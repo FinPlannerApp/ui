@@ -1,0 +1,362 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+@if (issue(); as issue) {
+<div class="p-4 md:p-6 max-w-5xl mx-auto">
+  <!-- Back button -->
+  <div class="mb-4">
+    <p-button icon="pi pi-arrow-left" label="Back to Feedback Hub" [text]="true" (onClick)="goBack()"></p-button>
+  </div>
+
+  <!-- Issue Header Card -->
+  <p-card styleClass="shadow-2 mb-4">
+    <div class="flex gap-4">
+      <!-- Vote Column -->
+      <div class="flex flex-column align-items-center gap-1">
+        <p-button icon="pi pi-chevron-up" [rounded]="true" [text]="true"
+          [severity]="issue.userVote === 1 ? 'success' : 'secondary'"
+          [disabled]="issue.userVote === 1"
+          (onClick)="vote(1)"></p-button>
+        <span class="text-2xl font-bold" [ngClass]="{
+          'text-green-500': issue.votes > 0,
+          'text-red-500': issue.votes < 0,
+          'text-color-secondary': issue.votes === 0,
+          'cursor-pointer hover:underline': authService.isAdmin()
+        }" (click)="viewVoters()" [pTooltip]="authService.isAdmin() ? 'View Voters' : ''">{{issue.votes}}</span>
+        <p-button icon="pi pi-chevron-down" [rounded]="true" [text]="true"
+          [severity]="issue.userVote === -1 ? 'danger' : 'secondary'"
+          [disabled]="issue.userVote === -1"
+          (onClick)="vote(-1)"></p-button>
+      </div>
+
+      <!-- Issue Content -->
+      <div class="flex-1">
+        <div class="flex align-items-center gap-2 mb-2 flex-wrap">
+          <span class="text-sm font-bold text-color-secondary">#{{issue.id}}</span>
+          <p-tag [value]="getTypeIcon(issue.type) + ' ' + issue.type" [severity]="getTypeSeverity(issue.type)"></p-tag>
+          <p-tag [value]="issue.status" [severity]="issue.status === 'New' ? 'warning' : issue.status === 'Verified' ? 'success' : 'secondary'"></p-tag>
+          <p-tag [value]="issue.categoryName" severity="info"></p-tag>
+          @if (issue.subcategoryName) {
+          <p-tag [value]="issue.subcategoryName" severity="secondary"></p-tag>
+          }
+
+          <!-- Status Workflow Dropdown -->
+          <div class="ml-auto flex align-items-center gap-2">
+            @if (issue.isClosed) {
+              <p-button label="Reopen Issue" icon="pi pi-refresh" severity="success" size="small" (onClick)="reopenIssue()"></p-button>
+            } @else {
+              <p-button label="Close Issue" icon="pi pi-lock" severity="danger" size="small" [outlined]="true" (onClick)="closeIssue()"></p-button>
+            }
+            <p-select [options]="statusOptions" [ngModel]="issue.status" (ngModelChange)="updateStatus($event)"
+              placeholder="Status" size="small" styleClass="w-10rem"></p-select>
+          </div>
+        </div>
+
+        <!-- Title: Editable if creator -->
+        @if (isEditingIssue()) {
+          <div class="flex flex-column gap-2 mb-3">
+            <input pInputText [(ngModel)]="editTitleValue" class="w-full text-xl font-bold" />
+            <p-editor [(ngModel)]="editDescriptionValue" [style]="{'height':'200px'}"></p-editor>
+            <div class="flex gap-2 justify-content-end">
+              <p-button label="Cancel" [text]="true" severity="secondary" size="small" (onClick)="cancelEditIssue()"></p-button>
+              <p-button label="Save Changes" icon="pi pi-check" size="small" (onClick)="saveEditIssue()" [disabled]="!editTitle().trim() || isHtmlEmpty(editDescription())"></p-button>
+            </div>
+          </div>
+        } @else {
+          <div class="flex align-items-start justify-content-between">
+            <div>
+              <h1 class="text-2xl font-bold m-0 mb-3">{{issue.title}}</h1>
+              <div class="text-color-secondary line-height-3" [innerHTML]="issue.description"></div>
+            </div>
+            @if (issue.creatorId && authService.isLoggedIn()) {
+              <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" size="small" pTooltip="Edit Issue"
+                (onClick)="startEditIssue()"></p-button>
+            }
+          </div>
+        }
+
+        <!-- Attachments -->
+        <div class="mt-4">
+          <h3 class="text-lg font-bold mb-2">Attachments</h3>
+          @if (attachments().length > 0) {
+            <div class="flex flex-wrap gap-2 mb-3">
+              @for (file of attachments(); track file.id) {
+              <div class="border-1 surface-border border-round p-2 flex align-items-center gap-2">
+                  <i class="pi" [ngClass]="file.contentType.includes('image') ? 'pi-image' : 'pi-file'"></i>
+                  <a [href]="getAttachmentUrl(file.filePath)" target="_blank" class="text-color font-semibold no-underline text-sm hover:text-primary">{{file.fileName}}</a>
+                  <span class="text-xs text-color-secondary">({{ (file.fileSizeBytes / 1024) | number:'1.0-0' }} KB)</span>
+                </div>
+              }
+            </div>
+          }
+          
+          <p-fileUpload mode="basic" chooseLabel="Upload File" chooseIcon="pi pi-upload" name="file" maxFileSize="10000000" [customUpload]="true" (uploadHandler)="onUpload($event)" [auto]="true" styleClass="p-button-sm p-button-outlined p-button-secondary"></p-fileUpload>
+        </div>
+
+        <p-divider></p-divider>
+
+        <div class="flex align-items-center gap-4 text-sm flex-wrap">
+          <div class="flex align-items-center gap-2">
+            <p-tag value="Severity" severity="contrast"></p-tag>
+            <span class="font-semibold" [ngClass]="{
+              'text-red-500': issue.severity === 'Critical',
+              'text-yellow-500': issue.severity === 'Major',
+              'text-color-secondary': issue.severity === 'Minor'
+            }">{{issue.severity}}</span>
+          </div>
+          <div class="flex align-items-center gap-2">
+            <p-tag value="Frequency" severity="contrast"></p-tag>
+            <span class="font-semibold">{{issue.frequency}}</span>
+          </div>
+          @if (issue.impactsMoney) {
+          <div class="flex align-items-center gap-2">
+            <p-tag value="💰 Financial Impact" severity="danger"></p-tag>
+            @if (issue.financialImpactAmount) {
+            <span class="font-semibold">₹{{issue.financialImpactAmount | number:'1.0-0'}}</span>
+            }
+          </div>
+          }
+          <div class="flex align-items-center gap-2">
+            <i class="pi pi-calendar text-color-secondary"></i>
+            <span class="text-color-secondary">{{issue.createdAt | date:'medium'}}</span>
+          </div>
+          @if (issue.creatorName) {
+          <div class="flex align-items-center gap-2">
+            <i class="pi pi-user text-color-secondary"></i>
+            <span class="text-color-secondary font-semibold">{{issue.creatorName}}</span>
+          </div>
+          }
+        </div>
+
+        <div class="mt-3 flex align-items-center gap-3">
+          <span class="text-3xl font-bold" [ngClass]="{'text-red-500': issue.painScore > 500}">
+            {{issue.painScore | number:'1.0-0'}}
+          </span>
+          <span class="text-xs text-color-secondary uppercase">Pain Score</span>
+        </div>
+
+        <!-- Labels -->
+        @if ((issue.labels && issue.labels.length > 0) || allLabels().length > 0) {
+        <p-divider></p-divider>
+        <div class="flex align-items-center gap-2 flex-wrap">
+          <span class="text-sm font-semibold text-color-secondary mr-1"><i class="pi pi-tag mr-1"></i>Labels:</span>
+          @for (label of allLabels(); track label.id) {
+            <span class="inline-flex align-items-center gap-1 px-2 py-1 border-round-lg text-xs font-semibold cursor-pointer"
+              [style.background-color]="isLabelActive(label.id) ? label.color + '33' : 'transparent'"
+              [style.color]="label.color"
+              [style.border]="'1px solid ' + (isLabelActive(label.id) ? label.color : 'var(--surface-300)')"
+              [style.opacity]="isLabelActive(label.id) ? 1 : 0.5"
+              (click)="toggleLabel(label.id)">
+              <span class="border-circle" [style.background-color]="label.color" style="width: 8px; height: 8px; display: inline-block;"></span>
+              {{label.name}}
+            </span>
+          }
+        </div>
+        }
+
+        <!-- Assignees -->
+        @if (issue.assignees && issue.assignees.length > 0) {
+        <div class="flex align-items-center gap-2 mt-2">
+          <span class="text-sm font-semibold text-color-secondary"><i class="pi pi-users mr-1"></i>Assignees:</span>
+          @for (a of issue.assignees; track a.userId) {
+            <span class="inline-flex align-items-center gap-1 px-2 py-1 surface-ground border-round text-sm">{{a.displayName}}</span>
+          }
+        </div>
+        }
+
+        <!-- Milestone -->
+        @if (issue.milestoneTitle) {
+        <div class="flex align-items-center gap-2 mt-2">
+          <span class="text-sm font-semibold text-color-secondary"><i class="pi pi-flag mr-1"></i>Milestone:</span>
+          <p-tag [value]="issue.milestoneTitle" severity="info" icon="pi pi-flag"></p-tag>
+        </div>
+        }
+
+        <!-- GitHub Link -->
+        @if (issue.gitHubIssueUrl) {
+        <div class="flex align-items-center gap-2 mt-2">
+          <i class="pi pi-github text-color-secondary"></i>
+          <a [href]="issue.gitHubIssueUrl" target="_blank" class="text-primary no-underline text-sm font-semibold">View on GitHub →</a>
+        </div>
+        }
+
+        <!-- Closed Banner -->
+        @if (issue.isClosed) {
+        <div class="mt-3 p-3 border-round surface-ground flex align-items-center gap-2">
+          <i class="pi pi-lock text-red-500"></i>
+          <span class="text-sm"><strong>Closed</strong> by {{issue.closedByName || 'Unknown'}} on {{issue.closedAt | date:'medium'}}</span>
+        </div>
+        }
+      </div>
+    </div>
+  </p-card>
+
+  <!-- Comments Section -->
+  <p-card styleClass="shadow-2">
+    <div class="flex align-items-center gap-2 mb-4">
+      <i class="pi pi-comments text-xl"></i>
+      <h2 class="text-xl font-bold m-0">Discussion ({{comments().length}})</h2>
+    </div>
+
+    <!-- Add Comment -->
+    <div class="mb-4 p-3 surface-ground border-round">
+      <p-editor [(ngModel)]="newCommentValue" [style]="{'height':'120px'}" placeholder="Share your thoughts, add context, or suggest a fix..."></p-editor>
+      <div class="flex justify-content-end mt-2">
+        <p-button label="Post Comment" icon="pi pi-send" size="small" (onClick)="submitComment()" [disabled]="isHtmlEmpty(newComment())"></p-button>
+      </div>
+    </div>
+
+    <p-divider></p-divider>
+
+    <!-- Thread View -->
+    @for (comment of threadedComments(); track comment.id) {
+      <ng-container *ngTemplateOutlet="commentTemplate; context: { $implicit: comment, depth: 0 }"></ng-container>
+    }
+    @empty {
+      <div class="text-center p-4 text-color-secondary">
+        <i class="pi pi-info-circle text-3xl mb-2"></i>
+        <p>No comments yet. Be the first to contribute!</p>
+      </div>
+    }
+  </p-card>
+</div>
+} @else {
+<div class="flex justify-content-center align-items-center p-6">
+  <p-progressSpinner></p-progressSpinner>
+</div>
+}
+
+<!-- Recursive Comment Template -->
+<ng-template #commentTemplate let-comment let-depth="depth">
+  <div class="flex gap-2 mb-3" [style.margin-left.rem]="depth * 1.5">
+    <!-- Depth indicator bar -->
+    @if (depth > 0) {
+    <div class="border-left-2 border-round" [style.border-color]="getDepthColor(depth)" style="min-width: 3px;"></div>
+    }
+
+    <!-- Comment Vote -->
+    <div class="flex flex-column align-items-center gap-0">
+      <p-button icon="pi pi-chevron-up" [rounded]="true" [text]="true" size="small"
+        [severity]="comment.userVote === 1 ? 'success' : 'secondary'"
+        [disabled]="comment.userVote === 1"
+        (onClick)="voteComment(comment.id, 1)"></p-button>
+      <span class="text-sm font-bold" [ngClass]="{
+        'text-green-500': comment.score > 0,
+        'text-red-500': comment.score < 0
+      }">{{comment.score}}</span>
+      <p-button icon="pi pi-chevron-down" [rounded]="true" [text]="true" size="small"
+        [severity]="comment.userVote === -1 ? 'danger' : 'secondary'"
+        [disabled]="comment.userVote === -1"
+        (onClick)="voteComment(comment.id, -1)"></p-button>
+    </div>
+
+    <!-- Comment Content -->
+    <div class="flex-1 border-round p-3" [ngClass]="depth === 0 ? 'surface-ground' : 'surface-50'" [style.border-left]="depth > 0 ? '2px solid ' + getDepthColor(depth) : 'none'">
+      <div class="flex align-items-center justify-content-between gap-2 mb-2">
+        <div class="flex align-items-center gap-2">
+          <div class="flex align-items-center justify-content-center bg-primary border-circle text-white font-bold" style="width: 28px; height: 28px; font-size: 0.7rem;">
+            {{(comment.creatorName || 'A')[0] | uppercase}}{{(comment.creatorName || 'N')[1] | uppercase}}
+          </div>
+          <span class="text-sm font-semibold">{{comment.creatorName || 'Anonymous'}}</span>
+          <span class="text-xs text-color-secondary">{{comment.createdAt | date:'medium'}}</span>
+          @if (comment.isEdited) {
+            <span class="text-xs text-color-secondary font-italic">(edited)</span>
+          }
+        </div>
+        <!-- Edit/Delete buttons (only for comment owner) -->
+        @if (authService.isLoggedIn()) {
+        <div class="flex gap-1">
+          <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" size="small" severity="secondary" pTooltip="Edit"
+            (onClick)="startEditComment(comment)"></p-button>
+          <p-button icon="pi pi-trash" [text]="true" [rounded]="true" size="small" severity="danger" pTooltip="Delete"
+            (onClick)="confirmDeleteComment(comment.id)"></p-button>
+        </div>
+        }
+      </div>
+      
+      <!-- Comment content or edit mode -->
+      @if (editingCommentId() === comment.id) {
+        <div class="flex flex-column gap-2">
+          <p-editor [(ngModel)]="editCommentContentValue" [style]="{'height':'150px'}"></p-editor>
+          <div class="flex gap-2 justify-content-end">
+            <p-button label="Cancel" [text]="true" size="small" severity="secondary" (onClick)="cancelEditComment()"></p-button>
+            <p-button label="Save" icon="pi pi-check" size="small" (onClick)="saveEditComment(comment.id)" [disabled]="isHtmlEmpty(editCommentContent())"></p-button>
+          </div>
+        </div>
+      } @else {
+        <div class="m-0 line-height-3" [innerHTML]="comment.content"></div>
+      }
+      
+      <div class="mt-2 flex align-items-center gap-2 flex-wrap">
+        <p-button label="Reply" icon="pi pi-reply" [text]="true" size="small" (onClick)="replyingTo.set(comment.id)"></p-button>
+        <span class="text-color-secondary">|</span>
+        <!-- Reaction Emojis -->
+        @for (emoji of reactionEmojis; track emoji) {
+          <span class="cursor-pointer text-sm px-1 border-round hover:surface-200" style="line-height: 1.5"
+            (click)="toggleReaction(comment.id, emoji)" [pTooltip]="emoji">{{emoji}}</span>
+        }
+        <!-- Active Reactions -->
+        @for (r of getReactions(comment.id); track r.emoji) {
+          <span class="inline-flex align-items-center gap-1 px-2 py-1 border-round text-xs cursor-pointer"
+            [ngClass]="r.reacted ? 'bg-primary-100 border-primary-300 border-1' : 'surface-ground border-1 surface-border'"
+            (click)="toggleReaction(comment.id, r.emoji)">
+            {{r.emoji}} <strong>{{r.count}}</strong>
+          </span>
+        }
+      </div>
+
+      <!-- Reply Input -->
+      @if (replyingTo() === comment.id) {
+      <div class="mt-2 p-2 border-round surface-border border-1">
+        <p-editor [(ngModel)]="replyContentValue" [style]="{'height':'100px'}" placeholder="Write a reply..."></p-editor>
+        <div class="flex justify-content-end gap-2 mt-2">
+          <p-button label="Cancel" [text]="true" size="small" severity="secondary" (onClick)="replyingTo.set(null)"></p-button>
+          <p-button label="Reply" icon="pi pi-send" size="small" (onClick)="submitReply(comment.id)" [disabled]="isHtmlEmpty(replyContent())"></p-button>
+        </div>
+      </div>
+      }
+    </div>
+  </div>
+
+  <!-- Render replies recursively -->
+  @if (comment.replies?.length > 0) {
+    @for (reply of comment.replies; track reply.id) {
+      <ng-container *ngTemplateOutlet="commentTemplate; context: { $implicit: reply, depth: depth + 1 }"></ng-container>
+    }
+  }
+</ng-template>
+
+<!-- Voters Dialog -->
+<p-dialog [(visible)]="showVotersDialog" header="Issue Voters" [modal]="true" [style]="{width: '450px'}" [closable]="true" [dismissableMask]="true">
+  @if (voters().length === 0) {
+    <div class="text-center p-4 text-color-secondary">No votes yet.</div>
+  } @else {
+    <p-table [value]="voters()" [scrollable]="true" scrollHeight="300px" styleClass="p-datatable-sm">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>User</th>
+          <th class="text-right">Vote</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-voter>
+        <tr>
+          <td>
+            <div class="flex align-items-center gap-2">
+              <div class="flex align-items-center justify-content-center bg-primary border-circle text-white font-bold" style="width: 28px; height: 28px; font-size: 0.7rem;">
+                {{(voter.displayName || 'A')[0] | uppercase}}{{(voter.displayName || 'N')[1] | uppercase}}
+              </div>
+              <span class="font-semibold">{{voter.displayName}}</span>
+            </div>
+          </td>
+          <td class="text-right">
+            @if (voter.value > 0) {
+              <i class="pi pi-thumbs-up text-green-500 text-lg"></i>
+            } @else if (voter.value < 0) {
+              <i class="pi pi-thumbs-down text-red-500 text-lg"></i>
+            }
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  }
+</p-dialog>

@@ -24,6 +24,10 @@ import { ChartModule } from 'primeng/chart';
 import { StepperModule } from 'primeng/stepper';
 import { InputOtpModule } from 'primeng/inputotp';
 import { TableModule } from 'primeng/table';
+import { EditorModule } from 'primeng/editor';
+import { FileUploadModule } from 'primeng/fileupload';
+import { DragDropModule } from 'primeng/dragdrop';
+import { TagModule } from 'primeng/tag';
 
 export const sharedPrimeModules = [
     ButtonModule,
@@ -51,5 +55,9 @@ export const sharedPrimeModules = [
     ChartModule,
     StepperModule,
     InputOtpModule,
-    TableModule
+    TableModule,
+    EditorModule,
+    FileUploadModule,
+    DragDropModule,
+    TagModule
 ];

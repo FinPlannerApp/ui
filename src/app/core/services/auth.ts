@@ -17,6 +17,7 @@ export interface UserDetails {
   name: string;
   email: string;
   exp: number;
+  roles: string[];
 }
 
 export interface LoginUserDto {
@@ -71,6 +72,7 @@ export class Auth {
   public currentUser = computed(() => this._currentUserDetails()?.name ?? null);
   public currentUserEmail = computed(() => this._currentUserDetails()?.email ?? null);
   public isLoggedIn = computed(() => !!this._accessToken() || (this.isBrowser && !!localStorage.getItem('refreshToken')));
+  public isAdmin = computed(() => this._currentUserDetails()?.roles?.includes('Admin') ?? false);
 
   // Session Expiry Timer
   private _now = toSignal(interval(1000).pipe(map(() => Math.floor(Date.now() / 1000))), { initialValue: Math.floor(Date.now() / 1000) });
@@ -140,10 +142,14 @@ export class Auth {
   private decodeAndSetUser(token: string): void {
     try {
       const decodedToken: any = jwtDecode(token);
+      // Extract roles: JWT role claim can be a string or array
+      const roleClaim = decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+      const roles: string[] = Array.isArray(roleClaim) ? roleClaim : (roleClaim ? [roleClaim] : []);
       const userDetails: UserDetails = {
         name: decodedToken.sub,
         email: decodedToken.email,
-        exp: decodedToken.exp
+        exp: decodedToken.exp,
+        roles
       };
       this._currentUserDetails.set(userDetails);
     } catch (e) {

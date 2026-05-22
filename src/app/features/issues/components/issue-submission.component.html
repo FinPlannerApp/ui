@@ -1,0 +1,130 @@
+<div class="p-4 md:p-6 max-w-4xl mx-auto">
+  <div class="mb-4">
+    <p-button icon="pi pi-arrow-left" label="Back to Feedback Hub" routerLink=".." [text]="true" styleClass="p-0 text-color-secondary hover:text-color"></p-button>
+  </div>
+
+  <p-card header="Report Bug / Request Feature" styleClass="shadow-3">
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-column gap-4">
+
+      <!-- Issue Type Selector -->
+      <div class="flex flex-column gap-2">
+        <label class="font-semibold">What type of feedback?</label>
+        <div class="flex gap-2">
+          <p-button [outlined]="form.get('type')?.value !== 'Bug'" severity="danger"
+            label="🐛 Bug Report" (onClick)="form.patchValue({type: 'Bug'})" styleClass="flex-1"></p-button>
+          <p-button [outlined]="form.get('type')?.value !== 'Feature'" severity="success"
+            label="✨ Feature Request" (onClick)="form.patchValue({type: 'Feature'})" styleClass="flex-1"></p-button>
+          <p-button [outlined]="form.get('type')?.value !== 'Question'" severity="info"
+            label="❓ Question" (onClick)="form.patchValue({type: 'Question'})" styleClass="flex-1"></p-button>
+        </div>
+      </div>
+      
+      <div class="flex flex-column gap-2">
+        <label for="title" class="font-semibold">Title</label>
+        <input pInputText id="title" formControlName="title" placeholder="e.g. Dashboard UI not responsive" class="w-full" />
+        @if (form.get('title')?.invalid && form.get('title')?.touched) {
+          <small class="text-red-500">Title is required.</small>
+        }
+        
+        <!-- Live Similarity Suggestions -->
+        @if (similarIssues().length > 0) {
+          <p-message severity="warn" styleClass="mt-2 w-full">
+            <div class="flex flex-column gap-2 p-2 w-full">
+              <span class="font-bold">Looks similar to existing issues:</span>
+              <ul class="m-0 pl-3">
+                @for (issue of similarIssues(); track issue.id) {
+                  <li>#{{issue.id}} - {{issue.title}} ({{issue.status}})</li>
+                }
+              </ul>
+            </div>
+          </p-message>
+        }
+      </div>
+
+      <div class="flex flex-column gap-2">
+         <label for="description" class="font-semibold">Description</label>
+         <p-editor id="description" formControlName="description" [style]="{'height':'200px'}" class="w-full"></p-editor>
+         @if (form.get('description')?.invalid && form.get('description')?.touched) {
+           <small class="text-red-500">Description is required.</small>
+         }
+      </div>
+
+      <!-- 2. Taxonomy -->
+      <div class="flex flex-column md:flex-row gap-4">
+          <div class="flex flex-column gap-2 flex-1">
+            <label class="font-semibold">Category</label>
+            <p-select formControlName="categoryId" [options]="categories()" optionLabel="name" optionValue="id"
+               placeholder="Select or type to add" [showClear]="true" (onChange)="onCategoryChange()" styleClass="w-full"
+               [filter]="true" (onFilter)="filterCategories($event)">
+               <ng-template pTemplate="empty">No categories available (Optional).</ng-template>
+               <ng-template pTemplate="footer">
+                 @if (isNewCategory()) {
+                 <div class="p-2 border-top-1 surface-border">
+                   <p-button label="Create '{{ currentFilter() }}'" styleClass="p-button-link p-0 m-0"
+                     (onClick)="addNewCategory()"></p-button>
+                 </div>
+                 }
+               </ng-template>
+            </p-select>
+          </div>
+          
+          @if (subcategories().length > 0 || form.get('categoryId')?.value) {
+          <div class="flex flex-column gap-2 flex-1">
+            <label class="font-semibold">Subcategory</label>
+            <p-select formControlName="subcategoryId" [options]="subcategories()" optionLabel="name" optionValue="id"
+               placeholder="Select or type to add" [showClear]="true" styleClass="w-full"
+               [filter]="true" (onFilter)="filterSubcategories($event)">
+               <ng-template pTemplate="footer">
+                 @if (isNewSubcategory()) {
+                 <div class="p-2 border-top-1 surface-border">
+                   <p-button label="Create '{{ currentSubFilter() }}'" styleClass="p-button-link p-0 m-0"
+                     (onClick)="addNewSubcategory()"></p-button>
+                 </div>
+                 }
+               </ng-template>
+            </p-select>
+          </div>
+          }
+      </div>
+
+      <hr class="my-3 surface-border" />
+      
+      <!-- 3. Impact Assessment -->
+      <h3 class="mt-0 mb-2 text-lg font-semibold">Impact Assessment</h3>
+          
+      <div class="flex flex-column md:flex-row gap-4">
+          <div class="flex flex-column gap-2 flex-1">
+             <label class="font-semibold">Severity</label>
+             <p-select formControlName="severity" [options]="['Minor', 'Major', 'Critical']" styleClass="w-full"></p-select>
+          </div>
+
+          <div class="flex flex-column gap-2 flex-1">
+             <label class="font-semibold">Frequency</label>
+             <p-select formControlName="frequency" [options]="['Rare', 'Frequent', 'Always']" styleClass="w-full"></p-select>
+          </div>
+      </div>
+
+      <div class="flex align-items-center gap-2 mt-2">
+           <p-checkbox formControlName="impactsMoney" [binary]="true" inputId="impactsMoney"></p-checkbox>
+           <label for="impactsMoney" class="cursor-pointer">This issue causes explicit financial loss or discrepancy</label>
+      </div>
+      
+      @if (form.get('impactsMoney')?.value) {
+          <div class="flex flex-column gap-2 mt-2">
+            <label for="financialImpactAmount" class="font-semibold">Estimated Amount (₹)</label>
+            <p-inputNumber formControlName="financialImpactAmount" inputId="financialImpactAmount" mode="currency" currency="INR" locale="en-IN" styleClass="w-full" class="w-full"></p-inputNumber>
+          </div>
+      }
+      <!-- GitHub Link (Optional) -->
+      <hr class="my-3 surface-border" />
+      <div class="flex flex-column gap-2">
+        <label for="gitHubIssueUrl" class="font-semibold"><i class="pi pi-github mr-1"></i>GitHub Issue URL (Optional)</label>
+        <input pInputText id="gitHubIssueUrl" formControlName="gitHubIssueUrl" placeholder="https://github.com/user/repo/issues/123" class="w-full" />
+      </div>
+
+      <div class="flex justify-content-end mt-4">
+         <p-button type="submit" label="Submit Issue" icon="pi pi-check" [loading]="isSubmitting()"></p-button>
+      </div>
+    </form>
+  </p-card>
+</div>

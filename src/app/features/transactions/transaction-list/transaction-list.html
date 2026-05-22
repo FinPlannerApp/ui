@@ -63,36 +63,10 @@
     </div>
   </div>
   }
-    </div>
-  </div>
-  }
 
   <p-card>
     <ng-template pTemplate="header">
-<<<<<<< HEAD
-      <div
-        class="flex flex-wrap align-items-center justify-content-between gap-3 px-3 py-2 border-bottom-1 surface-border">
-        <div class="flex flex-wrap gap-2 text-sm">
-          <p-iconfield class="w-full md:w-30rem">
-            <p-inputicon class="pi pi-search"></p-inputicon>
-            <input type="text" pInputText [ngModel]="searchTerm()"
-              (ngModelChange)="searchTerm.set($event); onFilterChange()" placeholder="Search transactions..."
-              class="w-full" />
-          </p-iconfield>
-
-          <p-datepicker [ngModel]="selectedDate()" view="month" dateFormat="mm/yy" [showIcon]="true"
-            (ngModelChange)="selectedDate.set($event); onFilterChange()" placeholder="Select Month"
-            class="w-12rem"></p-datepicker>
-        </div>
-
-        <div class="flex gap-2">
-          <p-button label="New Transaction" icon="pi pi-plus" (onClick)="showTransactionForm()"
-            severity="primary"></p-button>
-        </div>
-      </div>
-=======
       <!-- Removed redundant button as it is present in filter bar -->
->>>>>>> gitlab/main
     </ng-template>
 
     @if (ready()) {

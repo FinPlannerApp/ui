@@ -81,7 +81,11 @@ export const routes: Routes = [
       {
         path: 'contact',
         loadComponent: () => import('./features/public/contact/contact').then(m => m.Contact)
-      }
+      },
+      {
+        path: 'feedback',
+        loadChildren: () => import('./features/issues/issues.routes').then(m => m.ISSUES_ROUTES)
+      },
     ]
   },
 

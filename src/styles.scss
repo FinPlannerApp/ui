@@ -399,6 +399,42 @@ button[aria-label="Close"] {
   }
 }
 
+/* Fix IconField Icon Overlap (e.g. 'Qearch') */
+.p-iconfield {
+  position: relative;
+  display: inline-flex;
+  width: 100%;
+}
+
+.p-iconfield-left > .p-inputtext,
+.p-iconfield-left > input {
+  padding-left: 2.75rem !important;
+}
+
+.p-iconfield-right > .p-inputtext,
+.p-iconfield-right > input {
+  padding-right: 2.75rem !important;
+}
+
+.p-iconfield > .p-inputicon {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+  pointer-events: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.p-iconfield-left > .p-inputicon {
+  left: 1rem;
+}
+
+.p-iconfield-right > .p-inputicon {
+  right: 1rem;
+}
+
 /* Fix DatePicker Border/Shadow Artifact */
 .p-datepicker-input {
   box-shadow: none !important;

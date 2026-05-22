@@ -189,26 +189,6 @@ export class TransactionList implements OnInit {
     }
   }
 
-      this.transactions.set(paginatedResult.data);
-      this.totalRecords.set(paginatedResult.totalRecords);
-      this.summary.set(summaryData);
-
-      // Update Breadcrumbs
-      const accountName = this.accountState.accounts().find(a => a.id === this.accountId())?.name || 'Account';
-      this.breadcrumbService.setItems([
-        { label: 'Accounts', routerLink: '/app/accounts' },
-        { label: accountName },
-        { label: 'Transactions' }
-      ]);
-
-    } catch (err) {
-      console.error('Failed to load account transactions', err);
-      this.lastQueryKey = null; // Allow retry on error
-    } finally {
-      this.isLoading.set(false);
-      this.cdr.markForCheck();
-    }
-  }
 
   onDateChange(event: any): void {
     if (event) {
