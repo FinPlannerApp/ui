@@ -41,7 +41,7 @@ export class IssueService {
 
     // --- Comments ---
     getComments(issueId: number): Observable<any[]> { return this.http.get<any[]>(`${this.apiUrl}/${issueId}/comments`); }
-    addComment(issueId: number, content: string, parentCommentId?: number): Observable<any> { return this.http.post<any>(`${this.apiUrl}/${issueId}/comments`, { content, parentCommentId }); }
+    addComment(issueId: number, content: string, parentCommentId?: number, type: string = 'General'): Observable<any> { return this.http.post<any>(`${this.apiUrl}/${issueId}/comments`, { content, parentCommentId, type }); }
     editComment(commentId: number, content: string): Observable<any> { return this.http.put<any>(`${this.apiUrl}/comments/${commentId}`, { content }); }
     deleteComment(commentId: number): Observable<any> { return this.http.delete<any>(`${this.apiUrl}/comments/${commentId}`); }
     voteComment(commentId: number, value: number): Observable<any> { return this.http.post<any>(`${this.apiUrl}/comments/${commentId}/vote`, { value }); }
@@ -64,6 +64,19 @@ export class IssueService {
     toggleReaction(commentId: number, emoji: string): Observable<any> { return this.http.post<any>(`${this.apiUrl}/comments/${commentId}/reactions`, { emoji }); }
     getReactions(commentId: number): Observable<any[]> { return this.http.get<any[]>(`${this.apiUrl}/comments/${commentId}/reactions`); }
 
+    // --- Relations ---
+    getRelations(id: number): Observable<any[]> { return this.http.get<any[]>(`${this.apiUrl}/${id}/relations`); }
+    addRelation(id: number, targetIssueId: number, relationType: string): Observable<any> { return this.http.post<any>(`${this.apiUrl}/${id}/relations`, { targetIssueId, relationType }); }
+    removeRelation(id: number, targetIssueId: number, relationType: string): Observable<any> { return this.http.delete<any>(`${this.apiUrl}/${id}/relations/${targetIssueId}/${relationType}`); }
+
+    // --- Activities ---
+    getActivities(id: number): Observable<any[]> { return this.http.get<any[]>(`${this.apiUrl}/${id}/activities`); }
+
+    // --- Comment Quality Toggles ---
+    toggleHelpful(commentId: number): Observable<any> { return this.http.post<any>(`${environment.apiBaseUrl}/comments/${commentId}/helpful`, {}); }
+    toggleRootCause(commentId: number): Observable<any> { return this.http.post<any>(`${environment.apiBaseUrl}/comments/${commentId}/root-cause`, {}); }
+    toggleReproConfirmed(commentId: number): Observable<any> { return this.http.post<any>(`${environment.apiBaseUrl}/comments/${commentId}/repro-confirmed`, {}); }
+
     // --- Attachments ---
     uploadAttachment(issueId: number, file: File): Observable<any> {
         const formData = new FormData();
@@ -73,8 +86,9 @@ export class IssueService {
     getAttachments(issueId: number): Observable<any[]> { return this.http.get<any[]>(`${this.apiUrl}/${issueId}/attachments`); }
 
     // --- Gamification & Analytics ---
-    getLeaderboard(): Observable<any[]> { return this.http.get<any[]>(`${this.apiUrl}/leaderboard`); }
+    private gamificationUrl = `${environment.apiBaseUrl}/gamification`;
+    getLeaderboard(): Observable<any[]> { return this.http.get<any[]>(`${this.gamificationUrl}/leaderboard`); }
     getAnalytics(): Observable<any> { return this.http.get<any>(`${this.apiUrl}/analytics`); }
-    getAllBadges(): Observable<any[]> { return this.http.get<any[]>(`${this.apiUrl}/gamification/badges`); }
-    getMyGamificationProfile(): Observable<any> { return this.http.get<any>(`${this.apiUrl}/gamification/profile`); }
+    getAllBadges(): Observable<any[]> { return this.http.get<any[]>(`${this.gamificationUrl}/badges`); }
+    getMyGamificationProfile(): Observable<any> { return this.http.get<any>(`${this.gamificationUrl}/profile`); }
 }

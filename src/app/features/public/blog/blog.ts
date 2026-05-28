@@ -2,7 +2,399 @@ import { Component, signal, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 export const BLOG_POSTS = [
-  // ─── LATEST ─────────────────────────────────────────────────────────────────
+  // ─── v5.0.0 — COMMUNITY FEEDBACK & GAMIFICATION ─────────────────────────────
+  {
+    id: 'v5-0-0-release',
+    tag: 'v5.0.0',
+    tagColor: '#8b5cf6',
+    title: 'v5.0.0 — Community Feedback Hub, Pain-Driven Prioritization & Gamification',
+    excerpt: 'Our biggest release yet: a full-stack community feedback system with pain-score ranking, voting, threaded discussions, product roadmap, gamified karma, badges, and an analytics dashboard.',
+    date: 'May 29, 2026',
+    _dateValue: new Date('2026-05-29'),
+    content: `
+      <h2>What is v5.0.0?</h2>
+      <p>Version 5.0.0 transforms Financial Planner from a personal finance tool into a <strong>community-driven product</strong>. Users can now report bugs, request features, vote on priorities, participate in threaded discussions, earn karma points, collect badges, and track the product roadmap — all from within the app.</p>
+
+      <h2>🎯 Pain-Driven Prioritization</h2>
+      <p>Traditional issue trackers let you pick "High / Medium / Low" priority. We replaced that with a <strong>Pain Score</strong> — a mathematically computed ranking that surfaces the issues causing the most real damage.</p>
+      <p>The formula: <code>Pain Score = (Impact × Frequency × Severity) + Financial Risk + Trust Penalty</code></p>
+      <ul>
+        <li><strong>Impact:</strong> Does this issue cause financial loss? If yes, the weight is <strong>100×</strong>. If not, it's <strong>10×</strong>.</li>
+        <li><strong>Frequency:</strong> How often does it occur? Always (×10), Frequent (×5), Sometimes (×3), or Rare (×1).</li>
+        <li><strong>Severity:</strong> Critical (×5), Major (×3), or Minor (×1).</li>
+        <li><strong>Financial Risk:</strong> The estimated monetary impact (₹) is added directly to the score.</li>
+        <li><strong>Trust Penalty:</strong> An additional weight for issues that erode user trust.</li>
+      </ul>
+      <p>The result: a critical financial bug that happens always scores <strong>5,000+</strong> while a minor cosmetic issue scores under 10. The Feedback Hub auto-sorts by Pain Score so the team always sees the most painful problems first.</p>
+
+      <h2>🗳️ Voting System</h2>
+      <p>Every issue and comment supports <strong>upvotes and downvotes</strong>. Votes act as tie-breakers — when two issues have similar Pain Scores, community votes push the more-wanted fix to the top. Voting is one-per-user-per-issue to prevent manipulation.</p>
+
+      <h2>💬 Threaded Discussions</h2>
+      <p>Each issue has a rich-text <strong>threaded comment system</strong> with nested replies, structured comment types (General, Workaround, Repro Steps, Solution), inline editing, and emoji reactions (👍 ❤️ 🎉 😄 😕 👀). Comments can be flagged as "Helpful Solution", "Root Cause", or "Repro Confirmed" to surface high-quality contributions.</p>
+
+      <h2>🏆 Gamification & Karma</h2>
+      <p>Every contribution earns <strong>karma points</strong>:</p>
+      <ul>
+        <li>Issue upvote received: <strong>+5</strong> karma</li>
+        <li>Issue downvote received: <strong>−3</strong> karma</li>
+        <li>Comment upvote received: <strong>+2</strong> karma</li>
+        <li>Issue created: <strong>+1</strong> karma</li>
+        <li>Issue verified/released: <strong>+10</strong> karma</li>
+        <li>Helpful comment: <strong>+5</strong> karma</li>
+        <li>Root cause comment: <strong>+10</strong> karma</li>
+        <li>Repro confirmed comment: <strong>+5</strong> karma</li>
+      </ul>
+      <p>Karma thresholds unlock <strong>contributor tags</strong>: Active Contributor (5+), Bronze Reporter (20+), Silver Reporter (50+), Gold Reporter (100+). <strong>Badges</strong> are awarded automatically: First Report, Bug Hunter (5+ issues), Top Reporter (50+ karma), Legend (100+ karma).</p>
+
+      <h2>🗺️ Product Roadmap</h2>
+      <p>A public-facing <strong>Kanban roadmap</strong> shows what's Planned, In Progress, and Released. Users can upvote items to influence priorities. Admins can drag-and-drop issues between phases and create new roadmap items with a WYSIWYG editor.</p>
+
+      <h2>📊 Analytics Dashboard (Admin)</h2>
+      <p>Admins get a dedicated analytics view with pie/doughnut charts for issues by status and by type, plus summary cards for total issues, open/closed counts, and average resolution time.</p>
+
+      <h2>🔄 Issue Lifecycle</h2>
+      <p>Issues follow a structured workflow: <strong>New → Acknowledged → Triaged → Planned → In Progress → Released → Verified → Closed</strong>. Every status transition is logged in a timeline-style Activity Feed with the user who made the change and when.</p>
+
+      <h2>Additional Features in v5.0.0</h2>
+      <ul>
+        <li><strong>Issue Types:</strong> Bug, Feature, or Question — each with a distinct visual tag.</li>
+        <li><strong>Taxonomy System:</strong> Hierarchical categories and subcategories for organizing issues. Create new ones inline while submitting.</li>
+        <li><strong>Labels:</strong> Colored labels (like GitHub) that can be toggled on/off per issue.</li>
+        <li><strong>Assignees & Milestones:</strong> Assign team members and group issues by milestone.</li>
+        <li><strong>Issue Relations:</strong> Link issues with relationship types: Blocks, BlockedBy, DuplicateOf, RelatedTo, Causes, ParentOf, ChildOf.</li>
+        <li><strong>Attachments:</strong> Upload screenshots and files directly to issues.</li>
+        <li><strong>Duplicate Detection:</strong> Live similarity suggestions as you type your issue title.</li>
+        <li><strong>Kanban Board:</strong> Toggle between list and Kanban views in the Feedback Hub. Drag-and-drop status changes (admin only).</li>
+        <li><strong>GitHub Integration:</strong> Link issues to their GitHub counterparts with a clickable URL.</li>
+        <li><strong>Public Access:</strong> The Feedback Hub, Roadmap, and Leaderboard are accessible without login at <code>/feedback</code>.</li>
+      </ul>
+    `
+  },
+  {
+    id: 'pain-score-deep-dive',
+    tag: 'Feature',
+    tagColor: '#ef4444',
+    title: 'Pain Score Deep Dive: How We Calculate Issue Priority',
+    excerpt: 'Traditional priority dropdowns are lazy. Here\'s how our weighted Pain Score formula mathematically surfaces the issues causing the most real damage to users.',
+    date: 'May 29, 2026',
+    _dateValue: new Date('2026-05-29'),
+    content: `
+      <h2>Why Not Just "High / Medium / Low"?</h2>
+      <p>Every project management tool gives you a priority dropdown. The problem? <strong>Everything becomes "High".</strong> When everything is high priority, nothing is. Pain Score replaces subjective priority with a <strong>mathematically weighted ranking</strong> that accounts for real user impact.</p>
+
+      <h2>The Formula</h2>
+      <p>Each issue is scored using:</p>
+      <pre><code>Pain Score = (Impact × Frequency × Severity) + Financial Risk + Trust Penalty</code></pre>
+
+      <h2>Factor 1: Impact (Does It Cost Money?)</h2>
+      <p>The single most important question. If the issue causes direct financial loss or discrepancy:</p>
+      <ul>
+        <li><strong>Impacts Money = Yes:</strong> Weight = <strong>100</strong></li>
+        <li><strong>Impacts Money = No:</strong> Weight = <strong>10</strong></li>
+      </ul>
+      <p>This 10× multiplier ensures that a minor UX annoyance never outranks a bug that silently miscalculates your bank balance.</p>
+
+      <h2>Factor 2: Frequency (How Often?)</h2>
+      <ul>
+        <li><strong>Always</strong> (happens every time): Weight = <strong>10</strong></li>
+        <li><strong>Frequent</strong> (happens most times): Weight = <strong>5</strong></li>
+        <li><strong>Sometimes</strong> (intermittent): Weight = <strong>3</strong></li>
+        <li><strong>Rare</strong> (edge case): Weight = <strong>1</strong></li>
+      </ul>
+
+      <h2>Factor 3: Severity (How Bad Is It?)</h2>
+      <ul>
+        <li><strong>Critical</strong> (data loss, security breach): Weight = <strong>5</strong></li>
+        <li><strong>Major</strong> (broken workflow): Weight = <strong>3</strong></li>
+        <li><strong>Minor</strong> (cosmetic, workaround exists): Weight = <strong>1</strong></li>
+      </ul>
+
+      <h2>Factor 4: Financial Risk</h2>
+      <p>If the issue has a dollar/rupee amount attached (e.g. "this bug caused a ₹5,000 discrepancy"), that amount is added directly to the Pain Score. A ₹50,000 financial risk will dominate the ranking regardless of other factors.</p>
+
+      <h2>Factor 5: Trust Penalty</h2>
+      <p>A manually-assigned weight for issues that erode user trust — for example, incorrect balance displays or failed login flows. Even if rare, trust-breaking bugs deserve elevated attention.</p>
+
+      <h2>Score Examples</h2>
+      <table>
+        <thead><tr><th>Scenario</th><th>Impact</th><th>Freq</th><th>Sev</th><th>Score</th></tr></thead>
+        <tbody>
+          <tr><td>Balance calculation wrong (always)</td><td>100</td><td>10</td><td>5</td><td><strong>5,000</strong></td></tr>
+          <tr><td>Export fails with large datasets</td><td>10</td><td>5</td><td>3</td><td><strong>150</strong></td></tr>
+          <tr><td>Dark mode icon color mismatch</td><td>10</td><td>10</td><td>1</td><td><strong>100</strong></td></tr>
+          <tr><td>Minor typo on about page</td><td>10</td><td>1</td><td>1</td><td><strong>10</strong></td></tr>
+        </tbody>
+      </table>
+
+      <h2>Where Votes Fit In</h2>
+      <p>Votes are intentionally <strong>not</strong> part of the Pain Score formula. As our codebase notes: <em>"Upvotes are lazy. You need weighted pain."</em> Votes are tracked separately as a <strong>tie-breaker</strong> when sorting — ensuring community voice matters without letting popularity trump objective severity.</p>
+
+      <h2>Visual Indicators</h2>
+      <ul>
+        <li>Score &gt; 500: <strong>Red left border</strong> — immediate attention needed</li>
+        <li>Score 100–500: <strong>Yellow left border</strong> — significant issue</li>
+        <li>Score &lt; 100: <strong>Green left border</strong> — under control</li>
+      </ul>
+    `
+  },
+  {
+    id: 'feedback-hub-guide',
+    tag: 'Guide',
+    tagColor: '#3b82f6',
+    title: 'Feedback Hub: Your Voice Shapes the Product',
+    excerpt: 'A complete user guide to the Feedback Hub — how to report bugs, request features, vote on priorities, filter issues, and switch between List and Kanban views.',
+    date: 'May 28, 2026',
+    _dateValue: new Date('2026-05-28'),
+    content: `
+      <h2>What Is the Feedback Hub?</h2>
+      <p>The Feedback Hub is a <strong>community-driven issue tracker</strong> built directly into Financial Planner. Instead of filing bugs through email or external tools, you can report issues, request features, and ask questions — all from within the app.</p>
+
+      <h2>Accessing the Hub</h2>
+      <ul>
+        <li><strong>Logged In:</strong> Navigate to <code>/app/issues</code> from the sidebar.</li>
+        <li><strong>Public:</strong> Visit <code>/feedback</code> — the Hub is accessible without an account so anyone can browse and submit.</li>
+      </ul>
+
+      <h2>Submitting an Issue</h2>
+      <p>Click <strong>"Report / Request"</strong> to open the submission form. You'll provide:</p>
+      <ol>
+        <li><strong>Type:</strong> Choose 🐛 Bug Report, ✨ Feature Request, or ❓ Question.</li>
+        <li><strong>Title & Description:</strong> Rich-text editor with formatting. As you type the title, <strong>duplicate detection</strong> shows similar existing issues to prevent duplicates.</li>
+        <li><strong>Category & Subcategory:</strong> Select from existing taxonomies or <strong>create new ones inline</strong> by typing a name that doesn't exist yet.</li>
+        <li><strong>Impact Assessment:</strong> Set Severity (Minor/Major/Critical) and Frequency (Rare/Sometimes/Frequent/Always). Check "Impacts Money" if the issue causes financial loss, and optionally enter the estimated amount in ₹.</li>
+        <li><strong>GitHub Link:</strong> Optionally link to an external GitHub issue.</li>
+      </ol>
+
+      <h2>Browsing & Filtering</h2>
+      <p>The main Hub page offers powerful filtering:</p>
+      <ul>
+        <li><strong>Search:</strong> Full-text search across issue titles and descriptions.</li>
+        <li><strong>Type Filter:</strong> Toggle between All, Bug, Feature, and Question with a select button strip.</li>
+        <li><strong>Category Filter:</strong> Dropdown to filter by taxonomy category.</li>
+        <li><strong>Severity Filter:</strong> Filter by Minor, Major, or Critical.</li>
+        <li><strong>Sort Options:</strong> Sort by 🔥 Pain Score, 📅 Newest, or 👍 Most Voted from the sidebar.</li>
+      </ul>
+
+      <h2>List View vs Kanban View</h2>
+      <p>Toggle between views using the button in the top-right filter bar:</p>
+      <ul>
+        <li><strong>List View:</strong> A vertical card-based layout with voting arrows, pain score display, label tags, and status badges. Each card shows a 2-line description preview and metadata (date, comment count, creator).</li>
+        <li><strong>Kanban View:</strong> A horizontal board with columns for each workflow status (New, Acknowledged, Triaged, Planned, InProgress, Released, Verified, Closed). Admins can <strong>drag-and-drop</strong> cards between columns to update status instantly.</li>
+      </ul>
+
+      <h2>Voting on Issues</h2>
+      <p>Each issue card has up/down vote arrows. Click ▲ to upvote or ▼ to downvote. Your vote is highlighted (green for up, red for down) and you can only vote once per issue. Vote counts are color-coded: green for positive, red for negative.</p>
+
+      <h2>Issue Cards at a Glance</h2>
+      <p>Every card displays:</p>
+      <ul>
+        <li>Issue <strong>#ID</strong> and type tag (Bug/Feature/Question)</li>
+        <li><strong>Title</strong> and truncated description</li>
+        <li><strong>Status</strong> and <strong>Category</strong> tags</li>
+        <li>Colored <strong>labels</strong> with dot indicators</li>
+        <li><strong>Date</strong>, <strong>comment count</strong>, and <strong>creator name</strong></li>
+        <li>The computed <strong>Pain Score</strong> in large bold text</li>
+        <li>A color-coded left border based on Pain Score severity</li>
+      </ul>
+
+      <h2>Stats & Formula</h2>
+      <p>The sidebar shows total issue count and the pain formula for transparency: <code>Pain Score = (Impact × Frequency × Severity) + Financial Risk + Community Votes</code>.</p>
+    `
+  },
+  {
+    id: 'gamification-karma-guide',
+    tag: 'Feature',
+    tagColor: '#f59e0b',
+    title: 'Gamification & Karma: Earn Points, Badges, and Climb the Leaderboard',
+    excerpt: 'Every contribution earns karma. Unlock badges like Bug Hunter and Legend. Climb the community leaderboard and earn your contributor tag.',
+    date: 'May 28, 2026',
+    _dateValue: new Date('2026-05-28'),
+    content: `
+      <h2>Why Gamification?</h2>
+      <p>Quality feedback is the lifeblood of a good product. Gamification rewards the users who invest time in reporting bugs, confirming reproduction steps, and suggesting solutions — making them visible to the entire community.</p>
+
+      <h2>How Karma Is Calculated</h2>
+      <p>Your karma score is recalculated in real-time based on all your contributions:</p>
+      <table>
+        <thead><tr><th>Action</th><th>Karma</th></tr></thead>
+        <tbody>
+          <tr><td>Issue upvote received (someone upvotes your issue)</td><td><strong>+5</strong></td></tr>
+          <tr><td>Issue downvote received</td><td><strong>−3</strong></td></tr>
+          <tr><td>Comment upvote received</td><td><strong>+2</strong></td></tr>
+          <tr><td>Issue created</td><td><strong>+1</strong></td></tr>
+          <tr><td>Issue you reported gets Verified or Released</td><td><strong>+10</strong></td></tr>
+          <tr><td>Your comment marked as "Helpful Solution"</td><td><strong>+5</strong></td></tr>
+          <tr><td>Your comment marked as "Root Cause"</td><td><strong>+10</strong></td></tr>
+          <tr><td>Your comment marked as "Repro Confirmed"</td><td><strong>+5</strong></td></tr>
+        </tbody>
+      </table>
+
+      <h2>Contributor Tags</h2>
+      <p>As your karma grows, you automatically earn visible tags next to your name on the leaderboard:</p>
+      <ul>
+        <li>5+ karma: <strong>Active Contributor</strong></li>
+        <li>20+ karma: <strong>Bronze Reporter</strong></li>
+        <li>50+ karma: <strong>Silver Reporter</strong></li>
+        <li>100+ karma: <strong>Gold Reporter</strong></li>
+      </ul>
+
+      <h2>Badges</h2>
+      <p>Badges are permanent achievements displayed on your leaderboard profile:</p>
+      <ul>
+        <li>🏳️ <strong>First Report</strong> — Submitted your first issue (1+ issue).</li>
+        <li>🔍 <strong>Bug Hunter</strong> — Reported 5 or more bugs.</li>
+        <li>⭐ <strong>Top Reporter</strong> — Earned 50+ karma.</li>
+        <li>🏆 <strong>Legend</strong> — Reached 100+ karma.</li>
+      </ul>
+      <p>Badges are color-coded and displayed with icons. New badges are added as the community grows.</p>
+
+      <h2>The Leaderboard</h2>
+      <p>Accessible at <code>/feedback/leaderboard</code> (or <code>/app/issues/leaderboard</code> when logged in), the leaderboard displays the <strong>top 10 contributors</strong> ranked by karma score. The top 3 positions get trophy icons (🥇 Gold, 🥈 Silver, 🥉 Bronze). Each entry shows the contributor's avatar, display name, karma score, contributor tag, and all earned badges.</p>
+
+      <h2>Best Strategies to Earn Karma Fast</h2>
+      <ol>
+        <li><strong>Report real pain:</strong> Financial bugs that get upvoted earn the most karma (+5 per upvote).</li>
+        <li><strong>Confirm reproductions:</strong> Comment on issues with exact repro steps. If admins mark your comment as "Repro Confirmed", you earn +5.</li>
+        <li><strong>Share root causes:</strong> If you discover the root cause of a bug, comment with the details. A "Root Cause" tag earns you +10 karma — the highest single reward.</li>
+        <li><strong>Be constructive:</strong> Helpful solution comments earn +5 and often receive upvotes too.</li>
+        <li><strong>Avoid spam:</strong> Downvotes cost −3 karma. Quality over quantity always wins.</li>
+      </ol>
+    `
+  },
+  {
+    id: 'roadmap-kanban-guide',
+    tag: 'Guide',
+    tagColor: '#10b981',
+    title: 'Product Roadmap & Kanban: See What\'s Coming Next',
+    excerpt: 'The public product roadmap lets you see what\'s planned, what\'s being built, and what\'s been released. Upvote items to influence our development priorities.',
+    date: 'May 27, 2026',
+    _dateValue: new Date('2026-05-27'),
+    content: `
+      <h2>The Roadmap: Transparency by Default</h2>
+      <p>Our product roadmap is <strong>publicly visible</strong> at <code>/feedback/roadmap</code>. No registration required. We believe in radical transparency — you should always know what we're building, what's next, and what's already shipped.</p>
+
+      <h2>Three Phases</h2>
+      <p>The roadmap is organized as a <strong>horizontal Kanban board</strong> with three columns:</p>
+      <ul>
+        <li>📅 <strong>Planned</strong> (amber border) — Features and fixes queued for development.</li>
+        <li>⚙️ <strong>In Progress</strong> (blue border) — Currently being built and tested.</li>
+        <li>✅ <strong>Released</strong> (green border) — Fully completed, tested, and live in production.</li>
+      </ul>
+
+      <h2>Stats Dashboard</h2>
+      <p>The roadmap header shows four live stats: total planned features, items in progress, released items, and total community upvotes across all roadmap items. These update in real-time as items move between phases.</p>
+
+      <h2>Roadmap Cards</h2>
+      <p>Each card on the roadmap shows:</p>
+      <ul>
+        <li><strong>Type</strong> (Feature/Bug/Question) with a colored tag</li>
+        <li><strong>Severity</strong> indicator dot (red for Critical, amber for Major, blue for Minor)</li>
+        <li><strong>Milestone</strong> flag if assigned</li>
+        <li><strong>Title</strong> and a 3-line description preview</li>
+        <li>A color-coded <strong>left border</strong> based on type (green for Feature, red for Bug, blue for Question)</li>
+      </ul>
+
+      <h2>Voting on the Roadmap</h2>
+      <p>Every roadmap card has inline 👍/👎 voting buttons. You can upvote items you want built sooner. The vote count is displayed between the buttons. Your vote is highlighted so you can see what you've already supported. Clicking "View Details →" takes you to the full issue page where you can join the discussion.</p>
+
+      <h2>Admin Capabilities</h2>
+      <p>Administrators have additional powers on the roadmap:</p>
+      <ul>
+        <li><strong>Drag & Drop:</strong> Move cards between Planned, In Progress, and Released columns by dragging.</li>
+        <li><strong>Drop Zones:</strong> Each column has a labeled drop zone at the bottom for intuitive placement.</li>
+        <li><strong>Context Menu:</strong> Right-click (or click the ⋮ menu) on any card to edit details, move to a specific phase, or view the full issue.</li>
+        <li><strong>Create Items:</strong> Click the + button on any column header to create a new roadmap item with a rich-text WYSIWYG editor. Set the type and severity during creation.</li>
+        <li><strong>Edit Items:</strong> Modify title, description, type, and severity of existing items via the context menu.</li>
+      </ul>
+
+      <h2>Feedback Hub Integration</h2>
+      <p>The roadmap prominently features a "Community Feedback Hub Portal" banner encouraging users to submit feedback and visit the leaderboard. Every roadmap item links back to its full issue page where discussions happen.</p>
+
+      <h2>Two Kanban Views in One App</h2>
+      <p>Financial Planner has <strong>two separate Kanban views</strong>, each serving a different purpose:</p>
+      <ul>
+        <li><strong>Feedback Hub Kanban:</strong> Shows all issues grouped by workflow status (New through Closed). Best for tracking issue lifecycle.</li>
+        <li><strong>Product Roadmap Kanban:</strong> Shows only Planned, InProgress, and Released items. Best for understanding product direction.</li>
+      </ul>
+    `
+  },
+  {
+    id: 'issue-detail-collaboration',
+    tag: 'Feature',
+    tagColor: '#8b5cf6',
+    title: 'Issue Detail & Collaboration: Threads, Reactions & Relationships',
+    excerpt: 'Deep dive into the issue detail page: threaded discussions, emoji reactions, comment types, label management, issue relations, file attachments, and the activity feed timeline.',
+    date: 'May 27, 2026',
+    _dateValue: new Date('2026-05-27'),
+    content: `
+      <h2>The Issue Detail Page</h2>
+      <p>Clicking any issue opens a <strong>comprehensive detail page</strong> that serves as the central collaboration hub. It's divided into the issue header, a discussion column (8/12 width), and an activity feed timeline column (4/12 width).</p>
+
+      <h2>Issue Header</h2>
+      <p>The header card shows everything at a glance:</p>
+      <ul>
+        <li><strong>Voting</strong>: Upvote/downvote arrows with the live vote count. Admins can click the count to see the full voter list with names and vote direction.</li>
+        <li><strong>Metadata</strong>: Issue #ID, type tag, status tag, category & subcategory tags.</li>
+        <li><strong>Inline Editing</strong>: Issue creators and admins can edit the title and description in place with a rich-text editor.</li>
+        <li><strong>Severity & Frequency</strong>: Displayed as badge pairs with color-coded text (red for Critical, yellow for Major).</li>
+        <li><strong>Financial Impact</strong>: Shown as a red danger tag with the ₹ amount when applicable.</li>
+        <li><strong>Pain Score</strong>: The computed score in large bold text — turns red when above 500.</li>
+      </ul>
+
+      <h2>Labels System</h2>
+      <p>Labels work like GitHub labels. Each label has a name, hex color, and optional description. Labels appear as colored pill badges on the issue. Click any label to <strong>toggle it on/off</strong> — active labels have a filled background, inactive ones are dimmed. This is available to all logged-in users.</p>
+
+      <h2>Assignees & Milestones</h2>
+      <p>Issues can have <strong>multiple assignees</strong> (shown as name pills) and be linked to a <strong>milestone</strong> (shown as a flag tag). These help organize work and track progress toward release goals.</p>
+
+      <h2>Issue Relationships</h2>
+      <p>Link issues together with typed relationships:</p>
+      <ul>
+        <li><strong>Blocks / BlockedBy</strong> — Dependency chains</li>
+        <li><strong>DuplicateOf / DuplicatedBy</strong> — Consolidate similar reports</li>
+        <li><strong>RelatedTo</strong> — General association</li>
+        <li><strong>Causes / CausedBy</strong> — Root cause tracking</li>
+        <li><strong>ParentOf / ChildOf</strong> — Hierarchical decomposition</li>
+      </ul>
+      <p>Each relationship is clickable and navigates to the linked issue. A dialog lets you add new relationships by issue ID and type.</p>
+
+      <h2>File Attachments</h2>
+      <p>Upload screenshots, logs, or any supporting files directly to the issue. Each attachment shows the filename, content type icon (image or file), and file size. Clicking the filename opens it in a new tab.</p>
+
+      <h2>Threaded Comments</h2>
+      <p>The discussion section supports <strong>fully nested threaded replies</strong> with depth indicators (colored left borders that change hue at each depth level). Each comment shows:</p>
+      <ul>
+        <li><strong>Avatar</strong> with the user's initials</li>
+        <li><strong>Display name</strong> and timestamp</li>
+        <li><strong>Comment type</strong> tag (Workaround, ReproSteps, Solution)</li>
+        <li><strong>Quality flags</strong>: "Helpful Solution" (green), "Root Cause" (red), "Repro Confirmed" (yellow)</li>
+        <li><strong>Vote score</strong> with up/down arrows</li>
+        <li><strong>Inline editing</strong> and deletion for comment owners</li>
+      </ul>
+
+      <h2>Emoji Reactions</h2>
+      <p>Below each comment, you can react with: 👍 ❤️ 🎉 😄 😕 👀. Reactions aggregate and display as small pills showing the emoji and count. Click a reaction to toggle yours on/off. Active reactions are highlighted with a primary-colored border.</p>
+
+      <h2>Comment Quality Flags</h2>
+      <p>Issue creators and admins can flag comments to elevate quality contributions:</p>
+      <ul>
+        <li>✅ <strong>Mark Helpful</strong> — Identifies solution-quality comments (+5 karma for the author).</li>
+        <li>🔴 <strong>Mark Root Cause</strong> — Identifies the root cause analysis (+10 karma for the author). Admin only.</li>
+        <li>⚠️ <strong>Confirm Repro</strong> — Confirms that someone has reproduced the bug (+5 karma for the author). Admin only.</li>
+      </ul>
+
+      <h2>Status Workflow</h2>
+      <p>The detail page header includes a <strong>status dropdown</strong> and Close/Reopen buttons. Status transitions follow the enforced workflow: New → Acknowledged → Triaged → Planned → InProgress → Released → Verified → Closed. Closing an issue records who closed it and when.</p>
+
+      <h2>Activity Feed Timeline</h2>
+      <p>The right-side column shows a <strong>chronological timeline</strong> of all activity on the issue: creation, status changes, comments added, relations added, assignee changes, and more. Each entry has a type-specific icon, description text, the user who performed the action, and a timestamp.</p>
+
+      <h2>GitHub Integration</h2>
+      <p>If a GitHub Issue URL is linked, it appears as a clickable <code><i class="pi pi-github"></i> View on GitHub →</code> link in the header, enabling seamless cross-referencing between the community hub and the development repository.</p>
+    `
+  },
+  // ─── PREVIOUS RELEASES ──────────────────────────────────────────────────────
   {
     id: 'v4-7-0-release',
     tag: 'v4.7.0',

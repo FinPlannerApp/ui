@@ -18,7 +18,7 @@ import { DialogModule } from 'primeng/dialog';
 @Component({
     selector: 'app-issue-detail',
     standalone: true,
-    imports: [CommonModule, FormsModule, TagModule, DividerModule, TextareaModule, ConfirmDialogModule, DialogModule, ...sharedPrimeModules],
+    imports: [CommonModule, FormsModule, TagModule, DividerModule, TextareaModule, ConfirmDialogModule, DialogModule, RouterLink, ...sharedPrimeModules],
     providers: [MessageService, ConfirmationService],
     templateUrl: './issue-detail.component.html'
 })
@@ -51,6 +51,19 @@ export class IssueDetailComponent {
     allLabels = signal<IssueLabel[]>([]);
     allMilestones = signal<Milestone[]>([]);
     commentReactions = signal<Record<number, {emoji: string; count: number; reacted: boolean}[]>>({});
+
+    // Phase 2 comment quality and relations signals
+    newCommentType = signal('General');
+    replyCommentType = signal('General');
+    commentTypeOptions = ['General', 'Workaround', 'ReproSteps', 'Solution'];
+    
+    relations = signal<any[]>([]);
+    activities = signal<any[]>([]);
+    
+    showAddRelationDialog = signal(false);
+    newRelationTargetId = signal<number | null>(null);
+    newRelationType = signal('RelatedTo');
+    relationTypeOptions = ['Blocks', 'BlockedBy', 'DuplicateOf', 'DuplicatedBy', 'RelatedTo', 'Causes', 'CausedBy', 'ParentOf', 'ChildOf'];
     
     // Phase 3 signals
     attachments = signal<any[]>([]);
@@ -80,12 +93,16 @@ export class IssueDetailComponent {
     });
 
     constructor() {
-        const id = Number(this.route.snapshot.paramMap.get('id'));
-        if (id) {
-            this.loadIssue(id);
-            this.loadComments(id);
-            this.loadAttachments(id);
-        }
+        this.route.paramMap.subscribe(params => {
+            const id = Number(params.get('id'));
+            if (id) {
+                this.loadIssue(id);
+                this.loadComments(id);
+                this.loadAttachments(id);
+                this.loadRelations(id);
+                this.loadActivities(id);
+            }
+        });
         this.issueService.getLabels().subscribe(l => this.allLabels.set(l));
         this.issueService.getMilestones().subscribe(m => this.allMilestones.set(m));
     }
@@ -105,6 +122,18 @@ export class IssueDetailComponent {
     loadAttachments(id: number) {
         this.issueService.getAttachments(id).subscribe(data => {
             this.attachments.set(data);
+        });
+    }
+
+    loadRelations(id: number) {
+        this.issueService.getRelations(id).subscribe(data => {
+            this.relations.set(Array.isArray(data) ? data : []);
+        });
+    }
+
+    loadActivities(id: number) {
+        this.issueService.getActivities(id).subscribe(data => {
+            this.activities.set(Array.isArray(data) ? data : []);
         });
     }
 
@@ -198,9 +227,10 @@ export class IssueDetailComponent {
     submitComment() {
         const content = this.newComment().trim();
         if (this.isHtmlEmpty(content) || !this.issue()) return;
-        this.issueService.addComment(this.issue().id, content).subscribe({
+        this.issueService.addComment(this.issue().id, content, undefined, this.newCommentType()).subscribe({
             next: () => {
                 this.newComment.set('');
+                this.newCommentType.set('General');
                 this.loadComments(this.issue().id);
                 this.messageService.add({ severity: 'success', summary: 'Comment added' });
             },
@@ -213,10 +243,11 @@ export class IssueDetailComponent {
     submitReply(parentId: number) {
         const content = this.replyContent().trim();
         if (this.isHtmlEmpty(content) || !this.issue()) return;
-        this.issueService.addComment(this.issue().id, content, parentId).subscribe({
+        this.issueService.addComment(this.issue().id, content, parentId, this.replyCommentType()).subscribe({
             next: () => {
                 this.replyingTo.set(null);
                 this.replyContent.set('');
+                this.replyCommentType.set('General');
                 this.loadComments(this.issue().id);
                 this.messageService.add({ severity: 'success', summary: 'Reply added' });
             },
@@ -306,6 +337,24 @@ export class IssueDetailComponent {
 
     getDepthColor(depth: number): string {
         return this.depthColors[depth % this.depthColors.length];
+    }
+
+    getActivityIcon(type: string): string {
+        switch (type) {
+            case 'IssueCreated': return 'pi-plus-circle text-green-500';
+            case 'IssueUpdated': return 'pi-pencil text-blue-500';
+            case 'IssueDeleted': return 'pi-trash text-red-500';
+            case 'AssigneeAdded': return 'pi-user-plus text-cyan-500';
+            case 'AssigneeRemoved': return 'pi-user-minus text-orange-500';
+            case 'CommentAdded': return 'pi-comment text-purple-500';
+            case 'CommentDeleted': return 'pi-trash text-red-500';
+            case 'RelationAdded': return 'pi-link text-teal-500';
+            case 'RelationRemoved': return 'pi-unlink text-pink-500';
+            case 'StatusChanged': return 'pi-directions text-yellow-500';
+            case 'Closed': return 'pi-lock text-red-500';
+            case 'Reopened': return 'pi-unlock text-green-500';
+            default: return 'pi-info-circle text-gray-500';
+        }
     }
 
     openLightbox(imageUrl: string, fileName: string) {
@@ -412,6 +461,18 @@ export class IssueDetailComponent {
     get editCommentContentValue() { return this.editCommentContent(); }
     set editCommentContentValue(v: string) { this.editCommentContent.set(v); }
 
+    get newCommentTypeValue() { return this.newCommentType(); }
+    set newCommentTypeValue(v: string) { this.newCommentType.set(v); }
+
+    get replyCommentTypeValue() { return this.replyCommentType(); }
+    set replyCommentTypeValue(v: string) { this.replyCommentType.set(v); }
+
+    get newRelationTargetIdValue() { return this.newRelationTargetId(); }
+    set newRelationTargetIdValue(v: number | null) { this.newRelationTargetId.set(v); }
+
+    get newRelationTypeValue() { return this.newRelationType(); }
+    set newRelationTypeValue(v: string) { this.newRelationType.set(v); }
+
     statusOptions = ['New', 'Acknowledged', 'Triaged', 'Planned', 'InProgress', 'Released', 'Verified', 'Closed'];
 
     // ===== Phase 2: Close / Reopen =====
@@ -469,6 +530,89 @@ export class IssueDetailComponent {
 
     getReactions(commentId: number) {
         return this.commentReactions()[commentId] || [];
+    }
+
+    // ===== Phase 2: Comment Quality Toggles =====
+    toggleHelpful(commentId: number) {
+        this.issueService.toggleHelpful(commentId).subscribe({
+            next: (res) => {
+                this.loadComments(this.issue().id);
+                this.messageService.add({ severity: 'success', summary: 'Success', detail: res.message });
+            },
+            error: (err) => {
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'Action failed.' });
+            }
+        });
+    }
+
+    toggleRootCause(commentId: number) {
+        this.issueService.toggleRootCause(commentId).subscribe({
+            next: (res) => {
+                this.loadComments(this.issue().id);
+                this.messageService.add({ severity: 'success', summary: 'Success', detail: res.message });
+            },
+            error: (err) => {
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'Action failed.' });
+            }
+        });
+    }
+
+    toggleReproConfirmed(commentId: number) {
+        this.issueService.toggleReproConfirmed(commentId).subscribe({
+            next: (res) => {
+                this.loadComments(this.issue().id);
+                this.messageService.add({ severity: 'success', summary: 'Success', detail: res.message });
+            },
+            error: (err) => {
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'Action failed.' });
+            }
+        });
+    }
+
+    // ===== Phase 2: Issue Relationships =====
+    addRelation() {
+        const issue = this.issue();
+        const targetId = this.newRelationTargetId();
+        const relType = this.newRelationType();
+        if (!issue || !targetId) return;
+
+        this.issueService.addRelation(issue.id, targetId, relType).subscribe({
+            next: (res) => {
+                this.loadRelations(issue.id);
+                this.loadActivities(issue.id);
+                this.showAddRelationDialog.set(false);
+                this.newRelationTargetId.set(null);
+                this.messageService.add({ severity: 'success', summary: 'Relation Added', detail: res.message });
+            },
+            error: (err) => {
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'Failed to add relation.' });
+            }
+        });
+    }
+
+    removeRelation(targetIssueId: number, relationType: string) {
+        const issue = this.issue();
+        if (!issue) return;
+
+        this.confirmService.confirm({
+            message: `Are you sure you want to remove this relation?`,
+            header: 'Remove Relation',
+            icon: 'pi pi-exclamation-triangle',
+            acceptButtonStyleClass: 'p-button-danger p-button-sm',
+            rejectButtonStyleClass: 'p-button-secondary p-button-sm',
+            accept: () => {
+                this.issueService.removeRelation(issue.id, targetIssueId, relationType).subscribe({
+                    next: (res) => {
+                        this.loadRelations(issue.id);
+                        this.loadActivities(issue.id);
+                        this.messageService.add({ severity: 'success', summary: 'Relation Removed', detail: res.message });
+                    },
+                    error: (err) => {
+                        this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'Failed to remove relation.' });
+                    }
+                });
+            }
+        });
     }
 
     isHtmlEmpty(html: string): boolean {

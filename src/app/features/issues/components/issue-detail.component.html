@@ -180,6 +180,24 @@
         </div>
         }
 
+        <!-- Relationships -->
+        <div class="flex align-items-center gap-2 mt-2 flex-wrap">
+          <span class="text-sm font-semibold text-color-secondary"><i class="pi pi-link mr-1"></i>Relationships:</span>
+          @for (rel of relations(); track rel.id) {
+            <span class="inline-flex align-items-center gap-2 px-2 py-1 surface-ground border-round text-sm">
+              <a [routerLink]="authService.isLoggedIn() ? ['/app/issues', rel.targetIssueId] : ['/feedback', rel.targetIssueId]" class="text-primary no-underline font-semibold hover:underline">
+                #{{rel.targetIssueId}} ({{rel.relationType}})
+              </a>
+              @if (authService.isLoggedIn()) {
+                <i class="pi pi-times-circle text-red-500 cursor-pointer text-xs" pTooltip="Remove relationship" (click)="removeRelation(rel.targetIssueId, rel.relationType)"></i>
+              }
+            </span>
+          }
+          @if (authService.isLoggedIn()) {
+            <p-button icon="pi pi-plus" [text]="true" [rounded]="true" size="small" pTooltip="Add Relationship" (onClick)="showAddRelationDialog.set(true)"></p-button>
+          }
+        </div>
+
         <!-- Closed Banner -->
         @if (issue.isClosed) {
         <div class="mt-3 p-3 border-round surface-ground flex align-items-center gap-2">
@@ -191,34 +209,86 @@
     </div>
   </p-card>
 
-  <!-- Comments Section -->
-  <p-card styleClass="shadow-2">
-    <div class="flex align-items-center gap-2 mb-4">
-      <i class="pi pi-comments text-xl"></i>
-      <h2 class="text-xl font-bold m-0">Discussion ({{comments().length}})</h2>
+  <!-- Grid layout for Comments and Activity Feed -->
+  <div class="grid">
+    <!-- Discussion / Comments Column -->
+    <div class="col-12 md:col-8">
+      <p-card styleClass="shadow-2 h-full">
+        <div class="flex align-items-center gap-2 mb-4">
+          <i class="pi pi-comments text-xl"></i>
+          <h2 class="text-xl font-bold m-0">Discussion ({{comments().length}})</h2>
+        </div>
+
+        <!-- Add Comment -->
+        <div class="mb-4 p-3 surface-ground border-round">
+          <p-editor [(ngModel)]="newCommentValue" [style]="{'height':'120px'}" placeholder="Share your thoughts, add context, or suggest a fix..."></p-editor>
+          <div class="flex justify-content-between align-items-center mt-2">
+            <div class="flex align-items-center gap-2">
+              <span class="text-sm font-semibold text-color-secondary">Comment Type:</span>
+              <p-select [options]="commentTypeOptions" [(ngModel)]="newCommentTypeValue" placeholder="Select Type" size="small" styleClass="w-10rem"></p-select>
+            </div>
+            <p-button label="Post Comment" icon="pi pi-send" size="small" (onClick)="submitComment()" [disabled]="isHtmlEmpty(newComment())"></p-button>
+          </div>
+        </div>
+
+        <p-divider></p-divider>
+
+        <!-- Thread View -->
+        @for (comment of threadedComments(); track comment.id) {
+          <ng-container *ngTemplateOutlet="commentTemplate; context: { $implicit: comment, depth: 0 }"></ng-container>
+        }
+        @empty {
+          <div class="text-center p-4 text-color-secondary">
+            <i class="pi pi-info-circle text-3xl mb-2"></i>
+            <p>No comments yet. Be the first to contribute!</p>
+          </div>
+        }
+      </p-card>
     </div>
 
-    <!-- Add Comment -->
-    <div class="mb-4 p-3 surface-ground border-round">
-      <p-editor [(ngModel)]="newCommentValue" [style]="{'height':'120px'}" placeholder="Share your thoughts, add context, or suggest a fix..."></p-editor>
-      <div class="flex justify-content-end mt-2">
-        <p-button label="Post Comment" icon="pi pi-send" size="small" (onClick)="submitComment()" [disabled]="isHtmlEmpty(newComment())"></p-button>
-      </div>
+    <!-- Activity Feed Timeline Column -->
+    <div class="col-12 md:col-4">
+      <p-card styleClass="shadow-2 h-full">
+        <div class="flex align-items-center gap-2 mb-4">
+          <i class="pi pi-history text-xl"></i>
+          <h2 class="text-xl font-bold m-0">Activity Feed</h2>
+        </div>
+
+        @if (activities().length === 0) {
+          <div class="text-center p-4 text-color-secondary">
+            <p>No activity logged yet.</p>
+          </div>
+        } @else {
+          <div class="flex flex-column gap-3" style="max-height: 500px; overflow-y: auto; padding-right: 5px;">
+            @for (act of activities(); track act.id) {
+              <div class="flex gap-2">
+                <!-- Icon/Indicator -->
+                <div class="flex flex-column align-items-center">
+                  <div class="flex align-items-center justify-content-center border-circle bg-blue-50 border-1 border-blue-200" style="width: 28px; height: 28px;">
+                    <i class="pi text-sm" [ngClass]="getActivityIcon(act.activityType)"></i>
+                  </div>
+                  @if (!$last) {
+                    <div class="flex-1 border-left-1 border-300 my-1" style="min-height: 15px;"></div>
+                  }
+                </div>
+                <!-- Details -->
+                <div class="flex-1 pb-2">
+                  <div class="text-sm font-semibold text-color line-height-2">{{act.description}}</div>
+                  <div class="text-xs text-color-secondary mt-1">
+                    @if (act.userDisplayName) {
+                      <span>by {{act.userDisplayName}}</span>
+                      <span class="mx-1">•</span>
+                    }
+                    <span>{{act.createdAt | date:'short'}}</span>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </p-card>
     </div>
-
-    <p-divider></p-divider>
-
-    <!-- Thread View -->
-    @for (comment of threadedComments(); track comment.id) {
-      <ng-container *ngTemplateOutlet="commentTemplate; context: { $implicit: comment, depth: 0 }"></ng-container>
-    }
-    @empty {
-      <div class="text-center p-4 text-color-secondary">
-        <i class="pi pi-info-circle text-3xl mb-2"></i>
-        <p>No comments yet. Be the first to contribute!</p>
-      </div>
-    }
-  </p-card>
+  </div>
 </div>
 } @else {
 <div class="flex justify-content-center align-items-center p-6">
@@ -262,6 +332,18 @@
           @if (comment.isEdited) {
             <span class="text-xs text-color-secondary font-italic">(edited)</span>
           }
+          @if (comment.type && comment.type !== 'General') {
+            <p-tag [value]="comment.type" severity="secondary" styleClass="text-xs py-0"></p-tag>
+          }
+          @if (comment.isHelpful) {
+            <p-tag value="Helpful Solution" severity="success" icon="pi pi-check" styleClass="text-xs py-0"></p-tag>
+          }
+          @if (comment.isRootCause) {
+            <p-tag value="Root Cause" severity="danger" icon="pi pi-info-circle" styleClass="text-xs py-0"></p-tag>
+          }
+          @if (comment.isReproConfirmed) {
+            <p-tag value="Repro Confirmed" severity="warn" icon="pi pi-exclamation-triangle" styleClass="text-xs py-0"></p-tag>
+          }
         </div>
         <!-- Edit/Delete buttons (only for comment owner) -->
         @if (authService.isLoggedIn()) {
@@ -289,6 +371,31 @@
       
       <div class="mt-2 flex align-items-center gap-2 flex-wrap">
         <p-button label="Reply" icon="pi pi-reply" [text]="true" size="small" (onClick)="replyingTo.set(comment.id)"></p-button>
+
+        @if (authService.isLoggedIn() && (authService.isAdmin() || (issue() && issue().creatorId === currentUserId()))) {
+          <p-button [label]="comment.isHelpful ? 'Helpful Solution' : 'Mark Helpful'"
+            [icon]="comment.isHelpful ? 'pi pi-check-circle' : 'pi pi-check'"
+            [text]="!comment.isHelpful"
+            [severity]="comment.isHelpful ? 'success' : 'secondary'"
+            size="small"
+            (onClick)="toggleHelpful(comment.id)"></p-button>
+        }
+        @if (authService.isLoggedIn() && authService.isAdmin()) {
+          <p-button [label]="comment.isRootCause ? 'Root Cause' : 'Mark Root Cause'"
+            [icon]="comment.isRootCause ? 'pi pi-info-circle' : 'pi pi-info'"
+            [text]="!comment.isRootCause"
+            [severity]="comment.isRootCause ? 'danger' : 'secondary'"
+            size="small"
+            (onClick)="toggleRootCause(comment.id)"></p-button>
+
+          <p-button [label]="comment.isReproConfirmed ? 'Repro Confirmed' : 'Confirm Repro'"
+            [icon]="comment.isReproConfirmed ? 'pi pi-exclamation-triangle' : 'pi pi-exclamation-circle'"
+            [text]="!comment.isReproConfirmed"
+            [severity]="comment.isReproConfirmed ? 'warn' : 'secondary'"
+            size="small"
+            (onClick)="toggleReproConfirmed(comment.id)"></p-button>
+        }
+
         <span class="text-color-secondary">|</span>
         <!-- Reaction Emojis -->
         @for (emoji of reactionEmojis; track emoji) {
@@ -309,9 +416,15 @@
       @if (replyingTo() === comment.id) {
       <div class="mt-2 p-2 border-round surface-border border-1">
         <p-editor [(ngModel)]="replyContentValue" [style]="{'height':'100px'}" placeholder="Write a reply..."></p-editor>
-        <div class="flex justify-content-end gap-2 mt-2">
-          <p-button label="Cancel" [text]="true" size="small" severity="secondary" (onClick)="replyingTo.set(null)"></p-button>
-          <p-button label="Reply" icon="pi pi-send" size="small" (onClick)="submitReply(comment.id)" [disabled]="isHtmlEmpty(replyContent())"></p-button>
+        <div class="flex justify-content-between align-items-center mt-2">
+          <div class="flex align-items-center gap-2">
+            <span class="text-sm font-semibold text-color-secondary">Reply Type:</span>
+            <p-select [options]="commentTypeOptions" [(ngModel)]="replyCommentTypeValue" placeholder="Select Type" size="small" styleClass="w-10rem"></p-select>
+          </div>
+          <div class="flex gap-2">
+            <p-button label="Cancel" [text]="true" size="small" severity="secondary" (onClick)="replyingTo.set(null)"></p-button>
+            <p-button label="Reply" icon="pi pi-send" size="small" (onClick)="submitReply(comment.id)" [disabled]="isHtmlEmpty(replyContent())"></p-button>
+          </div>
         </div>
       </div>
       }
@@ -359,4 +472,22 @@
       </ng-template>
     </p-table>
   }
+</p-dialog>
+
+<!-- Add Relation Dialog -->
+<p-dialog [(visible)]="showAddRelationDialog" header="Add Issue Relation" [modal]="true" [style]="{width: '450px'}" [closable]="true" [dismissableMask]="true">
+  <div class="flex flex-column gap-3">
+    <div class="flex flex-column gap-1">
+      <label for="targetIssueId" class="font-semibold text-sm">Target Issue ID</label>
+      <p-inputNumber id="targetIssueId" [(ngModel)]="newRelationTargetIdValue" [useGrouping]="false" styleClass="w-full" placeholder="Enter target issue ID"></p-inputNumber>
+    </div>
+    <div class="flex flex-column gap-1">
+      <label for="relationType" class="font-semibold text-sm">Relation Type</label>
+      <p-select id="relationType" [options]="relationTypeOptions" [(ngModel)]="newRelationTypeValue" styleClass="w-full"></p-select>
+    </div>
+    <div class="flex justify-content-end gap-2 mt-2">
+      <p-button label="Cancel" [text]="true" severity="secondary" size="small" (onClick)="showAddRelationDialog.set(false)"></p-button>
+      <p-button label="Add Relation" icon="pi pi-check" size="small" (onClick)="addRelation()" [disabled]="!newRelationTargetId()"></p-button>
+    </div>
+  </div>
 </p-dialog>
