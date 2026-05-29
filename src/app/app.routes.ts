@@ -166,10 +166,6 @@ export const routes: Routes = [
         }
       },
       {
-        path: 'support',
-        loadComponent: () => import('./features/support/support').then(m => m.Support)
-      },
-      {
         path: 'settings',
         loadComponent: () => import('./features/settings/settings/settings').then(m => m.Settings)
       },

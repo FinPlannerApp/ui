@@ -60,8 +60,7 @@ export class Layout {
         label: 'Settings',
         items: [
           { label: 'Settings', icon: 'pi pi-cog', routerLink: '/app/settings', command: () => { this.sidebarVisible = false; } },
-          { label: 'Feedback Hub', icon: 'pi pi-comments', routerLink: '/app/issues', command: () => { this.sidebarVisible = false; } },
-          { label: 'Support', icon: 'pi pi-question-circle', routerLink: '/app/support', command: () => { this.sidebarVisible = false; } },
+          { label: 'Feedback Hub', icon: 'pi pi-comments', routerLink: '/app/issues', command: () => { this.sidebarVisible = false; } }
         ]
       }
     ];

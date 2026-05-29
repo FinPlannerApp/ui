@@ -2,6 +2,36 @@ import { Component, signal, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 export const BLOG_POSTS = [
+  // ─── v5.0.1 — URGENT FIX: CLEANUP & POLISH ─────────────────────────────────
+  {
+    id: 'v5-0-1-release',
+    tag: 'v5.0.1',
+    tagColor: '#ef4444',
+    title: 'v5.0.1 — Urgent Fix: UI Polish & Support System Consolidation',
+    excerpt: 'An urgent patch release to resolve a layout regression in generic views and consolidate the feedback channels by removing the obsolete legacy support form.',
+    date: 'May 29, 2026',
+    _dateValue: new Date('2026-05-29'),
+    content: `
+      <h2>Why v5.0.1?</h2>
+      <p>Following the successful launch of <strong>v5.0.0</strong>, we noticed a minor layout regression on generic resource views and identified a redundancy in our user support flows. This patch release quickly addresses these issues to ensure a seamless experience.</p>
+
+      <h2>🧹 Support Channels Consolidation</h2>
+      <p>With the introduction of the powerful full-stack <strong>Feedback Hub</strong> in v5.0.0, the old, simple support form is now fully obsolete. To prevent user confusion and focus all interactions in our rich, gamified environment, we have consolidated our channels:</p>
+      <ul>
+        <li><strong>Obsolescence Cleanup:</strong> The legacy and redundant <code>/app/support</code> page has been completely removed from navigation routes and sidebar menus.</li>
+        <li><strong>Unified Feedback:</strong> Users can now direct all bugs, questions, and feature requests to the <strong>Feedback Hub</strong>, where they can earn karma, interact with comments, and track issue lifecycles.</li>
+      </ul>
+
+      <h2>🐛 Generic View Layout Fix</h2>
+      <p>We fixed a minor layout regression in the generic <code>ResourcePage</code> views (used for Accounts, Budgets, and Categories):</p>
+      <ul>
+        <li><strong>Search Bar Duplication:</strong> Resolved a bug that caused an extra, non-functional search input box to render at the top of the resource tables.</li>
+        <li><strong>Style Alignment:</strong> Cleaned up layout properties to ensure perfect alignment and cross-browser visual consistency.</li>
+      </ul>
+
+      <p>This quick patch keeps the platform robust and polished as we gather community feedback on the new release!</p>
+    `
+  },
   // ─── v5.0.0 — COMMUNITY FEEDBACK & GAMIFICATION ─────────────────────────────
   {
     id: 'v5-0-0-release',

@@ -10,7 +10,8 @@
     </div>
     <p-card [header]="title">
         <ng-template pTemplate="header">
-            <div class="flex justify-content-between align-items-center w-full px-4 pt-4 border-bottom-1 surface-border">
+            <div
+                class="flex justify-content-between align-items-center w-full px-4 pt-4 border-bottom-1 surface-border">
                 <div class="flex align-items-center gap-1">
                     <p-iconfield>
                         <p-inputicon class="pi pi-search"></p-inputicon>
@@ -20,8 +21,8 @@
                     <p-button icon="pi pi-search" [text]="true" severity="primary" size="small" (onClick)="onSearch()"
                         pTooltip="Run Search"></p-button>
                     @if (searchTerm()) {
-                    <p-button icon="pi pi-times" [text]="true" severity="secondary" size="small" (onClick)="clearSearch()"
-                        pTooltip="Clear Search"></p-button>
+                    <p-button icon="pi pi-times" [text]="true" severity="secondary" size="small"
+                        (onClick)="clearSearch()" pTooltip="Clear Search"></p-button>
                     }
 
                     @if (showCategoryFilter()) {
