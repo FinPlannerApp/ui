@@ -41,15 +41,69 @@
   <app-root>
     <style>
       .app-loading {
+        position: relative;
+        overflow: hidden;
         height: 100vh;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        background: radial-gradient(circle at 50% 50%, #1a1a1a 0%, #0a0a0a 100%);
+        background: #050505;
         color: #ffffff;
         font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         margin: 0;
+      }
+
+      .glow-orb {
+        position: absolute;
+        width: 350px;
+        height: 350px;
+        border-radius: 50%;
+        filter: blur(120px);
+        opacity: 0.12;
+        z-index: 0;
+        pointer-events: none;
+      }
+
+      .glow-orb-1 {
+        top: 15%;
+        left: 15%;
+        background: #3b82f6;
+        animation: floatOrb1 20s ease-in-out infinite alternate;
+      }
+
+      .glow-orb-2 {
+        bottom: 15%;
+        right: 15%;
+        background: #ec4899;
+        animation: floatOrb2 20s ease-in-out infinite alternate;
+      }
+
+      @keyframes floatOrb1 {
+        0% {
+          transform: translate(0, 0) scale(1);
+        }
+        100% {
+          transform: translate(80px, 40px) scale(1.15);
+        }
+      }
+
+      @keyframes floatOrb2 {
+        0% {
+          transform: translate(0, 0) scale(1);
+        }
+        100% {
+          transform: translate(-80px, -40px) scale(1.15);
+        }
+      }
+
+      .loading-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
       }
 
       .loader-container {
@@ -167,14 +221,18 @@
       }
     </style>
     <div class="app-loading">
-      <div class="loader-container">
-        <div class="loader-rings"></div>
-      </div>
-      <div class="loading-text">Financial Planner</div>
-      <div class="loading-subtext">Loading your financial workspace...</div>
-      <div class="render-hint">
-        <strong>Note:</strong> Free hosting (Render) pings can take up to 60 seconds to respond if the server has spun
-        down.
+      <div class="glow-orb glow-orb-1"></div>
+      <div class="glow-orb glow-orb-2"></div>
+      <div class="loading-content">
+        <div class="loader-container">
+          <div class="loader-rings"></div>
+        </div>
+        <div class="loading-text">Financial Planner</div>
+        <div class="loading-subtext">Loading your financial workspace...</div>
+        <div class="render-hint">
+          <strong>Note:</strong> Free hosting (Render) pings can take up to 60 seconds to respond if the server has spun
+          down.
+        </div>
       </div>
     </div>
   </app-root>

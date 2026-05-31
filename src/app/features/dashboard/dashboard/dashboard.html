@@ -1,5 +1,5 @@
 <div class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
-  <div class="flex align-items-center gap-3">
+  <div class="flex flex-column md:flex-row align-items-center gap-3">
     <h1 class="text-3xl font-bold m-0">Dashboard</h1>
     <p-datepicker [(ngModel)]="localDate" view="month" dateFormat="mm/yy" (ngModelChange)="onDateChange($event)"
       placeholder="Select Month" [showIcon]="true"></p-datepicker>

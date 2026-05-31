@@ -17,7 +17,7 @@ import { firstValueFrom } from 'rxjs';
 import { SessionSyncService } from './core/services/session-sync.service';
 import { IdleTimerService } from './core/services/idle-timer.service';
 import { environment } from '../environments/environment';
-import { from, of, switchMap } from 'rxjs';
+import { catchError, from, of, switchMap } from 'rxjs';
 import { BackendStatusService } from './core/services/backend-status.service';
 import { provideServiceWorker } from '@angular/service-worker';
 
@@ -29,38 +29,37 @@ function initializeApp(
   backendStatus: BackendStatusService
 ) {
   return () => {
-    // Start backend wake-up in background — do NOT block app bootstrap
-    backendStatus.ensureBackendReady().then(isReady => {
-      if (!isReady) return;
+    // Block bootstrap until the backend is verified ready
+    return backendStatus.ensureBackendReady().then(isReady => {
+      if (!isReady) {
+        // Let the app boot so the "Server Connection Required" dialog is shown
+        return true;
+      }
 
-      // Once backend is ready, restore session in background
-      sessionSync.checkLockState().pipe(
-        switchMap(isLocked => {
-          if (isLocked) return of(true);
+      // Rest of initialization runs only after backend is ready
+      return firstValueFrom(
+        sessionSync.checkLockState().pipe(
+          switchMap(isLocked => {
+            if (isLocked) return of(true);
 
-          return auth.restoreSession().pipe(
-            switchMap(sessionRestored => {
-              // Fetch CSRF token
-              const csrfUrl = `${environment.apiBaseUrl}/antiforgery/token`;
-              http.get(csrfUrl).subscribe({
-                next: () => { },
-                error: (err) => { }
-              });
-
-              // Start idle timer if user is authenticated
-              if (sessionRestored && auth.isLoggedIn()) {
-                idleTimer.startMonitoring();
-              }
-
-              return of(true);
-            })
-          );
-        })
-      ).subscribe();
+            return auth.restoreSession().pipe(
+              switchMap(sessionRestored => {
+                const csrfUrl = `${environment.apiBaseUrl}/antiforgery/token`;
+                return http.get(csrfUrl).pipe(
+                  catchError(() => of(null)), // Don't crash if CSRF fails
+                  switchMap(() => {
+                    if (sessionRestored && auth.isLoggedIn()) {
+                      idleTimer.startMonitoring();
+                    }
+                    return of(true);
+                  })
+                );
+              })
+            );
+          })
+        )
+      ).catch(() => true); // Ensure the app always boots even if session restore has errors
     });
-
-    // Return immediately — app shell renders instantly
-    return Promise.resolve(true);
   };
 }
 
