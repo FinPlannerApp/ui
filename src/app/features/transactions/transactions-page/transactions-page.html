@@ -1,39 +1,37 @@
-<div class="transactions-page p-4">
+<div class="transactions-page">
 
   <!-- FILTER BAR -->
   <div class="filter-bar mb-4 flex flex-wrap align-items-center gap-3">
     <div class="flex align-items-center gap-2 mr-auto">
-      <p-button label="Back to Dashboard" icon="pi pi-arrow-left" severity="secondary" outlined="true" (onClick)="goToDashboard()"></p-button>
+      <p-button label="Back to Dashboard" icon="pi pi-arrow-left" severity="secondary" outlined="true"
+        (onClick)="goToDashboard()"></p-button>
       <p-button label="Bulk Add" icon="pi pi-plus-circle" severity="primary" (onClick)="goToBulkAdd()"></p-button>
     </div>
 
-    <div class="flex align-items-center gap-2">
-      <label class="font-semibold text-sm">Period</label>
+    <p-fieldset legend="Period">
       <p-datepicker [(ngModel)]="selectedDate" view="month" dateFormat="mm/yy" (ngModelChange)="onDateChange($event)"
-        placeholder="Select Month" [showIcon]="true" [style]="{'width': '12rem'}"></p-datepicker>
-    </div>
+        placeholder="Select Month" [showIcon]="true" iconDisplay="input" [style]="{'width': '12rem'}"></p-datepicker>
+    </p-fieldset>
+
+    <p-fieldset legend="Category">
+      <p-select [options]="categoryOptions" [(ngModel)]="selectedCategory" optionLabel="label" optionValue="value"
+        placeholder="All Categories" [showClear]="true" (onChange)="onCategoryChange()"
+        [style]="{'min-width': '12rem'}" class="p-inputtext-sm">
+      </p-select>
+    </p-fieldset>
 
     <div class="flex align-items-center gap-1">
-      <span class="p-input-icon-left">
-        <i class="pi pi-search"></i>
+      <p-iconfield>
+        <p-inputicon class="pi pi-search"></p-inputicon>
         <input pInputText type="text" name="transactionSearch" autocomplete="off" [(ngModel)]="globalSearch"
-          (keyup.enter)="onSearch()" placeholder="Search transactions..." class="w-15rem" />
-      </span>
+          (keyup.enter)="onSearch()" placeholder="Search..." class="w-15rem p-inputtext-sm" />
+      </p-iconfield>
       <p-button icon="pi pi-search" [text]="true" severity="primary" size="small" (onClick)="onSearch()"
         pTooltip="Run Search"></p-button>
       @if (globalSearch) {
       <p-button icon="pi pi-times" [text]="true" severity="secondary" size="small" (onClick)="clearSearch()"
         pTooltip="Clear Search"></p-button>
       }
-    </div>
-
-
-    <div class="flex align-items-center gap-2">
-      <label class="font-semibold text-sm">Category</label>
-      <p-select [options]="categoryOptions" [(ngModel)]="selectedCategory" optionLabel="label" optionValue="value"
-        placeholder="All Categories" [showClear]="true" (onChange)="onCategoryChange()"
-        [style]="{'min-width': '12rem'}">
-      </p-select>
     </div>
   </div>
 
@@ -109,21 +107,23 @@
   <!-- TRANSACTIONS TABLE -->
   <p-card header="Transactions">
     <div class="glass-panel-inner p-1">
-      @if (isLoading && transactions.length === 0) {
-      <div class="flex justify-center items-center py-12">
-        <i class="pi pi-spin pi-spinner text-4xl text-primary"></i>
-      </div>
-      } @else {
+      @if (ready) {
       <app-data-table [data]="transactions" [columns]="transactionColumns" [loading]="isLoading" [lazy]="true"
         [totalRecords]="totalRecords" [rows]="pageSize" (onLazyLoad)="onLazyLoad($event)">
         <ng-template #actions let-transaction>
           <div class="flex gap-1">
-            <p-button icon="pi pi-pencil" [text]="true" severity="secondary" size="small" (onClick)="editTransaction(transaction)" pTooltip="Edit"></p-button>
-            <p-button icon="pi pi-trash" [text]="true" severity="danger" size="small" (onClick)="deleteTransaction(transaction)" pTooltip="Delete"></p-button>
+            <p-button icon="pi pi-pencil" [text]="true" severity="secondary" size="small"
+              (onClick)="editTransaction(transaction)" pTooltip="Edit"></p-button>
+            <p-button icon="pi pi-trash" [text]="true" severity="danger" size="small"
+              (onClick)="deleteTransaction(transaction)" pTooltip="Delete"></p-button>
           </div>
         </ng-template>
       </app-data-table>
+      } @else {
+      <div class="flex justify-content-center p-4">
+        <p-progressSpinner></p-progressSpinner>
+      </div>
       }
     </div>
   </p-card>
-</div>
+</div>

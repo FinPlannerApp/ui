@@ -6,29 +6,7 @@ import { CardModule } from 'primeng/card';
     selector: 'app-stat-card',
     standalone: true,
     imports: [CommonModule, CardModule],
-    template: `
-    <p-card [style]="{'height': '100%'}">
-      <div class="flex flex-column gap-2">
-        <div class="flex align-items-center justify-content-between">
-          <span class="text-sm font-medium text-muted-color">{{ label() }}</span>
-          <i [class]="icon()" [style]="{'color': iconColor()}" class="text-xl"></i>
-        </div>
-        <div class="flex align-items-end justify-content-between">
-          <div>
-            <span class="text-2xl font-bold line-height-1">{{ value() }}</span>
-            @if (secondaryValue()) {
-              <div class="text-xs text-muted-color mt-1">{{ secondaryValue() }}</div>
-            }
-          </div>
-          @if (trend()) {
-            <span [class]="trendClass" class="text-sm font-medium">
-              {{ trend() }}
-            </span>
-          }
-        </div>
-      </div>
-    </p-card>
-  `,
+    templateUrl: './stat-card.html',
     styles: [`
     :host {
       display: block;

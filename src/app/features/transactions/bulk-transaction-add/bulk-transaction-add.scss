@@ -49,6 +49,8 @@
 .excel-table {
     border-collapse: collapse;
     table-layout: fixed;
+    width: 100%;
+    min-width: 93rem; /* Prevents columns from shrinking below readable widths and enables horizontal scroll */
 
     th,
     td {
@@ -245,4 +247,8 @@
 
 .shadow-top {
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.w-20rem {
+    width: 20rem !important;
 }

@@ -54,6 +54,17 @@ export class ResourcePage<T extends { id: number }> implements OnInit {
   @Input({ required: true }) columns!: ColumnDefinition[];
   @Input({ required: true }) formComponent!: Type<any>;
 
+  get singularTitle(): string {
+    if (!this.title) return '';
+    if (this.title.endsWith('Categories')) {
+      return this.title.slice(0, -10) + 'Category';
+    }
+    if (this.title.endsWith('s')) {
+      return this.title.slice(0, -1);
+    }
+    return this.title;
+  }
+
   // --- OBSERVABLES FOR THE TEMPLATE ---
   items$ = this.crudService.items$;
   isLoading$ = this.crudService.isLoading$;
@@ -151,7 +162,7 @@ export class ResourcePage<T extends { id: number }> implements OnInit {
   async showForm(itemToEdit?: T): Promise<void> {
     const isEditMode = !!itemToEdit;
     this.ref = this.dialogService.open(this.formComponent, {
-      header: `${isEditMode ? 'Edit' : 'New'} ${this.title.slice(0, -1)}`,
+      header: `${isEditMode ? 'Edit' : 'New'} ${this.singularTitle}`,
       width: '450px',
       modal: true,
       closable: true,

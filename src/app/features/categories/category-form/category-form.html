@@ -1,4 +1,4 @@
-<form [formGroup]="categoryForm" (ngSubmit)="onSubmit()" class="p-4">
+<form [formGroup]="categoryForm" (ngSubmit)="onSubmit()">
   <app-form-field label="Category Name" inputId="name" [control]="categoryForm.get('name')">
     <input id="name" type="text" pInputText formControlName="name" class="w-full" />
   </app-form-field>

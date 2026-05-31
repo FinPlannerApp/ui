@@ -1,4 +1,4 @@
-import { APP_INITIALIZER, ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection } from '@angular/core';
+import { APP_INITIALIZER, ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection, isDevMode } from '@angular/core';
 import { provideRouter } from '@angular/router';
 
 import { routes } from './app.routes';
@@ -19,6 +19,7 @@ import { IdleTimerService } from './core/services/idle-timer.service';
 import { environment } from '../environments/environment';
 import { from, of, switchMap } from 'rxjs';
 import { BackendStatusService } from './core/services/backend-status.service';
+import { provideServiceWorker } from '@angular/service-worker';
 
 function initializeApp(
   auth: Auth,
@@ -27,34 +28,40 @@ function initializeApp(
   idleTimer: IdleTimerService,
   backendStatus: BackendStatusService
 ) {
-  return () => from(backendStatus.ensureBackendReady()).pipe(
-    switchMap(() => sessionSync.checkLockState().pipe(
-      switchMap(isLocked => {
-        if (isLocked) {
-          return of(true); // Skip session restore if locked
-        }
+  return () => {
+    // Start backend wake-up in background — do NOT block app bootstrap
+    backendStatus.ensureBackendReady().then(isReady => {
+      if (!isReady) return;
 
-        // Restore session if available
-        return auth.restoreSession().pipe(
-          switchMap(sessionRestored => {
-            // Fetch CSRF token on app startup
-            const csrfUrl = `${environment.apiBaseUrl}/antiforgery/token`;
-            http.get(csrfUrl).subscribe({
-              next: () => { },
-              error: (err) => { }
-            });
+      // Once backend is ready, restore session in background
+      sessionSync.checkLockState().pipe(
+        switchMap(isLocked => {
+          if (isLocked) return of(true);
 
-            // Start idle timer if user is authenticated
-            if (sessionRestored && auth.isLoggedIn()) {
-              idleTimer.startMonitoring();
-            }
+          return auth.restoreSession().pipe(
+            switchMap(sessionRestored => {
+              // Fetch CSRF token
+              const csrfUrl = `${environment.apiBaseUrl}/antiforgery/token`;
+              http.get(csrfUrl).subscribe({
+                next: () => { },
+                error: (err) => { }
+              });
 
-            return of(true);
-          })
-        );
-      })
-    ))
-  );
+              // Start idle timer if user is authenticated
+              if (sessionRestored && auth.isLoggedIn()) {
+                idleTimer.startMonitoring();
+              }
+
+              return of(true);
+            })
+          );
+        })
+      ).subscribe();
+    });
+
+    // Return immediately — app shell renders instantly
+    return Promise.resolve(true);
+  };
 }
 
 export const appConfig: ApplicationConfig = {
@@ -92,6 +99,10 @@ export const appConfig: ApplicationConfig = {
       useFactory: initializeApp,
       deps: [Auth, SessionSyncService, HttpClient, IdleTimerService, BackendStatusService],
       multi: true
-    }
+    },
+    provideServiceWorker('ngsw-worker.js', {
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerWhenStable:30000'
+    })
   ]
 };

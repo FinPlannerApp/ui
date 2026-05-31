@@ -32,8 +32,42 @@
 </p-dialog>
 
 <p-toast position="top-right"></p-toast>
+<p-toast position="top-right" key="pwa-update">
+    <ng-template let-message pTemplate="message">
+        <div class="flex flex-col gap-3 w-full">
+            <div class="flex items-center gap-2">
+                <i class="pi pi-cloud-download text-2xl"></i>
+                <div>
+                    <p class="font-bold m-0">{{ message.summary }}</p>
+                    <p class="text-sm m-0 mt-1">{{ message.detail }}</p>
+                </div>
+            </div>
+            <div class="flex gap-2 justify-end">
+                <p-button size="small" label="Reload Now" (click)="reloadApp()" severity="primary"></p-button>
+            </div>
+        </div>
+    </ng-template>
+</p-toast>
 <p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
 <router-outlet></router-outlet>
+
+<!-- PWA Install Banner -->
+@if (pwaInstall.canInstall() && !pwaInstall.wasDismissed()) {
+<div class="pwa-install-banner">
+    <div class="pwa-install-content">
+        <div class="pwa-install-text">
+            <i class="pi pi-download"></i>
+            <span>Install <strong>Financial Planner</strong> for a faster, app-like experience</span>
+        </div>
+        <div class="pwa-install-actions">
+            <button class="pwa-install-btn" (click)="installPwa()">Install</button>
+            <button class="pwa-dismiss-btn" (click)="dismissInstall()">
+                <i class="pi pi-times"></i>
+            </button>
+        </div>
+    </div>
+</div>
+}
 
 <p-dialog header="Session Active in Another Tab" [visible]="isSessionLocked()" [modal]="true" [closable]="false"
     [style]="{width: '400px'}">

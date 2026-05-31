@@ -1,0 +1,85 @@
+{
+  "$schema": "./node_modules/@angular/service-worker/config/schema.json",
+  "index": "/index.html",
+  "assetGroups": [
+    {
+      "name": "app",
+      "installMode": "prefetch",
+      "resources": {
+        "files": [
+          "/favicon.ico",
+          "/index.csr.html",
+          "/index.html",
+          "/manifest.webmanifest",
+          "/*.css",
+          "/*.js"
+        ]
+      }
+    },
+    {
+      "name": "assets",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": [
+          "/**/*.(svg|cur|jpg|jpeg|png|apng|webp|avif|gif|otf|ttf|woff|woff2)"
+        ],
+        "urls": [
+          "https://fonts.googleapis.com/**",
+          "https://fonts.gstatic.com/**"
+        ]
+      }
+    }
+  ],
+  "dataGroups": [
+    {
+      "name": "api-health",
+      "urls": [
+        "**/api/health/**"
+      ],
+      "cacheConfig": {
+        "maxSize": 1,
+        "maxAge": "1m",
+        "strategy": "freshness",
+        "timeout": "5s"
+      }
+    },
+    {
+      "name": "api-read",
+      "urls": [
+        "**/api/Accounts",
+        "**/api/Accounts/**",
+        "**/api/TransactionCategories",
+        "**/api/TransactionCategories/**",
+        "**/api/AccountCategories",
+        "**/api/AccountCategories/**",
+        "**/api/Budgets",
+        "**/api/Budgets/**",
+        "**/api/Dashboard/**"
+      ],
+      "cacheConfig": {
+        "maxSize": 50,
+        "maxAge": "1h",
+        "strategy": "freshness",
+        "timeout": "10s"
+      }
+    },
+    {
+      "name": "api-mutations",
+      "urls": [
+        "**/api/Transactions",
+        "**/api/Transactions/**",
+        "**/api/RecurringTransactions",
+        "**/api/RecurringTransactions/**",
+        "**/api/auth/**",
+        "**/api/antiforgery/**"
+      ],
+      "cacheConfig": {
+        "maxSize": 0,
+        "maxAge": "0u",
+        "strategy": "freshness",
+        "timeout": "10s"
+      }
+    }
+  ]
+}

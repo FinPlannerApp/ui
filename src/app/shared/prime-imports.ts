@@ -28,8 +28,10 @@ import { EditorModule } from 'primeng/editor';
 import { FileUploadModule } from 'primeng/fileupload';
 import { DragDropModule } from 'primeng/dragdrop';
 import { TagModule } from 'primeng/tag';
+import { FieldsetModule } from 'primeng/fieldset';
 
 export const sharedPrimeModules = [
+    FieldsetModule,
     ButtonModule,
     CardModule,
     InputTextModule,

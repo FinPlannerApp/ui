@@ -1,57 +1,56 @@
 <p-confirmDialog></p-confirmDialog>
 <p-toast></p-toast>
 
-<div class="p-4">
-    <div class="mb-4">
-        <a [routerLink]="backLinkPath" class="no-underline">
-            <p-button [label]="backLinkLabel || ('Back to ' + title.replace('s', ''))" icon="pi pi-arrow-left"
-                [text]="true"></p-button>
-        </a>
-    </div>
-    <p-card [header]="title">
-        <ng-template pTemplate="header">
-            <div
-                class="flex justify-content-between align-items-center w-full px-4 pt-4 border-bottom-1 surface-border">
-                <div class="flex align-items-center gap-1">
-                    <p-iconfield>
-                        <p-inputicon class="pi pi-search"></p-inputicon>
-                        <input pInputText type="text" [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)"
-                            (keyup.enter)="onSearch()" placeholder="Search..." class="p-inputtext-sm w-15rem" />
-                    </p-iconfield>
+@if (backLinkPath) {
+<div class="mb-4">
+    <a [routerLink]="backLinkPath" class="no-underline">
+        <p-button [label]="backLinkLabel || ('Back to ' + singularTitle)" icon="pi pi-arrow-left"
+            [text]="true"></p-button>
+    </a>
+</div>
+}
+<p-card [header]="title">
+    <ng-template pTemplate="header">
+        <div
+            class="flex flex-column md:flex-row justify-content-between align-items-center w-full gap-2 p-2 border-bottom-1 surface-border">
+            <div class="flex flex-column md:flex-row align-items-center gap-2">
+                @if (showCategoryFilter()) {
+                <p-select [options]="categories()" [ngModel]="selectedCategoryId()"
+                    (ngModelChange)="selectedCategoryId.set($event); onSearch()" optionLabel="name" optionValue="id"
+                    placeholder="Filter Category" [showClear]="true" class="w-15rem p-inputtext-sm"></p-select>
+                }
+                <p-iconfield class="flex gap-2 align-items-center">
+                    <p-inputicon class="pi pi-search"></p-inputicon>
+                    <input pInputText type="text" [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)"
+                        (keyup.enter)="onSearch()" placeholder="Search..." class="p-inputtext-sm w-15rem" />
                     <p-button icon="pi pi-search" [text]="true" severity="primary" size="small" (onClick)="onSearch()"
                         pTooltip="Run Search"></p-button>
                     @if (searchTerm()) {
                     <p-button icon="pi pi-times" [text]="true" severity="secondary" size="small"
                         (onClick)="clearSearch()" pTooltip="Clear Search"></p-button>
                     }
+                </p-iconfield>
+            </div>
+            <p-button [label]="'New ' + singularTitle" icon="pi pi-plus" (onClick)="showForm()"
+                severity="primary"></p-button>
+        </div>
+    </ng-template>
 
-                    @if (showCategoryFilter()) {
-                    <p-select [options]="categories()" [ngModel]="selectedCategoryId()"
-                        (ngModelChange)="selectedCategoryId.set($event); onSearch()" optionLabel="name" optionValue="id"
-                        placeholder="Filter Category" [showClear]="true" class="w-15rem p-inputtext-sm"></p-select>
-                    }
-                </div>
-                <p-button [label]="'New ' + title.slice(0, -1)" icon="pi pi-plus" (onClick)="showForm()"
-                    severity="primary"></p-button>
+    @if (ready) {
+    <app-data-table [data]="items$ | async" [columns]="columns" [loading]="isLoading$ | async" [lazy]="true"
+        [totalRecords]="crudService.totalRecords$ | async" (onLazyLoad)="onLazyLoad($event)">
+        <ng-template #actions let-item>
+            <div class="flex gap-2">
+                <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" (onClick)="showForm(item)"></p-button>
+                <p-button icon="pi pi-trash" [text]="true" [rounded]="true" severity="danger"
+                    (onClick)="deleteItem(item)"></p-button>
             </div>
         </ng-template>
+    </app-data-table>
+    } @else {
+    <div class="flex justify-content-center p-4">
+        <p-progressSpinner></p-progressSpinner>
+    </div>
+    }
 
-        @if (ready) {
-        <app-data-table [data]="items$ | async" [columns]="columns" [loading]="isLoading$ | async" [lazy]="true"
-            [totalRecords]="crudService.totalRecords$ | async" (onLazyLoad)="onLazyLoad($event)">
-            <ng-template #actions let-item>
-                <div class="flex gap-2">
-                    <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" (onClick)="showForm(item)"></p-button>
-                    <p-button icon="pi pi-trash" [text]="true" [rounded]="true" severity="danger"
-                        (onClick)="deleteItem(item)"></p-button>
-                </div>
-            </ng-template>
-        </app-data-table>
-        } @else {
-        <div class="flex justify-content-center p-4">
-            <p-progressSpinner></p-progressSpinner>
-        </div>
-        }
-
-    </p-card>
-</div>
+</p-card>

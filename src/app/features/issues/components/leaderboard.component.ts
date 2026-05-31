@@ -9,76 +9,7 @@ import { Auth } from '../../../core/services/auth';
   selector: 'app-leaderboard',
   standalone: true,
   imports: [CommonModule, RouterLink, ...sharedPrimeModules],
-  template: `
-    <div class="p-4 md:p-6" style="max-width: 900px; margin: 0 auto;">
-      <div class="flex align-items-center justify-content-between mb-4">
-        <div class="flex align-items-center gap-3">
-          <p-button icon="pi pi-arrow-left" severity="secondary" [outlined]="true" [rounded]="true" [routerLink]="auth.isLoggedIn() ? '/app/issues' : '/feedback'"></p-button>
-          <h1 class="m-0 text-3xl font-bold">🏆 Community Leaderboard</h1>
-        </div>
-      </div>
-      <p class="text-color-secondary text-lg mt-0 mb-4">Recognizing our top contributors and bug hunters.</p>
-
-      @if (loading()) {
-        <div class="flex justify-content-center p-6"><p-progressSpinner></p-progressSpinner></div>
-      } @else {
-        <p-card styleClass="shadow-4 border-round-2xl overflow-hidden">
-          <p-table [value]="leaders()" responsiveLayout="scroll" [tableStyle]="{'min-width': '100%'}">
-            <ng-template pTemplate="header">
-              <tr>
-                <th style="width: 10%" class="text-center">Rank</th>
-                <th style="width: 60%">Contributor</th>
-                <th style="width: 30%" class="text-right">Karma Score</th>
-              </tr>
-            </ng-template>
-            <ng-template pTemplate="body" let-leader let-i="rowIndex">
-              <tr [ngClass]="{'bg-yellow-50': i === 0, 'bg-gray-50': i === 1, 'bg-orange-50': i === 2}">
-                <td class="text-center font-bold text-xl">
-                  @if (i === 0) { <i class="pi pi-trophy text-yellow-500 text-2xl"></i> }
-                  @else if (i === 1) { <i class="pi pi-trophy text-gray-500 text-xl"></i> }
-                  @else if (i === 2) { <i class="pi pi-trophy text-orange-500 text-xl"></i> }
-                  @else { <span class="text-color-secondary">#{{i + 1}}</span> }
-                </td>
-                <td>
-                  <div class="flex align-items-center gap-3">
-                    <p-avatar [label]="leader.displayName?.charAt(0)" shape="circle" size="large" 
-                      [style]="{'background': 'linear-gradient(135deg, #10b981, #3b82f6)', 'color': '#ffffff'}"></p-avatar>
-                    <div>
-                      <div class="font-bold text-lg">{{leader.displayName}}</div>
-                      <div class="flex gap-1 flex-wrap mt-1">
-                        @if (leader.tag) {
-                          <p-tag [value]="leader.tag" severity="info" size="small"></p-tag>
-                        } @else if (i < 3) {
-                          <p-tag value="Top Contributor" severity="success" size="small"></p-tag>
-                        }
-                        @if (leader.badges?.length > 0) {
-                          @for (badge of leader.badges; track badge.name) {
-                            <span class="inline-flex align-items-center gap-1 px-2 py-1 border-round-lg text-xs font-semibold" 
-                              [style.background-color]="badge.color + '22'" [style.color]="badge.color" [style.border]="'1px solid ' + badge.color"
-                              [pTooltip]="badge.name">
-                              <i [class]="badge.iconUrl"></i> {{badge.name}}
-                            </span>
-                          }
-                        }
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                <td class="text-right">
-                  <span class="text-2xl font-bold" [ngClass]="{'text-primary': i < 3}">{{leader.karmaScore}}</span>
-                </td>
-              </tr>
-            </ng-template>
-            <ng-template pTemplate="emptymessage">
-              <tr>
-                <td colspan="3" class="text-center p-5 text-color-secondary">No contributors yet. Start engaging!</td>
-              </tr>
-            </ng-template>
-          </p-table>
-        </p-card>
-      }
-    </div>
-  `
+  templateUrl: './leaderboard.component.html'
 })
 export class LeaderboardComponent implements OnInit {
   private issueService = inject(IssueService);

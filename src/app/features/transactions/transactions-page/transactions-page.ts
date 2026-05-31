@@ -19,6 +19,9 @@ import { MultiSelectModule } from 'primeng/multiselect';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { TooltipModule } from 'primeng/tooltip';
+import { FieldsetModule } from 'primeng/fieldset';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
 
 interface MonthOption {
   label: string;
@@ -46,7 +49,10 @@ interface YearOption {
     InputTextModule,
     ConfirmDialogModule,
     ToastModule,
-    TooltipModule
+    TooltipModule,
+    FieldsetModule,
+    IconFieldModule,
+    InputIconModule
   ],
   providers: [DialogService],
   templateUrl: './transactions-page.html',
@@ -73,6 +79,7 @@ export class TransactionsPage implements OnInit {
   pageSize = 10;
   currentPage = 1;
   isLoading = false;
+  ready = false;
   lastLazyLoadEvent: any;
   private lastQueryKey: string | null = null;
 
@@ -99,6 +106,7 @@ export class TransactionsPage implements OnInit {
   }
 
   ngOnInit(): void {
+    this.ready = true;
   }
 
   onDateChange(event: any): void {
@@ -195,6 +203,7 @@ export class TransactionsPage implements OnInit {
       this.lastQueryKey = null; // Allow retry on error
     } finally {
       this.isLoading = false;
+      this.ready = true;
       this.cdr.markForCheck();
     }
   }

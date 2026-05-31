@@ -122,6 +122,8 @@ export const routes: Routes = [
           title: 'Account Categories',
           endpoint: 'AccountCategories',
           columns: categoryColumns,
+          backLinkPath: '/app/dashboard',
+          backLinkLabel: 'Back to Dashboard',
           formConfig: { endpoint: 'AccountCategories' },
           loadFormComponent: () => import('./features/categories/category-form/category-form').then(m => m.CategoryForm)
         }
@@ -133,6 +135,8 @@ export const routes: Routes = [
           title: 'Transaction Categories',
           endpoint: 'TransactionCategories',
           columns: categoryColumns,
+          backLinkPath: '/app/dashboard',
+          backLinkLabel: 'Back to Dashboard',
           formConfig: { endpoint: 'TransactionCategories' },
           loadFormComponent: () => import('./features/categories/category-form/category-form').then(m => m.CategoryForm)
         }
@@ -152,6 +156,8 @@ export const routes: Routes = [
           title: 'Budgets',
           endpoint: 'Budgets',
           columns: budgetColumns,
+          backLinkPath: '/app/dashboard',
+          backLinkLabel: 'Back to Dashboard',
           loadFormComponent: () => import('./features/budgets/budget-form/budget-form').then(m => m.BudgetForm)
         }
       },
@@ -162,6 +168,8 @@ export const routes: Routes = [
           title: 'Recurring Transactions',
           endpoint: 'RecurringTransactions',
           columns: recurringTransactionColumns,
+          backLinkPath: '/app/dashboard',
+          backLinkLabel: 'Back to Dashboard',
           loadFormComponent: () => import('./features/recurring-transactions/recurring-transaction-form/recurring-transaction-form').then(m => m.RecurringTransactionForm)
         }
       },

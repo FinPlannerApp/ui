@@ -25,6 +25,8 @@ import { sharedPrimeModules } from '../../../shared/prime-imports';
 import { StatCard } from '../../../shared/components/stat-card/stat-card';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
+import { FloatLabelModule } from 'primeng/floatlabel';
+
 
 @Component({
   selector: 'app-transaction-list',
@@ -43,6 +45,7 @@ import { ToastModule } from 'primeng/toast';
     SelectModule,
     InputTextModule,
     TooltipModule,
+    FloatLabelModule,
     ...sharedPrimeModules
   ],
   templateUrl: './transaction-list.html',

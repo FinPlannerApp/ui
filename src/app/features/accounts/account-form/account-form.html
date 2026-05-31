@@ -1,4 +1,4 @@
-<form [formGroup]="accountForm" (ngSubmit)="onSubmit()" class="p-4">
+<form [formGroup]="accountForm" (ngSubmit)="onSubmit()">
   <app-form-field label="Account Name" inputId="name" [control]="accountForm.get('name')">
     <input id="name" type="text" pInputText formControlName="name" class="w-full" />
   </app-form-field>
@@ -23,7 +23,7 @@
     </p-select>
   </app-form-field>
 
-  <div class="flex justify-content-end gap-2 mt-4 pt-3 border-top-1 surface-border">
+  <div class="flex align-items-center justify-content-end gap-2 mt-4 pt-3 border-top-1 surface-border">
     <p-button label="Cancel" icon="pi pi-times" [text]="true" severity="secondary" (onClick)="ref.close()"></p-button>
     <p-button [label]="isEditMode ? 'Update Account' : 'Create Account'"
       [icon]="isEditMode ? 'pi pi-check' : 'pi pi-plus'" type="submit" [loading]="isSubmitting()"

@@ -3,7 +3,7 @@
 
 <div class="transactions-page p-4">
   <!-- FILTER BAR (GitLab style + Local Signals) -->
-  <div class="filter-bar mb-4 flex flex-wrap align-items-center gap-3">
+  <div class="filter-bar flex flex-wrap gap-2">
     <div class="flex align-items-center gap-2 mr-auto">
       <p-button label="Back to Accounts" icon="pi pi-arrow-left" severity="secondary" [outlined]="true"
         routerLink="/app/accounts"></p-button>
@@ -11,11 +11,16 @@
         severity="primary"></p-button>
     </div>
 
-    <div class="flex align-items-center gap-2">
-      <label class="font-semibold text-sm">Period</label>
+    <p-fieldset legend="Period">
       <p-datepicker [ngModel]="selectedDate()" view="month" dateFormat="mm/yy" (ngModelChange)="onDateChange($event)"
-        placeholder="Select Month" [showIcon]="true" [style]="{'width': '12rem'}"></p-datepicker>
-    </div>
+        placeholder="Select Month" [showIcon]="true" iconDisplay="input" [style]="{'width': '12rem'}"></p-datepicker>
+    </p-fieldset>
+    <p-fieldset legend="Category">
+      <p-select [options]="categoryOptions()" [ngModel]="selectedCategory()"
+        (ngModelChange)="selectedCategory.set($event); onCategoryChange()" optionLabel="label" optionValue="value"
+        placeholder="All Categories" [showClear]="true" [style]="{'min-width': '12rem'}" class="p-inputtext-sm">
+      </p-select>
+    </p-fieldset>
 
     <div class="flex align-items-center gap-1">
       <p-iconfield>
@@ -30,14 +35,6 @@
       <p-button icon="pi pi-times" [text]="true" severity="secondary" size="small" (onClick)="clearSearch()"
         pTooltip="Clear Search"></p-button>
       }
-    </div>
-
-    <div class="flex align-items-center gap-2">
-      <label class="font-semibold text-sm">Category</label>
-      <p-select [options]="categoryOptions()" [ngModel]="selectedCategory()"
-        (ngModelChange)="selectedCategory.set($event); onCategoryChange()" optionLabel="label" optionValue="value"
-        placeholder="All Categories" [showClear]="true" [style]="{'min-width': '12rem'}" class="p-inputtext-sm">
-      </p-select>
     </div>
   </div>
 

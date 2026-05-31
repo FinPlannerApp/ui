@@ -2,6 +2,80 @@ import { Component, signal, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 export const BLOG_POSTS = [
+  // ─── v6.0.0 — PWA + UI OVERHAUL ───────────────────────────────────────────
+  {
+    id: 'v6-0-0-release',
+    tag: 'v6.0.0',
+    tagColor: '#6366f1',
+    title: 'v6.0.0 — Progressive Web App, UI Overhaul & Responsiveness',
+    excerpt: 'Financial Planner is now an installable PWA with instant loading, plus a complete UI overhaul — responsive layouts, template extraction, filter bar redesigns, and dashboard polish.',
+    date: 'May 31, 2026',
+    _dateValue: new Date('2026-05-31'),
+    content: `
+      <h2>What is v6.0.0?</h2>
+      <p>Version 6.0.0 is a dual release: the app is now a <strong>Progressive Web App</strong> (installable, offline-ready, instant loading), and the entire frontend has received a <strong>comprehensive UI and responsiveness overhaul</strong> across every major page.</p>
+
+      <h2>📲 Progressive Web App</h2>
+      <p>Financial Planner can now be <strong>installed</strong> on any device — phone, tablet, or desktop. It launches in its own window like a native app, loads <strong>instantly from cache</strong> on repeat visits, and notifies you when a new version is available.</p>
+      <ul>
+        <li><strong>Install Banner:</strong> A glassmorphism-styled banner slides up at the bottom when the app is installable. One click to add to your home screen.</li>
+        <li><strong>Instant Boot:</strong> The app no longer blocks while waiting for the Render backend. Public pages (Home, Blog, About, Features) load immediately — the backend wakes up silently in the background.</li>
+        <li><strong>Update Toast:</strong> When a new version is deployed, a "Reload Now" toast appears — no stale cached versions.</li>
+        <li><strong>iOS Support:</strong> Full Apple PWA meta tags — standalone mode, translucent status bar, touch icon.</li>
+      </ul>
+
+      <h2>🎨 Dashboard Layout Cleanup</h2>
+      <p>The dashboard template has been restructured for cleaner nesting and better responsive behavior:</p>
+      <ul>
+        <li>Removed unnecessary wrapper <code>&lt;div class="p-4"&gt;</code> — content now flows naturally within the layout shell without double-padding.</li>
+        <li>Summary cards grid uses <code>col-12 sm:col-6 lg:col-3</code> — stacking on mobile, 2-up on tablet, 4-across on desktop.</li>
+        <li>Deep Insights panel and chart sections follow the same responsive grid pattern.</li>
+      </ul>
+
+      <h2>📋 Resource Page Responsive Redesign</h2>
+      <p>The generic <code>ResourcePage</code> (Accounts, Categories, Budgets) received a full responsive overhaul:</p>
+      <ul>
+        <li>Header bar now uses <code>flex-column md:flex-row</code> — filter controls stack vertically on mobile, sit inline on desktop.</li>
+        <li>Search bar + category filter + "New" button properly wrap with <code>gap-2</code> spacing.</li>
+        <li>Removed hard-coded <code>p-4</code> padding wrapper — aligns with the layout shell pattern used by all other pages.</li>
+        <li>"Back to..." link label now uses <code>singularTitle</code> computed property instead of <code>title.replace('s', '')</code> — fixes issues like "Account Categorie" → "Account Category".</li>
+      </ul>
+
+      <h2>💳 Transaction Pages — Filter Bar & Table Responsiveness</h2>
+      <p>Both the <strong>Transactions Page</strong> and <strong>Transaction List</strong> received significant CSS work:</p>
+      <ul>
+        <li><strong>Filter bar</strong> now uses <code>display: flex; align-items: center; justify-content: center</code> with proper wrapping — no more overflow on narrow screens.</li>
+        <li><strong>Fieldset-based filters</strong> (Period, Category) wrapped in <code>p-fieldset</code> with custom styling: 12px border-radius, emerald green focus ring, uppercase legend labels, and transparent inner controls for a clean embedded look.</li>
+        <li><strong>Table horizontal scroll:</strong> Transaction tables now scroll horizontally on mobile via <code>overflow-x: auto</code> — no more clipped columns.</li>
+        <li><strong>Bulk Transaction table</strong> gets <code>min-width: 93rem</code> to prevent column crushing, with horizontal scroll enabled.</li>
+        <li><strong>Summary stat cards</strong> in transaction views replaced custom <code>p-card</code> templates with the reusable <code>&lt;app-stat-card&gt;</code> component for consistency.</li>
+      </ul>
+
+      <h2>🧩 Template Extraction</h2>
+      <p>Several large components had their inline HTML templates extracted to separate <code>.html</code> files for maintainability:</p>
+      <ul>
+        <li><code>analytics-dashboard.component.ts</code> → <code>analytics-dashboard.component.html</code></li>
+        <li><code>leaderboard.component.ts</code> → <code>leaderboard.component.html</code></li>
+        <li><code>roadmap.component.ts</code> → <code>roadmap.component.html</code></li>
+        <li><code>stat-card.ts</code> → <code>stat-card.html</code></li>
+      </ul>
+
+      <h2>🧹 Form & Dialog Polish</h2>
+      <ul>
+        <li><strong>Account Form:</strong> Removed redundant <code>p-4</code> padding class from form wrapper — dialog content padding handles spacing. Footer buttons aligned with <code>align-items-center</code>.</li>
+        <li><strong>Category Form:</strong> Same padding cleanup — consistent with Account Form.</li>
+        <li><strong>Transaction Form:</strong> Layout refinements for field alignment and focus order — amount field no longer auto-activates over description.</li>
+      </ul>
+
+      <h2>📦 Infrastructure</h2>
+      <ul>
+        <li>Frontend version bumped to <strong>v6.0.0</strong> across <code>package.json</code>, <code>environment.ts</code>, and <code>environment.prod.ts</code>.</li>
+        <li><code>nginx.conf</code> updated with PWA headers (service worker no-cache, manifest MIME type) and non-Docker paths.</li>
+        <li><code>@angular/service-worker</code> added as a dependency.</li>
+        <li>Content Security Policy updated with <code>manifest-src 'self'</code>.</li>
+      </ul>
+    `
+  },
   // ─── v5.0.1 — URGENT FIX: CLEANUP & POLISH ─────────────────────────────────
   {
     id: 'v5-0-1-release',
