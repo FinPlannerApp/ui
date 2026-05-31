@@ -245,12 +245,14 @@ export class TransactionsPage implements OnInit {
       }
     });
 
-    ref.onClose.subscribe((result: boolean) => {
-      if (result) {
-        this.messageService.add({ severity: 'success', summary: 'Updated', detail: 'Transaction updated successfully' });
-        this.fetchTransactions();
-      }
-    });
+    if (ref) {
+      ref.onClose.subscribe((result: boolean) => {
+        if (result) {
+          this.messageService.add({ severity: 'success', summary: 'Updated', detail: 'Transaction updated successfully' });
+          this.fetchTransactions();
+        }
+      });
+    }
   }
 
   deleteTransaction(transaction: Transaction) {

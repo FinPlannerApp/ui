@@ -249,12 +249,14 @@ export class BulkTransactionAdd {
             data: { endpoint: 'Accounts', itemToEdit: nameToInject ? { name: nameToInject } : undefined }
         });
 
-        ref.onClose.subscribe((result: any) => {
-            if (result) {
-                // Assume true means it saved, refresh lists
-                this.onAccountCreated(result);
-            }
-        });
+        if (ref) {
+            ref.onClose.subscribe((result: any) => {
+                if (result) {
+                    // Assume true means it saved, refresh lists
+                    this.onAccountCreated(result);
+                }
+            });
+        }
     }
 
     openCategoryModal(rowIndex: number, initialName?: any) {
@@ -266,11 +268,13 @@ export class BulkTransactionAdd {
             data: { endpoint: 'TransactionCategories', itemToEdit: nameToInject ? { name: nameToInject } : undefined }
         });
 
-        ref.onClose.subscribe((result: any) => {
-            if (result) {
-                this.onCategoryCreated(result);
-            }
-        });
+        if (ref) {
+            ref.onClose.subscribe((result: any) => {
+                if (result) {
+                    this.onCategoryCreated(result);
+                }
+            });
+        }
     }
 
     onAccountCreated(saved: boolean) {

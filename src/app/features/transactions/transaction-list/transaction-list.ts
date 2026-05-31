@@ -68,7 +68,7 @@ export class TransactionList implements OnInit {
   transactions = signal<Transaction[]>([]);
   isLoading = signal(false);
   accountId = signal<number | null>(null);
-  ref: DynamicDialogRef | undefined;
+  ref: DynamicDialogRef | null = null;
   summary = signal<AccountSummary | null>(null);
   totalRecords = signal(0);
   rows = signal(10);
@@ -235,10 +235,12 @@ export class TransactionList implements OnInit {
       }
     });
 
-    const result = await firstValueFrom(this.ref.onClose);
-    if (result) {
-      this.loadData();
-      this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Operation successful' });
+    if (this.ref) {
+      const result = await firstValueFrom(this.ref.onClose);
+      if (result) {
+        this.loadData();
+        this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Operation successful' });
+      }
     }
   }
 
@@ -268,16 +270,18 @@ export class TransactionList implements OnInit {
       data: { currentAccountId: this.accountId() }
     });
 
-    const result = await firstValueFrom(this.ref.onClose);
+    if (this.ref) {
+      const result = await firstValueFrom(this.ref.onClose);
 
-    if (result && result.destinationAccountId) {
-      try {
-        await firstValueFrom(this.transactionService.switchAccount(this.accountId()!, transaction.id, result.destinationAccountId));
-        this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Transaction switched successfully' });
-        await this.accountState.refresh();
-        await this.loadData();
-      } catch (err: any) {
-        this.notificationService.showError('Failed to switch transaction target');
+      if (result && result.destinationAccountId) {
+        try {
+          await firstValueFrom(this.transactionService.switchAccount(this.accountId()!, transaction.id, result.destinationAccountId));
+          this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Transaction switched successfully' });
+          await this.accountState.refresh();
+          await this.loadData();
+        } catch (err: any) {
+          this.notificationService.showError('Failed to switch transaction target');
+        }
       }
     }
   }

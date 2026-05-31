@@ -69,10 +69,10 @@ export class ResourcePage<T extends { id: number }> implements OnInit {
   items$ = this.crudService.items$;
   isLoading$ = this.crudService.isLoading$;
 
-  ref: DynamicDialogRef | undefined;
+  ref: DynamicDialogRef | null = null;
   ready = false;
   lastLazyLoadEvent: any;
-
+  
   async ngOnInit(): Promise<void> {
     const routeData = await firstValueFrom(this.route.data);
     const params = await firstValueFrom(this.route.paramMap);
@@ -174,10 +174,12 @@ export class ResourcePage<T extends { id: number }> implements OnInit {
       }
     });
 
-    const result = await firstValueFrom(this.ref.onClose);
-    if (result === true) {
-      // Reload list as the form has modified the data
-      this.crudService.search(this.endpoint, { pageNumber: 1, pageSize: 10 });
+    if (this.ref) {
+      const result = await firstValueFrom(this.ref.onClose);
+      if (result === true) {
+        // Reload list as the form has modified the data
+        this.crudService.search(this.endpoint, { pageNumber: 1, pageSize: 10 });
+      }
     }
   }
 

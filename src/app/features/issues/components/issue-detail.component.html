@@ -34,7 +34,7 @@
         <div class="flex align-items-center gap-2 mb-2 flex-wrap">
           <span class="text-sm font-bold text-color-secondary">#{{issue.id}}</span>
           <p-tag [value]="getTypeIcon(issue.type) + ' ' + issue.type" [severity]="getTypeSeverity(issue.type)"></p-tag>
-          <p-tag [value]="issue.status" [severity]="issue.status === 'New' ? 'warning' : issue.status === 'Verified' ? 'success' : 'secondary'"></p-tag>
+          <p-tag [value]="issue.status" [severity]="issue.status === 'New' ? 'warn' : issue.status === 'Verified' ? 'success' : 'secondary'"></p-tag>
           <p-tag [value]="issue.categoryName" severity="info"></p-tag>
           @if (issue.subcategoryName) {
           <p-tag [value]="issue.subcategoryName" severity="secondary"></p-tag>
