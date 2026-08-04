@@ -91,7 +91,12 @@ export class TransactionList implements OnInit {
   ];
 
   constructor() {
-    this.selectedDate().setDate(1); // canonical start of month
+    this.selectedDate.update(d => {
+      const startOfMonth = new Date(d);
+      startOfMonth.setDate(1);
+      return startOfMonth;
+    }); // canonical start of month — creates a new Date and notifies the signal properly,
+    // instead of mutating the held object in place with no change notification
     this.breadcrumbService.refresh$.subscribe(() => {
       this.loadData(this.lastLazyLoadEvent);
     });
@@ -286,4 +291,3 @@ export class TransactionList implements OnInit {
     }
   }
 }
-
