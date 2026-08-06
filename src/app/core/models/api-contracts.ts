@@ -32,6 +32,8 @@ export interface UpsertCategoryRequest {
     id?: number;
     name: string;
     isTransferCategory?: boolean; // Only for TransactionCategory
+    isLiability?: boolean;        // Only for AccountCategory
+    accountType?: number;         // Only for AccountCategory — AccountType enum value
 }
 
 export interface BulkTransactionEntry {

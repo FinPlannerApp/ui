@@ -3,10 +3,13 @@ import { ApiResult, GenericApi } from '../../core/services/generic-api';
 import { map, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { UpsertCategoryRequest } from '../../core/models/api-contracts';
+import { AccountType } from '../../core/models/account-type.model';
 
 export interface AccountCategory {
   id: number;
   name: string;
+  isLiability: boolean;
+  accountType: AccountType;
 }
 
 export interface TransactionCategory {
