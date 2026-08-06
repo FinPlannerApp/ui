@@ -44,6 +44,22 @@
         </p-select>
     </app-form-field>
 
+    @if (recurringForm.get('frequency')?.value === RecurrenceFrequency.Custom) {
+        <div class="flex flex-column gap-2">
+            <label class="text-sm text-secondary">Repeat on</label>
+            <div class="flex gap-2">
+                @for (day of dayOptions; track day.value) {
+                    <button type="button"
+                        class="day-toggle"
+                        [class.day-toggle-selected]="isDaySelected(day.value)"
+                        (click)="toggleDay(day.value)">
+                        {{ day.label }}
+                    </button>
+                }
+            </div>
+        </div>
+    }
+
     <div class="grid">
         <div class="col-12 md:col-6">
             <app-form-field label="Start Date" inputId="startDate" [control]="recurringForm.get('startDate')">

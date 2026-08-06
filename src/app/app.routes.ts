@@ -182,6 +182,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/settings/settings/settings').then(m => m.Settings)
       },
       {
+        path: 'challenge',
+        loadComponent: () => import('./features/challenge/challenge').then(m => m.Challenge)
+      },
+      {
         path: 'change-password',
         loadComponent: () => import('./features/auth/change-password/change-password.component').then(m => m.ChangePasswordComponent)
       },

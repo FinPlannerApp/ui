@@ -1,0 +1,103 @@
+<div class="flex flex-column gap-3 p-4">
+  <div class="flex align-items-center justify-content-between">
+    <h2 class="m-0">30-Day Money Challenge</h2>
+    <a routerLink="/app/dashboard" class="p-button p-button-text">
+      <i class="pi pi-arrow-left mr-2"></i>Back to Dashboard
+    </a>
+  </div>
+
+  @if (isLoading()) {
+    <div class="flex justify-content-center p-6">
+      <p-progressSpinner></p-progressSpinner>
+    </div>
+  } @else if (overview(); as data) {
+
+    <p-card>
+      <div class="flex flex-column gap-2">
+        <div class="flex align-items-center justify-content-between">
+          <span class="font-medium">
+            Day {{ data.currentDayNumber }} of 30
+            @if (data.isFullyCompleted) {
+              <p-tag severity="success" value="Completed!" class="ml-2"></p-tag>
+            }
+          </span>
+          <span class="text-sm text-secondary">
+            {{ data.completedDaysCount }} / {{ data.totalActionableDays }} days done
+          </span>
+        </div>
+        <p-progressBar [value]="progressPercent()"></p-progressBar>
+        <div class="flex gap-3 text-sm text-secondary">
+          <span><i class="pi pi-bolt mr-1"></i>{{ data.currentStreak }} day streak</span>
+          <span><i class="pi pi-star mr-1"></i>Best: {{ data.longestStreak }} days</span>
+        </div>
+      </div>
+    </p-card>
+
+    <p-accordion [value]="defaultOpenWeek()">
+      @for (week of weeks(); track week.weekNumber) {
+        <p-accordion-panel [value]="week.weekNumber.toString()">
+          <p-accordion-header>Week {{ week.weekNumber }}</p-accordion-header>
+          <p-accordion-content>
+            <div class="flex flex-column gap-2">
+              @for (day of week.days; track day.id) {
+
+                @if (day.isRestDay) {
+                  <div class="flex align-items-center gap-2 p-2 text-secondary">
+                    <i class="pi pi-moon"></i>
+                    <span class="font-medium">Day {{ day.dayNumber }} — {{ day.title }}</span>
+                    <span class="text-sm">{{ day.description }}</span>
+                  </div>
+                } @else {
+                  <p-card>
+                    <div class="flex flex-column gap-2">
+                      <div class="flex align-items-center gap-2">
+                        <p-checkbox
+                          [binary]="true"
+                          [ngModel]="day.isCompleted"
+                          (onChange)="toggleDay(day)"
+                          [disabled]="savingDayId() === day.id">
+                        </p-checkbox>
+                        <span class="font-medium" [class.line-through]="day.isCompleted">
+                          Day {{ day.dayNumber }} — {{ day.title }}
+                        </span>
+                        @if (day.isCompleted) {
+                          <p-tag severity="success" value="Done" class="ml-auto"></p-tag>
+                        }
+                      </div>
+
+                      <p class="text-sm m-0">{{ day.description }}</p>
+
+                      @if (day.actionRoute) {
+                        <a [routerLink]="day.actionRoute" class="p-button p-button-sm p-button-outlined w-fit">
+                          <i class="pi pi-arrow-right mr-2"></i>Go do this
+                        </a>
+                      }
+
+                      @if (day.requiresReflection) {
+                        <div class="flex flex-column gap-1">
+                          <textarea
+                            pTextarea
+                            rows="3"
+                            class="w-full"
+                            [ngModel]="getDraft(day)"
+                            (ngModelChange)="setDraft(day, $event)"
+                            placeholder="Write a few honest sentences...">
+                          </textarea>
+                          @if (day.isCompleted) {
+                            <button pButton type="button" label="Update reflection" class="p-button-sm p-button-text align-self-end"
+                              (click)="saveReflectionOnly(day)" [loading]="savingDayId() === day.id">
+                            </button>
+                          }
+                        </div>
+                      }
+                    </div>
+                  </p-card>
+                }
+              }
+            </div>
+          </p-accordion-content>
+        </p-accordion-panel>
+      }
+    </p-accordion>
+  }
+</div>

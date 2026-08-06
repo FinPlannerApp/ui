@@ -48,6 +48,7 @@ export class Layout {
           { label: 'Recurring', icon: 'pi pi-sync', routerLink: '/app/recurring-transactions', command: () => { this.sidebarVisible = false; } },
           { label: 'Transactions', icon: 'pi pi-list', routerLink: '/app/transactions', command: () => { this.sidebarVisible = false; } },
           { label: 'Reports', icon: 'pi pi-file-export', routerLink: '/app/reports', command: () => { this.sidebarVisible = false; } },
+          { label: '30-Day Challenge', icon: 'pi pi-flag', routerLink: '/app/challenge', command: () => { this.sidebarVisible = false; } },
         ],
       },
       {
