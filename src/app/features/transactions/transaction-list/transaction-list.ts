@@ -26,6 +26,7 @@ import { StatCard } from '../../../shared/components/stat-card/stat-card';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
 import { FloatLabelModule } from 'primeng/floatlabel';
+import { AccountType, InterestFrequency } from '../../../core/models/account-type.model';
 
 
 @Component({
@@ -70,6 +71,61 @@ export class TransactionList implements OnInit {
   accountId = signal<number | null>(null);
   ref: DynamicDialogRef | null = null;
   summary = signal<AccountSummary | null>(null);
+
+  // Exposes the enum to the template for the @if checks below.
+  readonly AccountType = AccountType;
+
+  // Looks up the FULL account object (with type/details) from the
+  // already-loaded AccountState — no new API call needed, this data has
+  // been flowing through the existing accounts endpoint since the
+  // account-type backend package. Recomputes automatically whenever
+  // either accountId or the account list itself changes.
+  currentAccount = computed(() => {
+    const id = this.accountId();
+    if (id === null) return null;
+    return this.accountState.accounts().find(a => a.id === id) ?? null;
+  });
+
+  // "How much would accrue in ONE period at today's balance and rate" —
+  // deliberately labeled as an estimate in the template, not a precise
+  // guarantee. Real interest calculations depend on exact compounding
+  // method and day-count convention, which isn't something this app
+  // tracks — this is a simple, clearly-approximate figure, not meant to
+  // replace what the bank itself actually credits.
+  estimatedInterest = computed(() => {
+    const account = this.currentAccount();
+    const details = account?.bankAccountDetails;
+    if (!details?.interestRate) return null;
+
+    const periodsPerYear = details.interestFrequency === InterestFrequency.Daily ? 365
+      : details.interestFrequency === InterestFrequency.Monthly ? 12
+      : details.interestFrequency === InterestFrequency.Quarterly ? 4
+      : 1; // Yearly
+
+    return (account!.balance * (details.interestRate / 100)) / periodsPerYear;
+  });
+
+  interestFrequencyLabel(freq: InterestFrequency | null | undefined): string {
+    switch (freq) {
+      case InterestFrequency.Daily: return 'day';
+      case InterestFrequency.Monthly: return 'month';
+      case InterestFrequency.Quarterly: return 'quarter';
+      case InterestFrequency.Yearly: return 'year';
+      default: return 'period';
+    }
+  }
+
+  // Separate from the noun form above ("per day") — "day" + "ly" isn't
+  // "daily", so this can't just concatenate "ly" onto interestFrequencyLabel.
+  interestFrequencyAdverb(freq: InterestFrequency | null | undefined): string {
+    switch (freq) {
+      case InterestFrequency.Daily: return 'Daily';
+      case InterestFrequency.Monthly: return 'Monthly';
+      case InterestFrequency.Quarterly: return 'Quarterly';
+      case InterestFrequency.Yearly: return 'Yearly';
+      default: return '—';
+    }
+  }
   totalRecords = signal(0);
   rows = signal(10);
   lastLazyLoadEvent: any;

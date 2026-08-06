@@ -1,12 +1,19 @@
 import { Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import { GenericApi, PaginatedResult } from '../../core/services/generic-api';
+import { AccountType, CreditCardDetails, LoanDetails, BankAccountDetails } from '../../core/models/account-type.model';
 
 export interface Account {
   id: number;
   name: string;
   balance: number;
   userId: string;
+  accountCategoryName?: string;
+  isLiability?: boolean;
+  accountType?: AccountType;
+  creditCardDetails?: CreditCardDetails | null;
+  loanDetails?: LoanDetails | null;
+  bankAccountDetails?: BankAccountDetails | null;
 }
 
 @Injectable({

@@ -51,6 +51,7 @@ export class AccountForm {
   ];
 
   interestFrequencyOptions = [
+    { label: 'Daily', value: InterestFrequency.Daily },
     { label: 'Monthly', value: InterestFrequency.Monthly },
     { label: 'Quarterly', value: InterestFrequency.Quarterly },
     { label: 'Yearly', value: InterestFrequency.Yearly }
