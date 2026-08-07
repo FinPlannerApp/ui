@@ -1,5 +1,5 @@
 <form [formGroup]="categoryForm" (ngSubmit)="onSubmit()">
-<app-form-field label="Category Name" inputId="name" [control]="categoryForm.get('name')">
+  <app-form-field label="Category Name" inputId="name" [control]="categoryForm.get('name')">
     <input id="name" type="text" pInputText formControlName="name" class="w-full" />
   </app-form-field>
 
@@ -14,12 +14,25 @@
     </div>
   }
 
-  <!-- NEW: Show this checkbox only for Transaction Categories -->
+  <!-- Transaction Categories only -->
   @if(isTransactionCategory()) {
   <div class="field-checkbox mt-3">
     <p-checkbox formControlName="isTransferCategory" [binary]="true" inputId="isTransfer"></p-checkbox>
     <label for="isTransfer" class="ml-2">Is this a transfer category?</label>
   </div>
+  }
+
+  <!-- Account Categories only -->
+  @if(!isTransactionCategory()) {
+  <div class="field-checkbox mt-3">
+    <p-checkbox formControlName="isLiability" [binary]="true" inputId="isLiability"></p-checkbox>
+    <label for="isLiability" class="ml-2">Is this a liability (credit card, loan, EMI)?</label>
+  </div>
+
+  <app-form-field label="Account Type" inputId="accountType" [control]="categoryForm.get('accountType')">
+    <p-select id="accountType" [options]="accountTypeOptions" formControlName="accountType" optionLabel="label"
+      optionValue="value" appendTo="body" class="w-full"></p-select>
+  </app-form-field>
   }
 
   <div class="flex justify-content-end mt-4 gap-2">

@@ -8,6 +8,7 @@ import { ValidationService } from '../../../core/services/validation.service';
 import { GenericCrud } from '../../../core/services/generic-crud';
 import { NotificationService } from '../../../core/services/notification.service';
 import { FormField } from '../../../shared/components/form-field/form-field';
+import { AccountType } from '../../../core/models/account-type.model';
 
 @Component({
   selector: 'app-category-form',
@@ -26,8 +27,16 @@ export class CategoryForm implements OnInit {
   private categoryService = inject(Category);
 
   categoryForm: FormGroup;
-  isTransactionCategory = signal(false); // To know when to show the checkbox
+  isTransactionCategory = signal(false); // To know when to show the transfer checkbox
   isSubmitting = signal<boolean>(false);
+
+  accountTypeOptions = [
+    { label: 'Bank / Savings', value: AccountType.Bank },
+    { label: 'Credit Card', value: AccountType.CreditCard },
+    { label: 'Loan', value: AccountType.Loan },
+    { label: 'Cash', value: AccountType.Cash },
+    { label: 'Other', value: AccountType.Other }
+  ];
 
   existingCategoryNames = signal<string[]>([]);
 
@@ -52,7 +61,6 @@ export class CategoryForm implements OnInit {
     if (!typed || typed.length < 2) return null;
 
     const normalizedTyped = this.normalizeForComparison(typed);
-    const editingId = this.categoryForm?.get('id')?.value;
 
     // Skip comparing against itself when editing an existing category.
     const match = this.existingCategoryNames().find((existingName) =>
@@ -67,7 +75,12 @@ export class CategoryForm implements OnInit {
     this.categoryForm = this.fb.group({
       id: [null],
       name: ['', Validators.required],
-      isTransferCategory: [false] // Add the new form control
+      isTransferCategory: [false],
+      // These two were missing from the live app entirely — added here
+      // alongside a genuine merge with the duplicate-warning logic that
+      // was already working, rather than another isolated patch.
+      isLiability: [false],
+      accountType: [AccountType.Other]
     });
   }
 
@@ -87,18 +100,19 @@ export class CategoryForm implements OnInit {
       this.categoryForm.patchValue(this.config.data.itemToEdit);
     }
 
-    // If not a transaction category, disable the transfer checkbox
+    // Each set of fields only makes sense for its own category type.
     if (!this.isTransactionCategory()) {
       this.categoryForm.get('isTransferCategory')?.disable();
+    } else {
+      this.categoryForm.get('isLiability')?.disable();
+      this.categoryForm.get('accountType')?.disable();
     }
   }
 
   async onSubmit(): Promise<void> {
     if (this.categoryForm.valid && !this.isSubmitting()) {
       this.isSubmitting.set(true);
-      const payload = this.categoryForm.getRawValue(); // Use getRawValue() to get disabled fields
-      // Use endpoint from config, or default if missing? 
-      // ResourcePage passes it.
+      const payload = this.categoryForm.getRawValue(); // getRawValue() includes disabled fields
       const endpoint = this.config.data.endpoint;
 
       if (!endpoint) {
