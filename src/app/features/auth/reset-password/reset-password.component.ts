@@ -136,6 +136,12 @@ export class ResetPasswordComponent implements OnInit {
     hasNumber(pwd: string): boolean { return /\d/.test(pwd || ''); }
     hasSpecial(pwd: string): boolean { return /[@$!%*?&]/.test(pwd || ''); }
 
+    doPasswordsMatch(): boolean {
+        const pwd = this.form.get('newPassword')?.value;
+        const confirmPwd = this.form.get('confirmPassword')?.value;
+        return !!pwd && !!confirmPwd && pwd === confirmPwd;
+    }
+
     onSubmit() {
         if (this.step === 1) {
             this.onVerifyOtp();

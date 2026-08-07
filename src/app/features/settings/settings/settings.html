@@ -1,72 +1,139 @@
-<div class="p-4 md:p-6">
-    <h1 class="text-3xl font-bold mb-4">Settings</h1>
+<div class="p-3 md:p-6">
+    <h1 class="text-2xl md:text-3xl font-bold mb-4 gradient-text">Settings</h1>
 
-    <div class="grid">
-        <!-- Profile Settings -->
-        <div class="col-12 md:col-6 p-3">
-            <p-card header="Profile">
-                <div class="flex flex-column gap-3">
-                    <div>
-                        <label for="displayName">Display Name</label>
-                        <input id="displayName" type="text" pInputText class="w-full" [(ngModel)]="profile.name"
-                            placeholder="Your display name">
+    <p-tabs>
+        <!-- Profile Tab -->
+        <p-tabpanel header="Profile" leftIcon="pi pi-user">
+            <div class="grid grid-cols-12 gap-4 grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <p-card>
+                    <ng-template pTemplate="header">
+                        <div class="flex items-center gap-2 p-4 pb-0">
+                            <i class="pi pi-user text-xl text-[var(--primary-color)]"></i>
+                            <span class="font-bold text-lg">Profile</span>
+                        </div>
+                    </ng-template>
+                    <div class="flex flex-col gap-4">
+                        <div>
+                            <label for="displayName">Display Name</label>
+                            <input id="displayName" type="text" pInputText class="w-full" [(ngModel)]="profile.name"
+                                placeholder="Your display name">
+                        </div>
+                        <div>
+                            <label for="email">Email</label>
+                            <input id="email" type="email" pInputText class="w-full" [value]="profile.email" disabled
+                                placeholder="Email (read-only)">
+                        </div>
+                        <p-button label="Save Profile" icon="pi pi-save" (onClick)="saveProfile()"></p-button>
                     </div>
-                    <div>
-                        <label for="email">Email</label>
-                        <input id="email" type="email" pInputText class="w-full" [value]="profile.email" disabled
-                            placeholder="Email (read-only)">
-                    </div>
-                    <p-button label="Save Profile" icon="pi pi-save" (onClick)="saveProfile()"></p-button>
-                </div>
-            </p-card>
-        </div>
+                </p-card>
 
-        <!-- Appearance Settings -->
-        <div class="col-12 md:col-6 p-3">
-            <p-card header="Appearance">
-                <div class="flex flex-column gap-3">
-                    <div class="flex align-items-center justify-content-between">
-                        <label class="m-0">Dark Mode</label>
-                        <p-togglebutton [(ngModel)]="isDarkMode" onIcon="pi pi-moon" offIcon="pi pi-sun"
-                            (onChange)="toggleTheme()"></p-togglebutton>
+                <p-card>
+                    <ng-template pTemplate="header">
+                        <div class="flex items-center gap-2 p-4 pb-0">
+                            <i class="pi pi-shield text-xl text-[var(--primary-color)]"></i>
+                            <span class="font-bold text-lg">Security</span>
+                        </div>
+                    </ng-template>
+                    <div class="flex flex-col gap-3">
+                        <a routerLink="/app/change-password" class="no-underline">
+                            <p-button label="Change Password" icon="pi pi-lock"
+                                styleClass="p-button-outlined w-full"></p-button>
+                        </a>
+                        <p-divider></p-divider>
+                        <p-button label="Log Out" icon="pi pi-sign-out" severity="danger" (onClick)="logout()"
+                            styleClass="w-full"></p-button>
                     </div>
-                    <div class="flex align-items-center justify-content-between">
-                        <label class="m-0">Compact View</label>
-                        <p-togglebutton [(ngModel)]="isCompact" onIcon="pi pi-th-large" offIcon="pi pi-list"
-                            (onChange)="toggleCompact()"></p-togglebutton>
+                </p-card>
+            </div>
+        </p-tabpanel>
+
+        <!-- Appearance Tab -->
+        <p-tabpanel header="Appearance" leftIcon="pi pi-palette">
+            <div class="grid grid-cols-12 gap-4 grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+                <!-- Color Theme Picker -->
+                <p-card>
+                    <ng-template pTemplate="header">
+                        <div class="flex items-center gap-2 p-4 pb-0">
+                            <i class="pi pi-palette text-xl text-[var(--primary-color)]"></i>
+                            <span class="font-bold text-lg">Color Theme</span>
+                        </div>
+                    </ng-template>
+                    <p class="text-sm text-[var(--text-muted)] mb-3">Choose your preferred color scheme</p>
+                    <p-selectbutton [options]="themeOptions" [ngModel]="themeEngine.currentThemeId()"
+                        (onChange)="onThemeChange($event)" optionLabel="label" optionValue="value">
+                    </p-selectbutton>
+                </p-card>
+
+                <!-- Background Effect Picker -->
+                <p-card>
+                    <ng-template pTemplate="header">
+                        <div class="flex items-center gap-2 p-4 pb-0">
+                            <i class="pi pi-sparkles text-xl text-[var(--primary-color)]"></i>
+                            <span class="font-bold text-lg">Background Effect</span>
+                        </div>
+                    </ng-template>
+                    <p class="text-sm text-[var(--text-muted)] mb-3">Choose animated background style</p>
+                    <p-selectbutton [options]="effectOptions" [ngModel]="themeEngine.currentEffectId()"
+                        (onChange)="onEffectChange($event)" optionLabel="label" optionValue="value">
+                    </p-selectbutton>
+                </p-card>
+
+                <!-- PrimeNG Preset Picker -->
+                <p-card>
+                    <ng-template pTemplate="header">
+                        <div class="flex items-center gap-2 p-4 pb-0">
+                            <i class="pi pi-sliders-h text-xl text-[var(--primary-color)]"></i>
+                            <span class="font-bold text-lg">Component Preset</span>
+                        </div>
+                    </ng-template>
+                    <p class="text-sm text-[var(--text-muted)] mb-3">Choose PrimeNG component style</p>
+                    <p-selectbutton [options]="presetOptions" [ngModel]="themeEngine.currentPresetId()"
+                        (onChange)="onPresetChange($event)" optionLabel="label" optionValue="value">
+                    </p-selectbutton>
+                </p-card>
+
+                <!-- Compact Mode -->
+                <p-card>
+                    <ng-template pTemplate="header">
+                        <div class="flex items-center gap-2 p-4 pb-0">
+                            <i class="pi pi-compress text-xl text-[var(--primary-color)]"></i>
+                            <span class="font-bold text-lg">Layout</span>
+                        </div>
+                    </ng-template>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="font-medium">Compact Mode</span>
+                            <p class="text-sm text-[var(--text-muted)] m-0 mt-1">Reduce spacing for denser views</p>
+                        </div>
+                        <p-toggleswitch [ngModel]="themeEngine.isCompact()"
+                            (onChange)="themeEngine.setCompact($event.checked)"></p-toggleswitch>
                     </div>
-                </div>
-            </p-card>
-        </div>
+                </p-card>
+            </div>
+        </p-tabpanel>
 
-        <!-- Security Settings -->
-        <div class="col-12 md:col-6 p-3">
-            <p-card header="Security">
-                <div class="flex flex-column gap-3">
-                    <a routerLink="/app/change-password" class="no-underline">
-                        <p-button label="Change Password" icon="pi pi-lock"
-                            styleClass="p-button-outlined w-full"></p-button>
-                    </a>
-                    <p-button label="Log Out" icon="pi pi-sign-out" severity="danger" (onClick)="logout()"
-                        styleClass="w-full"></p-button>
-                </div>
-            </p-card>
-        </div>
-
-        <!-- Data Management -->
-        <div class="col-12 md:col-6 p-3">
-            <p-card header="Data Management">
-                <div class="flex flex-column gap-3">
-                    <a routerLink="/app/account-categories" class="no-underline">
-                        <p-button label="Manage Account Categories" icon="pi pi-folder"
-                            styleClass="p-button-outlined w-full"></p-button>
-                    </a>
-                    <a routerLink="/app/transaction-categories" class="no-underline">
-                        <p-button label="Manage Transaction Categories" icon="pi pi-tag"
-                            styleClass="p-button-outlined w-full"></p-button>
-                    </a>
-                </div>
-            </p-card>
-        </div>
-    </div>
+        <!-- Data Management Tab -->
+        <p-tabpanel header="Data" leftIcon="pi pi-database">
+            <div class="grid grid-cols-12 gap-4 grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <p-card>
+                    <ng-template pTemplate="header">
+                        <div class="flex items-center gap-2 p-4 pb-0">
+                            <i class="pi pi-database text-xl text-[var(--primary-color)]"></i>
+                            <span class="font-bold text-lg">Data Management</span>
+                        </div>
+                    </ng-template>
+                    <div class="flex flex-col gap-3">
+                        <a routerLink="/app/account-categories" class="no-underline">
+                            <p-button label="Manage Account Categories" icon="pi pi-folder"
+                                styleClass="p-button-outlined w-full"></p-button>
+                        </a>
+                        <a routerLink="/app/transaction-categories" class="no-underline">
+                            <p-button label="Manage Transaction Categories" icon="pi pi-tag"
+                                styleClass="p-button-outlined w-full"></p-button>
+                        </a>
+                    </div>
+                </p-card>
+            </div>
+        </p-tabpanel>
+    </p-tabs>
 </div>

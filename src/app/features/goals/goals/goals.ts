@@ -13,7 +13,6 @@ import { NotificationService } from '../../../core/services/notification.service
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, ...sharedPrimeModules],
   templateUrl: './goals.html',
-  styleUrl: './goals.scss'
 })
 export class Goals implements OnInit {
   private goalService = inject(GoalService);

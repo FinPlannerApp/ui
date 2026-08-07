@@ -19,7 +19,7 @@
       @for (col of columns; track col.field) {
       <td>
         @if (col.isLink && col.linkPath) {
-        <a [routerLink]="constructLink(col.linkPath, item)" class="text-primary hover:underline font-bold">
+        <a [routerLink]="constructLink(col.linkPath, item)" class="text-[var(--primary-color)] hover:underline font-bold">
           {{ item[col.field] }}
         </a>
         } @else if (col.isTransaction) {
@@ -45,7 +45,7 @@
     <tr>
       <td [attr.colspan]="(columns?.length || 0) + 1">
         @if (loading) {
-        <div class="flex flex-column gap-2">
+        <div class="flex flex-col gap-2">
           <p-skeleton width="100%" height="2rem"></p-skeleton>
           <p-skeleton width="100%" height="2rem"></p-skeleton>
           <p-skeleton width="100%" height="2rem"></p-skeleton>

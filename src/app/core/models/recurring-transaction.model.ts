@@ -3,7 +3,8 @@ export enum RecurrenceFrequency {
     Weekly = 2,
     Monthly = 3,
     Yearly = 4,
-    Custom = 5
+    Custom = 5,
+    OneTime = 6
 }
 
 // Matches Domain.Enums.RecurrenceDayOfWeek on the backend exactly — same

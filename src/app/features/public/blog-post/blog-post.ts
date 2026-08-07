@@ -6,7 +6,6 @@ import { BLOG_POSTS } from '../blog/blog';
   selector: 'app-blog-post',
   imports: [RouterLink],
   templateUrl: './blog-post.html',
-  styleUrl: './blog-post.scss'
 })
 export class BlogPost {
   private route = inject(ActivatedRoute);

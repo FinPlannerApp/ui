@@ -4,7 +4,7 @@
 <div class="transactions-page p-4">
   <!-- FILTER BAR (GitLab style + Local Signals) -->
   <div class="filter-bar flex flex-wrap gap-2">
-    <div class="flex align-items-center gap-2 mr-auto">
+    <div class="flex items-center gap-2 mr-auto">
       <p-button label="Back to Accounts" icon="pi pi-arrow-left" severity="secondary" [outlined]="true"
         routerLink="/app/accounts"></p-button>
       <p-button label="New Transaction" icon="pi pi-plus" (onClick)="showTransactionForm()"
@@ -22,7 +22,7 @@
       </p-select>
     </p-fieldset>
 
-    <div class="flex align-items-center gap-1">
+    <div class="flex items-center gap-1">
       <p-iconfield>
         <p-inputicon class="pi pi-search"></p-inputicon>
         <input pInputText type="text" name="transactionSearch" autocomplete="off" [ngModel]="globalSearch()"
@@ -40,21 +40,21 @@
 
   <!-- SUMMARY CARDS (Stat Card Style) -->
   @if(summary()) {
-  <div class="grid mb-4">
-    <div class="col-12 sm:col-6 lg:col-3">
+  <div class="grid grid-cols-12 gap-4 mb-4">
+    <div class="col-span-12 sm:col-span-6 lg:col-span-3">
       <app-stat-card label="B/F Amount" [value]="((summary()?.broughtForwardAmount || 0) | currency:'INR')!"
         icon="pi pi-history" iconColor="var(--orange-500)" secondaryValue="Opening balance for this month">
       </app-stat-card>
     </div>
-    <div class="col-12 sm:col-6 lg:col-3">
+    <div class="col-span-12 sm:col-span-6 lg:col-span-3">
       <app-stat-card label="Closing Balance" [value]="(summary()?.currentBalance | currency:'INR')!" icon="pi pi-wallet"
         iconColor="var(--blue-500)"></app-stat-card>
     </div>
-    <div class="col-12 sm:col-6 lg:col-3">
+    <div class="col-span-12 sm:col-span-6 lg:col-span-3">
       <app-stat-card label="Monthly Income" [value]="(summary()?.totalIncome | currency:'INR')!" icon="pi pi-arrow-up"
         iconColor="var(--green-500)"></app-stat-card>
     </div>
-    <div class="col-12 sm:col-6 lg:col-3">
+    <div class="col-span-12 sm:col-span-6 lg:col-span-3">
       <app-stat-card label="Monthly Expenses" [value]="(summary()?.totalExpenses | currency:'INR')!"
         icon="pi pi-arrow-down" iconColor="var(--red-500)"></app-stat-card>
     </div>
@@ -69,43 +69,43 @@
 
     @if (account.accountType === AccountType.CreditCard && account.creditCardDetails; as details) {
       <p-card styleClass="mb-4">
-        <div class="flex align-items-center gap-2 mb-3">
+        <div class="flex items-center gap-2 mb-3">
           <i class="pi pi-credit-card text-xl"></i>
           <span class="font-medium">Credit Card Details</span>
         </div>
-        <div class="grid">
+        <div class="grid grid-cols-12 gap-4 grid-cols-12 gap-4">
           @if (details.creditLimit) {
-            <div class="col-6 md:col-3">
+            <div class="col-span-6 md:col-span-3">
               <div class="text-sm text-secondary">Credit Limit</div>
               <div class="font-medium">{{ details.creditLimit | currency:'INR' }}</div>
             </div>
           }
           @if (details.minimumDueAmount) {
-            <div class="col-6 md:col-3">
+            <div class="col-span-6 md:col-span-3">
               <div class="text-sm text-secondary">Minimum Due</div>
               <div class="font-medium">{{ details.minimumDueAmount | currency:'INR' }}</div>
             </div>
           }
           @if (details.dueDate) {
-            <div class="col-6 md:col-3">
+            <div class="col-span-6 md:col-span-3">
               <div class="text-sm text-secondary">Due Date</div>
               <div class="font-medium">{{ details.dueDate | date:'mediumDate' }}</div>
             </div>
           }
           @if (details.statementClosingDate) {
-            <div class="col-6 md:col-3">
+            <div class="col-span-6 md:col-span-3">
               <div class="text-sm text-secondary">Bill Date</div>
               <div class="font-medium">{{ details.statementClosingDate | date:'mediumDate' }}</div>
             </div>
           }
           @if (details.annualFee) {
-            <div class="col-6 md:col-3">
+            <div class="col-span-6 md:col-span-3">
               <div class="text-sm text-secondary">Annual Fee</div>
               <div class="font-medium">{{ details.annualFee | currency:'INR' }}</div>
             </div>
           }
           @if (details.interestRate) {
-            <div class="col-6 md:col-3">
+            <div class="col-span-6 md:col-span-3">
               <div class="text-sm text-secondary">Interest Rate</div>
               <div class="font-medium">{{ details.interestRate }}%</div>
             </div>
@@ -116,31 +116,31 @@
 
     @if (account.accountType === AccountType.Loan && account.loanDetails; as details) {
       <p-card styleClass="mb-4">
-        <div class="flex align-items-center gap-2 mb-3">
+        <div class="flex items-center gap-2 mb-3">
           <i class="pi pi-money-bill text-xl"></i>
           <span class="font-medium">Loan Details</span>
         </div>
-        <div class="grid">
+        <div class="grid grid-cols-12 gap-4 grid-cols-12 gap-4">
           @if (details.principalAmount) {
-            <div class="col-6 md:col-3">
+            <div class="col-span-6 md:col-span-3">
               <div class="text-sm text-secondary">Principal</div>
               <div class="font-medium">{{ details.principalAmount | currency:'INR' }}</div>
             </div>
           }
           @if (details.interestRate) {
-            <div class="col-6 md:col-3">
+            <div class="col-span-6 md:col-span-3">
               <div class="text-sm text-secondary">Interest Rate</div>
               <div class="font-medium">{{ details.interestRate }}%</div>
             </div>
           }
           @if (details.emiAmount) {
-            <div class="col-6 md:col-3">
+            <div class="col-span-6 md:col-span-3">
               <div class="text-sm text-secondary">EMI</div>
               <div class="font-medium">{{ details.emiAmount | currency:'INR' }}</div>
             </div>
           }
           @if (details.nextEmiDueDate) {
-            <div class="col-6 md:col-3">
+            <div class="col-span-6 md:col-span-3">
               <div class="text-sm text-secondary">Next EMI Due</div>
               <div class="font-medium">{{ details.nextEmiDueDate | date:'mediumDate' }}</div>
             </div>
@@ -151,29 +151,29 @@
 
     @if (account.accountType === AccountType.Bank && account.bankAccountDetails; as details) {
       <p-card styleClass="mb-4">
-        <div class="flex align-items-center gap-2 mb-3">
+        <div class="flex items-center gap-2 mb-3">
           <i class="pi pi-percentage text-xl"></i>
           <span class="font-medium">Interest Details</span>
         </div>
-        <div class="grid">
+        <div class="grid grid-cols-12 gap-4 grid-cols-12 gap-4">
           @if (details.interestRate) {
-            <div class="col-6 md:col-3">
+            <div class="col-span-6 md:col-span-3">
               <div class="text-sm text-secondary">Interest Rate</div>
               <div class="font-medium">{{ details.interestRate }}% p.a.</div>
             </div>
-            <div class="col-6 md:col-3">
+            <div class="col-span-6 md:col-span-3">
               <div class="text-sm text-secondary">Compounds</div>
               <div class="font-medium">{{ interestFrequencyAdverb(details.interestFrequency) }}</div>
             </div>
             @if (estimatedInterest() !== null) {
-              <div class="col-6 md:col-3">
+              <div class="col-span-6 md:col-span-3">
                 <div class="text-sm text-secondary">Est. per {{ interestFrequencyLabel(details.interestFrequency) }}</div>
                 <div class="font-medium">{{ estimatedInterest() | currency:'INR' }}</div>
               </div>
             }
           }
           @if (details.minimumBalance) {
-            <div class="col-6 md:col-3">
+            <div class="col-span-6 md:col-span-3">
               <div class="text-sm text-secondary">Minimum Balance</div>
               <div class="font-medium">{{ details.minimumBalance | currency:'INR' }}</div>
             </div>
@@ -189,8 +189,8 @@
 
   @if (bucketBreakdown(); as breakdown) {
     <p-card styleClass="mb-4">
-      <div class="flex align-items-center justify-content-between mb-3">
-        <div class="flex align-items-center gap-2">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
           <i class="pi pi-wallet text-xl"></i>
           <span class="font-medium">Savings Buckets</span>
         </div>
@@ -198,7 +198,7 @@
       </div>
 
       @if (showBucketForm()) {
-        <div class="flex gap-2 mb-3 align-items-end">
+        <div class="flex gap-2 mb-3 items-end">
           <div class="flex-1">
             <label class="text-sm text-secondary">Bucket name</label>
             <input type="text" pInputText class="w-full" placeholder="e.g. Emergency Fund"
@@ -213,10 +213,10 @@
         </div>
       }
 
-      <div class="flex flex-column gap-2">
+      <div class="flex flex-col gap-2">
         @for (bucket of breakdown.buckets; track bucket.id) {
-          <div class="flex align-items-center justify-content-between p-2 border-round" style="background: rgba(255,255,255,0.03);">
-            <div class="flex flex-column">
+          <div class="flex items-center justify-between p-2 rounded" style="background: rgba(255,255,255,0.03);">
+            <div class="flex flex-col">
               <span>{{ bucket.name }}</span>
               @if (bucketInterestShare(bucket.allocatedAmount); as share) {
                 <span class="text-xs text-secondary">
@@ -224,14 +224,14 @@
                 </span>
               }
             </div>
-            <div class="flex align-items-center gap-2">
+            <div class="flex items-center gap-2">
               <span class="font-medium">{{ bucket.allocatedAmount | currency:'INR' }}</span>
               <p-button icon="pi pi-trash" [text]="true" severity="danger" (onClick)="deleteBucket(bucket.id)"></p-button>
             </div>
           </div>
         }
 
-        <div class="flex align-items-center justify-content-between p-2 text-secondary text-sm">
+        <div class="flex items-center justify-between p-2 text-secondary text-sm">
           <span>Unallocated</span>
           <span>{{ breakdown.unallocated | currency:'INR' }}</span>
         </div>
@@ -258,7 +258,7 @@
       </ng-template>
     </app-data-table>
     } @else {
-    <div class="flex justify-content-center p-4">
+    <div class="flex justify-center p-4">
       <p-progressSpinner></p-progressSpinner>
     </div>
     }

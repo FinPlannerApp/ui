@@ -1,0 +1,76 @@
+/* ============================================================
+   Effect: Aurora Borealis
+   Northern-lights style sweeping color bands.
+   ============================================================ */
+
+@keyframes effect-aurora-sweep {
+  0% {
+    opacity: 0.4;
+    transform: rotate(-5deg) translateY(0);
+  }
+  33% {
+    opacity: 0.6;
+    transform: rotate(0deg) translateY(-20px);
+  }
+  66% {
+    opacity: 0.5;
+    transform: rotate(3deg) translateY(10px);
+  }
+  100% {
+    opacity: 0.4;
+    transform: rotate(-5deg) translateY(0);
+  }
+}
+
+@keyframes effect-aurora-glow {
+  0%, 100% { opacity: 0.3; filter: blur(80px); }
+  50% { opacity: 0.5; filter: blur(120px); }
+}
+
+.effect-aurora .layout-wrapper,
+.effect-aurora .auth-background {
+  background: var(--bg-gradient-1) !important;
+  position: relative;
+}
+
+.effect-aurora .layout-wrapper::before,
+.effect-aurora .auth-background::before {
+  content: '';
+  position: fixed;
+  top: -30%;
+  left: -10%;
+  width: 120%;
+  height: 60%;
+  background: linear-gradient(
+    135deg,
+    rgba(16, 185, 129, 0.2) 0%,
+    rgba(56, 189, 248, 0.15) 25%,
+    rgba(139, 92, 246, 0.15) 50%,
+    rgba(236, 72, 153, 0.1) 75%,
+    transparent 100%
+  );
+  border-radius: 50%;
+  animation: effect-aurora-sweep 20s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.effect-aurora .layout-wrapper::after,
+.effect-aurora .auth-background::after {
+  content: '';
+  position: fixed;
+  bottom: -20%;
+  right: -10%;
+  width: 80%;
+  height: 50%;
+  background: linear-gradient(
+    225deg,
+    rgba(56, 189, 248, 0.15) 0%,
+    rgba(16, 185, 129, 0.12) 40%,
+    transparent 100%
+  );
+  border-radius: 50%;
+  animation: effect-aurora-glow 12s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}

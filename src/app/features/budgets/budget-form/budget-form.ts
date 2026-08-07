@@ -15,8 +15,7 @@ import { sharedPrimeModules } from '../../../shared/prime-imports';
     selector: 'app-budget-form',
     imports: [CommonModule, ReactiveFormsModule, FormField, ...sharedPrimeModules],
     templateUrl: './budget-form.html',
-    styleUrl: './budget-form.scss',
-    changeDetection: ChangeDetectionStrategy.OnPush
+      changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BudgetForm implements OnInit {
     budgetForm: FormGroup;

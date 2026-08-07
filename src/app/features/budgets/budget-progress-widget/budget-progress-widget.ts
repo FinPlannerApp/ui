@@ -11,8 +11,7 @@ import { ButtonModule } from 'primeng/button';
     standalone: true,
     imports: [CommonModule, ProgressBarModule, CardModule, CurrencyPipe, DecimalPipe, RouterLink, ButtonModule],
     templateUrl: './budget-progress-widget.html',
-    styleUrl: './budget-progress-widget.scss',
-    changeDetection: ChangeDetectionStrategy.OnPush
+      changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BudgetProgressWidget {
     public state = inject(DashboardState);

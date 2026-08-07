@@ -1,14 +1,33 @@
-<p-card header="Financial Health" styleClass="h-full shadow-2 overflow-hidden">
+<p-card styleClass="glass-card h-full shadow-lg overflow-hidden relative">
+    <ng-template pTemplate="title">
+        <div class="flex items-center justify-between w-full mb-1">
+            <div class="flex items-center gap-2">
+                <i class="pi pi-heart text-emerald-400"></i>
+                <span class="text-xl font-bold">Financial Health</span>
+            </div>
+            <!-- Glowing Animated (i) Info Button -->
+            <button 
+                type="button" 
+                (click)="showDrawer.set(true)"
+                pTooltip="View Health Analysis & Insights" 
+                tooltipPosition="left"
+                class="glow-info-btn group relative w-9 h-9 rounded-full bg-emerald-500/10 border border-emerald-500/40 text-emerald-400 flex items-center justify-center cursor-pointer hover:bg-emerald-500/20 hover:scale-105 transition-all duration-300 shadow-md shadow-emerald-500/20 outline-none"
+            >
+                <i class="pi pi-info-circle text-lg font-bold group-hover:rotate-12 transition-transform"></i>
+            </button>
+        </div>
+    </ng-template>
+
     @if (health(); as h) {
-    <div class="flex flex-column align-items-center gap-4">
+    <div class="flex flex-col items-center gap-3">
         <!-- Custom SVG Gauge -->
-        <div class="gauge-container relative flex justify-content-center">
-            <svg width="200" height="120" viewBox="0 0 200 120">
+        <div class="gauge-container relative flex justify-center mt-1">
+            <svg width="200" height="110" viewBox="0 0 200 110">
                 <!-- Background Track -->
-                <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#e2e8f0" stroke-width="12"
+                <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="12"
                     stroke-linecap="round" />
 
-                <!-- Colored Segments (Simplified Gradient) -->
+                <!-- Colored Segments (Gradient) -->
                 <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#gaugeGradient)" stroke-width="12"
                     stroke-linecap="round" />
 
@@ -20,85 +39,157 @@
                     </linearGradient>
                 </defs>
 
-                <!-- Needle -->
-                <line x1="100" y1="100" x2="100" y2="40" stroke="#1e293b" stroke-width="3" stroke-linecap="round"
+                <!-- Needle (Bright visible color) -->
+                <line x1="100" y1="100" x2="100" y2="38" stroke="#38bdf8" stroke-width="4" stroke-linecap="round"
                     [style.transform]="'rotate(' + needleRotation() + 'deg)'"
                     style="transform-origin: 100px 100px; transition: transform 1s cubic-bezier(0.34, 1.56, 0.64, 1);" />
 
                 <!-- Pivot -->
-                <circle cx="100" cy="100" r="6" fill="#1e293b" />
+                <circle cx="100" cy="100" r="7" fill="#38bdf8" />
             </svg>
 
-            <div class="absolute bottom-0 text-center" style="transform: translateY(-20px);">
-                <div class="text-4xl font-bold line-height-1">{{ score() }}</div>
-                <div class="text-sm font-medium uppercase mt-1" [class]="statusClass()">{{ h.status }}</div>
+            <div class="absolute bottom-0 text-center flex flex-col items-center justify-end pb-1">
+                <div class="text-3xl font-extrabold text-main leading-none">{{ score() }}</div>
+                <div class="text-xs font-bold uppercase mt-1 tracking-wider" [class]="statusClass()">{{ h.status }}</div>
             </div>
         </div>
 
-        <!-- Metrics Summary -->
-        <div class="flex w-full justify-content-around border-top-1 surface-border pt-3 mt-2">
-            <div class="text-center">
-                <div class="text-xs text-secondary font-medium uppercase mb-1">Savings</div>
-                <div class="font-bold text-sm">{{ h.savingsRate | percent:'1.0-1' }}</div>
+        <!-- Metrics Summary (Savings & Budgets Side-by-Side) -->
+        <div class="flex w-full justify-around items-center border-t border-white/10 pt-3.5 mt-1">
+            <div class="text-center px-2 flex-1">
+                <div class="text-xs text-muted font-bold uppercase tracking-wider mb-1">Savings</div>
+                <div class="font-extrabold text-base text-emerald-400">{{ h.savingsRate | percent:'1.0-1' }}</div>
             </div>
-            <div class="text-center">
-                <div class="text-xs text-secondary font-medium uppercase mb-1">Budgets</div>
-                <div class="font-bold text-sm">{{ h.budgetAdherence | percent:'1.0-1' }}</div>
+            <div class="w-px h-8 bg-white/10"></div>
+            <div class="text-center px-2 flex-1">
+                <div class="text-xs text-muted font-bold uppercase tracking-wider mb-1">Budgets</div>
+                <div class="font-extrabold text-base text-emerald-400">{{ h.budgetAdherence | percent:'1.0-1' }}</div>
             </div>
-        </div>
-
-        <!-- Component Breakdown -->
-        <div class="w-full border-top-1 surface-border pt-2 mt-1">
-            <button type="button" class="w-full flex align-items-center justify-content-between p-1 border-none bg-transparent cursor-pointer text-xs text-secondary"
-                (click)="showBreakdown.set(!showBreakdown())">
-                <span>Why this score?</span>
-                <i class="pi" [ngClass]="showBreakdown() ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
-            </button>
-
-            @if (showBreakdown()) {
-                <div class="flex flex-column gap-2 mt-2">
-                    @for (component of h.components; track component.name) {
-                        <div class="flex flex-column gap-1">
-                            <div class="flex align-items-center justify-content-between text-xs">
-                                <span class="font-medium">{{ component.name }}</span>
-                                <span class="text-secondary">{{ component.pointsEarned }} / {{ component.maxPoints }}</span>
-                            </div>
-                            <div class="w-full border-round overflow-hidden" style="height: 4px; background: rgba(255,255,255,0.08);">
-                                <div class="h-full border-round" [style.width.%]="(component.pointsEarned / component.maxPoints) * 100"
-                                    style="background: var(--primary-color);"></div>
-                            </div>
-                            <span class="text-xs text-secondary line-height-2">{{ component.explanation }}</span>
-                        </div>
-                    }
-                </div>
-            }
-        </div>
-
-        <!-- Insights List -->
-        <div class="w-full flex flex-column gap-2 mt-2">
-            @for (insight of h.insights; track insight.message) {
-            <div class="insight-item p-2 border-round flex align-items-start gap-2" [ngClass]="{
-                 'bg-blue-50 text-blue-700': insight.type === 'info',
-                 'bg-green-50 text-green-700': insight.type === 'success',
-                 'bg-orange-50 text-orange-700': insight.type === 'warning'
-               }">
-                <i class="pi" [ngClass]="{
-                 'pi-info-circle': insight.type === 'info',
-                 'pi-check-circle': insight.type === 'success',
-                 'pi-exclamation-triangle': insight.type === 'warning'
-               }" style="font-size: 0.9rem; margin-top: 2px;"></i>
-                <span class="text-xs line-height-2">{{ insight.message }}</span>
-            </div>
-            }
         </div>
     </div>
     } @else {
-    <div class="flex flex-column gap-3">
-        <div class="h-8rem border-round surface-100 flex align-items-center justify-content-center">
-            <i class="pi pi-spin pi-spinner text-4xl text-300"></i>
+    <div class="flex flex-col gap-3">
+        <div class="h-28 rounded-2xl bg-white/5 flex items-center justify-center">
+            <i class="pi pi-spin pi-spinner text-3xl text-emerald-400"></i>
         </div>
-        <div class="h-2rem border-round surface-100"></div>
-        <div class="h-2rem border-round surface-100"></div>
+        <div class="h-6 rounded-xl bg-white/5"></div>
     </div>
     }
 </p-card>
+
+<!-- Right Drawer / Sidebar Detailed Analysis Panel -->
+<p-drawer 
+  [visible]="showDrawer()" 
+  (visibleChange)="showDrawer.set($event)" 
+  position="right" 
+  [style]="{ width: '460px', maxWidth: '100vw' }"
+  styleClass="glass-sidebar"
+>
+    <ng-template pTemplate="header">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                <i class="pi pi-heart text-xl"></i>
+            </div>
+            <div>
+                <h2 class="text-lg font-extrabold text-main m-0">Financial Health Analysis</h2>
+                <p class="text-xs text-muted m-0">Score factors, point breakdown & recommendations</p>
+            </div>
+        </div>
+    </ng-template>
+
+    @if (health(); as h) {
+        <div class="flex flex-col gap-6 py-2">
+            
+            <!-- Score Summary Banner -->
+            <div class="p-4 rounded-3xl bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent border border-emerald-500/20 flex items-center justify-between">
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-muted block mb-1">Overall Score</span>
+                    <div class="text-4xl font-black text-main leading-none">{{ score() }} <span class="text-sm font-normal text-muted">/ 100</span></div>
+                    <div class="text-xs font-bold uppercase tracking-wider mt-2 px-2.5 py-1 inline-block rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                        {{ h.status }}
+                    </div>
+                </div>
+
+                <div class="text-right border-l border-white/10 pl-4">
+                    <div class="text-xs text-muted mb-0.5 font-semibold">Savings Rate</div>
+                    <div class="text-base font-extrabold text-emerald-400 mb-2">{{ h.savingsRate | percent:'1.0-1' }}</div>
+                    <div class="text-xs text-muted mb-0.5 font-semibold">Budget Adherence</div>
+                    <div class="text-base font-extrabold text-emerald-400">{{ h.budgetAdherence | percent:'1.0-1' }}</div>
+                </div>
+            </div>
+
+            <!-- Factor Breakdown Section -->
+            <div class="flex flex-col gap-3">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-muted m-0 flex items-center gap-2">
+                    <i class="pi pi-sliders text-emerald-400"></i>
+                    Score Factors & Point Allocation
+                </h3>
+
+                <div class="flex flex-col gap-3">
+                    @for (component of h.components; track component.name) {
+                        <div class="p-4 rounded-2xl bg-white/5 border border-white/10 flex flex-col gap-2 hover:bg-white/[0.07] transition-all">
+                            <div class="flex items-center justify-between">
+                                <span class="font-extrabold text-sm text-main">{{ component.name }}</span>
+                                <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                    {{ component.pointsEarned }} / {{ component.maxPoints }} pts
+                                </span>
+                            </div>
+
+                            <!-- Progress Bar -->
+                            <div class="w-full rounded-full overflow-hidden h-2 bg-white/10 mt-1">
+                                <div 
+                                    class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-400 transition-all duration-700 shadow-sm" 
+                                    [style.width.%]="(component.pointsEarned / component.maxPoints) * 100"
+                                ></div>
+                            </div>
+
+                            <p class="text-xs text-muted leading-relaxed m-0 mt-1">{{ component.explanation }}</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Recommendations & Insights Section -->
+            @if (h.insights && h.insights.length > 0) {
+                <div class="flex flex-col gap-3">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-muted m-0 flex items-center gap-2">
+                        <i class="pi pi-lightbulb text-amber-400"></i>
+                        Recommendations & Insights
+                    </h3>
+
+                    <div class="flex flex-col gap-2.5">
+                        @for (insight of h.insights; track insight.message) {
+                            <div 
+                                class="p-3.5 rounded-2xl flex items-start gap-3 border text-xs sm:text-sm font-medium leading-snug" 
+                                [ngClass]="{
+                                    'bg-blue-500/10 border-blue-500/25 text-blue-300': insight.type === 'info',
+                                    'bg-emerald-500/10 border-emerald-500/25 text-emerald-300': insight.type === 'success',
+                                    'bg-amber-500/10 border-amber-500/25 text-amber-300': insight.type === 'warning'
+                                }"
+                            >
+                                <div 
+                                    class="w-7 h-7 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
+                                    [ngClass]="{
+                                        'bg-blue-500/20 text-blue-400': insight.type === 'info',
+                                        'bg-emerald-500/20 text-emerald-400': insight.type === 'success',
+                                        'bg-amber-500/20 text-amber-400': insight.type === 'warning'
+                                    }"
+                                >
+                                    <i class="pi text-sm" [ngClass]="{
+                                        'pi-info-circle': insight.type === 'info',
+                                        'pi-check-circle': insight.type === 'success',
+                                        'pi-exclamation-triangle': insight.type === 'warning'
+                                    }"></i>
+                                </div>
+                                <div class="pt-0.5">
+                                    <span>{{ insight.message }}</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+        </div>
+    }
+</p-drawer>

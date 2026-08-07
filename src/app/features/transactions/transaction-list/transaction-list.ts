@@ -54,7 +54,6 @@ import { AccountType, InterestFrequency } from '../../../core/models/account-typ
     ...sharedPrimeModules
   ],
   templateUrl: './transaction-list.html',
-  styleUrl: './transaction-list.scss',
   providers: [DialogService, MessageService, ConfirmationService],
   changeDetection: ChangeDetectionStrategy.OnPush
 })

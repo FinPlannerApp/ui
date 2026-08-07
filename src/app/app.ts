@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
-import { Theme } from './core/services/theme';
+import { ThemeEngine } from './core/services/theme';
 import { ToastModule } from 'primeng/toast';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
@@ -16,10 +16,9 @@ import { MessageService } from 'primeng/api';
   selector: 'app-root',
   imports: [RouterOutlet, ToastModule, DialogModule, ButtonModule, ProgressBarModule, ConfirmDialogModule],
   templateUrl: './app.html',
-  styleUrl: './app.scss'
 })
 export class App {
-  private themeService = inject(Theme);
+  private themeEngine = inject(ThemeEngine);
   private sessionSync = inject(SessionSyncService);
   protected backendStatus = inject(BackendStatusService);
   protected readonly title = signal('Financial Management App');

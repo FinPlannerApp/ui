@@ -30,7 +30,28 @@ import { DragDropModule } from 'primeng/dragdrop';
 import { TagModule } from 'primeng/tag';
 import { FieldsetModule } from 'primeng/fieldset';
 
+/* ─── New PrimeNG Components ─── */
+import { SkeletonModule } from 'primeng/skeleton';
+import { ScrollTopModule } from 'primeng/scrolltop';
+import { SelectButtonModule } from 'primeng/selectbutton';
+import { SpeedDialModule } from 'primeng/speeddial';
+import { DividerModule } from 'primeng/divider';
+import { ChipModule } from 'primeng/chip';
+import { BadgeModule } from 'primeng/badge';
+import { MessageModule } from 'primeng/message';
+import { ToolbarModule } from 'primeng/toolbar';
+import { SplitterModule } from 'primeng/splitter';
+import { TabsModule } from 'primeng/tabs';
+import { AccordionModule } from 'primeng/accordion';
+import { KnobModule } from 'primeng/knob';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { PanelModule } from 'primeng/panel';
+import { MeterGroupModule } from 'primeng/metergroup';
+import { TimelineModule } from 'primeng/timeline';
+import { ProgressBarModule } from 'primeng/progressbar';
+
 export const sharedPrimeModules = [
+    /* Original modules */
     FieldsetModule,
     ButtonModule,
     CardModule,
@@ -61,5 +82,25 @@ export const sharedPrimeModules = [
     EditorModule,
     FileUploadModule,
     DragDropModule,
-    TagModule
+    TagModule,
+
+    /* New modules */
+    SkeletonModule,
+    ScrollTopModule,
+    SelectButtonModule,
+    SpeedDialModule,
+    DividerModule,
+    ChipModule,
+    BadgeModule,
+    MessageModule,
+    ToolbarModule,
+    SplitterModule,
+    TabsModule,
+    AccordionModule,
+    KnobModule,
+    ToggleSwitchModule,
+    PanelModule,
+    MeterGroupModule,
+    TimelineModule,
+    ProgressBarModule,
 ];

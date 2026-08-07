@@ -1,11 +1,11 @@
 <form [formGroup]="switchForm" (ngSubmit)="onSubmit()" class="p-4">
-    <div class="field flex flex-column gap-2">
+    <div class="field flex flex-col gap-2">
         <label for="destAccount">Select New Account</label>
         <p-select id="destAccount" [options]="filteredAccounts()" formControlName="destinationAccountId"
             optionLabel="name" optionValue="id" [filter]="true" placeholder="Choose an account" class="w-full"
             appendTo="body"></p-select>
     </div>
-    <div class="flex justify-content-end gap-2 mt-4">
+    <div class="flex justify-end gap-2 mt-4">
         <p-button label="Cancel" severity="secondary" (onClick)="ref.close()"></p-button>
         <p-button label="Switch" type="submit" [disabled]="switchForm.invalid"></p-button>
     </div>

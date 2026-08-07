@@ -9,7 +9,7 @@
             style="color: var(--text-muted); max-width: 600px; margin-left: auto; margin-right: auto;">
             Track spending, manage accounts, and build wealth — all in one beautifully crafted platform.
         </p>
-        <div class="flex justify-content-center gap-3 fade-in">
+        <div class="flex justify-center gap-3 fade-in">
             <a routerLink="/register" class="no-underline">
                 <p-button label="Get Started Free" icon="pi pi-arrow-right" iconPos="right"
                     styleClass="p-button-lg"></p-button>
@@ -21,9 +21,9 @@
     </div>
 
     <!-- Feature Highlights Grid -->
-    <div class="grid max-w-6xl mx-auto mt-8 mb-8">
-        <div class="col-12 md:col-4 p-3">
-            <div class="glass-card p-5 text-center border-round-2xl h-full">
+    <div class="grid grid-cols-12 gap-4 max-w-6xl mx-auto mt-8 mb-8">
+        <div class="col-span-12 md:col-span-4 p-3">
+            <div class="glass-card p-5 text-center rounded-2xl h-full">
                 <i class="pi pi-wallet text-5xl mb-3"
                     style="background: linear-gradient(135deg, #10b981, #34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"></i>
                 <h3 class="text-xl font-bold mb-2">Unlimited Accounts</h3>
@@ -31,8 +31,8 @@
                     dashboard — completely free.</p>
             </div>
         </div>
-        <div class="col-12 md:col-4 p-3">
-            <div class="glass-card p-5 text-center border-round-2xl h-full">
+        <div class="col-span-12 md:col-span-4 p-3">
+            <div class="glass-card p-5 text-center rounded-2xl h-full">
                 <i class="pi pi-chart-pie text-5xl mb-3"
                     style="background: linear-gradient(135deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"></i>
                 <h3 class="text-xl font-bold mb-2">Visual Analytics</h3>
@@ -40,8 +40,8 @@
                     monthly comparisons at a glance.</p>
             </div>
         </div>
-        <div class="col-12 md:col-4 p-3">
-            <div class="glass-card p-5 text-center border-round-2xl h-full">
+        <div class="col-span-12 md:col-span-4 p-3">
+            <div class="glass-card p-5 text-center rounded-2xl h-full">
                 <i class="pi pi-shield text-5xl mb-3"
                     style="background: linear-gradient(135deg, #f59e0b, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"></i>
                 <h3 class="text-xl font-bold mb-2">Bank-Grade Security</h3>
@@ -52,22 +52,22 @@
     </div>
 
     <div class="text-center py-6 mb-6">
-        <div class="grid max-w-5xl mx-auto">
-            <div class="col-6 md:col-3 mb-4 md:mb-0">
+        <div class="grid grid-cols-12 gap-4 max-w-5xl mx-auto">
+            <div class="col-span-6 md:col-span-3 mb-4 md:mb-0">
                 <h2 class="text-4xl font-bold m-0" style="color: #10b981;">{{ formatValue(stats().totalUsers) }}+</h2>
                 <p style="color: var(--text-muted);">Active Users</p>
             </div>
-            <div class="col-6 md:col-3 mb-4 md:mb-0">
+            <div class="col-span-6 md:col-span-3 mb-4 md:mb-0">
                 <h2 class="text-4xl font-bold m-0" style="color: #38bdf8;">{{ formatValue(stats().totalAccounts) }}+
                 </h2>
                 <p style="color: var(--text-muted);">Accounts Managed</p>
             </div>
-            <div class="col-6 md:col-3">
+            <div class="col-span-6 md:col-span-3">
                 <h2 class="text-4xl font-bold m-0" style="color: #818cf8;">{{ formatValue(stats().totalTransactions) }}+
                 </h2>
                 <p style="color: var(--text-muted);">Transactions Tracked</p>
             </div>
-            <div class="col-6 md:col-3">
+            <div class="col-span-6 md:col-span-3">
                 <h2 class="text-4xl font-bold m-0" style="color: #f59e0b;">{{
                     formatValue(stats().totalTransactionVolume) }}+</h2>
                 <p style="color: var(--text-muted);">Volume Handled (₹)</p>
@@ -76,7 +76,7 @@
     </div>
 
     <!-- CTA Section -->
-    <div class="glass-card p-6 text-center border-round-3xl max-w-3xl mx-auto mb-6">
+    <div class="glass-card p-6 text-center rounded-3xl max-w-3xl mx-auto mb-6">
         <h2 class="text-3xl font-bold mb-3">Ready to simplify your finances?</h2>
         <p class="text-lg mb-4" style="color: var(--text-muted);">Join users who trust Financial Planner to manage their
             money smarter.</p>

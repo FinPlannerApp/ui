@@ -25,7 +25,6 @@ import { BreadcrumbService } from '../../../core/layout/breadcrumb.service';
     StatCard
   ],
   templateUrl: './dashboard.html',
-  styleUrl: './dashboard.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Dashboard implements OnInit {
@@ -51,11 +50,11 @@ export class Dashboard implements OnInit {
     if (!data) return { labels: [], datasets: [] };
 
     const colors = [
-      '#3B82F6', '#8B5CF6', '#14B8A6', '#F97316', '#EC4899', '#06B6D4', '#6366F1'
+      '#10b981', '#38bdf8', '#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6', '#f97316'
     ];
 
     const hoverColors = [
-      '#60A5FA', '#A78BFA', '#2DD4BF', '#FB923C', '#F472B6', '#22D3EE', '#818CF8'
+      '#34d399', '#7dd3fc', '#fbbf24', '#f472b6', '#a78bfa', '#2dd4bf', '#fb923c'
     ];
 
     return {
@@ -96,11 +95,8 @@ export class Dashboard implements OnInit {
   }
 
   ngOnInit() {
-    // Delay slightly to ensure theme CSS variables are computed on the body
-    setTimeout(() => {
-      this.setupSpendingChartOptions();
-      this.cdr.markForCheck();
-    }, 50);
+    this.setupSpendingChartOptions();
+    this.cdr.markForCheck();
   }
 
   onDateChange(newDate: any) {
@@ -119,30 +115,30 @@ export class Dashboard implements OnInit {
   }
 
   setupSpendingChartOptions(): void {
-    const documentStyle = getComputedStyle(document.body);
-    const textColor = documentStyle.getPropertyValue('--text-color') || '#9ca3af'; // Fallback to accessible gray
-    const surfaceBorder = documentStyle.getPropertyValue('--surface-border') || '#4b5563';
-
     this.spendingChartOptions = {
-      cutout: '70%', // Creates the elegant doughnut hole
+      cutout: '68%',
+      responsive: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: {
-          position: 'right', // Move legend to the side rather than top
+          position: 'right',
           labels: {
             usePointStyle: true,
-            color: textColor,
-            padding: 20,
+            pointStyle: 'circle',
+            color: '#f4f4f5', // High-contrast white/light-gray text for dark screens!
+            padding: 16,
             font: {
               size: 13,
-              family: 'inherit'
+              weight: '600',
+              family: 'Outfit, sans-serif'
             }
           }
         },
         tooltip: {
-          backgroundColor: documentStyle.getPropertyValue('--surface-overlay'),
-          titleColor: textColor,
-          bodyColor: textColor,
-          borderColor: surfaceBorder,
+          backgroundColor: 'rgba(15, 23, 42, 0.95)',
+          titleColor: '#f4f4f5',
+          bodyColor: '#38bdf8',
+          borderColor: 'rgba(255, 255, 255, 0.15)',
           borderWidth: 1,
           padding: 12,
           boxPadding: 6,
@@ -150,7 +146,7 @@ export class Dashboard implements OnInit {
         }
       },
       animation: {
-        animateScale: true, // Smooth pop-in animation
+        animateScale: true,
         animateRotate: true
       }
     };

@@ -1,23 +1,85 @@
-<p-card header="Upcoming Obligations" styleClass="h-full shadow-2">
+<p-card styleClass="glass-card h-full shadow-lg overflow-hidden relative">
+  <ng-template pTemplate="title">
+    <div class="flex items-center justify-between w-full gap-2 mb-1">
+      
+      <!-- Header Left: Icon + Title + Count Badge -->
+      <div class="flex items-center gap-2 min-w-0">
+        <i class="pi pi-calendar text-amber-400 text-lg sm:text-xl shrink-0"></i>
+        <span class="text-base sm:text-xl font-extrabold text-main truncate">Upcoming Obligations</span>
+        @if (totalCount() > 0) {
+          <span class="text-xs font-black px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 shrink-0">
+            {{ totalCount() }}
+          </span>
+        }
+      </div>
+
+      <!-- Header Right: Single Glowing Action Button -->
+      <div class="flex items-center shrink-0">
+        @if (hasMore()) {
+          <button 
+            type="button" 
+            (click)="showDrawer.set(true)"
+            pTooltip="View All Obligations & Schedule" 
+            tooltipPosition="left"
+            class="glow-info-btn group relative px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/40 text-amber-400 flex items-center gap-1.5 cursor-pointer hover:bg-amber-500/20 hover:scale-105 transition-all duration-300 shadow-md shadow-amber-500/20 outline-none whitespace-nowrap"
+          >
+            <span class="text-xs font-extrabold">+{{ totalCount() - 4 }} More</span>
+            <i class="pi pi-arrow-right text-xs font-bold group-hover:translate-x-0.5 transition-transform"></i>
+          </button>
+        } @else {
+          <button 
+            type="button" 
+            (click)="showDrawer.set(true)"
+            pTooltip="View All Obligations & Schedule" 
+            tooltipPosition="left"
+            class="glow-info-btn group relative w-9 h-9 rounded-full bg-amber-500/10 border border-amber-500/40 text-amber-400 flex items-center justify-center cursor-pointer hover:bg-amber-500/20 hover:scale-105 transition-all duration-300 shadow-md shadow-amber-500/20 outline-none"
+          >
+            <i class="pi pi-list text-base font-bold group-hover:scale-110 transition-transform"></i>
+          </button>
+        }
+      </div>
+
+    </div>
+  </ng-template>
+
   @if (isLoading()) {
-    <div class="flex flex-column gap-2">
-      <div class="h-2rem border-round surface-100"></div>
-      <div class="h-2rem border-round surface-100"></div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+      <div class="h-20 rounded-2xl bg-white/5 animate-pulse"></div>
+      <div class="h-20 rounded-2xl bg-white/5 animate-pulse"></div>
+      <div class="h-20 rounded-2xl bg-white/5 animate-pulse"></div>
     </div>
   } @else if (obligations().length === 0) {
-    <p class="text-sm text-secondary m-0">Nothing due in the next 30 days.</p>
+    <div class="flex flex-col items-center justify-center py-6 text-center">
+      <div class="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-muted mb-2">
+        <i class="pi pi-check-circle text-xl text-emerald-400"></i>
+      </div>
+      <p class="text-sm font-semibold text-main m-0">No Upcoming Obligations</p>
+      <p class="text-xs text-muted m-0 mt-0.5">You have no recurring bills due in the next 30 days.</p>
+    </div>
   } @else {
-    <div class="flex flex-column gap-2">
-      @for (obligation of obligations(); track obligation.id) {
-        <div class="flex align-items-center justify-content-between p-2 border-round" style="background: rgba(255,255,255,0.03);">
-          <div class="flex flex-column">
-            <span class="text-sm font-medium">{{ obligation.description }}</span>
-            <span class="text-xs text-secondary">{{ obligation.accountName }}</span>
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 mt-1">
+      @for (obligation of displayedObligations(); track $index) {
+        <div class="p-3.5 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between hover:bg-white/[0.08] transition-all">
+          <div class="flex items-center gap-3">
+            <div 
+              class="w-10 h-10 rounded-2xl border flex items-center justify-center shrink-0"
+              [ngClass]="obligation.source === 'CreditCard' ? 'bg-sky-500/10 border-sky-500/30 text-sky-400' : 'bg-amber-500/10 border-amber-500/30 text-amber-400'"
+            >
+              <i class="pi text-lg" [ngClass]="obligation.source === 'CreditCard' ? 'pi-credit-card' : 'pi-receipt'"></i>
+            </div>
+            <div class="flex flex-col overflow-hidden">
+              <span class="text-sm font-extrabold text-main truncate">{{ obligation.description }}</span>
+              <span class="text-xs text-muted font-medium truncate">{{ obligation.accountName }}</span>
+            </div>
           </div>
-          <div class="flex flex-column align-items-end">
-            <span class="text-sm font-medium">{{ obligation.amount | currency:'INR' }}</span>
-            <span class="text-xs text-secondary">
-              {{ daysUntil(obligation.nextProcessDate) === 0 ? 'Due today' : 'In ' + daysUntil(obligation.nextProcessDate) + ' days' }}
+
+          <div class="flex flex-col items-end shrink-0 pl-2">
+            <span class="text-sm sm:text-base font-extrabold" [ngClass]="obligation.source === 'CreditCard' ? 'text-sky-400' : 'text-amber-400'">{{ displayAmount(obligation) }}</span>
+            <span 
+              class="text-xs font-bold px-2 py-0.5 rounded-full mt-1" 
+              [ngClass]="daysUntil(obligation.dueDate) === 0 ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-white/10 text-muted'"
+            >
+              {{ daysUntil(obligation.dueDate) === 0 ? 'Due today' : 'In ' + daysUntil(obligation.dueDate) + ' days' }}
             </span>
           </div>
         </div>
@@ -25,3 +87,92 @@
     </div>
   }
 </p-card>
+
+<!-- Right Drawer / Sidebar Detailed Obligations Panel -->
+<p-drawer 
+  [visible]="showDrawer()" 
+  (visibleChange)="showDrawer.set($event)" 
+  position="right" 
+  [style]="{ width: '480px', maxWidth: '100vw' }"
+  styleClass="glass-sidebar"
+>
+  <ng-template pTemplate="header">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+        <i class="pi pi-calendar-plus text-xl"></i>
+      </div>
+      <div>
+        <h2 class="text-lg font-extrabold text-main m-0">Upcoming Obligations Schedule</h2>
+        <p class="text-xs text-muted m-0">All bills and recurring payments due in the next 30 days</p>
+      </div>
+    </div>
+  </ng-template>
+
+  @if (obligations().length > 0) {
+    <div class="flex flex-col gap-5 py-2">
+      
+      <!-- Obligations Summary Banner -->
+      <div class="p-4 rounded-3xl bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/20 flex items-center justify-between">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-muted block mb-1">Total Due (Next 30 Days)</span>
+          <div class="text-3xl font-black text-amber-400 leading-none">{{ totalUpcomingAmount() | currency:'INR' }}</div>
+        </div>
+        <div class="text-right">
+          <span class="px-3 py-1 rounded-full text-xs font-extrabold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+            {{ totalCount() }} Obligations
+          </span>
+        </div>
+      </div>
+
+      <!-- Full Obligations List -->
+      <div class="flex flex-col gap-3">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-muted m-0 flex items-center gap-2">
+          <i class="pi pi-list text-amber-400"></i>
+          Scheduled Payments & Bills
+        </h3>
+
+        <div class="flex flex-col gap-3">
+          @for (obligation of obligations(); track $index) {
+            <div class="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between hover:bg-white/[0.08] transition-all">
+              <div class="flex items-center gap-3">
+                <div 
+                  class="w-10 h-10 rounded-2xl border flex items-center justify-center shrink-0"
+                  [ngClass]="obligation.source === 'CreditCard' ? 'bg-sky-500/10 border-sky-500/30 text-sky-400' : 'bg-amber-500/10 border-amber-500/30 text-amber-400'"
+                >
+                  <i class="pi text-lg" [ngClass]="obligation.source === 'CreditCard' ? 'pi-credit-card' : 'pi-receipt'"></i>
+                </div>
+                <div class="flex flex-col">
+                  <span class="text-sm font-extrabold text-main">{{ obligation.description }}</span>
+                  <div class="flex items-center gap-2 text-xs text-muted mt-0.5">
+                    <span><i class="pi pi-wallet text-xs mr-1"></i>{{ obligation.accountName }}</span>
+                    <span>•</span>
+                    <span class="capitalize font-medium">{{ obligation.source === 'CreditCard' ? 'Credit Card Bill' : 'Recurring Bill' }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex flex-col items-end shrink-0 pl-2">
+                <span class="text-base font-extrabold" [ngClass]="obligation.source === 'CreditCard' ? 'text-sky-400' : 'text-amber-400'">{{ displayAmount(obligation) }}</span>
+                <span 
+                  class="text-xs font-bold px-2.5 py-0.5 rounded-full mt-1.5" 
+                  [ngClass]="daysUntil(obligation.dueDate) === 0 ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-white/10 text-muted'"
+                >
+                  {{ daysUntil(obligation.dueDate) === 0 ? 'Due today' : 'In ' + daysUntil(obligation.dueDate) + ' days' }}
+                </span>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+    </div>
+  } @else {
+    <div class="flex flex-col items-center justify-center py-12 text-center">
+      <div class="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-muted mb-3">
+        <i class="pi pi-check-circle text-3xl text-emerald-400"></i>
+      </div>
+      <p class="text-base font-bold text-main m-0">No Upcoming Obligations</p>
+      <p class="text-xs text-muted m-0 mt-1">You have no recurring bills or obligations scheduled.</p>
+    </div>
+  }
+</p-drawer>

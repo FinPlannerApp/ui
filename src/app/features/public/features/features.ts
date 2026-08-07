@@ -4,7 +4,6 @@ import { Component } from '@angular/core';
   selector: 'app-features',
   imports: [],
   templateUrl: './features.html',
-  styleUrl: './features.scss'
 })
 export class Features {
   featureList = [

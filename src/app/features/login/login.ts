@@ -1,23 +1,25 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, NgZone } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { ButtonModule } from 'primeng/button';
-import { CardModule } from 'primeng/card';
-import { InputTextModule } from 'primeng/inputtext';
-import { PasswordModule } from 'primeng/password';
+import { CommonModule } from '@angular/common';
 import { Auth, LoginUserDto } from '../../core/services/auth';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ToastModule } from 'primeng/toast';
-import { DialogModule } from 'primeng/dialog';
 import { NotificationService } from '../../core/services/notification.service';
 import { ValidationService } from '../../core/services/validation.service';
-
+import { ThemeEngine } from '../../core/services/theme';
+import { sharedPrimeModules } from '../../shared/prime-imports';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, RouterLink, CardModule, InputTextModule, PasswordModule, ButtonModule, ToastModule, DialogModule],
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    RouterLink,
+    ...sharedPrimeModules
+  ],
   templateUrl: './login.html',
-  styleUrl: './login.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Login {
@@ -26,6 +28,7 @@ export class Login {
   private router = inject(Router);
   private notificationService = inject(NotificationService);
   public validationService = inject(ValidationService);
+  public themeEngine = inject(ThemeEngine);
   private cdr = inject(ChangeDetectorRef);
 
   loginForm: FormGroup;
@@ -78,16 +81,12 @@ export class Login {
         // Check for Concurrent Login Error
         if (err.status === 400) {
           const errorBody = err.error;
-
-          // Robust check for ConcurrentLogin flag
           let isConcurrent = false;
 
-          // Check 1: Explicit "ConcurrentLogin" in errors array
           if (errorBody?.errors && Array.isArray(errorBody.errors)) {
             isConcurrent = errorBody.errors.includes('ConcurrentLogin');
           }
 
-          // Check 2: Fallback to message text if errors array is missing or empty
           if (!isConcurrent && errorBody?.message) {
             isConcurrent = errorBody.message.includes('already logged in') || errorBody.message.includes('ConcurrentLogin');
           }
@@ -120,3 +119,4 @@ export class Login {
     this.cdr.markForCheck();
   }
 }
+

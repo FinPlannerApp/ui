@@ -8,7 +8,6 @@ import { FormsModule } from '@angular/forms';
   selector: 'app-pricing',
   imports: [RouterLink, ButtonModule, ToggleButtonModule, FormsModule],
   templateUrl: './pricing.html',
-  styleUrl: './pricing.scss'
 })
 export class Pricing {
   showPricing = false;

@@ -1,24 +1,24 @@
 <div class="px-4 py-8 md:px-8 max-w-4xl mx-auto">
     <a routerLink="/blog"
-        class="no-underline text-color-secondary flex align-items-center gap-2 mb-5 hover:text-primary transition-colors">
+        class="no-underline text-[var(--text-muted)] flex items-center gap-2 mb-5 hover:text-[var(--primary-color)] transition-colors">
         <i class="pi pi-arrow-left"></i>
         <span>Back to Blog</span>
     </a>
 
     @if(post) {
-    <article class="glass-card p-4 md:p-6 border-round-3xl">
-        <span class="inline-block text-xs font-bold px-3 py-2 border-round-xl mb-4" [style.background]="post.tagColor"
+    <article class="glass-card p-4 md:p-6 rounded-3xl">
+        <span class="inline-block text-xs font-bold px-3 py-2 rounded-xl mb-4" [style.background]="post.tagColor"
             style="color: white;">{{ post.tag }}</span>
 
         <h1 class="text-4xl md:text-5xl font-bold mb-3 mt-0">{{ post.title }}</h1>
 
-        <div class="flex align-items-center gap-3 text-color-secondary mb-5 pb-5 border-bottom-1 surface-border">
-            <div class="flex align-items-center gap-2">
+        <div class="flex items-center gap-3 text-[var(--text-muted)] mb-5 pb-5 border-b border-[var(--glass-border)]">
+            <div class="flex items-center gap-2">
                 <i class="pi pi-calendar"></i>
                 <span>{{ post.date }}</span>
             </div>
             <span>•</span>
-            <div class="flex align-items-center gap-2">
+            <div class="flex items-center gap-2">
                 <i class="pi pi-clock"></i>
                 <span>3 min read</span>
             </div>
@@ -29,9 +29,9 @@
     </article>
     } @else {
     <div class="text-center py-8">
-        <i class="pi pi-exclamation-circle text-6xl text-color-secondary mb-4"></i>
+        <i class="pi pi-exclamation-circle text-6xl text-[var(--text-muted)] mb-4"></i>
         <h2 class="text-2xl font-bold mb-2">Post Not Found</h2>
-        <p class="text-color-secondary mb-4">The blog article you are looking for doesn't exist or has been moved.</p>
+        <p class="text-[var(--text-muted)] mb-4">The blog article you are looking for doesn't exist or has been moved.</p>
         <p-button routerLink="/blog" label="Return to Blog Directory" icon="pi pi-home"></p-button>
     </div>
     }

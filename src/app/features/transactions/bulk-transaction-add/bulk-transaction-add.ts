@@ -39,8 +39,7 @@ interface BulkTransactionRow {
         ...sharedPrimeModules
     ],
     templateUrl: './bulk-transaction-add.html',
-    styleUrls: ['./bulk-transaction-add.scss'],
-    providers: [DialogService]
+      providers: [DialogService]
 })
 export class BulkTransactionAdd {
     private transactionService = inject(TransactionService);

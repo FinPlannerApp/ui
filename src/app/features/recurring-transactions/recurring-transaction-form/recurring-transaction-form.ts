@@ -15,8 +15,7 @@ import { sharedPrimeModules } from '../../../shared/prime-imports';
     selector: 'app-recurring-transaction-form',
     imports: [CommonModule, ReactiveFormsModule, FormField, ...sharedPrimeModules],
     templateUrl: './recurring-transaction-form.html',
-    styleUrl: './recurring-transaction-form.scss',
-    changeDetection: ChangeDetectionStrategy.OnPush
+      changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class RecurringTransactionForm implements OnInit {
     // Exposes the enum to the template so it can check
@@ -29,6 +28,7 @@ export class RecurringTransactionForm implements OnInit {
     categories = signal<any[]>([]);
 
     frequencies = [
+        { label: 'One-time', value: RecurrenceFrequency.OneTime },
         { label: 'Daily', value: RecurrenceFrequency.Daily },
         { label: 'Weekly', value: RecurrenceFrequency.Weekly },
         { label: 'Monthly', value: RecurrenceFrequency.Monthly },

@@ -1,6 +1,6 @@
 <p-toast></p-toast>
-<div class="flex flex-column gap-3 p-4">
-  <div class="flex align-items-center justify-content-between">
+<div class="flex flex-col gap-3 p-4">
+  <div class="flex items-center justify-between">
     <h2 class="m-0">Decision Journal</h2>
     <a routerLink="/app/dashboard" class="p-button p-button-text">
       <i class="pi pi-arrow-left mr-2"></i>Back to Dashboard
@@ -19,7 +19,7 @@
 
   @if (showForm()) {
     <p-card>
-      <form [formGroup]="entryForm" (ngSubmit)="saveEntry()" class="flex flex-column gap-2 p-fluid">
+      <form [formGroup]="entryForm" (ngSubmit)="saveEntry()" class="flex flex-col gap-2 p-fluid">
         <div class="field">
           <label class="text-sm text-secondary">Title</label>
           <input type="text" pInputText formControlName="title" placeholder="e.g. Buying a new laptop" />
@@ -39,7 +39,7 @@
             <p-datepicker formControlName="decisionDate" [showIcon]="true" appendTo="body" class="w-full"></p-datepicker>
           </div>
         </div>
-        <div class="flex justify-content-end gap-2 mt-2">
+        <div class="flex justify-end gap-2 mt-2">
           <p-button label="Cancel" severity="secondary" [text]="true" type="button" (onClick)="showForm.set(false)"></p-button>
           <p-button label="Save Entry" type="submit" [disabled]="entryForm.invalid"></p-button>
         </div>
@@ -48,17 +48,17 @@
   }
 
   @if (isLoading()) {
-    <div class="flex justify-content-center p-6">
+    <div class="flex justify-center p-6">
       <p-progressSpinner></p-progressSpinner>
     </div>
   } @else {
-    <div class="flex flex-column gap-2">
+    <div class="flex flex-col gap-2">
       @for (entry of entries(); track entry.id) {
         <p-card>
-          <div class="flex flex-column gap-2">
-            <div class="flex align-items-center justify-content-between">
+          <div class="flex flex-col gap-2">
+            <div class="flex items-center justify-between">
               <span class="font-medium">{{ entry.title }}</span>
-              <div class="flex align-items-center gap-2">
+              <div class="flex items-center gap-2">
                 @if (entry.amount) {
                   <span class="text-sm text-secondary">{{ entry.amount | currency:'INR' }}</span>
                 }
@@ -69,7 +69,7 @@
             <p class="text-sm m-0">{{ entry.reasoning }}</p>
 
             @if (entry.outcome) {
-              <div class="p-2 border-round" style="background: rgba(16, 185, 129, 0.08);">
+              <div class="p-2 rounded" style="background: rgba(16, 185, 129, 0.08);">
                 <span class="text-xs text-secondary">Reflection ({{ entry.outcomeRecordedAt | date:'mediumDate' }})</span>
                 <p class="text-sm m-0 mt-1">{{ entry.outcome }}</p>
               </div>

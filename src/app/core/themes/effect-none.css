@@ -1,0 +1,17 @@
+/* ============================================================
+   Effect: None (Clean)
+   Static solid background, no animations.
+   ============================================================ */
+
+.effect-none .layout-wrapper,
+.effect-none .auth-background {
+  background: var(--bg-gradient-1) !important;
+  animation: none !important;
+}
+
+.effect-none .layout-wrapper::before,
+.effect-none .layout-wrapper::after,
+.effect-none .auth-background::before,
+.effect-none .auth-background::after {
+  display: none !important;
+}

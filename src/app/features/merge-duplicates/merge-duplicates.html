@@ -1,8 +1,8 @@
 <p-confirmDialog></p-confirmDialog>
 <p-toast></p-toast>
 
-<div class="flex flex-column gap-4 p-4">
-  <div class="flex align-items-center justify-content-between">
+<div class="flex flex-col gap-4 p-4">
+  <div class="flex items-center justify-between">
     <h2 class="m-0">Merge Duplicates</h2>
     <a routerLink="/app/accounts" class="p-button p-button-text">
       <i class="pi pi-arrow-left mr-2"></i>Back to Accounts
@@ -11,7 +11,7 @@
 
   <!-- ACCOUNTS -->
   <p-card>
-    <div class="flex align-items-center gap-2 mb-3">
+    <div class="flex items-center gap-2 mb-3">
       <i class="pi pi-wallet text-xl"></i>
       <span class="font-medium">Merge Accounts</span>
     </div>
@@ -21,15 +21,15 @@
       created more than once.
     </p>
 
-    <div class="grid">
-      <div class="col-12 md:col-6">
+    <div class="grid grid-cols-12 gap-4 grid-cols-12 gap-4">
+      <div class="col-span-12 md:col-span-6">
         <label class="text-sm text-secondary">Merge this account...</label>
         <p-select [options]="accountState.accounts()" [ngModel]="sourceAccountId()"
           (ngModelChange)="sourceAccountId.set($event); onAccountSelectionChange()"
           optionLabel="name" optionValue="id" placeholder="Select source account"
           appendTo="body" class="w-full mt-1"></p-select>
       </div>
-      <div class="col-12 md:col-6">
+      <div class="col-span-12 md:col-span-6">
         <label class="text-sm text-secondary">...into this account</label>
         <p-select [options]="accountState.accounts()" [ngModel]="targetAccountId()"
           (ngModelChange)="targetAccountId.set($event); onAccountSelectionChange()"
@@ -54,7 +54,7 @@
         </p>
       </div>
 
-      <div class="flex justify-content-end mt-3">
+      <div class="flex justify-end mt-3">
         <p-button label="Merge Accounts" icon="pi pi-arrow-right-arrow-left" severity="danger"
           (onClick)="confirmMergeAccounts()" [loading]="isMergingAccounts()"></p-button>
       </div>
@@ -63,7 +63,7 @@
 
   <!-- CATEGORIES -->
   <p-card>
-    <div class="flex align-items-center gap-2 mb-3">
+    <div class="flex items-center gap-2 mb-3">
       <i class="pi pi-tags text-xl"></i>
       <span class="font-medium">Merge Categories</span>
     </div>
@@ -72,14 +72,14 @@
       the original category.
     </p>
 
-    <div class="grid">
-      <div class="col-12 md:col-6">
+    <div class="grid grid-cols-12 gap-4 grid-cols-12 gap-4">
+      <div class="col-span-12 md:col-span-6">
         <label class="text-sm text-secondary">Merge this category...</label>
         <p-select [options]="categories()" [ngModel]="sourceCategoryId()" (ngModelChange)="sourceCategoryId.set($event)"
           optionLabel="name" optionValue="id" placeholder="Select source category"
           appendTo="body" class="w-full mt-1"></p-select>
       </div>
-      <div class="col-12 md:col-6">
+      <div class="col-span-12 md:col-span-6">
         <label class="text-sm text-secondary">...into this category</label>
         <p-select [options]="categories()" [ngModel]="targetCategoryId()" (ngModelChange)="targetCategoryId.set($event)"
           optionLabel="name" optionValue="id" placeholder="Select target category"
@@ -103,7 +103,7 @@
     }
 
     @if (sourceCategoryId() && targetCategoryId()) {
-      <div class="flex justify-content-end mt-3">
+      <div class="flex justify-end mt-3">
         <p-button label="Merge Categories" icon="pi pi-arrow-right-arrow-left" severity="danger"
           (onClick)="confirmMergeCategories()" [loading]="isMergingCategories()"></p-button>
       </div>

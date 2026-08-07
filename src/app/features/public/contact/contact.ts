@@ -8,7 +8,6 @@ import { ButtonModule } from 'primeng/button';
   selector: 'app-contact',
   imports: [FormsModule, InputTextModule, Textarea, ButtonModule],
   templateUrl: './contact.html',
-  styleUrl: './contact.scss'
 })
 export class Contact {
   form = {

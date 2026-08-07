@@ -7,7 +7,7 @@
   </div>
 
   @if (suggestedMerchantName()) {
-    <div class="flex align-items-center justify-content-between p-2 border-round mb-3" style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3);">
+    <div class="flex items-center justify-between p-2 rounded mb-3" style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3);">
       <span class="text-sm">Tag as <strong>{{ suggestedMerchantName() }}</strong>?</span>
       <div class="flex gap-2">
         <p-button label="Tag" size="small" (onClick)="acceptMerchantSuggestion()"></p-button>
@@ -36,7 +36,7 @@
       <!-- Add change event -->
       <ng-template pTemplate="footer">
         @if (isNewCategory()) {
-        <div class="p-2 border-top-1 surface-border">
+        <div class="p-2 border-t border-[var(--glass-border)]">
           <p-button label="Create '{{ currentFilter() }}'" [link]="true" (onClick)="addNewCategory()"></p-button>
         </div>
         }
@@ -73,7 +73,7 @@
   }
 
   <!-- Footer -->
-  <div class="flex align-items-center justify-content-end gap-2 mt-4 pt-3 border-top-1 surface-border">
+  <div class="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-[var(--glass-border)]">
     <p-button label="Cancel" icon="pi pi-times" [text]="true" severity="secondary" (onClick)="ref.close()"></p-button>
     <p-button label="Save Transaction" icon="pi pi-check" type="submit" [loading]="isSubmitting()"
       [disabled]="transactionForm.invalid"></p-button>

@@ -20,7 +20,6 @@ interface ApiResult<T> {
   selector: 'app-home',
   imports: [RouterLink, ButtonModule],
   templateUrl: './home.html',
-  styleUrl: './home.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Home implements OnInit {

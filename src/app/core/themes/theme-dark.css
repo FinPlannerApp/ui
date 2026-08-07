@@ -1,0 +1,39 @@
+/* ============================================================
+   Theme: Dark
+   Dark zinc, emerald & sky accents.
+   ============================================================ */
+[data-theme="dark"] {
+  --bg-gradient-1: #09090b;
+  --bg-gradient-2: #18181b;
+  --bg-gradient-3: #27272a;
+  --bg-gradient-4: #0f172a;
+
+  --orb-1-color: rgba(16, 185, 129, 0.15);
+  --orb-2-color: rgba(56, 189, 248, 0.15);
+
+  --glass-bg: rgba(24, 24, 27, 0.6);
+  --glass-bg-solid: rgba(24, 24, 27, 0.95);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+
+  --text-main: #f4f4f5;
+  --text-muted: #a1a1aa;
+
+  --primary-color: #3b82f6;
+  --secondary-color: #64748b;
+  --accent-color: #10b981;
+
+  --input-bg: rgba(9, 9, 11, 0.5);
+  --input-bg-focus: rgba(9, 9, 11, 0.8);
+  --input-border: rgba(255, 255, 255, 0.1);
+  --input-text: #f4f4f5;
+
+  --table-header-bg: rgba(255, 255, 255, 0.05);
+  --table-row-hover: rgba(255, 255, 255, 0.05);
+  --table-border: rgba(255, 255, 255, 0.05);
+
+  --button-gradient-1: #059669;
+  --button-gradient-2: #0284c7;
+  --button-shadow: rgba(16, 185, 129, 0.4);
+  --button-text: #ffffff;
+}

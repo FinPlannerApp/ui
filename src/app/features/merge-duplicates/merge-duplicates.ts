@@ -16,7 +16,6 @@ import { firstValueFrom } from 'rxjs';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, ...sharedPrimeModules],
   templateUrl: './merge-duplicates.html',
-  styleUrl: './merge-duplicates.scss'
 })
 export class MergeDuplicates implements OnInit {
   accountState = inject(AccountState);

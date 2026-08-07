@@ -15,7 +15,6 @@ import { sharedPrimeModules } from '../../shared/prime-imports';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, AccordionModule, ProgressBarModule, TextareaModule, ...sharedPrimeModules],
   templateUrl: './challenge.html',
-  styleUrl: './challenge.scss'
 })
 export class Challenge implements OnInit {
   private challengeService = inject(ChallengeService);

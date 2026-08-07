@@ -1,0 +1,40 @@
+/* ============================================================
+   Theme: Light
+   Clean whites, soft grays, blue-emerald accents.
+   ============================================================ */
+[data-theme="light"],
+:root {
+  --bg-gradient-1: #fdfbfb;
+  --bg-gradient-2: #ebedee;
+  --bg-gradient-3: #f5f7fa;
+  --bg-gradient-4: #c3cfe2;
+
+  --orb-1-color: rgba(16, 185, 129, 0.15);
+  --orb-2-color: rgba(56, 189, 248, 0.15);
+
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-bg-solid: rgba(255, 255, 255, 0.95);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+
+  --primary-color: #3b82f6;
+  --secondary-color: #64748b;
+  --accent-color: #10b981;
+
+  --input-bg: rgba(255, 255, 255, 0.5);
+  --input-bg-focus: rgba(255, 255, 255, 0.8);
+  --input-border: rgba(0, 0, 0, 0.1);
+  --input-text: #0f172a;
+
+  --table-header-bg: rgba(0, 0, 0, 0.03);
+  --table-row-hover: rgba(0, 0, 0, 0.02);
+  --table-border: rgba(0, 0, 0, 0.05);
+
+  --button-gradient-1: #38bdf8;
+  --button-gradient-2: #3b82f6;
+  --button-shadow: rgba(56, 189, 248, 0.3);
+  --button-text: #ffffff;
+}

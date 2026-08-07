@@ -56,7 +56,6 @@ interface YearOption {
   ],
   providers: [DialogService],
   templateUrl: './transactions-page.html',
-  styleUrl: './transactions-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TransactionsPage implements OnInit {

@@ -8,7 +8,7 @@ import { MenuModule } from 'primeng/menu';
 import { environment } from '../../../../environments/environment';
 import { AvatarModule } from 'primeng/avatar';
 import { PopoverModule } from 'primeng/popover';
-import { Theme } from '../../services/theme';
+import { ThemeEngine } from '../../services/theme';
 import { BreadcrumbService } from '../breadcrumb.service';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { CommonModule } from '@angular/common';
@@ -17,12 +17,11 @@ import { CommonModule } from '@angular/common';
   selector: 'app-layout',
   imports: [RouterOutlet, DrawerModule, ButtonModule, MenuModule, AvatarModule, PopoverModule, BreadcrumbModule, CommonModule],
   templateUrl: './layout.html',
-  styleUrl: './layout.scss'
 })
 
 export class Layout {
   public authService = inject(Auth);
-  public themeService = inject(Theme);
+  public themeEngine = inject(ThemeEngine);
   public breadcrumbService = inject(BreadcrumbService);
   private router = inject(Router);
 

@@ -12,14 +12,14 @@
 <p-card [header]="title">
     <ng-template pTemplate="header">
         <div
-            class="flex flex-column md:flex-row justify-content-between align-items-center w-full gap-2 p-2 border-bottom-1 surface-border">
-            <div class="flex flex-column md:flex-row align-items-center gap-2">
+            class="flex flex-col md:flex-row justify-between items-center w-full gap-2 p-2 border-b border-[var(--glass-border)]">
+            <div class="flex flex-col md:flex-row items-center gap-2">
                 @if (showCategoryFilter()) {
                 <p-select [options]="categories()" [ngModel]="selectedCategoryId()"
                     (ngModelChange)="selectedCategoryId.set($event); onSearch()" optionLabel="name" optionValue="id"
                     placeholder="Filter Category" [showClear]="true" class="w-15rem p-inputtext-sm"></p-select>
                 }
-                <p-iconfield class="flex gap-2 align-items-center">
+                <p-iconfield class="flex gap-2 items-center">
                     <p-inputicon class="pi pi-search"></p-inputicon>
                     <input pInputText type="text" [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)"
                         (keyup.enter)="onSearch()" placeholder="Search..." class="p-inputtext-sm w-15rem" />
@@ -48,7 +48,7 @@
         </ng-template>
     </app-data-table>
     } @else {
-    <div class="flex justify-content-center p-4">
+    <div class="flex justify-center p-4">
         <p-progressSpinner></p-progressSpinner>
     </div>
     }

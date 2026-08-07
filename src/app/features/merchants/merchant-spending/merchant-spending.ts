@@ -10,7 +10,6 @@ import { MerchantSpending } from '../../../core/models/merchant.model';
   standalone: true,
   imports: [CommonModule, RouterLink, ...sharedPrimeModules],
   templateUrl: './merchant-spending.html',
-  styleUrl: './merchant-spending.scss'
 })
 export class MerchantSpendingPage implements OnInit {
   private merchantService = inject(MerchantService);

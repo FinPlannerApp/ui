@@ -1,17 +1,17 @@
 <p-toast></p-toast>
 <div class="p-4 md:p-6">
   <p-card header="Contact Support & Feedback">
-    <p class="m-0 mb-4 text-color-secondary">
+    <p class="m-0 mb-4 text-[var(--text-muted)]">
       Found a bug or have an idea for a new feature? Let us know!
     </p>
 
     <form [formGroup]="supportForm" (ngSubmit)="onSubmit()">
       <div class="formgrid grid">
-        <div class="field col-12 md:col-6">
+        <div class="field col-span-12 md:col-span-6">
           <label for="name">Your Name</label>
           <input id="name" type="text" pInputText formControlName="name" class="w-full" />
         </div>
-        <div class="field col-12 md:col-6">
+        <div class="field col-span-12 md:col-span-6">
           <label for="email">Your Email</label>
           <input id="email" type="email" pInputText formControlName="email" class="w-full" />
         </div>
@@ -25,7 +25,7 @@
           <p-editor formControlName="description" [style]="{ 'height': '200px' }"></p-editor>
         </div>
       </div>
-      <div class="flex justify-content-end mt-4">
+      <div class="flex justify-end mt-4">
         <p-button label="Submit Feedback" type="submit" icon="pi pi-send"></p-button>
       </div>
     </form>

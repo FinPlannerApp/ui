@@ -18,7 +18,6 @@ import { Merchant } from '../../../core/models/merchant.model';
   selector: 'app-transaction-form',
   imports: [CommonModule, ReactiveFormsModule, ...sharedPrimeModules],
   templateUrl: './transaction-form.html',
-  styleUrl: './transaction-form.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TransactionForm implements OnInit {

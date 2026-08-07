@@ -26,7 +26,6 @@ import { TooltipModule } from 'primeng/tooltip';
   selector: 'app-resource-page',
   imports: [CommonModule, FormsModule, InputTextModule, CardModule, ButtonModule, TableModule, DataTable, ProgressSpinnerModule, ConfirmDialogModule, ToastModule, RouterLink, SelectModule, IconFieldModule, InputIconModule, TooltipModule],
   templateUrl: './resource-page.html',
-  styleUrl: './resource-page.scss',
   providers: [DialogService, ConfirmationService, GenericCrud],
   changeDetection: ChangeDetectionStrategy.OnPush
 })

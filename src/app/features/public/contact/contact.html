@@ -6,8 +6,8 @@
         <p class="text-lg" style="color: var(--text-muted);">Have questions? We'd love to hear from you.</p>
     </div>
 
-    <div class="glass-card p-5 border-round-2xl">
-        <form (ngSubmit)="onSubmit()" class="flex flex-column gap-4">
+    <div class="glass-card p-5 rounded-2xl">
+        <form (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
             <div>
                 <label for="name">Name</label>
                 <input id="name" type="text" pInputText [(ngModel)]="form.name" name="name" class="w-full"

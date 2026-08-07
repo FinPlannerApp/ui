@@ -1,0 +1,1422 @@
+@import "tailwindcss";
+@import "primeicons/primeicons.css";
+
+/* ============================================================
+   Theme & Effect Files
+   ============================================================ */
+@import "./app/core/themes/theme-light.css";
+@import "./app/core/themes/theme-dark.css";
+@import "./app/core/themes/theme-glassmorphic.css";
+@import "./app/core/themes/theme-midnight-blue.css";
+
+@import "./app/core/themes/effect-orbs.css";
+@import "./app/core/themes/effect-wave.css";
+@import "./app/core/themes/effect-aurora.css";
+@import "./app/core/themes/effect-none.css";
+
+/* ============================================================
+   Tailwind v4 Config
+   ============================================================ */
+
+/* Dark mode variant uses PrimeNG's class selector */
+@variant dark (&:where(.my-app-dark, .my-app-dark *));
+
+@theme {
+  --font-family-sans: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* ============================================================
+   Reusable @utility Definitions (used as Tailwind inline classes)
+   ============================================================ */
+
+@utility glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: 1rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+@utility glass-card-hover {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: 1rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(16, 185, 129, 0.15);
+  }
+}
+
+@utility glass-container {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 1.5rem;
+  padding: 3rem;
+  width: 100%;
+  max-width: 550px;
+  box-shadow: var(--glass-shadow);
+  z-index: 10;
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@utility gradient-text {
+  background: linear-gradient(135deg, var(--button-gradient-1), var(--button-gradient-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ============================================================
+   Base Styles
+   ============================================================ */
+
+body {
+  margin: 0;
+  font-family: var(--font-family-sans, 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  color: var(--text-main);
+  background-color: var(--bg-gradient-1);
+}
+
+/* ============================================================
+   Auth Pages (Login, Register, Forgot/Reset/Change Password)
+   ============================================================ */
+
+.auth-background {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  position: relative;
+  background: linear-gradient(
+    135deg,
+    var(--bg-gradient-1),
+    var(--bg-gradient-2),
+    var(--bg-gradient-3),
+    var(--bg-gradient-4)
+  );
+  background-size: 400% 400%;
+  animation: gradientBG 15s ease infinite;
+  overflow: hidden;
+}
+
+.auth-header h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0 0 0.5rem;
+  background: linear-gradient(135deg, var(--button-gradient-1), var(--button-gradient-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.auth-header p {
+  color: var(--text-muted);
+  font-size: 1rem;
+  margin: 0 0 1.5rem;
+}
+
+/* ============================================================
+   Public Pages (Home, Features, About, etc.)
+   ============================================================ */
+
+.public-page-container {
+  padding: 4rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .auth-background {
+    padding: 1rem;
+  }
+
+  .auth-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .public-page-container {
+    padding: 2rem 1rem;
+  }
+}
+
+/* ============================================================
+   Animations (global keyframes)
+   ============================================================ */
+
+@keyframes gradientBG {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes zoomIn {
+  0% { transform: scale(0.9); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUpBanner {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Utility animation classes */
+.zoom-in {
+  animation: zoomIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+.fade-in {
+  opacity: 0;
+  animation: fadeIn 1s ease 0.4s forwards;
+}
+
+/* ============================================================
+   Global PrimeNG Component Overrides
+   ============================================================ */
+
+/* --- Toast Z-Index --- */
+.p-toast {
+  z-index: 10002 !important;
+}
+
+/* --- Cards --- */
+.p-card {
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  box-shadow: var(--glass-shadow);
+  color: var(--text-main);
+
+  & .p-card-title,
+  & .p-card-subtitle,
+  & .p-card-content,
+  & .p-card-footer {
+    color: var(--text-main) !important;
+  }
+
+  & .p-card-header {
+    color: #38bdf8 !important;
+  }
+}
+
+/* --- DataTable --- */
+.p-datatable {
+  & .p-datatable-header,
+  & .p-datatable-footer {
+    background: transparent !important;
+    border: none !important;
+    color: var(--text-main) !important;
+  }
+
+  & .p-datatable-thead > tr > th {
+    background: var(--table-header-bg) !important;
+    color: var(--text-main) !important;
+    border-color: var(--table-border) !important;
+    font-weight: 600;
+  }
+
+  & .p-datatable-tbody > tr {
+    background: transparent !important;
+    color: var(--text-main) !important;
+
+    &:hover {
+      background: var(--table-row-hover) !important;
+    }
+
+    & > td {
+      border-color: var(--table-border) !important;
+    }
+  }
+
+  & .p-paginator {
+    background: transparent !important;
+    border-color: var(--table-border) !important;
+
+    & .p-paginator-pages .p-paginator-page {
+      color: var(--text-main);
+    }
+  }
+
+  & .p-sortable-column-icon {
+    color: var(--text-muted) !important;
+  }
+}
+
+/* --- Dialog --- */
+.p-dialog {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--glass-shadow);
+
+  & .p-dialog-header,
+  & .p-dialog-content,
+  & .p-dialog-footer {
+    background: var(--glass-bg-solid) !important;
+    color: var(--text-main) !important;
+    border-color: var(--glass-border) !important;
+  }
+}
+
+.p-dialog-mask {
+  backdrop-filter: blur(5px);
+  background-color: rgba(0, 0, 0, 0.4) !important;
+}
+
+/* --- Close Buttons (dialog, drawer, sidebar) --- */
+.p-dialog-close-button,
+.p-drawer-close-button,
+.p-sidebar-close,
+button[aria-label="Close"] {
+  background: transparent !important;
+  border: none !important;
+  color: var(--text-main) !important;
+  border-radius: 50% !important;
+  padding: 0.5rem !important;
+  min-width: 2rem;
+  min-height: 2rem;
+  box-shadow: none !important;
+
+  &::before { display: none !important; }
+
+  &:hover {
+    background: var(--table-row-hover) !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
+  & .p-icon {
+    color: var(--text-main) !important;
+    width: 1rem;
+    height: 1rem;
+  }
+
+  & svg {
+    fill: var(--text-main) !important;
+    color: var(--text-main) !important;
+  }
+}
+
+/* --- Stepper --- */
+.p-stepper {
+  background: transparent !important;
+}
+
+/* --- SelectButton --- */
+.p-selectbutton {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 0.5rem !important;
+
+  & .p-togglebutton {
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    flex: 0 1 auto !important;
+    padding: 0.6rem 1rem !important;
+    font-size: 0.875rem !important;
+    border-radius: 8px !important;
+  }
+}
+
+/* --- Form Inputs --- */
+.p-inputtext,
+.p-password input,
+.p-dropdown,
+.p-inputnumber input,
+.p-datepicker input {
+  background: var(--input-bg) !important;
+  border: 1px solid var(--input-border) !important;
+  color: var(--input-text) !important;
+  border-radius: 12px !important;
+  padding: 0.8rem 1rem !important;
+  transition: all 0.3s ease !important;
+
+  &:focus {
+    border-color: #10b981 !important;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15) !important;
+    background: var(--input-bg-focus) !important;
+  }
+}
+
+/* IconField fix */
+.p-iconfield {
+  position: relative;
+  display: inline-flex;
+  width: 100%;
+}
+
+.p-iconfield-left > .p-inputtext,
+.p-iconfield-left > input {
+  padding-left: 2.75rem !important;
+}
+
+.p-iconfield-right > .p-inputtext,
+.p-iconfield-right > input {
+  padding-right: 2.75rem !important;
+}
+
+.p-iconfield-left > .p-inputicon { left: 1rem; }
+.p-iconfield-right > .p-inputicon { right: 1rem; }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   UNIFIED GLOBAL DATEPICKER OVERHAUL (PrimeNG 19 DatePicker)
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Host Container Reset */
+p-datepicker,
+span.p-datepicker,
+.p-datepicker-host,
+.p-datepicker:not(.p-datepicker-panel):not(.p-datepicker-overlay) {
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  position: relative !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  padding: 0 !important;
+}
+
+/* Input Field Styling */
+.p-datepicker-input,
+input.p-datepicker-input {
+  width: 100% !important;
+  flex: 1 1 auto !important;
+  background: var(--input-bg, rgba(255, 255, 255, 0.05)) !important;
+  border: 1px solid var(--input-border, rgba(255, 255, 255, 0.15)) !important;
+  color: var(--input-text, #f4f4f5) !important;
+  border-radius: 12px !important;
+  padding: 0.75rem 2.75rem 0.75rem 1rem !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Compact DatePicker Override for Header Month Selectors (e.g. styleClass="w-auto") */
+p-datepicker.w-auto,
+span.p-datepicker.w-auto,
+.p-datepicker-host.w-auto,
+.p-datepicker.w-auto {
+  width: 125px !important;
+  max-width: 125px !important;
+  display: inline-flex !important;
+}
+
+p-datepicker.w-auto .p-datepicker-input,
+span.p-datepicker.w-auto .p-datepicker-input,
+.p-datepicker-host.w-auto .p-datepicker-input,
+.p-datepicker.w-auto .p-datepicker-input {
+  width: 125px !important;
+  max-width: 125px !important;
+  flex: 0 0 125px !important;
+  padding: 0.5rem 2.25rem 0.5rem 0.85rem !important;
+  font-size: 0.875rem !important;
+  font-weight: 700 !important;
+}
+
+/* Support for DatePicker inside p-iconfield (left icon alignment) */
+.p-iconfield > p-datepicker,
+.p-iconfield > span.p-datepicker,
+.p-iconfield > .p-datepicker-host {
+  width: 100% !important;
+}
+
+.p-iconfield > p-datepicker .p-datepicker-input,
+.p-iconfield > span.p-datepicker .p-datepicker-input,
+.p-iconfield > .p-datepicker-host .p-datepicker-input {
+  padding-left: 2.75rem !important;
+}
+
+/* Focus State */
+.p-datepicker-input:focus,
+input.p-datepicker-input:focus,
+.p-datepicker:focus-within .p-datepicker-input {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25) !important;
+  background: var(--input-bg-focus, rgba(255, 255, 255, 0.08)) !important;
+}
+
+/* Icon Container & Trigger Button Alignment */
+.p-datepicker-dropdown,
+.p-datepicker-trigger,
+.p-datepicker-trigger.p-button,
+.p-datepicker-input-icon-container {
+  background: transparent !important;
+  border: none !important;
+  color: #10b981 !important;
+  fill: #10b981 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  position: absolute !important;
+  right: 0.75rem !important;
+  top: 50% !important;
+  bottom: auto !important;
+  height: auto !important;
+  transform: translateY(-50%) !important;
+  z-index: 5 !important;
+  pointer-events: none !important;
+  transition: transform 0.2s ease, color 0.2s ease !important;
+}
+
+.p-datepicker-dropdown:hover,
+.p-datepicker-trigger:hover,
+.p-datepicker-input-icon-container:hover {
+  background: transparent !important;
+  color: #34d399 !important;
+  transform: translateY(-50%) scale(1.1) !important;
+}
+
+.p-datepicker-input-icon,
+.p-datepicker-trigger-icon,
+.p-datepicker-dropdown .p-icon,
+.p-datepicker-trigger .p-icon,
+.p-datepicker-input-icon-container svg,
+.p-datepicker-input-icon-container i,
+.p-datepicker-input-icon-container path,
+.p-datepicker-input-icon-container .p-icon {
+  color: #10b981 !important;
+  fill: #10b981 !important;
+  stroke: #10b981 !important;
+  font-size: 1.1rem !important;
+  width: 1.1rem !important;
+  height: 1.1rem !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: inline-block !important;
+}
+
+/* Calendar Overlay Popup Panel */
+.p-datepicker-panel,
+.p-datepicker-overlay,
+div.p-datepicker-panel {
+  background: rgba(18, 18, 24, 0.95) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(16, 185, 129, 0.1) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  backdrop-filter: blur(24px) !important;
+  border-radius: 20px !important;
+  padding: 1rem !important;
+  color: #f4f4f5 !important;
+  z-index: 9999 !important;
+  margin-top: 6px !important;
+}
+
+/* Header & Navigation Controls */
+.p-datepicker-panel .p-datepicker-header,
+.p-datepicker-overlay .p-datepicker-header {
+  background: transparent !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  padding-bottom: 0.75rem !important;
+  margin-bottom: 0.75rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  color: #f4f4f5 !important;
+}
+
+.p-datepicker-panel .p-datepicker-title,
+.p-datepicker-overlay .p-datepicker-title {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  font-weight: 800 !important;
+}
+
+.p-datepicker-panel .p-datepicker-title button,
+.p-datepicker-overlay .p-datepicker-title button,
+.p-datepicker-header button {
+  color: #f4f4f5 !important;
+  background: transparent !important;
+  border: none !important;
+  font-weight: 700 !important;
+  font-size: 0.95rem !important;
+  border-radius: 8px !important;
+  padding: 0.25rem 0.5rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.p-datepicker-panel .p-datepicker-title button:hover,
+.p-datepicker-header button:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #10b981 !important;
+}
+
+/* Next / Prev Navigation Arrows */
+.p-datepicker-prev,
+.p-datepicker-next,
+.p-datepicker-prev-button,
+.p-datepicker-next-button {
+  color: #f4f4f5 !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 10px !important;
+  width: 2.25rem !important;
+  height: 2.25rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.p-datepicker-prev:hover,
+.p-datepicker-next:hover {
+  background: rgba(16, 185, 129, 0.2) !important;
+  border-color: rgba(16, 185, 129, 0.4) !important;
+  color: #34d399 !important;
+}
+
+.p-datepicker-prev .p-icon,
+.p-datepicker-next .p-icon,
+.p-datepicker-prev svg,
+.p-datepicker-next svg {
+  color: #f4f4f5 !important;
+  fill: #f4f4f5 !important;
+  width: 0.9rem !important;
+  height: 0.9rem !important;
+}
+
+/* Table Headers (Weekdays) */
+.p-datepicker-panel table th,
+.p-datepicker-overlay table th {
+  color: #a1a1aa !important;
+  font-weight: 700 !important;
+  font-size: 0.75rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  padding: 0.5rem 0 !important;
+}
+
+/* Calendar Date Cells */
+.p-datepicker-panel table td,
+.p-datepicker-overlay table td {
+  padding: 2px !important;
+}
+
+.p-datepicker-panel table td > span,
+.p-datepicker-overlay table td > span,
+.p-datepicker-panel table td > div {
+  color: #f4f4f5 !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+  border-radius: 10px !important;
+  width: 2.25rem !important;
+  height: 2.25rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+}
+
+.p-datepicker-panel table td > span:hover,
+.p-datepicker-overlay table td > span:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #10b981 !important;
+}
+
+/* Selected Date Highlight */
+.p-datepicker-panel table td > span.p-highlight,
+.p-datepicker-overlay table td > span.p-highlight,
+.p-datepicker-panel table td > span[aria-selected="true"] {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4) !important;
+}
+
+/* Today Highlight */
+.p-datepicker-panel table td.p-datepicker-today > span,
+.p-datepicker-overlay table td.p-datepicker-today > span {
+  border: 1px solid #10b981 !important;
+  color: #34d399 !important;
+}
+
+/* Month & Year Selection Grid View */
+.p-datepicker-month-picker,
+.p-datepicker-year-picker {
+  display: grid !important;
+  grid-template-cols: repeat(3, 1fr) !important;
+  gap: 0.5rem !important;
+  padding: 0.5rem 0 !important;
+}
+
+.p-datepicker-month-picker span,
+.p-datepicker-year-picker span {
+  color: #f4f4f5 !important;
+  font-weight: 700 !important;
+  font-size: 0.875rem !important;
+  padding: 0.6rem 0.5rem !important;
+  border-radius: 12px !important;
+  text-align: center !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.p-datepicker-month-picker span:hover,
+.p-datepicker-year-picker span:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #10b981 !important;
+}
+
+.p-datepicker-month-picker span.p-highlight,
+.p-datepicker-year-picker span.p-highlight,
+.p-datepicker-month-picker span[aria-selected="true"],
+.p-datepicker-year-picker span[aria-selected="true"] {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4) !important;
+}
+
+/* --- Register Stepper Overhaul (Number Top, Title Bottom) --- */
+.register-custom-stepper .p-step-list,
+.register-custom-stepper .p-stepper-nav,
+.register-custom-stepper .p-stepper-header,
+.register-custom-stepper [role="tablist"] {
+  border: none !important;
+  border-bottom: none !important;
+  background: transparent !important;
+  padding-bottom: 0 !important;
+  margin-bottom: 2rem !important;
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-around !important;
+  align-items: flex-start !important;
+  gap: 0.5rem !important;
+  width: 100% !important;
+  overflow: visible !important;
+  box-shadow: none !important;
+}
+
+.register-custom-stepper .p-step-list::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* Force vertical column layout on ALL step containers & inner buttons */
+.register-custom-stepper p-step,
+.register-custom-stepper .p-step,
+.register-custom-stepper .p-step-header,
+.register-custom-stepper .p-step-content,
+.register-custom-stepper .p-step-title-container,
+.register-custom-stepper [role="tab"],
+.register-custom-stepper button,
+.register-custom-stepper a {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  gap: 0.35rem !important;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  flex: 1 1 0% !important;
+  width: 100% !important;
+}
+
+/* Number Circle Styling */
+.register-custom-stepper .p-step-number,
+.register-custom-stepper .p-step-icon,
+.register-custom-stepper .p-stepper-number {
+  margin-right: 0 !important;
+  margin-left: 0 !important;
+  margin-bottom: 0.25rem !important;
+}
+
+/* Title Styling */
+.register-custom-stepper .p-step-title {
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  text-align: center !important;
+  display: block !important;
+  white-space: nowrap !important;
+}
+
+/* Hide all horizontal lines, track bars, pseudo-elements, and separators */
+.register-custom-stepper .p-stepper-separator,
+.register-custom-stepper .p-step-header::after,
+.register-custom-stepper .p-step-header::before,
+.register-custom-stepper .p-step-item::after,
+.register-custom-stepper .p-step-item::before,
+.register-custom-stepper [role="separator"],
+.register-custom-stepper .border-b,
+.register-custom-stepper .p-step-ink-bar,
+.register-custom-stepper hr {
+  display: none !important;
+  border: none !important;
+  height: 0 !important;
+  width: 0 !important;
+  background: transparent !important;
+  opacity: 0 !important;
+}
+
+.auth-background .glass-container {
+  max-width: 620px !important;
+}
+
+.auth-background .p-inputtext,
+.auth-background .p-password input {
+  padding-top: 0.85rem !important;
+  padding-bottom: 0.85rem !important;
+}
+
+.auth-background .p-iconfield .p-inputtext {
+  padding-left: 2.75rem !important;
+}
+
+.auth-currency-select {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.auth-currency-select .p-select-label {
+  padding: 0 0.25rem !important;
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+}
+
+/* Modern Select Overlay Dropdown Styling */
+.modern-currency-panel {
+  background: var(--glass-bg-solid, rgba(15, 23, 42, 0.96)) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.18)) !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35), 0 0 25px rgba(16, 185, 129, 0.15) !important;
+  padding: 0.5rem !important;
+  overflow: hidden !important;
+}
+
+.modern-currency-panel .p-select-list,
+.modern-currency-panel .p-dropdown-items,
+.modern-currency-panel .p-select-list-container {
+  padding: 0.25rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.25rem !important;
+}
+
+.modern-currency-panel .p-select-option,
+.modern-currency-panel .p-dropdown-item {
+  border-radius: 0.75rem !important;
+  padding: 0.65rem 0.85rem !important;
+  color: var(--text-main) !important;
+  transition: all 0.2s ease !important;
+
+  &:hover {
+    background: rgba(16, 185, 129, 0.15) !important;
+    color: #10b981 !important;
+    transform: translateX(3px);
+  }
+
+  &.p-select-option-selected,
+  &.p-highlight {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(20, 184, 166, 0.25)) !important;
+    color: #10b981 !important;
+    font-weight: 700 !important;
+    border: 1px solid rgba(16, 185, 129, 0.3) !important;
+  }
+}
+
+.p-inputotp .p-inputtext {
+  width: 3rem;
+  height: 3.5rem;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+label {
+  color: var(--text-main);
+  font-weight: 500;
+  font-size: 0.95rem;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.field {
+  margin-bottom: 0.75rem !important;
+}
+
+.p-error {
+  color: #fb7185 !important;
+  font-size: 0.85rem !important;
+}
+
+/* --- Dropdown Panel --- */
+.p-dropdown-panel {
+  background: var(--glass-bg-solid) !important;
+  border: 1px solid var(--glass-border) !important;
+  color: var(--text-main) !important;
+
+  & .p-dropdown-item {
+    color: var(--text-main) !important;
+
+    &:hover {
+      background: var(--table-row-hover) !important;
+    }
+  }
+}
+
+
+/* --- Premium Buttons --- */
+.p-button {
+  background: linear-gradient(135deg, var(--button-gradient-1), var(--button-gradient-2)) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+  padding: 0.8rem 1.5rem !important;
+  color: var(--button-text) !important;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    pointer-events: none;
+  }
+
+  &:hover:not(:disabled) {
+    box-shadow: 0 8px 25px var(--button-shadow) !important;
+    transform: translateY(-2px) scale(1.02);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(1px) scale(0.98);
+    box-shadow: 0 4px 10px var(--button-shadow) !important;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: var(--secondary-color) !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
+  /* Secondary / Text Buttons */
+  &.p-button-secondary,
+  &.p-button-text {
+    background: transparent !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--glass-border) !important;
+
+    &::before { display: none; }
+
+    &:hover:not(:disabled) {
+      background: var(--table-row-hover) !important;
+      box-shadow: none !important;
+      transform: translateY(-1px);
+    }
+  }
+
+  /* Danger Buttons */
+  &.p-button-danger {
+    background: linear-gradient(135deg, #ef4444, #b91c1c) !important;
+    --button-shadow: rgba(239, 68, 68, 0.3);
+  }
+
+  /* Outlined Buttons */
+  &.p-button-outlined {
+    background: transparent !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--glass-border) !important;
+
+    &::before { display: none; }
+
+    &:hover:not(:disabled) {
+      background: var(--table-row-hover) !important;
+      box-shadow: none !important;
+      transform: translateY(-1px);
+    }
+  }
+
+  /* Icon-only buttons */
+  &.p-button-icon-only {
+    padding: 0.5rem !important;
+    border-radius: 50% !important;
+  }
+}
+
+.auth-background .p-button {
+  padding: 1rem !important;
+}
+
+/* ============================================================
+   Fieldset Overrides (Transactions filter bar)
+   ============================================================ */
+
+.transactions-page p-fieldset {
+  display: inline-block;
+  vertical-align: middle;
+
+  & .p-fieldset {
+    border: 1px solid var(--input-border) !important;
+    background: var(--input-bg) !important;
+    border-radius: 12px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    transition: all 0.3s ease !important;
+
+    &:hover { border-color: #10b981 !important; }
+
+    &:focus-within {
+      border-color: #10b981 !important;
+      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15) !important;
+      background: var(--input-bg-focus) !important;
+    }
+  }
+
+  & .p-fieldset-legend {
+    background: var(--glass-bg-solid) !important;
+    border: none !important;
+    padding: 0 0.5rem !important;
+    margin-left: 0.75rem !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    color: var(--text-muted) !important;
+  }
+
+  & .p-fieldset-content {
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+
+    & .p-datepicker,
+    & .p-select {
+      border: none !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      width: 100% !important;
+
+      & .p-datepicker-input,
+      & .p-inputtext,
+      & .p-select-label {
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        padding: 0.45rem 0.75rem !important;
+        font-size: 0.875rem !important;
+        color: var(--input-text) !important;
+        height: auto !important;
+        width: 100% !important;
+      }
+
+      & .p-datepicker-dropdown,
+      & .p-datepicker-trigger.p-button,
+      & .p-select-trigger,
+      & .p-datepicker-input-icon-container {
+        background: transparent !important;
+        border: none !important;
+        color: var(--text-muted) !important;
+        box-shadow: none !important;
+        transform: none !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+
+        &:hover {
+          background: transparent !important;
+          color: var(--text-main) !important;
+          box-shadow: none !important;
+          transform: none !important;
+        }
+
+        & .p-icon,
+        & svg,
+        & .p-datepicker-input-icon {
+          color: var(--text-muted) !important;
+          fill: var(--text-muted) !important;
+        }
+      }
+    }
+  }
+}
+
+/* ============================================================
+   Bulk Transaction Excel Grid (global overrides)
+   ============================================================ */
+
+.excel-grid-wrapper {
+  &::-webkit-scrollbar { width: 8px; height: 8px; }
+  &::-webkit-scrollbar-track { background: var(--table-border); }
+  &::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 4px; }
+  &::-webkit-scrollbar-thumb:hover { background: var(--text-main); }
+}
+
+.excel-table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  min-width: 93rem;
+
+  & th, & td {
+    border: 1px solid var(--table-border);
+    padding: 0;
+    vertical-align: middle;
+    height: 38px;
+    max-height: 38px;
+    overflow: hidden;
+  }
+
+  & th {
+    padding: 0.5rem;
+    font-weight: 600;
+    color: var(--text-main);
+    background-color: var(--glass-bg-solid) !important;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    white-space: nowrap;
+    user-select: none;
+  }
+
+  & tbody tr {
+    background-color: transparent;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background-color: var(--table-row-hover);
+    }
+
+    &.error-row {
+      background-color: rgba(244, 63, 94, 0.15);
+
+      & td {
+        border-color: rgba(244, 63, 94, 0.3);
+      }
+    }
+  }
+
+  & td {
+    background-color: transparent;
+    color: var(--text-main);
+
+    &:focus-within {
+      outline: 2px solid var(--primary-color);
+      outline-offset: -2px;
+      z-index: 10;
+      position: relative;
+    }
+  }
+
+  & .excel-input {
+    width: 100%;
+    height: 100%;
+    border: none !important;
+    border-radius: 0;
+    padding: 0 0.5rem;
+    background: transparent !important;
+    color: var(--text-main);
+    box-shadow: none !important;
+  }
+
+  & .amount-cell .p-inputnumber {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  & .amount-cell .p-inputnumber-input {
+    width: 100%;
+    height: 36px;
+    border: none;
+    border-radius: 0;
+    box-shadow: none !important;
+    background: transparent;
+    padding: 0 0.5rem;
+    color: var(--text-main);
+  }
+
+  & .dropdown-cell {
+    height: 38px;
+    max-height: 38px;
+  }
+
+  & .dropdown-cell .p-autocomplete,
+  & .dropdown-cell .p-select,
+  & .dropdown-cell .p-inputnumber {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    align-items: center !important;
+  }
+
+  & .dropdown-cell .p-autocomplete-input {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  & .dropdown-cell .excel-dropdown {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 100%;
+  }
+
+  & .dropdown-cell .excel-dropdown .p-autocomplete {
+    width: 100%;
+    height: 100%;
+  }
+
+  & .dropdown-cell .excel-dropdown .p-autocomplete-input {
+    width: 100%;
+    height: 36px;
+    border: none;
+    border-radius: 0;
+    box-shadow: none !important;
+    background: transparent !important;
+    padding: 0 0.5rem;
+    color: var(--text-main);
+  }
+
+  & .dropdown-cell .p-select {
+    width: 100%;
+    height: 38px !important;
+    border: none;
+    border-radius: 0;
+    box-shadow: none !important;
+    background: transparent !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  & .dropdown-cell .p-select .p-select-label {
+    display: flex !important;
+    align-items: center !important;
+    padding: 0 0.5rem !important;
+    color: var(--text-main);
+    height: 38px !important;
+    line-height: normal !important;
+    border: none !important;
+  }
+
+  & .p-datepicker,
+  & .p-calendar {
+    width: 100%;
+    height: 36px;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+
+    & .p-inputtext,
+    & .p-datepicker-input,
+    & .p-component {
+      width: 100%;
+      height: 36px;
+      border: none !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+      padding: 0 0.5rem !important;
+      color: var(--text-main) !important;
+      box-shadow: none !important;
+    }
+  }
+}
+
+/* ============================================================
+   Register stepper scrollbar
+   ============================================================ */
+.register-stepper .p-step-list {
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  scrollbar-width: thin;
+
+  &::-webkit-scrollbar { height: 4px; }
+  &::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 4px; }
+  &::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
+}
+
+/* ============================================================
+   Blog Content Typography
+   ============================================================ */
+.blog-content {
+  & h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 2rem 0 0.75rem;
+    color: var(--text-main);
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--glass-border);
+  }
+
+  & h2:first-child { margin-top: 0; }
+
+  & p {
+    margin: 0 0 1rem;
+    line-height: 1.85;
+    color: var(--text-main);
+  }
+
+  & ul, & ol {
+    margin: 0 0 1.25rem 1.5rem;
+    padding: 0;
+    line-height: 1.85;
+    color: var(--text-main);
+  }
+
+  & ul li, & ol li { margin-bottom: 0.5rem; }
+
+  & strong {
+    font-weight: 700;
+    color: var(--primary-color);
+  }
+
+  & code {
+    background-color: var(--table-header-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 4px;
+    padding: 0.1rem 0.4rem;
+    font-family: 'Fira Code', 'Courier New', monospace;
+    font-size: 0.875em;
+    color: #ec4899;
+  }
+
+  & em {
+    font-style: italic;
+    opacity: 0.9;
+  }
+}
+
+/* ============================================================
+   PWA Install Banner
+   ============================================================ */
+.pwa-install-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  padding: 0.75rem 1rem;
+  background: rgba(15, 15, 25, 0.92);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(99, 102, 241, 0.25);
+  animation: slideUpBanner 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ============================================================
+   Compact View Mode
+   ============================================================ */
+body.compact-view {
+  font-size: 13px;
+
+  & .layout-main main { padding: 0.5rem !important; }
+
+  & .p-card .p-card-body { padding: 0.75rem; }
+
+  & .p-datatable .p-datatable-tbody > tr > td,
+  & .p-datatable .p-datatable-thead > tr > th {
+    padding: 0.4rem 0.6rem;
+  }
+
+  & .p-button {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+  }
+
+  & h1 { font-size: 1.5rem; }
+  & h2 { font-size: 1.25rem; }
+  & h3 { font-size: 1.1rem; }
+
+  & .p-dialog .p-dialog-content { padding: 0.75rem; }
+}
+
+/* ============================================================
+   Modern Auth Background Ambient Glow Orbs
+   ============================================================ */
+.auth-glow-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.35;
+  pointer-events: none;
+  z-index: 1;
+  animation: orbFloat 18s ease-in-out infinite alternate;
+}
+
+.auth-glow-orb.orb-1 {
+  width: 450px;
+  height: 450px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.4), rgba(13, 148, 136, 0.1));
+  top: -100px;
+  left: -100px;
+}
+
+.auth-glow-orb.orb-2 {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.35), rgba(59, 130, 246, 0.1));
+  bottom: -120px;
+  right: -100px;
+  animation-delay: -6s;
+}
+
+.auth-glow-orb.orb-3 {
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.25), rgba(236, 72, 153, 0.05));
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation-delay: -12s;
+}
+
+@keyframes orbFloat {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(40px, -50px) scale(1.1); }
+  100% { transform: translate(-30px, 30px) scale(0.95); }
+}
+
+@keyframes pulse-glow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.glow-info-btn {
+  animation: pulse-glow 2s infinite;
+}
+

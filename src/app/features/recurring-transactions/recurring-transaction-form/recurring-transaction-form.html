@@ -1,18 +1,18 @@
-<form [formGroup]="recurringForm" (ngSubmit)="onSubmit()" class="flex flex-column gap-3 p-fluid">
+<form [formGroup]="recurringForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-3 p-fluid">
     <app-form-field label="Description" inputId="description" [control]="recurringForm.get('description')">
         <input id="description" type="text" pInputText formControlName="description"
             placeholder="e.g. Netflix Subscription" />
     </app-form-field>
 
-    <div class="grid">
-        <div class="col-12 md:col-6">
+    <div class="grid grid-cols-12 gap-4 grid-cols-12 gap-4">
+        <div class="col-span-12 md:col-span-6">
             <app-form-field label="Account" inputId="accountId" [control]="recurringForm.get('accountId')">
                 <p-select formControlName="accountId" [options]="accounts()" optionLabel="name" optionValue="id"
                     placeholder="Select Account" appendTo="body" id="accountId">
                 </p-select>
             </app-form-field>
         </div>
-        <div class="col-12 md:col-6">
+        <div class="col-span-12 md:col-span-6">
             <app-form-field label="Category" inputId="transactionCategoryId"
                 [control]="recurringForm.get('transactionCategoryId')">
                 <p-select formControlName="transactionCategoryId" [options]="categories()" optionLabel="name"
@@ -22,15 +22,15 @@
         </div>
     </div>
 
-    <div class="grid">
-        <div class="col-12 md:col-6">
+    <div class="grid grid-cols-12 gap-4 grid-cols-12 gap-4">
+        <div class="col-span-12 md:col-span-6">
             <app-form-field label="Amount" inputId="amount" [control]="recurringForm.get('amount')">
                 <p-inputNumber formControlName="amount" mode="currency" currency="INR" locale="en-IN" placeholder="0.00"
                     id="amount" class="w-full">
                 </p-inputNumber>
             </app-form-field>
         </div>
-        <div class="col-12 md:col-6">
+        <div class="col-span-12 md:col-span-6">
             <app-form-field label="Type" inputId="type" [control]="recurringForm.get('type')">
                 <p-select formControlName="type" [options]="types" optionLabel="label" optionValue="value" id="type">
                 </p-select>
@@ -45,7 +45,7 @@
     </app-form-field>
 
     @if (recurringForm.get('frequency')?.value === RecurrenceFrequency.Custom) {
-        <div class="flex flex-column gap-2">
+        <div class="flex flex-col gap-2">
             <label class="text-sm text-secondary">Repeat on</label>
             <div class="flex gap-2">
                 @for (day of dayOptions; track day.value) {
@@ -60,14 +60,14 @@
         </div>
     }
 
-    <div class="grid">
-        <div class="col-12 md:col-6">
+    <div class="grid grid-cols-12 gap-4 grid-cols-12 gap-4">
+        <div class="col-span-12 md:col-span-6">
             <app-form-field label="Start Date" inputId="startDate" [control]="recurringForm.get('startDate')">
                 <p-datepicker formControlName="startDate" [showIcon]="true" appendTo="body" id="startDate">
                 </p-datepicker>
             </app-form-field>
         </div>
-        <div class="col-12 md:col-6">
+        <div class="col-span-12 md:col-span-6">
             <app-form-field label="End Date (Optional)" inputId="endDate" [control]="recurringForm.get('endDate')">
                 <p-datepicker formControlName="endDate" [showIcon]="true" appendTo="body" id="endDate">
                 </p-datepicker>
@@ -75,17 +75,17 @@
         </div>
     </div>
 
-    <div class="flex align-items-center gap-2">
+    <div class="flex items-center gap-2">
         <p-checkbox formControlName="isObligation" [binary]="true" inputId="isObligation"></p-checkbox>
         <label for="isObligation">This is a must-pay obligation (rent, EMI, insurance) — not a subscription I could cancel</label>
     </div>
 
-    <div class="flex align-items-center gap-2">
+    <div class="flex items-center gap-2">
         <p-checkbox formControlName="isActive" [binary]="true" inputId="isActive"></p-checkbox>
         <label for="isActive">Active</label>
     </div>
 
-    <div class="flex justify-content-end gap-2 mt-1">
+    <div class="flex justify-end gap-2 mt-1">
         <p-button label="Cancel" icon="pi pi-times" severity="secondary" type="button" (onClick)="ref.close()"
             [disabled]="isSubmitting()"></p-button>
         <p-button label="Save Schedule" icon="pi pi-check" type="submit"

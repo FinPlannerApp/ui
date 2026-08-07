@@ -15,7 +15,6 @@ type ReportType = 'monthly-summary' | 'category-analysis' | 'budget-vs-actual' |
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink, FormField, ...sharedPrimeModules],
   templateUrl: './reports.html',
-  styleUrl: './reports.scss'
 })
 export class Reports {
   private fb = inject(FormBuilder);

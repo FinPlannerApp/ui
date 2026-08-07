@@ -42,7 +42,8 @@ export class ForgotPasswordComponent {
             this.authService.checkUsername(this.form.value.username).subscribe({
                 next: (res) => {
                     this.isSubmitting = false;
-                    if (res.isSuccess && res.value === true) {
+                    // res.value is isAvailable (false means username exists in DB, true means available/not found)
+                    if (res.isSuccess && res.value === false) {
                         this.usernameExists.set(true);
                         this.step.set(2);
                     } else {

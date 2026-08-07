@@ -6,17 +6,17 @@
         <p class="text-lg mb-4" style="color: var(--text-muted);">Choose the plan that works best for you.</p>
 
         <!-- Hideable Toggle -->
-        <div class="flex justify-content-center align-items-center gap-3 mb-4">
+        <div class="flex justify-center items-center gap-3 mb-4">
             <span style="color: var(--text-muted);">Show Pricing</span>
             <p-togglebutton [(ngModel)]="showPricing" onIcon="pi pi-eye" offIcon="pi pi-eye-slash"></p-togglebutton>
         </div>
     </div>
 
     @if(showPricing) {
-    <div class="grid">
+    <div class="grid grid-cols-12 gap-4 grid-cols-12 gap-4">
         <!-- Free Tier -->
-        <div class="col-12 md:col-6 p-3">
-            <div class="glass-card p-5 border-round-2xl text-center h-full">
+        <div class="col-span-12 md:col-span-6 p-3">
+            <div class="glass-card p-5 rounded-2xl text-center h-full">
                 <h3 class="text-lg font-semibold mb-2" style="color: var(--text-muted);">Free</h3>
                 <h2 class="text-4xl font-bold mb-1">₹0</h2>
                 <p class="mb-4" style="color: var(--text-muted);">forever</p>
@@ -41,9 +41,9 @@
         </div>
 
         <!-- Pro Tier -->
-        <div class="col-12 md:col-6 p-3">
-            <div class="glass-card p-5 border-round-2xl text-center h-full" style="border: 2px solid #10b981;">
-                <span class="inline-block px-3 py-1 text-sm font-bold border-round-xl mb-3"
+        <div class="col-span-12 md:col-span-6 p-3">
+            <div class="glass-card p-5 rounded-2xl text-center h-full" style="border: 2px solid #10b981;">
+                <span class="inline-block px-3 py-1 text-sm font-bold rounded-xl mb-3"
                     style="background: linear-gradient(135deg, #10b981, #38bdf8); color: white;">COMING SOON</span>
                 <h3 class="text-lg font-semibold mb-2" style="color: var(--text-muted);">Pro</h3>
                 <h2 class="text-4xl font-bold mb-1">₹299</h2>
@@ -67,7 +67,7 @@
         </div>
     </div>
     } @else {
-    <div class="text-center p-6 glass-card border-round-2xl">
+    <div class="text-center p-6 glass-card rounded-2xl">
         <i class="pi pi-eye-slash text-5xl mb-3" style="color: var(--text-muted);"></i>
         <p class="text-lg" style="color: var(--text-muted);">Pricing details are currently hidden. Toggle the switch
             above to reveal plans.</p>

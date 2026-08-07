@@ -9,7 +9,6 @@ import { ButtonModule } from 'primeng/button';
   selector: 'app-transaction-switch-form',
   imports: [SelectModule, ButtonModule, ReactiveFormsModule],
   templateUrl: './transaction-switch-form.html',
-  styleUrl: './transaction-switch-form.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TransactionSwitchForm implements OnInit {

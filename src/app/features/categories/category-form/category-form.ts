@@ -14,7 +14,6 @@ import { AccountType } from '../../../core/models/account-type.model';
   selector: 'app-category-form',
   imports: [ReactiveFormsModule, FormField, ...sharedPrimeModules],
   templateUrl: './category-form.html',
-  styleUrl: './category-form.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CategoryForm implements OnInit {

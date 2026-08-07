@@ -20,7 +20,6 @@ export interface ColumnDefinition {
   imports: [CommonModule, TableModule, RouterLink, SkeletonModule],
   standalone: true,
   templateUrl: './data-table.html',
-  styleUrl: './data-table.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DataTable {

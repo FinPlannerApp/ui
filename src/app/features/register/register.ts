@@ -1,29 +1,26 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { ButtonModule } from 'primeng/button';
-import { CardModule } from 'primeng/card';
-import { InputTextModule } from 'primeng/inputtext';
-import { PasswordModule } from 'primeng/password';
 import { Auth } from '../../core/services/auth';
-import { DatePickerModule } from 'primeng/datepicker';
-import { ToastModule } from 'primeng/toast';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NotificationService } from '../../core/services/notification.service';
 import { MessageService } from 'primeng/api';
-import { StepperModule } from 'primeng/stepper';
-import { InputOtpModule } from 'primeng/inputotp';
+import { sharedPrimeModules } from '../../shared/prime-imports';
 import { Observable, of, timer } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-register',
-  imports: [FormsModule, ReactiveFormsModule, RouterLink, CardModule, InputTextModule, PasswordModule, ButtonModule, DatePickerModule, ToastModule, StepperModule, InputOtpModule],
+  imports: [
+    FormsModule,
+    ReactiveFormsModule,
+    RouterLink,
+    ...sharedPrimeModules
+  ],
   templateUrl: './register.html',
-  styleUrl: './register.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class Register {
+export class Register implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private authService = inject(Auth);
   private router = inject(Router);
@@ -38,6 +35,9 @@ export class Register {
   activeStep = 1;
   otpValue = '';
 
+  resendCountdown = 0;
+  private resendTimer: any = null;
+
   constructor() {
     this.registerForm = this.fb.group({
       name: ['', Validators.required],
@@ -51,6 +51,113 @@ export class Register {
       ]],
       confirmPassword: ['', Validators.required]
     }, { validators: this.passwordMatchValidator });
+  }
+
+  ngOnInit(): void {
+    this.restoreDraft();
+    this.registerForm.valueChanges.subscribe(val => {
+      this.saveDraft(val);
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.stopResendTimer();
+  }
+
+  // --- Draft Persistence ---
+  private saveDraft(formData: any): void {
+    try {
+      const draft = {
+        name: formData.name || '',
+        dateOfBirth: formData.dateOfBirth || '',
+        email: formData.email || '',
+        userName: formData.userName || '',
+        password: formData.password || '',
+        confirmPassword: formData.confirmPassword || '',
+        activeStep: this.activeStep
+      };
+      sessionStorage.setItem('fin_register_draft', JSON.stringify(draft));
+    } catch (e) {}
+  }
+
+  private restoreDraft(): void {
+    try {
+      const saved = sessionStorage.getItem('fin_register_draft');
+      if (saved) {
+        const draft = JSON.parse(saved);
+        this.registerForm.patchValue({
+          name: draft.name || '',
+          dateOfBirth: draft.dateOfBirth || '',
+          email: draft.email || '',
+          userName: draft.userName || '',
+          password: draft.password || '',
+          confirmPassword: draft.confirmPassword || ''
+        }, { emitEvent: false });
+
+        if (draft.activeStep && draft.activeStep >= 1 && draft.activeStep <= 4) {
+          this.activeStep = draft.activeStep;
+          if (this.activeStep === 4) {
+            this.startResendTimer();
+          }
+        }
+      }
+    } catch (e) {}
+  }
+
+  private clearDraft(): void {
+    try {
+      sessionStorage.removeItem('fin_register_draft');
+      sessionStorage.removeItem('fin_resend_target');
+    } catch (e) {}
+  }
+
+  // --- Resend Timer Helper (Timestamp-based) ---
+  startResendTimer(resetNewTarget: boolean = false): void {
+    this.stopResendTimer();
+
+    const now = Date.now();
+    let targetTime = 0;
+
+    if (!resetNewTarget) {
+      targetTime = parseInt(sessionStorage.getItem('fin_resend_target') || '0', 10);
+    }
+
+    if (!targetTime || targetTime <= now || resetNewTarget) {
+      targetTime = now + 60 * 1000;
+      sessionStorage.setItem('fin_resend_target', targetTime.toString());
+    }
+
+    const updateCountdown = () => {
+      const remainingMs = targetTime - Date.now();
+      if (remainingMs <= 0) {
+        this.resendCountdown = 0;
+        sessionStorage.removeItem('fin_resend_target');
+        this.stopResendTimer();
+      } else {
+        this.resendCountdown = Math.ceil(remainingMs / 1000);
+      }
+      this.cdr.markForCheck();
+    };
+
+    updateCountdown();
+    this.resendTimer = setInterval(updateCountdown, 1000);
+  }
+
+  stopResendTimer(): void {
+    if (this.resendTimer) {
+      clearInterval(this.resendTimer);
+      this.resendTimer = null;
+    }
+  }
+
+  // --- Wrong Email / Go Back ---
+  goToEditEmail(): void {
+    this.activeStep = 2;
+    this.otpValue = '';
+    this.stopResendTimer();
+    sessionStorage.removeItem('fin_resend_target');
+    this.saveDraft(this.registerForm.value);
+    this.cdr.markForCheck();
   }
 
   // --- Async Validators for Live Verification ---
@@ -89,11 +196,13 @@ export class Register {
         this.registerForm.get('userName')?.markAsTouched();
       }
     }
+    this.saveDraft(this.registerForm.value);
   }
 
   prevStep() {
     if (this.activeStep > 1) {
       this.activeStep--;
+      this.saveDraft(this.registerForm.value);
     }
   }
 
@@ -113,6 +222,12 @@ export class Register {
   hasNumber(pwd: string): boolean { return /\d/.test(pwd || ''); }
   hasSpecial(pwd: string): boolean { return /[@$!%*?&]/.test(pwd || ''); }
 
+  doPasswordsMatch(): boolean {
+    const pwd = this.registerForm.get('password')?.value;
+    const confirmPwd = this.registerForm.get('confirmPassword')?.value;
+    return !!pwd && !!confirmPwd && pwd === confirmPwd;
+  }
+
   // --- Step 3: Send OTP ---
   sendOtp(): void {
     if (this.registerForm.invalid) {
@@ -131,6 +246,8 @@ export class Register {
         if (response.isSuccess) {
           this.otpSent = true;
           this.activeStep = 4;
+          this.startResendTimer(true);
+          this.saveDraft(this.registerForm.value);
           this.notificationService.showSuccess('Verification code sent to your email!');
         } else {
           const msg = response.error?.description || 'Registration failed.';
@@ -168,6 +285,7 @@ export class Register {
       next: (response) => {
         this.isVerifying = false;
         if (response.isSuccess) {
+          this.clearDraft();
           this.notificationService.showSuccess('Account created successfully! Please login.');
           this.router.navigate(['/login']);
         } else {

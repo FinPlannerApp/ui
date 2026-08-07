@@ -950,7 +950,6 @@ export const BLOG_POSTS = [
   selector: 'app-blog',
   imports: [RouterLink],
   templateUrl: './blog.html',
-  styleUrl: './blog.scss'
 })
 export class Blog {
   sortAscending = signal(false); // default: newest first (descending)

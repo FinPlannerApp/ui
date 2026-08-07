@@ -8,30 +8,30 @@
     </div>
 
     <!-- Sort toggle -->
-    <div class="flex justify-content-end mb-4">
+    <div class="flex justify-end mb-4">
         <button (click)="toggleSort()"
-            class="flex align-items-center gap-2 px-3 py-2 border-round-lg cursor-pointer font-semibold text-sm transition-all transition-duration-200"
-            style="background: var(--surface-section); border: 1px solid var(--surface-border); color: var(--text-color);">
+            class="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer font-semibold text-sm transition-all transition-duration-200"
+            style="background: var(--surface-section); border: 1px solid var(--border-[var(--glass-border)]); color: var(--text-color);">
             <i class="pi" [class.pi-sort-amount-down]="!sortAscending()"
                 [class.pi-sort-amount-up]="sortAscending()"></i>
             {{ sortAscending() ? 'Oldest First' : 'Newest First' }}
         </button>
     </div>
 
-    <div class="grid">
+    <div class="grid grid-cols-12 gap-4 grid-cols-12 gap-4">
         @for(post of sortedPosts(); track post.id) {
-        <div class="col-12 md:col-6 p-3">
+        <div class="col-span-12 md:col-span-6 p-3">
             <a [routerLink]="['/blog', post.id]" class="no-underline text-color block h-full">
                 <div
-                    class="glass-card p-5 border-round-2xl h-full cursor-pointer hover:shadow-4 transition-all transition-duration-300">
-                    <span class="inline-block text-xs font-bold px-2 py-1 border-round-lg mb-3"
+                    class="glass-card p-5 rounded-2xl h-full cursor-pointer hover:shadow-4 transition-all transition-duration-300">
+                    <span class="inline-block text-xs font-bold px-2 py-1 rounded-lg mb-3"
                         [style.background]="post.tagColor" style="color: white;">{{ post.tag }}</span>
                     <h3 class="text-xl font-bold mb-2">{{ post.title }}</h3>
                     <p style="color: var(--text-muted);" class="line-height-3">{{ post.excerpt }}</p>
-                    <div class="flex align-items-center mt-4 gap-2 text-sm" style="color: var(--text-muted);">
+                    <div class="flex items-center mt-4 gap-2 text-sm" style="color: var(--text-muted);">
                         <i class="pi pi-calendar"></i>
                         <span>{{ post.date }}</span>
-                        <span class="ml-auto flex align-items-center gap-1 font-semibold text-primary">Read More <i
+                        <span class="ml-auto flex items-center gap-1 font-semibold text-[var(--primary-color)]">Read More <i
                                 class="pi pi-arrow-right text-xs"></i></span>
                     </div>
                 </div>

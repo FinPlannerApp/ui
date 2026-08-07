@@ -38,7 +38,6 @@
     "chart.js": "^4.5.0",
     "exceljs": "^4.4.0",
     "jwt-decode": "^4.0.0",
-    "primeflex": "^4.0.0",
     "primeicons": "^7.0.0",
     "primeng": "^20.1.2",
     "quill": "^2.0.3",
@@ -50,6 +49,7 @@
     "@angular/build": "^20.3.23",
     "@angular/cli": "^20.3.23",
     "@angular/compiler-cli": "^20.3.23",
+    "@tailwindcss/postcss": "^4.3.3",
     "@types/jasmine": "~5.1.0",
     "@types/node": "^20.17.19",
     "baseline-browser-mapping": "^2.8.32",
@@ -60,6 +60,8 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
+    "postcss": "^8.5.26",
+    "tailwindcss": "^4.3.3",
     "typescript": "~5.9.2"
   }
 }

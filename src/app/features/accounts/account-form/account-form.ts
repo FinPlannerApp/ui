@@ -15,7 +15,6 @@ import { CategoryForm } from '../../categories/category-form/category-form';
   selector: 'app-account-form',
   imports: [FormsModule, ReactiveFormsModule, ...sharedPrimeModules, FormField],
   templateUrl: './account-form.html',
-  styleUrl: './account-form.scss',
   providers: [DialogService],
   changeDetection: ChangeDetectionStrategy.OnPush
 })

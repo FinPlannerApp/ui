@@ -8,8 +8,7 @@ import { ValidationService } from '../../../core/services/validation.service';
     standalone: true,
     imports: [],
     templateUrl: './form-field.html',
-    styleUrl: './form-field.scss'
-})
+  })
 export class FormField {
     @Input() label: string = '';
     @Input() inputId: string = '';

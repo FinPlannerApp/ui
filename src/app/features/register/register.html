@@ -1,93 +1,206 @@
-<div class="auth-background">
-  <div class="glass-container">
-    <div class="auth-header zoom-in">
-      <h1>Let's Get Started</h1>
-      <p>Securely manage your finances by creating an account.</p>
-    </div>
-    <form [formGroup]="registerForm" class="fade-in">
-      <p-stepper [value]="activeStep" [linear]="true">
+<div class="auth-background relative min-h-screen w-full flex items-center justify-center p-4 lg:p-8 overflow-hidden">
+  
+  <!-- Dynamic Ambient Glow Orbs -->
+  <div class="auth-glow-orb orb-1"></div>
+  <div class="auth-glow-orb orb-2"></div>
+  <div class="auth-glow-orb orb-3"></div>
 
-        <p-step-list>
-          <p-step [value]="1">Basic Details</p-step>
-          <p-step [value]="2">Account specific</p-step>
-          <p-step [value]="3">Security</p-step>
-          <p-step [value]="4">Verify Email</p-step>
-        </p-step-list>
+  <!-- Centered Glass Auth Container -->
+  <div class="glass-container relative p-8 sm:p-10 lg:p-12 w-full max-w-lg sm:max-w-xl rounded-3xl shadow-2xl border border-white/10 backdrop-blur-2xl z-10 zoom-in">
+    
+    <!-- Brand Header -->
+    <div class="flex flex-col items-center text-center gap-3 mb-8">
+      <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-500 via-teal-400 to-cyan-500 flex items-center justify-center shadow-lg shadow-emerald-500/25 text-white font-bold text-3xl">
+        <i class="pi pi-user-plus text-3xl"></i>
+      </div>
+      <div class="flex flex-col gap-1">
+        <h2 class="text-sm uppercase tracking-widest font-extrabold text-emerald-400">Financial Planner</h2>
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-main tracking-tight">Create Account</h1>
+        <p class="text-sm sm:text-base text-muted">Join Financial Planner to master your wealth.</p>
+      </div>
+    </div>
+
+    <!-- Registration Multi-Step Form -->
+    <form [formGroup]="registerForm" class="fade-in">
+      <p-stepper [value]="activeStep" [linear]="true" styleClass="register-custom-stepper">
+
+        <!-- Custom Vertical Stepper Header (Number Top, Title Bottom) -->
+        <div class="mb-8 flex justify-between items-center relative px-2">
+          
+          <!-- Connecting Line Track -->
+          <div class="absolute top-5 left-[12.5%] right-[12.5%] h-0.5 bg-white/10 -translate-y-1/2 z-0"></div>
+
+          <!-- Dynamic Active Emerald Progress Fill Line -->
+          <div 
+            class="absolute top-5 left-[12.5%] h-0.5 bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 -translate-y-1/2 z-0 transition-all duration-500 ease-out shadow-sm shadow-emerald-500/50"
+            [style.width]="activeStep === 1 ? '0%' : (activeStep === 2 ? '25%' : (activeStep === 3 ? '50%' : (activeStep >= 4 ? '75%' : '0%')))"
+          ></div>
+
+          <!-- Step 1: Basic -->
+          <div class="flex flex-col items-center gap-1.5 z-10 flex-1">
+            <div [class]="activeStep === 1 ? 'w-10 h-10 rounded-full bg-emerald-500 text-white font-extrabold flex items-center justify-center shadow-lg shadow-emerald-500/30 ring-4 ring-emerald-500/20 text-base transition-all' : (activeStep > 1 ? 'w-10 h-10 rounded-full bg-emerald-950 text-emerald-400 font-bold flex items-center justify-center border border-emerald-500/40 text-base' : 'w-10 h-10 rounded-full bg-zinc-900 text-muted font-semibold flex items-center justify-center border border-white/10 text-base')">
+              @if (activeStep > 1) {
+                <i class="pi pi-check text-sm font-bold"></i>
+              } @else {
+                1
+              }
+            </div>
+            <span [class]="activeStep === 1 ? 'text-xs sm:text-sm font-extrabold text-emerald-400' : 'text-xs sm:text-sm font-medium text-muted'">Basic</span>
+          </div>
+
+          <!-- Step 2: Account -->
+          <div class="flex flex-col items-center gap-1.5 z-10 flex-1">
+            <div [class]="activeStep === 2 ? 'w-10 h-10 rounded-full bg-emerald-500 text-white font-extrabold flex items-center justify-center shadow-lg shadow-emerald-500/30 ring-4 ring-emerald-500/20 text-base transition-all' : (activeStep > 2 ? 'w-10 h-10 rounded-full bg-emerald-950 text-emerald-400 font-bold flex items-center justify-center border border-emerald-500/40 text-base' : 'w-10 h-10 rounded-full bg-zinc-900 text-muted font-semibold flex items-center justify-center border border-white/10 text-base')">
+              @if (activeStep > 2) {
+                <i class="pi pi-check text-sm font-bold"></i>
+              } @else {
+                2
+              }
+            </div>
+            <span [class]="activeStep === 2 ? 'text-xs sm:text-sm font-extrabold text-emerald-400' : 'text-xs sm:text-sm font-medium text-muted'">Account</span>
+          </div>
+
+          <!-- Step 3: Security -->
+          <div class="flex flex-col items-center gap-1.5 z-10 flex-1">
+            <div [class]="activeStep === 3 ? 'w-10 h-10 rounded-full bg-emerald-500 text-white font-extrabold flex items-center justify-center shadow-lg shadow-emerald-500/30 ring-4 ring-emerald-500/20 text-base transition-all' : (activeStep > 3 ? 'w-10 h-10 rounded-full bg-emerald-950 text-emerald-400 font-bold flex items-center justify-center border border-emerald-500/40 text-base' : 'w-10 h-10 rounded-full bg-zinc-900 text-muted font-semibold flex items-center justify-center border border-white/10 text-base')">
+              @if (activeStep > 3) {
+                <i class="pi pi-check text-sm font-bold"></i>
+              } @else {
+                3
+              }
+            </div>
+            <span [class]="activeStep === 3 ? 'text-xs sm:text-sm font-extrabold text-emerald-400' : 'text-xs sm:text-sm font-medium text-muted'">Security</span>
+          </div>
+
+          <!-- Step 4: Verify -->
+          <div class="flex flex-col items-center gap-1.5 z-10 flex-1">
+            <div [class]="activeStep === 4 ? 'w-10 h-10 rounded-full bg-emerald-500 text-white font-extrabold flex items-center justify-center shadow-lg shadow-emerald-500/30 ring-4 ring-emerald-500/20 text-base transition-all' : (activeStep > 4 ? 'w-10 h-10 rounded-full bg-emerald-950 text-emerald-400 font-bold flex items-center justify-center border border-emerald-500/40 text-base' : 'w-10 h-10 rounded-full bg-zinc-900 text-muted font-semibold flex items-center justify-center border border-white/10 text-base')">
+              4
+            </div>
+            <span [class]="activeStep === 4 ? 'text-xs sm:text-sm font-extrabold text-emerald-400' : 'text-xs sm:text-sm font-medium text-muted'">Verify</span>
+          </div>
+
+        </div>
 
         <p-step-panels>
-          <!-- Step 1 Panel -->
+          <!-- Step 1 Panel: Basic Details -->
           <p-step-panel [value]="1">
             <ng-template #content let-activateCallback="activateCallback">
-              <div class="flex flex-column gap-3 mt-3">
-                <div class="field">
-                  <label for="name">Full Name</label>
-                  <input id="name" type="text" pInputText formControlName="name" class="w-full" />
+              <div class="flex flex-col gap-5 mt-2">
+                
+                <!-- Full Name -->
+                <div class="flex flex-col gap-2">
+                  <label for="name" class="text-xs sm:text-sm font-bold uppercase tracking-wider text-muted">Full Name</label>
+                  <p-iconfield styleClass="w-full">
+                    <p-inputicon styleClass="pi pi-user text-muted text-base"></p-inputicon>
+                    <input id="name" type="text" pInputText formControlName="name" placeholder="e.g. John Doe" class="w-full text-base sm:text-lg" />
+                  </p-iconfield>
                   @if (registerForm.get('name')?.invalid && registerForm.get('name')?.touched) {
-                  <small class="p-error block mt-1">Full name is required.</small>
+                    <small class="p-error block text-xs sm:text-sm">Full name is required.</small>
                   }
                 </div>
 
-                <div class="field mt-3">
-                  <label for="dob">Date of Birth</label>
-                  <p-datepicker id="dob" formControlName="dateOfBirth" styleClass="w-full" [showIcon]="true"
-                    dateFormat="yy-mm-dd" appendTo="body"></p-datepicker>
+                <!-- Date of Birth (Fixed Full Width DatePicker) -->
+                <div class="flex flex-col gap-2">
+                  <label for="dob" class="text-xs sm:text-sm font-bold uppercase tracking-wider text-muted">Date of Birth</label>
+                  <p-datepicker 
+                    id="dob" 
+                    formControlName="dateOfBirth" 
+                    [showIcon]="true" 
+                    iconDisplay="input"
+                    dateFormat="yy-mm-dd" 
+                    placeholder="YYYY-MM-DD"
+                    appendTo="body"
+                  ></p-datepicker>
                   @if (registerForm.get('dateOfBirth')?.invalid && registerForm.get('dateOfBirth')?.touched) {
-                  <small class="p-error block mt-1">Date of birth is required.</small>
+                    <small class="p-error block text-xs sm:text-sm">Date of birth is required.</small>
                   }
                 </div>
+
               </div>
-              <div class="flex pt-4 justify-content-end">
-                <p-button label="Next" icon="pi pi-arrow-right" iconPos="right"
+
+              <!-- Navigation Button -->
+              <div class="flex pt-6 justify-end">
+                <p-button 
+                  label="Next Step" 
+                  icon="pi pi-arrow-right" 
+                  iconPos="right"
                   (onClick)="nextStep(); activateCallback(2)"
-                  [disabled]="registerForm.get('name')?.invalid || registerForm.get('dateOfBirth')?.invalid"></p-button>
+                  [disabled]="registerForm.get('name')?.invalid || registerForm.get('dateOfBirth')?.invalid"
+                  styleClass="py-3.5 px-6 text-base font-extrabold rounded-2xl shadow-lg shadow-emerald-500/20"
+                ></p-button>
               </div>
             </ng-template>
           </p-step-panel>
 
-          <!-- Step 2 Panel -->
+          <!-- Step 2 Panel: Email & Username -->
           <p-step-panel [value]="2">
             <ng-template #content let-activateCallback="activateCallback">
-              <div class="flex flex-column gap-3 mt-3">
-                <div class="field">
-                  <label for="email">Email</label>
-                  <input id="email" type="email" pInputText formControlName="email" class="w-full" />
+              <div class="flex flex-col gap-5 mt-2">
+                
+                <!-- Email -->
+                <div class="flex flex-col gap-2">
+                  <label for="email" class="text-xs sm:text-sm font-bold uppercase tracking-wider text-muted">Email Address</label>
+                  <p-iconfield styleClass="w-full">
+                    <p-inputicon styleClass="pi pi-envelope text-muted text-base"></p-inputicon>
+                    <input id="email" type="email" pInputText formControlName="email" placeholder="name@example.com" class="w-full text-base sm:text-lg" />
+                  </p-iconfield>
                   @if (registerForm.get('email')?.hasError('required') && registerForm.get('email')?.touched) {
-                  <small class="p-error block mt-1">Email is required.</small>
+                    <small class="p-error block text-xs sm:text-sm">Email is required.</small>
                   }
                   @if (registerForm.get('email')?.hasError('email') && registerForm.get('email')?.touched) {
-                  <small class="p-error block mt-1">Please enter a valid email address.</small>
+                    <small class="p-error block text-xs sm:text-sm">Please enter a valid email address.</small>
                   }
                   @if (registerForm.get('email')?.hasError('emailTaken') && registerForm.get('email')?.touched) {
-                  <small class="p-error block mt-1">This email is already in use.</small>
+                    <small class="p-error block text-xs sm:text-sm">This email is already in use.</small>
                   }
                   @if (registerForm.get('email')?.dirty && registerForm.get('email')?.pending) {
-                  <small class="text-primary block mt-1"><i class="pi pi-spin pi-spinner"></i> Checking
-                    availability...</small>
+                    <small class="text-emerald-400 block text-xs sm:text-sm mt-1">
+                      <i class="pi pi-spin pi-spinner"></i> Checking availability...
+                    </small>
                   }
                 </div>
 
-                <div class="field mt-3">
-                  <label for="username">Username</label>
-                  <input id="username" type="text" pInputText formControlName="userName" class="w-full" />
+                <!-- Username -->
+                <div class="flex flex-col gap-2">
+                  <label for="username" class="text-xs sm:text-sm font-bold uppercase tracking-wider text-muted">Username</label>
+                  <p-iconfield styleClass="w-full">
+                    <p-inputicon styleClass="pi pi-id-card text-muted text-base"></p-inputicon>
+                    <input id="username" type="text" pInputText formControlName="userName" placeholder="Choose a username" class="w-full text-base sm:text-lg" />
+                  </p-iconfield>
                   @if (registerForm.get('userName')?.hasError('required') && registerForm.get('userName')?.touched) {
-                  <small class="p-error block mt-1">Username is required.</small>
+                    <small class="p-error block text-xs sm:text-sm">Username is required.</small>
                   }
-                  @if (registerForm.get('userName')?.hasError('usernameTaken') && registerForm.get('userName')?.touched)
-                  {
-                  <small class="p-error block mt-1">This username is already taken.</small>
+                  @if (registerForm.get('userName')?.hasError('usernameTaken') && registerForm.get('userName')?.touched) {
+                    <small class="p-error block text-xs sm:text-sm">This username is already taken.</small>
                   }
                   @if (registerForm.get('userName')?.dirty && registerForm.get('userName')?.pending) {
-                  <small class="text-primary block mt-1"><i class="pi pi-spin pi-spinner"></i> Checking
-                    availability...</small>
+                    <small class="text-emerald-400 block text-xs sm:text-sm mt-1">
+                      <i class="pi pi-spin pi-spinner"></i> Checking availability...
+                    </small>
                   }
                 </div>
+
               </div>
-              <div class="flex pt-4 justify-content-between">
-                <p-button label="Back" severity="secondary" icon="pi pi-arrow-left"
-                  (onClick)="prevStep(); activateCallback(1)"></p-button>
-                <p-button label="Next" icon="pi pi-arrow-right" iconPos="right"
+
+              <!-- Navigation Buttons -->
+              <div class="flex pt-6 justify-between items-center gap-3">
+                <p-button 
+                  label="Back" 
+                  severity="secondary" 
+                  [outlined]="true"
+                  icon="pi pi-arrow-left"
+                  (onClick)="prevStep(); activateCallback(1)"
+                  styleClass="py-3.5 px-5 text-base font-bold rounded-2xl"
+                ></p-button>
+                <p-button 
+                  label="Next Step" 
+                  icon="pi pi-arrow-right" 
+                  iconPos="right"
                   (onClick)="nextStep(); activateCallback(3)"
-                  [disabled]="registerForm.get('email')?.invalid || registerForm.get('userName')?.invalid || registerForm.get('email')?.pending || registerForm.get('userName')?.pending"></p-button>
+                  [disabled]="registerForm.get('email')?.invalid || registerForm.get('userName')?.invalid || registerForm.get('email')?.pending || registerForm.get('userName')?.pending"
+                  styleClass="py-3.5 px-6 text-base font-extrabold rounded-2xl shadow-lg shadow-emerald-500/20"
+                ></p-button>
               </div>
             </ng-template>
           </p-step-panel>
@@ -95,74 +208,129 @@
           <!-- Step 3 Panel: Password -->
           <p-step-panel [value]="3">
             <ng-template #content let-activateCallback="activateCallback">
-              <div class="flex flex-column gap-3 mt-3">
-                <div class="field">
-                  <label for="password">Password</label>
-                  <p-password id="password" formControlName="password" [feedback]="false" styleClass="w-full"
-                    [toggleMask]="true"></p-password>
+              <div class="flex flex-col gap-5 mt-2">
+                
+                <!-- Password -->
+                <div class="flex flex-col gap-2">
+                  <label for="password" class="text-xs sm:text-sm font-bold uppercase tracking-wider text-muted">Password</label>
+                  <p-password 
+                    id="password" 
+                    formControlName="password" 
+                    [feedback]="false" 
+                    styleClass="w-full"
+                    inputStyleClass="w-full text-base sm:text-lg"
+                    [toggleMask]="true"
+                    placeholder="••••••••••••"
+                  ></p-password>
 
-                  <!-- Password Hints -->
-                  <div class="mt-2 p-2 border-round"
-                    style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
-                    <div class="text-sm font-medium mb-2 text-300">Password Requirements:</div>
-                    <div class="flex flex-wrap gap-2 text-xs">
-                      <div class="flex align-items-center gap-1"
-                        [class.text-green-500]="hasMinLength(registerForm.get('password')?.value)"
-                        [class.text-500]="!hasMinLength(registerForm.get('password')?.value)">
-                        <i class="pi" [class.pi-check]="hasMinLength(registerForm.get('password')?.value)"
-                          [class.pi-circle]="!hasMinLength(registerForm.get('password')?.value)"></i> 12+ chars
+                  <!-- Password Requirements Box -->
+                  <div class="p-3.5 rounded-2xl bg-white/5 border border-white/10 flex flex-col gap-2 mt-1">
+                    <div class="text-xs sm:text-sm font-bold text-muted uppercase tracking-wider">Password Requirements:</div>
+                    <div class="grid grid-cols-2 gap-2 text-xs sm:text-sm font-medium">
+                      <div 
+                        class="flex items-center gap-1.5"
+                        [class.text-emerald-400]="hasMinLength(registerForm.get('password')?.value)"
+                        [class.text-muted]="!hasMinLength(registerForm.get('password')?.value)"
+                      >
+                        <i class="pi" [class.pi-check-circle]="hasMinLength(registerForm.get('password')?.value)" [class.pi-circle]="!hasMinLength(registerForm.get('password')?.value)"></i>
+                        <span>12+ Characters</span>
                       </div>
-                      <div class="flex align-items-center gap-1"
-                        [class.text-green-500]="hasUpper(registerForm.get('password')?.value)"
-                        [class.text-500]="!hasUpper(registerForm.get('password')?.value)">
-                        <i class="pi" [class.pi-check]="hasUpper(registerForm.get('password')?.value)"
-                          [class.pi-circle]="!hasUpper(registerForm.get('password')?.value)"></i> Uppercase
+
+                      <div 
+                        class="flex items-center gap-1.5"
+                        [class.text-emerald-400]="hasUpper(registerForm.get('password')?.value)"
+                        [class.text-muted]="!hasUpper(registerForm.get('password')?.value)"
+                      >
+                        <i class="pi" [class.pi-check-circle]="hasUpper(registerForm.get('password')?.value)" [class.pi-circle]="!hasUpper(registerForm.get('password')?.value)"></i>
+                        <span>Uppercase</span>
                       </div>
-                      <div class="flex align-items-center gap-1"
-                        [class.text-green-500]="hasLower(registerForm.get('password')?.value)"
-                        [class.text-500]="!hasLower(registerForm.get('password')?.value)">
-                        <i class="pi" [class.pi-check]="hasLower(registerForm.get('password')?.value)"
-                          [class.pi-circle]="!hasLower(registerForm.get('password')?.value)"></i> Lowercase
+
+                      <div 
+                        class="flex items-center gap-1.5"
+                        [class.text-emerald-400]="hasLower(registerForm.get('password')?.value)"
+                        [class.text-muted]="!hasLower(registerForm.get('password')?.value)"
+                      >
+                        <i class="pi" [class.pi-check-circle]="hasLower(registerForm.get('password')?.value)" [class.pi-circle]="!hasLower(registerForm.get('password')?.value)"></i>
+                        <span>Lowercase</span>
                       </div>
-                      <div class="flex align-items-center gap-1"
-                        [class.text-green-500]="hasNumber(registerForm.get('password')?.value)"
-                        [class.text-500]="!hasNumber(registerForm.get('password')?.value)">
-                        <i class="pi" [class.pi-check]="hasNumber(registerForm.get('password')?.value)"
-                          [class.pi-circle]="!hasNumber(registerForm.get('password')?.value)"></i> Number
+
+                      <div 
+                        class="flex items-center gap-1.5"
+                        [class.text-emerald-400]="hasNumber(registerForm.get('password')?.value)"
+                        [class.text-muted]="!hasNumber(registerForm.get('password')?.value)"
+                      >
+                        <i class="pi" [class.pi-check-circle]="hasNumber(registerForm.get('password')?.value)" [class.pi-circle]="!hasNumber(registerForm.get('password')?.value)"></i>
+                        <span>Number</span>
                       </div>
-                      <div class="flex align-items-center gap-1"
-                        [class.text-green-500]="hasSpecial(registerForm.get('password')?.value)"
-                        [class.text-500]="!hasSpecial(registerForm.get('password')?.value)">
-                        <i class="pi" [class.pi-check]="hasSpecial(registerForm.get('password')?.value)"
-                          [class.pi-circle]="!hasSpecial(registerForm.get('password')?.value)"></i> Special Char
+
+                      <div 
+                        class="flex items-center gap-1.5 col-span-2"
+                        [class.text-emerald-400]="hasSpecial(registerForm.get('password')?.value)"
+                        [class.text-muted]="!hasSpecial(registerForm.get('password')?.value)"
+                      >
+                        <i class="pi" [class.pi-check-circle]="hasSpecial(registerForm.get('password')?.value)" [class.pi-circle]="!hasSpecial(registerForm.get('password')?.value)"></i>
+                        <span>Special Symbol (@$!%*?&)</span>
                       </div>
                     </div>
                   </div>
 
                   @if (registerForm.get('password')?.hasError('required') && registerForm.get('password')?.touched) {
-                  <small class="p-error block mt-1">Password is required.</small>
+                    <small class="p-error block text-xs sm:text-sm">Password is required.</small>
                   }
                 </div>
 
-                <div class="field mt-3">
-                  <label for="confirmPassword">Confirm Password</label>
-                  <p-password id="confirmPassword" formControlName="confirmPassword" [feedback]="false"
-                    styleClass="w-full" [toggleMask]="true"></p-password>
-                  @if (registerForm.get('confirmPassword')?.hasError('required') &&
-                  registerForm.get('confirmPassword')?.touched) {
-                  <small class="p-error block mt-1">Confirm Password is required.</small>
+                <!-- Confirm Password -->
+                <div class="flex flex-col gap-2">
+                  <label for="confirmPassword" class="text-xs sm:text-sm font-bold uppercase tracking-wider text-muted">Confirm Password</label>
+                  <p-password 
+                    id="confirmPassword" 
+                    formControlName="confirmPassword" 
+                    [feedback]="false"
+                    styleClass="w-full" 
+                    inputStyleClass="w-full text-base sm:text-lg"
+                    [toggleMask]="true"
+                    placeholder="••••••••••••"
+                  ></p-password>
+
+                  <!-- Live Password Match Status Indicator -->
+                  @if (registerForm.get('confirmPassword')?.value) {
+                    @if (doPasswordsMatch()) {
+                      <div class="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-emerald-400 mt-1">
+                        <i class="pi pi-check-circle text-base"></i> Passwords match
+                      </div>
+                    } @else {
+                      <div class="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-rose-400 mt-1">
+                        <i class="pi pi-times-circle text-base"></i> Passwords do not match
+                      </div>
+                    }
                   }
-                  @if (registerForm.hasError('passwordMismatch') && registerForm.get('confirmPassword')?.touched) {
-                  <small class="p-error block mt-1">Passwords do not match.</small>
+
+                  @if (registerForm.get('confirmPassword')?.hasError('required') && registerForm.get('confirmPassword')?.touched) {
+                    <small class="p-error block text-xs sm:text-sm mt-1">Confirm Password is required.</small>
                   }
                 </div>
+
               </div>
-              <div class="flex pt-4 justify-content-between">
-                <p-button label="Back" severity="secondary" icon="pi pi-arrow-left"
-                  (onClick)="prevStep(); activateCallback(2)"></p-button>
-                <p-button label="Send Verification Code" icon="pi pi-envelope" iconPos="right"
-                  (onClick)="sendOtp(); activateCallback(4)" [disabled]="registerForm.invalid"
-                  [loading]="isSubmitting"></p-button>
+
+              <!-- Navigation Buttons -->
+              <div class="flex pt-6 justify-between items-center gap-3">
+                <p-button 
+                  label="Back" 
+                  severity="secondary" 
+                  [outlined]="true"
+                  icon="pi pi-arrow-left"
+                  (onClick)="prevStep(); activateCallback(2)"
+                  styleClass="py-3.5 px-5 text-base font-bold rounded-2xl"
+                ></p-button>
+                <p-button 
+                  label="Send Verification Code" 
+                  icon="pi pi-envelope" 
+                  iconPos="right"
+                  (onClick)="sendOtp(); activateCallback(4)" 
+                  [disabled]="registerForm.invalid || !doPasswordsMatch()"
+                  [loading]="isSubmitting"
+                  styleClass="py-3.5 px-6 text-base font-extrabold rounded-2xl shadow-lg shadow-emerald-500/20"
+                ></p-button>
               </div>
             </ng-template>
           </p-step-panel>
@@ -170,38 +338,87 @@
           <!-- Step 4 Panel: OTP Verification -->
           <p-step-panel [value]="4">
             <ng-template #content let-activateCallback="activateCallback">
-              <div class="flex flex-column gap-3 mt-3 align-items-center">
-                <div class="text-center mb-3">
-                  <i class="pi pi-envelope text-5xl mb-3" style="color: #10b981;"></i>
-                  <h3 class="mt-2 mb-1" style="color: #f4f4f5;">Check Your Email</h3>
-                  <p class="text-400 text-sm">We've sent a 6-digit verification code to<br>
-                    <strong class="text-primary">{{ registerForm.get('email')?.value }}</strong>
+              <div class="flex flex-col gap-4 mt-2 items-center text-center">
+                <div class="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                  <i class="pi pi-envelope text-3xl"></i>
+                </div>
+                <div>
+                  <h3 class="text-xl sm:text-2xl font-extrabold text-main">Check Your Email</h3>
+                  <p class="text-muted text-sm sm:text-base mt-1">We've sent a 6-digit verification code to<br>
+                    <strong class="text-emerald-400 font-bold">{{ registerForm.get('email')?.value }}</strong>
                   </p>
                 </div>
 
-                <div class="field">
-                  <p-inputotp [(ngModel)]="otpValue" [length]="6" [integerOnly]="true"
-                    [ngModelOptions]="{standalone: true}"></p-inputotp>
+                <div class="my-2">
+                  <p-inputotp 
+                    [(ngModel)]="otpValue" 
+                    [length]="6" 
+                    [integerOnly]="true"
+                    [ngModelOptions]="{standalone: true}"
+                  ></p-inputotp>
                 </div>
 
-                <p class="text-400 text-xs mt-2">Code expires in 10 minutes</p>
+                <!-- Resend Code Timer Banner -->
+                @if (resendCountdown > 0) {
+                  <p class="text-muted text-xs sm:text-sm flex items-center gap-1">
+                    <i class="pi pi-clock text-emerald-400"></i> Resend code available in <strong class="text-emerald-400 font-mono text-sm">{{ resendCountdown }}s</strong>
+                  </p>
+                } @else {
+                  <p class="text-muted text-xs sm:text-sm">Didn't receive the code? You can resend now.</p>
+                }
               </div>
-              <div class="flex pt-4 justify-content-between">
-                <p-button label="Resend Code" severity="secondary" icon="pi pi-refresh" (onClick)="sendOtp()"
-                  [loading]="isSubmitting"></p-button>
-                <p-button label="Verify & Create Account" icon="pi pi-check" iconPos="right" (onClick)="verifyOtp()"
-                  [disabled]="!otpValue || otpValue.length < 6" [loading]="isVerifying"></p-button>
+
+              <!-- Navigation Buttons -->
+              <div class="flex flex-col-reverse sm:flex-row pt-6 justify-between items-stretch sm:items-center gap-2 sm:gap-3">
+                <div class="grid grid-cols-2 gap-2 sm:gap-3 w-full sm:w-auto">
+                  <p-button 
+                    label="Back" 
+                    severity="secondary" 
+                    [outlined]="true"
+                    icon="pi pi-arrow-left" 
+                    (onClick)="prevStep(); activateCallback(3)"
+                    styleClass="w-full py-3 px-3 sm:px-4 text-xs sm:text-sm font-bold rounded-2xl whitespace-nowrap justify-center"
+                    class="w-full sm:w-auto"
+                  ></p-button>
+
+                  <p-button 
+                    [label]="resendCountdown > 0 ? ('Resend (' + resendCountdown + 's)') : 'Resend Code'" 
+                    severity="secondary" 
+                    [outlined]="true"
+                    icon="pi pi-refresh" 
+                    (onClick)="sendOtp()"
+                    [disabled]="resendCountdown > 0 || isSubmitting"
+                    [loading]="isSubmitting"
+                    styleClass="w-full py-3 px-3 sm:px-4 text-xs sm:text-sm font-bold rounded-2xl whitespace-nowrap justify-center"
+                    class="w-full sm:w-auto"
+                  ></p-button>
+                </div>
+
+                <p-button 
+                  label="Verify & Create Account" 
+                  icon="pi pi-check" 
+                  iconPos="right" 
+                  (onClick)="verifyOtp()"
+                  [disabled]="!otpValue || otpValue.length < 6" 
+                  [loading]="isVerifying"
+                  styleClass="w-full py-3 px-3.5 sm:px-5 text-xs sm:text-sm font-extrabold rounded-2xl shadow-lg shadow-emerald-500/20 whitespace-nowrap justify-center"
+                  class="w-full sm:w-auto"
+                ></p-button>
               </div>
             </ng-template>
           </p-step-panel>
         </p-step-panels>
       </p-stepper>
 
-      <div class="mt-4 text-center">
-        <a routerLink="/login"
-          class="no-underline text-400 hover:text-white transition-colors transition-duration-300">Already have an
-          account? Login here</a>
+      <!-- Already Have Account Link -->
+      <div class="mt-6 pt-4 border-t border-white/10 text-center text-sm sm:text-base text-muted">
+        Already have an account? 
+        <a routerLink="/login" class="no-underline text-emerald-400 font-extrabold hover:text-emerald-300 transition-colors ml-1">
+          Login here
+        </a>
       </div>
     </form>
+
   </div>
-</div>
+
+</div>

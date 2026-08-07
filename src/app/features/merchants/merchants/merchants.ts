@@ -13,7 +13,6 @@ import { NotificationService } from '../../../core/services/notification.service
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, ...sharedPrimeModules],
   templateUrl: './merchants.html',
-  styleUrl: './merchants.scss'
 })
 export class Merchants implements OnInit {
   private merchantService = inject(MerchantService);

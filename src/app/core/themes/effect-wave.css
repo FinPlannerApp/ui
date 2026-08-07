@@ -1,0 +1,23 @@
+/* ============================================================
+   Effect: Gradient Wave
+   Smooth animated gradient that shifts across the background.
+   ============================================================ */
+
+@keyframes effect-wave-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.effect-wave .layout-wrapper,
+.effect-wave .auth-background {
+  background: linear-gradient(
+    -45deg,
+    var(--bg-gradient-1),
+    var(--bg-gradient-2),
+    var(--bg-gradient-3),
+    var(--bg-gradient-4)
+  ) !important;
+  background-size: 400% 400% !important;
+  animation: effect-wave-shift 15s ease infinite !important;
+}

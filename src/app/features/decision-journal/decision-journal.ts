@@ -13,7 +13,6 @@ import { DecisionJournalEntry } from './decision-journal.model';
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink, ...sharedPrimeModules],
   templateUrl: './decision-journal.html',
-  styleUrl: './decision-journal.scss'
 })
 export class DecisionJournal implements OnInit {
   private api = inject(GenericApi);

@@ -1,31 +1,31 @@
-<div class="public-layout layout-wrapper min-h-screen flex flex-column auth-background p-0 block-orbs">
+<div class="public-layout layout-wrapper min-h-screen flex flex-col auth-background p-0">
     <!-- Sticky Frosted Navbar -->
-    <header class="public-header">
-        <div class="public-header-inner">
+    <header class="sticky top-0 z-[100] w-full bg-[var(--glass-bg-solid)] backdrop-blur-xl border-b border-[var(--glass-border)]">
+        <div class="flex items-center justify-between w-full px-4 py-3 md:px-8 gap-4 md:gap-8">
             <!-- Logo -->
-            <a routerLink="/" class="no-underline flex align-items-center gap-2 cursor-pointer">
+            <a routerLink="/" class="no-underline flex items-center gap-2 cursor-pointer">
                 <i class="pi pi-wallet text-3xl gradient-text"></i>
                 <h2 class="m-0 font-bold gradient-text">Financial Planner</h2>
             </a>
 
             <!-- Desktop Nav Links -->
-            <nav class="hidden md:flex align-items-center gap-5">
-                <a routerLink="/features" routerLinkActive="active-link" [routerLinkActiveOptions]="{exact: true}"
-                    class="nav-link">Features</a>
-                <a routerLink="/blog" routerLinkActive="active-link" [routerLinkActiveOptions]="{exact: true}"
-                    class="nav-link">Blog</a>
-                <a routerLink="/feedback" routerLinkActive="active-link" [routerLinkActiveOptions]="{exact: false}"
-                    class="nav-link">Feedback</a>
-                <a routerLink="/about" routerLinkActive="active-link" [routerLinkActiveOptions]="{exact: true}"
-                    class="nav-link">About</a>
-                <a routerLink="/contact" routerLinkActive="active-link" [routerLinkActiveOptions]="{exact: true}"
-                    class="nav-link">Contact</a>
+            <nav class="hidden md:flex items-center gap-5">
+                <a routerLink="/features" routerLinkActive="!text-[var(--primary-color)] !font-bold" [routerLinkActiveOptions]="{exact: true}"
+                    class="no-underline text-[var(--text-main)] font-medium text-[0.95rem] transition-colors duration-200 hover:text-[var(--primary-color)] whitespace-nowrap relative">Features</a>
+                <a routerLink="/blog" routerLinkActive="!text-[var(--primary-color)] !font-bold" [routerLinkActiveOptions]="{exact: true}"
+                    class="no-underline text-[var(--text-main)] font-medium text-[0.95rem] transition-colors duration-200 hover:text-[var(--primary-color)] whitespace-nowrap relative">Blog</a>
+                <a routerLink="/feedback" routerLinkActive="!text-[var(--primary-color)] !font-bold" [routerLinkActiveOptions]="{exact: false}"
+                    class="no-underline text-[var(--text-main)] font-medium text-[0.95rem] transition-colors duration-200 hover:text-[var(--primary-color)] whitespace-nowrap relative">Feedback</a>
+                <a routerLink="/about" routerLinkActive="!text-[var(--primary-color)] !font-bold" [routerLinkActiveOptions]="{exact: true}"
+                    class="no-underline text-[var(--text-main)] font-medium text-[0.95rem] transition-colors duration-200 hover:text-[var(--primary-color)] whitespace-nowrap relative">About</a>
+                <a routerLink="/contact" routerLinkActive="!text-[var(--primary-color)] !font-bold" [routerLinkActiveOptions]="{exact: true}"
+                    class="no-underline text-[var(--text-main)] font-medium text-[0.95rem] transition-colors duration-200 hover:text-[var(--primary-color)] whitespace-nowrap relative">Contact</a>
             </nav>
 
             <!-- Right Side Actions -->
-            <div class="flex align-items-center gap-3">
-                <p-button [icon]="themeService.getCurrentTheme() === 'light' ? 'pi pi-moon' : 'pi pi-sun'" [text]="true"
-                    [rounded]="true" (onClick)="themeService.toggleTheme()">
+            <div class="flex items-center gap-3">
+                <p-button [icon]="themeEngine.isDark() ? 'pi pi-sun' : 'pi pi-moon'" [text]="true"
+                    [rounded]="true" (onClick)="themeEngine.toggleDarkMode()">
                 </p-button>
 
                 @if(isLoggedIn()) {
@@ -45,48 +45,48 @@
     </header>
 
     <!-- Main Content Area -->
-    <main class="flex-grow-1 z-1 relative">
+    <main class="grow z-[1] relative">
         <router-outlet></router-outlet>
     </main>
 
     <!-- Footer -->
-    <footer class="public-footer">
-        <div class="public-footer-inner">
-            <div class="footer-left">
-                <a routerLink="/" class="no-underline flex align-items-center gap-2 mb-3">
+    <footer class="w-full bg-[var(--glass-bg-solid)] backdrop-blur-xl border-t border-[var(--glass-border)] pt-12 px-4 pb-4 md:px-8">
+        <div class="flex justify-between items-start w-full gap-8 md:gap-12 flex-wrap">
+            <div class="flex-1 min-w-[200px]">
+                <a routerLink="/" class="no-underline flex items-center gap-2 mb-3">
                     <i class="pi pi-wallet text-xl gradient-text"></i>
                     <span class="font-bold text-lg gradient-text">Financial Planner</span>
                 </a>
-                <p class="text-color-secondary text-sm m-0">&copy; 2026 Financial Planner. All rights reserved.</p>
+                <p class="text-[var(--text-muted)] text-sm m-0">&copy; 2026 Financial Planner. All rights reserved.</p>
             </div>
 
-            <div class="footer-links">
-                <div class="flex flex-column gap-2">
+            <div class="flex gap-8 md:gap-16">
+                <div class="flex flex-col gap-2">
                     <span class="font-bold text-sm mb-1">Product</span>
-                    <a routerLink="/features" class="footer-link">Features</a>
-                    <a routerLink="/blog" class="footer-link">Blog</a>
-                    <a routerLink="/feedback" class="footer-link">Feedback Hub</a>
+                    <a routerLink="/features" class="no-underline text-[var(--text-muted)] text-sm transition-colors duration-200 hover:text-[var(--primary-color)]">Features</a>
+                    <a routerLink="/blog" class="no-underline text-[var(--text-muted)] text-sm transition-colors duration-200 hover:text-[var(--primary-color)]">Blog</a>
+                    <a routerLink="/feedback" class="no-underline text-[var(--text-muted)] text-sm transition-colors duration-200 hover:text-[var(--primary-color)]">Feedback Hub</a>
                 </div>
-                <div class="flex flex-column gap-2">
+                <div class="flex flex-col gap-2">
                     <span class="font-bold text-sm mb-1">Company</span>
-                    <a routerLink="/about" class="footer-link">About</a>
-                    <a routerLink="/contact" class="footer-link">Contact</a>
-                    <a routerLink="/register" class="footer-link">Get Started</a>
+                    <a routerLink="/about" class="no-underline text-[var(--text-muted)] text-sm transition-colors duration-200 hover:text-[var(--primary-color)]">About</a>
+                    <a routerLink="/contact" class="no-underline text-[var(--text-muted)] text-sm transition-colors duration-200 hover:text-[var(--primary-color)]">Contact</a>
+                    <a routerLink="/register" class="no-underline text-[var(--text-muted)] text-sm transition-colors duration-200 hover:text-[var(--primary-color)]">Get Started</a>
                 </div>
             </div>
 
-            <div class="footer-social">
+            <div class="min-w-[120px]">
                 <span class="font-bold text-sm mb-2 block">Follow Us</span>
                 <div class="flex gap-3">
-                    <a href="#" class="social-icon"><i class="pi pi-twitter text-xl"></i></a>
-                    <a href="#" class="social-icon"><i class="pi pi-github text-xl"></i></a>
-                    <a href="#" class="social-icon"><i class="pi pi-discord text-xl"></i></a>
+                    <a href="#" class="text-[var(--text-muted)] transition-all duration-200 hover:text-[var(--primary-color)] hover:-translate-y-0.5"><i class="pi pi-twitter text-xl"></i></a>
+                    <a href="#" class="text-[var(--text-muted)] transition-all duration-200 hover:text-[var(--primary-color)] hover:-translate-y-0.5"><i class="pi pi-github text-xl"></i></a>
+                    <a href="#" class="text-[var(--text-muted)] transition-all duration-200 hover:text-[var(--primary-color)] hover:-translate-y-0.5"><i class="pi pi-discord text-xl"></i></a>
                 </div>
             </div>
         </div>
 
-        <div class="footer-bottom">
-            <span class="text-color-secondary text-xs">Built with Angular, PrimeNG & .NET</span>
+        <div class="w-full mt-8 pt-4 border-t border-[var(--glass-border)] text-center">
+            <span class="text-[var(--text-muted)] text-xs">Built with Angular, PrimeNG & .NET</span>
         </div>
     </footer>
 </div>

@@ -10,7 +10,6 @@ import { sharedPrimeModules } from '../../shared/prime-imports';
   selector: 'app-support',
   imports: [ReactiveFormsModule, EditorModule, ...sharedPrimeModules],
   templateUrl: './support.html',
-  styleUrl: './support.scss',
   providers: [MessageService]
 })
 export class Support {

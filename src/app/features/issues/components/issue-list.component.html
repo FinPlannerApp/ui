@@ -1,11 +1,11 @@
 <p-toast></p-toast>
 <div class="p-4 md:p-6" style="max-width: 1400px; margin: 0 auto;">
-  <div class="flex justify-content-between align-items-center mb-4">
+  <div class="flex justify-between items-center mb-4">
     <div>
       <h2 class="text-2xl font-bold m-0">🗂️ Feedback Hub</h2>
-      <p class="text-color-secondary mt-1 mb-0">Report bugs, request features, and ask questions</p>
+      <p class="text-[var(--text-muted)] mt-1 mb-0">Report bugs, request features, and ask questions</p>
     </div>
-    <div class="flex gap-2 flex-wrap align-items-center">
+    <div class="flex gap-2 flex-wrap items-center">
       <p-button label="Roadmap" icon="pi pi-map" severity="help" [outlined]="true" routerLink="roadmap"></p-button>
       @if (auth.isAdmin()) {
       <p-button label="Analytics" icon="pi pi-chart-bar" severity="info" [outlined]="true"
@@ -20,7 +20,7 @@
   <!-- Search & Filter Bar -->
   <div class="mb-4">
     <p-card styleClass="shadow-1">
-      <div class="flex flex-column md:flex-row gap-3 align-items-start md:align-items-center">
+      <div class="flex flex-col md:flex-row gap-3 items-start md:items-center">
         <div class="flex-1 w-full md:w-auto">
           <p-iconfield>
             <p-inputicon class="pi pi-search"></p-inputicon>
@@ -46,12 +46,12 @@
   </div>
 
   @if (viewMode() === 'list') {
-  <div class="grid">
+  <div class="grid grid-cols-12 gap-4 grid-cols-12 gap-4">
     <!-- Sidebar Filters -->
-    <div class="col-12 md:col-3">
-      <p-card styleClass="h-full shadow-2">
+    <div class="col-span-12 md:col-span-3">
+      <p-card styleClass="h-full shadow-lg">
         <h3 class="font-semibold mb-3 mt-0">Sort By</h3>
-        <div class="flex flex-column gap-2">
+        <div class="flex flex-col gap-2">
           <p-button [text]="currentSort() !== 'pain'" [outlined]="currentSort() === 'pain'" severity="danger"
             (onClick)="loadIssues('pain')" label="🔥 Pain Score"
             styleClass="w-full text-left justify-content-start"></p-button>
@@ -65,8 +65,8 @@
 
         <p-divider></p-divider>
         <h3 class="font-semibold mb-3">Stats</h3>
-        <div class="flex flex-column gap-2 text-sm text-color-secondary">
-          <div class="flex justify-content-between">
+        <div class="flex flex-col gap-2 text-sm text-[var(--text-muted)]">
+          <div class="flex justify-between">
             <span>Total Issues</span>
             <span class="font-bold text-color">{{totalItems()}}</span>
           </div>
@@ -74,31 +74,31 @@
 
         <p-divider></p-divider>
         <h3 class="font-semibold mb-3">Pain Formula</h3>
-        <div class="text-sm text-color-secondary">
+        <div class="text-sm text-[var(--text-muted)]">
           Pain Score = (Impact × Frequency × Severity) + Financial Risk + Community Votes
         </div>
       </p-card>
     </div>
 
     <!-- Issue List -->
-    <div class="col-12 md:col-9">
-      <div class="flex flex-column gap-3">
+    <div class="col-span-12 md:col-9">
+      <div class="flex flex-col gap-3">
         @for (issue of issues(); track issue.id) {
-        <p-card styleClass="shadow-2 cursor-pointer issue-card" [ngClass]="{
+        <p-card styleClass="shadow-lg cursor-pointer issue-card" [ngClass]="{
                 'border-left-3 border-red-500': issue.painScore > 500,
                 'border-left-3 border-yellow-500': issue.painScore <= 500 && issue.painScore > 100,
                 'border-left-3 border-green-500': issue.painScore <= 100
             }" (click)="openDetail(issue.id)">
-          <div class="flex flex-column md:flex-row justify-content-between align-items-start gap-3">
+          <div class="flex flex-col md:flex-row justify-between items-start gap-3">
             <!-- Vote column -->
-            <div class="flex flex-column align-items-center gap-1 mr-2" (click)="$event.stopPropagation()">
+            <div class="flex flex-col items-center gap-1 mr-2" (click)="$event.stopPropagation()">
               <p-button icon="pi pi-chevron-up" [rounded]="true" [text]="true" size="small"
                 [severity]="issue.userVote === 1 ? 'success' : 'secondary'" [disabled]="issue.userVote === 1"
                 [ngClass]="{'font-bold': issue.userVote === 1}" (onClick)="vote(issue.id, 1)"></p-button>
               <span class="text-lg font-bold" [ngClass]="{
                             'text-green-500': issue.votes > 0,
                             'text-red-500': issue.votes < 0,
-                            'text-color-secondary': issue.votes === 0
+                            'text-[var(--text-muted)]': issue.votes === 0
                         }">{{issue.votes}}</span>
               <p-button icon="pi pi-chevron-down" [rounded]="true" [text]="true" size="small"
                 [severity]="issue.userVote === -1 ? 'danger' : 'secondary'" [disabled]="issue.userVote === -1"
@@ -106,23 +106,23 @@
             </div>
 
             <div class="flex-1">
-              <div class="flex align-items-center gap-2 flex-wrap">
-                <span class="text-sm font-bold text-color-secondary">#{{issue.id}}</span>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-sm font-bold text-[var(--text-muted)]">#{{issue.id}}</span>
                 <p-tag [value]="getTypeIcon(issue.type) + ' ' + issue.type"
                   [severity]="getTypeSeverity(issue.type)"></p-tag>
                 <h3 class="text-lg font-bold m-0">{{issue.title}}</h3>
               </div>
-              <p class="text-color-secondary mt-2 mb-3 line-clamp-2"
+              <p class="text-[var(--text-muted)] mt-2 mb-3 line-clamp-2"
                 style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
                 {{stripHtml(issue.description)}}</p>
-              <div class="flex align-items-center gap-2 text-sm flex-wrap">
+              <div class="flex items-center gap-2 text-sm flex-wrap">
                 @if (issue.isClosed) {
                 <p-tag value="Closed" severity="danger" icon="pi pi-lock"></p-tag>
                 }
                 <p-tag [value]="issue.categoryName" severity="info"></p-tag>
                 <p-tag [value]="issue.status" [severity]="getStatusSeverity(issue.status)"></p-tag>
                 @for (label of issue.labels || []; track label.id) {
-                <span class="inline-flex align-items-center gap-1 px-2 py-1 border-round-lg text-xs font-semibold"
+                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold"
                   [style.background-color]="label.color + '22'" [style.color]="label.color"
                   [style.border]="'1px solid ' + label.color">
                   <span class="border-circle" [style.background-color]="label.color"
@@ -130,32 +130,32 @@
                   {{label.name}}
                 </span>
                 }
-                <span class="text-color-secondary"><i class="pi pi-calendar mr-1"></i>{{issue.createdAt | date}}</span>
-                <span class="text-color-secondary"><i class="pi pi-comments mr-1"></i>{{issue.commentCount}}</span>
+                <span class="text-[var(--text-muted)]"><i class="pi pi-calendar mr-1"></i>{{issue.createdAt | date}}</span>
+                <span class="text-[var(--text-muted)]"><i class="pi pi-comments mr-1"></i>{{issue.commentCount}}</span>
                 @if (issue.creatorName) {
-                <span class="text-color-secondary"><i class="pi pi-user mr-1"></i>{{issue.creatorName}}</span>
+                <span class="text-[var(--text-muted)]"><i class="pi pi-user mr-1"></i>{{issue.creatorName}}</span>
                 }
                 @if (issue.gitHubIssueUrl) {
                 <a [href]="issue.gitHubIssueUrl" target="_blank" (click)="$event.stopPropagation()"
-                  class="text-color-secondary no-underline"><i class="pi pi-github"></i></a>
+                  class="text-[var(--text-muted)] no-underline"><i class="pi pi-github"></i></a>
                 }
               </div>
             </div>
-            <div class="text-right flex flex-column align-items-end">
+            <div class="text-right flex flex-col items-end">
               <div class="text-3xl font-bold" [ngClass]="{'text-red-500': issue.painScore > 500}">
                 {{issue.painScore | number:'1.0-0'}}
               </div>
-              <div class="text-xs text-color-secondary uppercase mt-1">Pain Score</div>
+              <div class="text-xs text-[var(--text-muted)] uppercase mt-1">Pain Score</div>
             </div>
           </div>
         </p-card>
         }
         @empty {
-        <p-card styleClass="shadow-2">
+        <p-card styleClass="shadow-lg">
           <div class="text-center p-4">
             <i class="pi pi-check-circle text-6xl text-green-500 mb-3"></i>
             <h3 class="m-0">No active issues found!</h3>
-            <p class="text-color-secondary">The system is running perfectly.</p>
+            <p class="text-[var(--text-muted)]">The system is running perfectly.</p>
           </div>
         </p-card>
         }
@@ -172,36 +172,36 @@
   </div>
   } @else {
   <!-- Kanban Board -->
-  <div class="flex align-items-center gap-3 mb-4">
+  <div class="flex items-center gap-3 mb-4">
     <p-button icon="pi pi-arrow-left" severity="secondary" [outlined]="true" [rounded]="true"
       (onClick)="toggleViewMode()"></p-button>
     <h3 class="m-0 font-bold">Kanban Board</h3>
   </div>
   <div class="kanban-wrapper">
     @for (status of kanbanStatuses; track status) {
-    <div class="kanban-column shadow-2" pDroppable="issues" [pDroppableDisabled]="!auth.isAdmin()"
+    <div class="kanban-column shadow-lg" pDroppable="issues" [pDroppableDisabled]="!auth.isAdmin()"
       (onDrop)="drop(status)">
-      <h3 class="mt-0 mb-3 text-lg font-bold flex justify-content-between align-items-center">
+      <h3 class="mt-0 mb-3 text-lg font-bold flex justify-between items-center">
         <span>{{status}}</span>
         <p-tag [value]="kanbanIssues()[status].length.toString()" severity="secondary"
           [rounded]="true"></p-tag>
       </h3>
 
-      <div class="kanban-cards-container flex flex-column gap-3">
+      <div class="kanban-cards-container flex flex-col gap-3">
         @for (issue of kanbanIssues()[status] || []; track issue.id) {
         <div pDraggable="issues" [pDraggableDisabled]="!auth.isAdmin()" (onDragStart)="dragStart(issue)"
           (onDragEnd)="dragEnd()" [class.cursor-move]="auth.isAdmin()">
-          <p-card styleClass="shadow-2 hover:shadow-4 transition-all transition-duration-200 cursor-pointer">
-            <div class="flex justify-content-between align-items-start mb-2">
+          <p-card styleClass="shadow-lg hover:shadow-4 transition-all transition-duration-200 cursor-pointer">
+            <div class="flex justify-between items-start mb-2">
               <p-tag [value]="issue.type"
                 [severity]="issue.type === 'Bug' ? 'danger' : issue.type === 'Feature' ? 'success' : 'info'"
                 size="small"></p-tag>
               <span class="text-xs font-bold" [ngClass]="{'text-red-500': issue.painScore > 500}">🔥
                 {{issue.painScore}}</span>
             </div>
-            <div class="font-bold mb-2 text-primary hover:underline cursor-pointer" (click)="openDetail(issue.id)">
+            <div class="font-bold mb-2 text-[var(--primary-color)] hover:underline cursor-pointer" (click)="openDetail(issue.id)">
               {{issue.title}}</div>
-            <div class="flex align-items-center justify-content-between text-xs text-color-secondary mt-3">
+            <div class="flex items-center justify-between text-xs text-[var(--text-muted)] mt-3">
               <span>#{{issue.id}}</span>
               <span><i class="pi pi-comments"></i> {{issue.commentCount}}</span>
             </div>
@@ -209,7 +209,7 @@
         </div>
         }
         @if ((kanbanIssues()[status] || []).length === 0) {
-        <div class="text-center p-4 text-color-secondary surface-card border-round border-1 surface-border">
+        <div class="text-center p-4 text-[var(--text-muted)] bg-[var(--glass-bg)] rounded border border-[var(--glass-border)]">
           <i class="pi pi-inbox text-2xl mb-2 opacity-50"></i>
           <div class="text-xs">No items</div>
         </div>

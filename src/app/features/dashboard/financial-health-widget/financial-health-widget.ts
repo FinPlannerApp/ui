@@ -1,18 +1,19 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { CardModule } from 'primeng/card';
 import { DashboardState } from '../../../core/state/dashboard-state.service';
+import { sharedPrimeModules } from '../../../shared/prime-imports';
 
 @Component({
     selector: 'app-financial-health-widget',
     standalone: true,
-    imports: [CommonModule, CardModule],
+    imports: [CommonModule, ...sharedPrimeModules],
     templateUrl: './financial-health-widget.html',
-    styleUrl: './financial-health-widget.scss'
 })
 export class FinancialHealthWidget {
     state = inject(DashboardState);
     health = this.state.financialHealth;
+
+    showDrawer = signal(false);
 
     // Gauge calculations
     score = computed(() => this.health()?.score ?? 0);
@@ -30,6 +31,4 @@ export class FinancialHealthWidget {
         if (s >= 40) return 'status-fair';
         return 'status-poor';
     });
-
-    showBreakdown = signal(false);
 }

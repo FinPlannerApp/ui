@@ -1,5 +1,5 @@
-<div class="flex flex-column gap-3 p-4">
-  <div class="flex align-items-center justify-content-between">
+<div class="flex flex-col gap-3 p-4">
+  <div class="flex items-center justify-between">
     <h2 class="m-0">Reports</h2>
     <a routerLink="/app/dashboard" class="p-button p-button-text">
       <i class="pi pi-arrow-left mr-2"></i>Back to Dashboard
@@ -7,7 +7,7 @@
   </div>
 
   <p-card>
-    <form [formGroup]="form" (ngSubmit)="downloadReport()" class="flex flex-column gap-2 p-fluid">
+    <form [formGroup]="form" (ngSubmit)="downloadReport()" class="flex flex-col gap-2 p-fluid">
 
       <app-form-field label="Report Type" inputId="reportType">
         <p-select formControlName="reportType" [options]="reportTypes" optionLabel="label" optionValue="value"
@@ -59,7 +59,7 @@
         </p>
       }
 
-      <div class="flex justify-content-end mt-2">
+      <div class="flex justify-end mt-2">
         <p-button label="Download CSV" icon="pi pi-download" type="submit" [loading]="isDownloading()">
         </p-button>
       </div>

@@ -1,44 +1,44 @@
-<div class="layout-wrapper min-h-screen flex flex-column">
+<div class="layout-wrapper min-h-screen flex flex-col">
   <!-- Header -->
   <header
-    class="p-3 surface-0 border-bottom-1 surface-border flex align-items-center justify-content-between sticky top-0 z-5">
-    <div class="flex align-items-center">
+    class="p-3 bg-[var(--glass-bg-solid)] backdrop-blur-xl border-b border-[var(--glass-border)] flex items-center justify-between sticky top-0 z-500">
+    <div class="flex items-center">
       <p-button icon="pi pi-bars" [text]="true" (onClick)="sidebarVisible = true"></p-button>
       <a routerLink="/app/dashboard" class="no-underline">
-        <h2 class="ml-2 my-0 text-primary">Financial Planner</h2>
+        <h2 class="ml-2 my-0 gradient-text">Financial Planner</h2>
       </a>
 
       <!-- Breadcrumbs & Refresh -->
-      <div class="flex align-items-center ml-2 border-left-1 surface-border pl-2">
+      <div class="flex items-center ml-2 border-l border-[var(--glass-border)] pl-2 max-md:hidden">
         <p-breadcrumb [model]="breadcrumbService.items()"></p-breadcrumb>
         <p-button icon="pi pi-refresh" [text]="true" [rounded]="true" styleClass="ml-1"
           (onClick)="breadcrumbService.refresh()" pTooltip="Soft Reset (Refresh Data)"></p-button>
       </div>
     </div>
 
-    <div class="flex align-items-center gap-3">
+    <div class="flex items-center gap-3">
       <!-- Theme Toggle Button -->
-      <p-button [icon]="themeService.getCurrentTheme() === 'light' ? 'pi pi-moon' : 'pi pi-sun'" [text]="true"
-        [rounded]="true" (onClick)="themeService.toggleTheme()">
+      <p-button [icon]="themeEngine.isDark() ? 'pi pi-sun' : 'pi pi-moon'" [text]="true"
+        [rounded]="true" (onClick)="themeEngine.toggleDarkMode()">
       </p-button>
 
       <!-- User Profile Section with Signals -->
       @if(authService.currentUser(); as userName) {
-      <div class="flex align-items-center gap-3">
+      <div class="flex items-center gap-3">
         <p-avatar [label]="userInitials()!" styleClass="bg-primary text-white" shape="circle"
           (click)="op.toggle($event)"></p-avatar>
 
         <p-popover #op>
-          <div class="flex flex-column gap-3 w-15rem">
-            <div class="flex flex-column">
+          <div class="flex flex-col gap-3 w-60">
+            <div class="flex flex-col">
               <span class="font-bold">{{ userName }}</span>
               @if(authService.currentUserEmail(); as userEmail) {
-              <span class="text-sm text-color-secondary">{{ userEmail }}</span>
+              <span class="text-sm text-[var(--text-muted)]">{{ userEmail }}</span>
               }
             </div>
             <hr class="my-1" />
-            <div class="flex flex-column gap-2 text-sm">
-              <div class="flex align-items-center gap-2">
+            <div class="flex flex-col gap-2 text-sm">
+              <div class="flex items-center gap-2">
                 <i class="pi pi-clock"></i>
                 <span>Session expires in {{ authService.sessionExpiresIn() }}</span>
               </div>
@@ -59,20 +59,20 @@
       <h3 class="p-3 my-0">Menu</h3>
     </ng-template>
     <ng-template pTemplate="content">
-      <div class="flex-grow-1">
+      <div class="grow">
         <p-menu [model]="navItems" styleClass="w-full"></p-menu>
       </div>
     </ng-template>
     <ng-template pTemplate="footer">
-      <div class="p-3 mt-auto border-top-1 surface-border">
-        <span class="text-sm text-color-secondary">Version {{ appVersion }}</span>
+      <div class="p-3 mt-auto border-t border-[var(--glass-border)]">
+        <span class="text-sm text-[var(--text-muted)]">Version {{ appVersion }}</span>
       </div>
     </ng-template>
   </p-drawer>
 
   <!-- Main Content Area -->
-  <div class="layout-main flex-grow-1">
-    <main class="p-3 md:p-5">
+  <div class="layout-main grow">
+    <main class="p-3 md:p-5 relative z-[1]">
       <router-outlet></router-outlet>
     </main>
   </div>

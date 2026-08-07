@@ -1,8 +1,8 @@
 <div class="transactions-page">
 
   <!-- FILTER BAR -->
-  <div class="filter-bar mb-4 flex flex-wrap align-items-center gap-3">
-    <div class="flex align-items-center gap-2 mr-auto">
+  <div class="filter-bar mb-4 flex flex-wrap items-center gap-3">
+    <div class="flex items-center gap-2 mr-auto">
       <p-button label="Back to Dashboard" icon="pi pi-arrow-left" severity="secondary" outlined="true"
         (onClick)="goToDashboard()"></p-button>
       <p-button label="Bulk Add" icon="pi pi-plus-circle" severity="primary" (onClick)="goToBulkAdd()"></p-button>
@@ -20,7 +20,7 @@
       </p-select>
     </p-fieldset>
 
-    <div class="flex align-items-center gap-1">
+    <div class="flex items-center gap-1">
       <p-iconfield>
         <p-inputicon class="pi pi-search"></p-inputicon>
         <input pInputText type="text" name="transactionSearch" autocomplete="off" [(ngModel)]="globalSearch"
@@ -42,7 +42,7 @@
         <ng-template pTemplate="header">
           <div class="summary-card-header">
             <i class="pi pi-history summary-icon bf-icon"></i>
-            <span class="text-sm font-semibold text-color-secondary">Balance B/F</span>
+            <span class="text-sm font-semibold text-[var(--text-muted)]">Balance B/F</span>
           </div>
         </ng-template>
         <p class="summary-value" [class.text-green-500]="balanceBF >= 0" [class.text-red-500]="balanceBF < 0">
@@ -55,7 +55,7 @@
         <ng-template pTemplate="header">
           <div class="summary-card-header">
             <i class="pi pi-arrow-down summary-icon income-icon"></i>
-            <span class="text-sm font-semibold text-color-secondary">Total Income</span>
+            <span class="text-sm font-semibold text-[var(--text-muted)]">Total Income</span>
           </div>
         </ng-template>
         <p class="summary-value text-green-500">
@@ -68,7 +68,7 @@
         <ng-template pTemplate="header">
           <div class="summary-card-header">
             <i class="pi pi-arrow-up summary-icon expense-icon"></i>
-            <span class="text-sm font-semibold text-color-secondary">Total Expenditure</span>
+            <span class="text-sm font-semibold text-[var(--text-muted)]">Total Expenditure</span>
           </div>
         </ng-template>
         <p class="summary-value text-red-500">
@@ -81,7 +81,7 @@
         <ng-template pTemplate="header">
           <div class="summary-card-header">
             <i class="pi pi-wallet summary-icon savings-icon"></i>
-            <span class="text-sm font-semibold text-color-secondary">Total Savings</span>
+            <span class="text-sm font-semibold text-[var(--text-muted)]">Total Savings</span>
           </div>
         </ng-template>
         <p class="summary-value" [class.text-green-500]="totalSavings >= 0" [class.text-red-500]="totalSavings < 0">
@@ -94,7 +94,7 @@
         <ng-template pTemplate="header">
           <div class="summary-card-header">
             <i class="pi pi-verified summary-icon closing-icon"></i>
-            <span class="text-sm font-semibold text-color-secondary">Closing Balance</span>
+            <span class="text-sm font-semibold text-[var(--text-muted)]">Closing Balance</span>
           </div>
         </ng-template>
         <p class="summary-value" [class.text-green-500]="closingBalance >= 0" [class.text-red-500]="closingBalance < 0">
@@ -120,7 +120,7 @@
         </ng-template>
       </app-data-table>
       } @else {
-      <div class="flex justify-content-center p-4">
+      <div class="flex justify-center p-4">
         <p-progressSpinner></p-progressSpinner>
       </div>
       }

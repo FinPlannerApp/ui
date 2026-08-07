@@ -1,5 +1,5 @@
-<div class="flex flex-column gap-3 p-4">
-  <div class="flex align-items-center justify-content-between">
+<div class="flex flex-col gap-3 p-4">
+  <div class="flex items-center justify-between">
     <h2 class="m-0">Spending by Merchant</h2>
     <a routerLink="/app/merchants" class="p-button p-button-text">
       <i class="pi pi-arrow-left mr-2"></i>Manage Merchants
@@ -9,7 +9,7 @@
   <p class="text-sm text-secondary mt-0">Last 3 months.</p>
 
   @if (isLoading()) {
-    <div class="flex justify-content-center p-6">
+    <div class="flex justify-center p-6">
       <p-progressSpinner></p-progressSpinner>
     </div>
   } @else if (spending().length === 0) {
@@ -18,15 +18,15 @@
       them here.
     </p>
   } @else {
-    <div class="flex flex-column gap-2">
+    <div class="flex flex-col gap-2">
       @for (item of spending(); track item.merchantId) {
-        <div class="flex flex-column gap-1 p-2">
-          <div class="flex align-items-center justify-content-between text-sm">
+        <div class="flex flex-col gap-1 p-2">
+          <div class="flex items-center justify-between text-sm">
             <span class="font-medium">{{ item.merchantName }}</span>
             <span>{{ item.totalSpent | currency:'INR' }} · {{ item.transactionCount }} transactions</span>
           </div>
-          <div class="w-full border-round overflow-hidden" style="height: 6px; background: rgba(255,255,255,0.08);">
-            <div class="h-full border-round" [style.width.%]="(item.totalSpent / maxSpent) * 100"
+          <div class="w-full rounded overflow-hidden" style="height: 6px; background: rgba(255,255,255,0.08);">
+            <div class="h-full rounded" [style.width.%]="(item.totalSpent / maxSpent) * 100"
               style="background: var(--primary-color);"></div>
           </div>
         </div>
