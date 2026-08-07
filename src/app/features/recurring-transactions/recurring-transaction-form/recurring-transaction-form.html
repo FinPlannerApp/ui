@@ -76,6 +76,11 @@
     </div>
 
     <div class="flex align-items-center gap-2">
+        <p-checkbox formControlName="isObligation" [binary]="true" inputId="isObligation"></p-checkbox>
+        <label for="isObligation">This is a must-pay obligation (rent, EMI, insurance) — not a subscription I could cancel</label>
+    </div>
+
+    <div class="flex align-items-center gap-2">
         <p-checkbox formControlName="isActive" [binary]="true" inputId="isActive"></p-checkbox>
         <label for="isActive">Active</label>
     </div>

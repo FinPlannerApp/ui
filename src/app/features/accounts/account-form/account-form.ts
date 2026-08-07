@@ -57,6 +57,7 @@ export class AccountForm {
       name: ['', Validators.required],
       balance: [0, [Validators.required, Validators.min(0)]],
       accountCategoryId: [null, Validators.required],
+      purpose: [null],
 
       // Credit Card fields
       creditLimit: [null],
@@ -224,6 +225,7 @@ export class AccountForm {
         name: this.accountForm.value.name,
         balance: this.accountForm.value.balance,
         accountCategoryId: this.accountForm.value.accountCategoryId,
+        purpose: this.accountForm.value.purpose,
         ...this.buildDetailsPayload()
       };
 

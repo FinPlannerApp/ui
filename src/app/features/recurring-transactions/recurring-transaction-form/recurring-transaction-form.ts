@@ -82,6 +82,7 @@ export class RecurringTransactionForm implements OnInit {
             frequency: [RecurrenceFrequency.Monthly, Validators.required],
             startDate: [new Date(), Validators.required],
             endDate: [null],
+            isObligation: [false],
             isActive: [true]
         });
     }

@@ -10,4 +10,12 @@ export interface FinancialHealth {
     insights: FinancialInsight[];
     savingsRate: number;
     budgetAdherence: number;
+    components: FinancialHealthComponent[];
+}
+
+export interface FinancialHealthComponent {
+    name: string;
+    pointsEarned: number;
+    maxPoints: number;
+    explanation: string;
 }

@@ -3,8 +3,18 @@
   <div class="field">
     <label for="description">Description</label>
     <input id="description" type="text" pInputText formControlName="description" class="w-full" pAutoFocus
-      [autofocus]="true" />
+      [autofocus]="true" (blur)="onDescriptionChange()" />
   </div>
+
+  @if (suggestedMerchantName()) {
+    <div class="flex align-items-center justify-content-between p-2 border-round mb-3" style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3);">
+      <span class="text-sm">Tag as <strong>{{ suggestedMerchantName() }}</strong>?</span>
+      <div class="flex gap-2">
+        <p-button label="Tag" size="small" (onClick)="acceptMerchantSuggestion()"></p-button>
+        <p-button icon="pi pi-times" [text]="true" severity="secondary" size="small" (onClick)="dismissMerchantSuggestion()"></p-button>
+      </div>
+    </div>
+  }
 
   <div class="field">
     <label for="amount">Amount</label>
@@ -31,6 +41,14 @@
         </div>
         }
       </ng-template>
+    </p-select>
+  </div>
+
+  <div class="field">
+    <label for="merchant">Merchant (optional)</label>
+    <p-select id="merchant" [options]="merchants()" formControlName="merchantId" optionLabel="name"
+      optionValue="id" [showClear]="true" placeholder="Select merchant" class="w-full" [filter]="true"
+      appendTo="body">
     </p-select>
   </div>
 

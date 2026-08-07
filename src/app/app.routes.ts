@@ -205,6 +205,18 @@ export const routes: Routes = [
         path: 'decision-journal',
         loadComponent: () => import('./features/decision-journal/decision-journal').then(m => m.DecisionJournal)
       },
+      {
+        path: 'merchants',
+        loadComponent: () => import('./features/merchants/merchants/merchants').then(m => m.Merchants)
+      },
+      {
+        path: 'merchants/spending',
+        loadComponent: () => import('./features/merchants/merchant-spending/merchant-spending').then(m => m.MerchantSpendingPage)
+      },
+      {
+        path: 'goals',
+        loadComponent: () => import('./features/goals/goals/goals').then(m => m.Goals)
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },

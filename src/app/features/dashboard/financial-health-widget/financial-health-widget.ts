@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CardModule } from 'primeng/card';
 import { DashboardState } from '../../../core/state/dashboard-state.service';
@@ -30,4 +30,6 @@ export class FinancialHealthWidget {
         if (s >= 40) return 'status-fair';
         return 'status-poor';
     });
+
+    showBreakdown = signal(false);
 }

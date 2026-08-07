@@ -24,6 +24,11 @@
     </div>
   </app-form-field>
 
+  <app-form-field label="Purpose (optional)" inputId="purpose">
+    <input id="purpose" type="text" pInputText formControlName="purpose" class="w-full"
+      placeholder="e.g. Emergency Fund, Daily Spends" />
+  </app-form-field>
+
   <!-- Credit Card fields -->
   @if (selectedAccountType() === AccountType.CreditCard) {
     <div class="grid">

@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { DashboardState } from '../../../core/state/dashboard-state.service';
 import { BudgetProgressWidget } from '../../budgets/budget-progress-widget/budget-progress-widget';
 import { FinancialHealthWidget } from '../financial-health-widget/financial-health-widget';
+import { UpcomingObligationsWidget } from '../upcoming-obligations-widget/upcoming-obligations-widget';
 import { sharedPrimeModules } from '../../../shared/prime-imports';
 import { StatCard } from '../../../shared/components/stat-card/stat-card';
 import { BreadcrumbService } from '../../../core/layout/breadcrumb.service';
@@ -20,6 +21,7 @@ import { BreadcrumbService } from '../../../core/layout/breadcrumb.service';
     FormsModule,
     BudgetProgressWidget,
     FinancialHealthWidget,
+    UpcomingObligationsWidget,
     StatCard
   ],
   templateUrl: './dashboard.html',

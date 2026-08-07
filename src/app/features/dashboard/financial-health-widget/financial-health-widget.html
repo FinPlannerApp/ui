@@ -47,6 +47,33 @@
             </div>
         </div>
 
+        <!-- Component Breakdown -->
+        <div class="w-full border-top-1 surface-border pt-2 mt-1">
+            <button type="button" class="w-full flex align-items-center justify-content-between p-1 border-none bg-transparent cursor-pointer text-xs text-secondary"
+                (click)="showBreakdown.set(!showBreakdown())">
+                <span>Why this score?</span>
+                <i class="pi" [ngClass]="showBreakdown() ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+            </button>
+
+            @if (showBreakdown()) {
+                <div class="flex flex-column gap-2 mt-2">
+                    @for (component of h.components; track component.name) {
+                        <div class="flex flex-column gap-1">
+                            <div class="flex align-items-center justify-content-between text-xs">
+                                <span class="font-medium">{{ component.name }}</span>
+                                <span class="text-secondary">{{ component.pointsEarned }} / {{ component.maxPoints }}</span>
+                            </div>
+                            <div class="w-full border-round overflow-hidden" style="height: 4px; background: rgba(255,255,255,0.08);">
+                                <div class="h-full border-round" [style.width.%]="(component.pointsEarned / component.maxPoints) * 100"
+                                    style="background: var(--primary-color);"></div>
+                            </div>
+                            <span class="text-xs text-secondary line-height-2">{{ component.explanation }}</span>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
         <!-- Insights List -->
         <div class="w-full flex flex-column gap-2 mt-2">
             @for (insight of h.insights; track insight.message) {

@@ -11,6 +11,9 @@ import { AccountState } from '../../../core/state/account-state.service';
 import { sharedPrimeModules } from '../../../shared/prime-imports';
 import { CommonModule } from '@angular/common';
 
+import { MerchantService } from '../../merchants/merchant.service';
+import { Merchant } from '../../../core/models/merchant.model';
+
 @Component({
   selector: 'app-transaction-form',
   imports: [CommonModule, ReactiveFormsModule, ...sharedPrimeModules],
@@ -24,6 +27,7 @@ export class TransactionForm implements OnInit {
   public config = inject(DynamicDialogConfig);
   private categoryService = inject(Category);
   private transactionService = inject(TransactionService);
+  private merchantService = inject(MerchantService);
   private accountState = inject(AccountState);
   private messageService = inject(MessageService);
 
@@ -31,12 +35,20 @@ export class TransactionForm implements OnInit {
   transactionTypes: any[];
   categories = signal<TransactionCategory[]>([]);
   accounts = signal<Account[]>([]);
+  merchants = signal<Merchant[]>([]);
+  suggestedMerchantId = signal<number | null>(null);
   currentFilter = signal<string>('');
 
   isEditMode = signal(false);
   isTransfer = signal(false);
   currentAccountId: number;
   isSubmitting = signal<boolean>(false);
+
+  suggestedMerchantName = computed(() => {
+    const id = this.suggestedMerchantId();
+    if (!id) return null;
+    return this.merchants().find(m => m.id === id)?.name ?? null;
+  });
 
   isNewCategory = computed(() => {
     const filter = this.currentFilter().trim().toLowerCase();
@@ -57,6 +69,7 @@ export class TransactionForm implements OnInit {
       date: [new Date(), Validators.required],
       type: [TransactionType.Expense, Validators.required],
       transactionCategoryId: [null],
+      merchantId: [null],
       destinationAccountId: [null] // Control for the transfer dropdown
     });
 
@@ -77,9 +90,13 @@ export class TransactionForm implements OnInit {
   }
 
   async loadInitialData(): Promise<void> {
-    // Fetch categories
-    const categories = await firstValueFrom(this.categoryService.getTransactionCategories());
+    // Fetch categories and merchants
+    const [categories, merchants] = await Promise.all([
+      firstValueFrom(this.categoryService.getTransactionCategories()),
+      this.merchantService.getAll()
+    ]);
     this.categories.set(categories);
+    this.merchants.set(merchants);
 
     // Use state for accounts
     this.accounts.set(this.accountState.accounts().filter(a => a.id !== this.currentAccountId));
@@ -147,6 +164,28 @@ export class TransactionForm implements OnInit {
     this.currentFilter.set(event.filter);
   }
 
+  async onDescriptionChange(): Promise<void> {
+    const desc = this.transactionForm.get('description')?.value;
+    if (this.transactionForm.get('merchantId')?.value || !desc) {
+      this.suggestedMerchantId.set(null);
+      return;
+    }
+    const match = await this.merchantService.suggest(desc);
+    this.suggestedMerchantId.set(match);
+  }
+
+  acceptMerchantSuggestion(): void {
+    const id = this.suggestedMerchantId();
+    if (id) {
+      this.transactionForm.get('merchantId')?.setValue(id);
+    }
+    this.suggestedMerchantId.set(null);
+  }
+
+  dismissMerchantSuggestion(): void {
+    this.suggestedMerchantId.set(null);
+  }
+
   // --- UPDATED SUBMIT LOGIC ---
   async onSubmit(): Promise<void> {
     if (this.transactionForm.invalid || this.isSubmitting()) {
@@ -177,6 +216,7 @@ export class TransactionForm implements OnInit {
           date: formValue.date.toISOString(),
           type: formValue.type,
           transactionCategoryId: formValue.transactionCategoryId,
+          merchantId: formValue.merchantId,
           accountCategoryId: undefined // Explicitly undefined or omitted
         };
         await firstValueFrom(this.transactionService.upsertTransaction(this.currentAccountId, transactionData));

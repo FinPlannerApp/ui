@@ -50,6 +50,8 @@ export class Layout {
           { label: 'Reports', icon: 'pi pi-file-export', routerLink: '/app/reports', command: () => { this.sidebarVisible = false; } },
           { label: '30-Day Challenge', icon: 'pi pi-flag', routerLink: '/app/challenge', command: () => { this.sidebarVisible = false; } },
           { label: 'Decision Journal', icon: 'pi pi-book', routerLink: '/app/decision-journal', command: () => { this.sidebarVisible = false; } },
+          { label: 'Merchants', icon: 'pi pi-shop', routerLink: '/app/merchants', command: () => { this.sidebarVisible = false; } },
+          { label: 'Goals', icon: 'pi pi-flag-fill', routerLink: '/app/goals', command: () => { this.sidebarVisible = false; } },
         ],
       },
       {
