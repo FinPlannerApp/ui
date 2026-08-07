@@ -197,6 +197,14 @@ export const routes: Routes = [
       //   path: 'about',
       //   component: About
       // },
+      {
+        path: 'merge-duplicates',
+        loadComponent: () => import('./features/merge-duplicates/merge-duplicates').then(m => m.MergeDuplicates)
+      },
+      {
+        path: 'decision-journal',
+        loadComponent: () => import('./features/decision-journal/decision-journal').then(m => m.DecisionJournal)
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },

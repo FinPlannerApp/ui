@@ -49,6 +49,7 @@ export class Layout {
           { label: 'Transactions', icon: 'pi pi-list', routerLink: '/app/transactions', command: () => { this.sidebarVisible = false; } },
           { label: 'Reports', icon: 'pi pi-file-export', routerLink: '/app/reports', command: () => { this.sidebarVisible = false; } },
           { label: '30-Day Challenge', icon: 'pi pi-flag', routerLink: '/app/challenge', command: () => { this.sidebarVisible = false; } },
+          { label: 'Decision Journal', icon: 'pi pi-book', routerLink: '/app/decision-journal', command: () => { this.sidebarVisible = false; } },
         ],
       },
       {
@@ -62,7 +63,8 @@ export class Layout {
         label: 'Settings',
         items: [
           { label: 'Settings', icon: 'pi pi-cog', routerLink: '/app/settings', command: () => { this.sidebarVisible = false; } },
-          { label: 'Feedback Hub', icon: 'pi pi-comments', routerLink: '/app/issues', command: () => { this.sidebarVisible = false; } }
+          { label: 'Feedback Hub', icon: 'pi pi-comments', routerLink: '/app/issues', command: () => { this.sidebarVisible = false; } },
+          { label: 'Merge Duplicates', icon: 'pi pi-sync', routerLink: '/app/merge-duplicates', command: () => { this.sidebarVisible = false; } }
         ]
       }
     ];

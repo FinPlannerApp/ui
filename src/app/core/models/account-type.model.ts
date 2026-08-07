@@ -21,6 +21,8 @@ export interface CreditCardDetails {
     minimumDueAmount?: number | null;
     dueDate?: string | null;
     statementClosingDate?: string | null;
+    annualFee?: number | null;
+    interestRate?: number | null;
 }
 
 export interface LoanDetails {
@@ -35,4 +37,5 @@ export interface LoanDetails {
 export interface BankAccountDetails {
     interestRate?: number | null;
     interestFrequency?: InterestFrequency | null;
+    minimumBalance?: number | null;
 }

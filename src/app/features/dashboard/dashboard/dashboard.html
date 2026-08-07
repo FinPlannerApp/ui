@@ -24,6 +24,12 @@
   </div>
 
   <div class="col-12 sm:col-6 lg:col-3">
+    <app-stat-card label="Real Available Cash" [value]="(summary()?.realAvailableCash | currency:'INR')!"
+      icon="pi pi-money-bill" iconColor="var(--teal-500)"
+      secondaryValue="Liquid cash minus unpaid credit card debt"></app-stat-card>
+  </div>
+
+  <div class="col-12 sm:col-6 lg:col-3">
     <app-stat-card label="Monthly Income" [value]="(summary()?.monthlyIncome | currency:'INR')!" icon="pi pi-arrow-up"
       iconColor="var(--green-500)"></app-stat-card>
   </div>

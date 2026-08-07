@@ -1,0 +1,112 @@
+<p-confirmDialog></p-confirmDialog>
+<p-toast></p-toast>
+
+<div class="flex flex-column gap-4 p-4">
+  <div class="flex align-items-center justify-content-between">
+    <h2 class="m-0">Merge Duplicates</h2>
+    <a routerLink="/app/accounts" class="p-button p-button-text">
+      <i class="pi pi-arrow-left mr-2"></i>Back to Accounts
+    </a>
+  </div>
+
+  <!-- ACCOUNTS -->
+  <p-card>
+    <div class="flex align-items-center gap-2 mb-3">
+      <i class="pi pi-wallet text-xl"></i>
+      <span class="font-medium">Merge Accounts</span>
+    </div>
+    <p class="text-sm text-secondary mt-0">
+      Moves every transaction from one account into another, then removes
+      the original. Use this when the same real account was accidentally
+      created more than once.
+    </p>
+
+    <div class="grid">
+      <div class="col-12 md:col-6">
+        <label class="text-sm text-secondary">Merge this account...</label>
+        <p-select [options]="accountState.accounts()" [ngModel]="sourceAccountId()"
+          (ngModelChange)="sourceAccountId.set($event); onAccountSelectionChange()"
+          optionLabel="name" optionValue="id" placeholder="Select source account"
+          appendTo="body" class="w-full mt-1"></p-select>
+      </div>
+      <div class="col-12 md:col-6">
+        <label class="text-sm text-secondary">...into this account</label>
+        <p-select [options]="accountState.accounts()" [ngModel]="targetAccountId()"
+          (ngModelChange)="targetAccountId.set($event); onAccountSelectionChange()"
+          optionLabel="name" optionValue="id" placeholder="Select target account"
+          appendTo="body" class="w-full mt-1"></p-select>
+      </div>
+    </div>
+
+    @if (sourceAccount() && targetAccount()) {
+      <div class="flex gap-4 mt-3 text-sm">
+        <span>{{ sourceAccount()!.name }}: <strong>{{ sourceAccount()!.balance | currency:'INR' }}</strong></span>
+        <span>{{ targetAccount()!.name }}: <strong>{{ targetAccount()!.balance | currency:'INR' }}</strong></span>
+      </div>
+
+      <div class="mt-3" style="max-width: 16rem;">
+        <label class="text-sm text-secondary">Final balance for {{ targetAccount()!.name }}</label>
+        <p-inputNumber [ngModel]="finalBalance()" (ngModelChange)="finalBalance.set($event)"
+          mode="currency" currency="INR" locale="en-IN" class="w-full mt-1"></p-inputNumber>
+        <p class="text-xs text-secondary mt-1 mb-0">
+          Defaults to the sum of both accounts — edit this if that's not
+          actually correct for your situation.
+        </p>
+      </div>
+
+      <div class="flex justify-content-end mt-3">
+        <p-button label="Merge Accounts" icon="pi pi-arrow-right-arrow-left" severity="danger"
+          (onClick)="confirmMergeAccounts()" [loading]="isMergingAccounts()"></p-button>
+      </div>
+    }
+  </p-card>
+
+  <!-- CATEGORIES -->
+  <p-card>
+    <div class="flex align-items-center gap-2 mb-3">
+      <i class="pi pi-tags text-xl"></i>
+      <span class="font-medium">Merge Categories</span>
+    </div>
+    <p class="text-sm text-secondary mt-0">
+      Moves every account from one category into another, then removes
+      the original category.
+    </p>
+
+    <div class="grid">
+      <div class="col-12 md:col-6">
+        <label class="text-sm text-secondary">Merge this category...</label>
+        <p-select [options]="categories()" [ngModel]="sourceCategoryId()" (ngModelChange)="sourceCategoryId.set($event)"
+          optionLabel="name" optionValue="id" placeholder="Select source category"
+          appendTo="body" class="w-full mt-1"></p-select>
+      </div>
+      <div class="col-12 md:col-6">
+        <label class="text-sm text-secondary">...into this category</label>
+        <p-select [options]="categories()" [ngModel]="targetCategoryId()" (ngModelChange)="targetCategoryId.set($event)"
+          optionLabel="name" optionValue="id" placeholder="Select target category"
+          appendTo="body" class="w-full mt-1"></p-select>
+      </div>
+    </div>
+
+    @if (sourceCategoryId()) {
+      <div class="mt-3">
+        <p class="text-sm text-secondary mb-1">
+          {{ affectedAccountsForCategory().length }} account(s) will move:
+        </p>
+        @if (affectedAccountsForCategory().length > 0) {
+          <ul class="text-sm m-0 pl-3">
+            @for (account of affectedAccountsForCategory(); track account.id) {
+              <li>{{ account.name }}</li>
+            }
+          </ul>
+        }
+      </div>
+    }
+
+    @if (sourceCategoryId() && targetCategoryId()) {
+      <div class="flex justify-content-end mt-3">
+        <p-button label="Merge Categories" icon="pi pi-arrow-right-arrow-left" severity="danger"
+          (onClick)="confirmMergeCategories()" [loading]="isMergingCategories()"></p-button>
+      </div>
+    }
+  </p-card>
+</div>

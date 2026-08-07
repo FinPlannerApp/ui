@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal, computed } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { DialogService, DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AccountCategory, Category } from '../../categories/category';
 import { firstValueFrom } from 'rxjs';
 import { sharedPrimeModules } from '../../../shared/prime-imports';
@@ -9,17 +9,17 @@ import { NotificationService } from '../../../core/services/notification.service
 import { FormField } from '../../../shared/components/form-field/form-field';
 import { AccountState } from '../../../core/state/account-state.service';
 import { AccountType, InterestFrequency } from '../../../core/models/account-type.model';
+import { CategoryForm } from '../../categories/category-form/category-form';
 
 @Component({
   selector: 'app-account-form',
   imports: [FormsModule, ReactiveFormsModule, ...sharedPrimeModules, FormField],
   templateUrl: './account-form.html',
   styleUrl: './account-form.scss',
+  providers: [DialogService],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AccountForm {
-  // Exposes the enum to the template — same pattern used in the custom
-  // recurring days form, "frequency === RecurrenceFrequency.Custom" style.
   readonly AccountType = AccountType;
 
   private fb = inject(FormBuilder);
@@ -29,26 +29,13 @@ export class AccountForm {
   public validationService = inject(ValidationService);
   private accountState = inject(AccountState);
   private notificationService = inject(NotificationService);
+  private dialogService = inject(DialogService);
 
   accountForm: FormGroup;
   accountCategories = signal<AccountCategory[]>([]);
   currentFilter = signal<string>('');
   isSubmitting = signal<boolean>(false);
   isEditMode = false;
-
-  newCategoryAccountType = signal<AccountType>(AccountType.Other);
-
-  setNewCategoryAccountType(value: any): void {
-    this.newCategoryAccountType.set(value as AccountType);
-  }
-
-  accountTypeOptions = [
-    { label: 'Bank / Savings', value: AccountType.Bank },
-    { label: 'Credit Card', value: AccountType.CreditCard },
-    { label: 'Loan', value: AccountType.Loan },
-    { label: 'Cash', value: AccountType.Cash },
-    { label: 'Other', value: AccountType.Other }
-  ];
 
   interestFrequencyOptions = [
     { label: 'Daily', value: InterestFrequency.Daily },
@@ -57,9 +44,6 @@ export class AccountForm {
     { label: 'Yearly', value: InterestFrequency.Yearly }
   ];
 
-  // Looks up the CURRENTLY SELECTED category's AccountType — this is what
-  // actually drives which detail field group shows. Recomputes whenever
-  // either the category list or the selected category changes.
   selectedAccountType = computed(() => {
     const categoryId = this.accountForm?.get('accountCategoryId')?.value;
     if (!categoryId) return null;
@@ -74,12 +58,13 @@ export class AccountForm {
       balance: [0, [Validators.required, Validators.min(0)]],
       accountCategoryId: [null, Validators.required],
 
-      // Credit Card fields — flat at the top level for simplicity, shaped
-      // into the nested payload the backend expects only at submit time.
+      // Credit Card fields
       creditLimit: [null],
       minimumDueAmount: [null],
       dueDate: [null],
       statementClosingDate: [null],
+      annualFee: [null],
+      cardInterestRate: [null],
 
       // Loan fields
       principalAmount: [null],
@@ -91,23 +76,18 @@ export class AccountForm {
 
       // Bank fields
       bankInterestRate: [null],
-      interestFrequency: [null]
+      interestFrequency: [null],
+      minimumBalance: [null]
     });
 
-    // Recompute selectedAccountType whenever the category selection
-    // changes — accountCategoryId isn't itself a signal, so this needs
-    // an explicit subscription rather than relying on signal reactivity
-    // alone to pick up the change.
     this.accountForm.get('accountCategoryId')?.valueChanges.subscribe(() => {
+      this.updateBalanceValidator();
       this.accountForm.updateValueAndValidity();
     });
   }
 
   async ngOnInit(): Promise<void> {
-    const categories = await firstValueFrom(this.categoryService.getAccountCategories());
-    if (categories) {
-      this.accountCategories.set(categories);
-    }
+    await this.loadCategories();
 
     const data = this.config.data;
     if (data && data.itemToEdit) {
@@ -119,14 +99,14 @@ export class AccountForm {
         accountCategoryId: category ? category.id : null
       });
 
-      // Decompose whichever detail object came back (at most one is
-      // non-null) into the flat form controls.
       if (item.creditCardDetails) {
         this.accountForm.patchValue({
           creditLimit: item.creditCardDetails.creditLimit,
           minimumDueAmount: item.creditCardDetails.minimumDueAmount,
           dueDate: item.creditCardDetails.dueDate ? new Date(item.creditCardDetails.dueDate) : null,
-          statementClosingDate: item.creditCardDetails.statementClosingDate ? new Date(item.creditCardDetails.statementClosingDate) : null
+          statementClosingDate: item.creditCardDetails.statementClosingDate ? new Date(item.creditCardDetails.statementClosingDate) : null,
+          annualFee: item.creditCardDetails.annualFee,
+          cardInterestRate: item.creditCardDetails.interestRate
         });
       }
       if (item.loanDetails) {
@@ -142,14 +122,37 @@ export class AccountForm {
       if (item.bankAccountDetails) {
         this.accountForm.patchValue({
           bankInterestRate: item.bankAccountDetails.interestRate,
-          interestFrequency: item.bankAccountDetails.interestFrequency
+          interestFrequency: item.bankAccountDetails.interestFrequency,
+          minimumBalance: item.bankAccountDetails.minimumBalance
         });
       }
+    }
+
+    this.updateBalanceValidator();
+  }
+
+  private async loadCategories(): Promise<void> {
+    const categories = await firstValueFrom(this.categoryService.getAccountCategories());
+    if (categories) {
+      this.accountCategories.set(categories);
     }
   }
 
   filterCategories(event: { filter: string }): void {
     this.currentFilter.set(event.filter);
+  }
+
+  private updateBalanceValidator(): void {
+    const category = this.accountCategories().find(c => c.id === this.accountForm.get('accountCategoryId')?.value);
+    const balanceControl = this.accountForm.get('balance');
+    if (!balanceControl) return;
+
+    if (category?.isLiability) {
+      balanceControl.setValidators([Validators.required]);
+    } else {
+      balanceControl.setValidators([Validators.required, Validators.min(0)]);
+    }
+    balanceControl.updateValueAndValidity();
   }
 
   isNewCategory(): boolean {
@@ -160,35 +163,32 @@ export class AccountForm {
     return !this.accountCategories().some(c => c.name.toLowerCase() === filter);
   }
 
-  async addNewCategory(): Promise<void> {
-    let newCategoryName = this.currentFilter().trim();
-    if (newCategoryName) {
-      newCategoryName = newCategoryName.charAt(0).toUpperCase() + newCategoryName.slice(1);
-      try {
-        const newCategory = await firstValueFrom(this.categoryService.upsertAccountCategory({
-          name: newCategoryName,
-          accountType: this.newCategoryAccountType(),
-          isLiability: this.newCategoryAccountType() === AccountType.CreditCard
-                    || this.newCategoryAccountType() === AccountType.Loan
-        }));
-        if (newCategory) {
-          this.accountCategories.update(categories => [...categories, newCategory]);
-          this.accountForm.get('accountCategoryId')?.setValue(newCategory.id);
-          this.currentFilter.set('');
-        }
-      } catch (err) {
+  openCategoryModal(): void {
+    const nameToInject = this.currentFilter().trim();
+    const ref = this.dialogService.open(CategoryForm, {
+      header: 'Add New Account Category',
+      width: '30rem',
+      data: {
+        endpoint: 'AccountCategories',
+        itemToEdit: nameToInject ? { name: nameToInject } : undefined
       }
-    }
+    });
+
+    ref?.onClose.subscribe(async (result: any) => {
+      if (result) {
+        await this.loadCategories();
+        const created = this.accountCategories().find(c => c.name.toLowerCase() === nameToInject.toLowerCase());
+        if (created) {
+          this.accountForm.get('accountCategoryId')?.setValue(created.id);
+        }
+        this.currentFilter.set('');
+      }
+    });
   }
 
   private buildDetailsPayload(): any {
     const type = this.selectedAccountType();
     const raw = this.accountForm.getRawValue();
-
-    // Matches the existing convention (see transaction-form.ts's onSubmit)
-    // of explicitly calling .toISOString() rather than relying on
-    // automatic Date serialization — null-safe here since every one of
-    // these date fields is optional.
     const toIso = (d: Date | null): string | null => d ? d.toISOString() : null;
 
     return {
@@ -196,7 +196,9 @@ export class AccountForm {
         creditLimit: raw.creditLimit,
         minimumDueAmount: raw.minimumDueAmount,
         dueDate: toIso(raw.dueDate),
-        statementClosingDate: toIso(raw.statementClosingDate)
+        statementClosingDate: toIso(raw.statementClosingDate),
+        annualFee: raw.annualFee,
+        interestRate: raw.cardInterestRate
       } : null,
       loanDetails: type === AccountType.Loan ? {
         principalAmount: raw.principalAmount,
@@ -208,7 +210,8 @@ export class AccountForm {
       } : null,
       bankAccountDetails: type === AccountType.Bank ? {
         interestRate: raw.bankInterestRate,
-        interestFrequency: raw.interestFrequency
+        interestFrequency: raw.interestFrequency,
+        minimumBalance: raw.minimumBalance
       } : null
     };
   }

@@ -1,7 +1,18 @@
 <form [formGroup]="categoryForm" (ngSubmit)="onSubmit()">
-  <app-form-field label="Category Name" inputId="name" [control]="categoryForm.get('name')">
+<app-form-field label="Category Name" inputId="name" [control]="categoryForm.get('name')">
     <input id="name" type="text" pInputText formControlName="name" class="w-full" />
   </app-form-field>
+
+  @if (possibleDuplicate(); as match) {
+    <div class="flex align-items-start gap-2 p-2 mt-1 border-round" style="background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3);">
+      <i class="pi pi-exclamation-triangle text-sm mt-1" style="color: #fbbf24;"></i>
+      <span class="text-sm">
+        This looks similar to an existing category, <strong>"{{ match }}"</strong>.
+        You can still create a new one if you mean something different — just
+        flagging it in case this was meant to be the same category.
+      </span>
+    </div>
+  }
 
   <!-- NEW: Show this checkbox only for Transaction Categories -->
   @if(isTransactionCategory()) {

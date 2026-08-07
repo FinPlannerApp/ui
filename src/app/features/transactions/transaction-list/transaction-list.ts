@@ -22,6 +22,9 @@ import { AccountState } from '../../../core/state/account-state.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { BreadcrumbService } from '../../../core/layout/breadcrumb.service';
 import { sharedPrimeModules } from '../../../shared/prime-imports';
+import { GenericApi } from '../../../core/services/generic-api';
+import { AccountBucketBreakdown } from '../../../core/models/savings-bucket.model';
+import { InputNumberModule } from 'primeng/inputnumber';
 import { StatCard } from '../../../shared/components/stat-card/stat-card';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
@@ -45,6 +48,7 @@ import { AccountType, InterestFrequency } from '../../../core/models/account-typ
     DatePickerModule,
     SelectModule,
     InputTextModule,
+    InputNumberModule,
     TooltipModule,
     FloatLabelModule,
     ...sharedPrimeModules
@@ -65,12 +69,62 @@ export class TransactionList implements OnInit {
   private notificationService = inject(NotificationService);
   private breadcrumbService = inject(BreadcrumbService);
   private cdr = inject(ChangeDetectorRef);
+  private api = inject(GenericApi);
 
   transactions = signal<Transaction[]>([]);
   isLoading = signal(false);
   accountId = signal<number | null>(null);
   ref: DynamicDialogRef | null = null;
   summary = signal<AccountSummary | null>(null);
+
+  bucketBreakdown = signal<AccountBucketBreakdown | null>(null);
+  showBucketForm = signal(false);
+  newBucketName = signal('');
+  newBucketAmount = signal<number | null>(null);
+
+  async loadBuckets(): Promise<void> {
+    const id = this.accountId();
+    if (id === null) return;
+    try {
+      const result = await firstValueFrom(this.api.get<AccountBucketBreakdown>(`SavingsBuckets/account/${id}`));
+      this.bucketBreakdown.set(result.value);
+      this.cdr.markForCheck();
+    } catch (err) {
+      // Non-critical widget
+    }
+  }
+
+  async addBucket(): Promise<void> {
+    const id = this.accountId();
+    const name = this.newBucketName().trim();
+    const amount = this.newBucketAmount();
+    if (id === null || !name || amount === null) return;
+
+    try {
+      await firstValueFrom(this.api.post<any>('SavingsBuckets/upsert', {
+        accountId: id,
+        name,
+        allocatedAmount: amount,
+        targetAmount: null
+      }));
+      this.notificationService.showSuccess('Bucket added.');
+      this.newBucketName.set('');
+      this.newBucketAmount.set(null);
+      this.showBucketForm.set(false);
+      await this.loadBuckets();
+    } catch (err: any) {
+      this.notificationService.showError(err?.message || 'Failed to add bucket.');
+    }
+  }
+
+  async deleteBucket(bucketId: number): Promise<void> {
+    try {
+      await firstValueFrom(this.api.post<any>('SavingsBuckets/delete', { id: bucketId }));
+      await this.loadBuckets();
+    } catch (err: any) {
+      this.notificationService.showError(err?.message || 'Failed to delete bucket.');
+    }
+  }
 
   // Exposes the enum to the template for the @if checks below.
   readonly AccountType = AccountType;
@@ -104,6 +158,18 @@ export class TransactionList implements OnInit {
 
     return (account!.balance * (details.interestRate / 100)) / periodsPerYear;
   });
+
+  bucketInterestShare(allocatedAmount: number): number | null {
+    const account = this.currentAccount();
+    const accountInterest = this.estimatedInterest();
+
+    if (!account || accountInterest === null || account.balance <= 0) {
+      return null;
+    }
+
+    const proportion = allocatedAmount / account.balance;
+    return proportion * accountInterest;
+  }
 
   interestFrequencyLabel(freq: InterestFrequency | null | undefined): string {
     switch (freq) {
@@ -236,6 +302,7 @@ export class TransactionList implements OnInit {
       this.transactions.set(paginatedResult.data);
       this.totalRecords.set(paginatedResult.totalRecords);
       this.summary.set(summaryData);
+      await this.loadBuckets();
 
       // Update Breadcrumbs
       const accountName = this.accountState.accounts().find(a => a.id === id)?.name || 'Account';

@@ -9,6 +9,7 @@ export interface Account {
   balance: number;
   userId: string;
   accountCategoryName?: string;
+  accountCategoryId?: number;
   isLiability?: boolean;
   accountType?: AccountType;
   creditCardDetails?: CreditCardDetails | null;

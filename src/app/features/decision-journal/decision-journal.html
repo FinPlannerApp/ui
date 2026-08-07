@@ -1,0 +1,90 @@
+<p-toast></p-toast>
+<div class="flex flex-column gap-3 p-4">
+  <div class="flex align-items-center justify-content-between">
+    <h2 class="m-0">Decision Journal</h2>
+    <a routerLink="/app/dashboard" class="p-button p-button-text">
+      <i class="pi pi-arrow-left mr-2"></i>Back to Dashboard
+    </a>
+  </div>
+
+  <p class="text-sm text-secondary mt-0">
+    Write down the reasoning behind a financial decision before you make
+    it. Come back later and record how it actually turned out — the value
+    is entirely in your own reflection, nothing here is scored or judged.
+  </p>
+
+  @if (!showForm()) {
+    <p-button label="New Entry" icon="pi pi-plus" class="w-fit" (onClick)="showForm.set(true)"></p-button>
+  }
+
+  @if (showForm()) {
+    <p-card>
+      <form [formGroup]="entryForm" (ngSubmit)="saveEntry()" class="flex flex-column gap-2 p-fluid">
+        <div class="field">
+          <label class="text-sm text-secondary">Title</label>
+          <input type="text" pInputText formControlName="title" placeholder="e.g. Buying a new laptop" />
+        </div>
+        <div class="field">
+          <label class="text-sm text-secondary">Reasoning</label>
+          <textarea pTextarea rows="3" formControlName="reasoning"
+            placeholder="Why are you making this decision?"></textarea>
+        </div>
+        <div class="flex gap-2">
+          <div class="field flex-1">
+            <label class="text-sm text-secondary">Amount (optional)</label>
+            <p-inputNumber formControlName="amount" mode="currency" currency="INR" locale="en-IN" class="w-full"></p-inputNumber>
+          </div>
+          <div class="field flex-1">
+            <label class="text-sm text-secondary">Decision Date</label>
+            <p-datepicker formControlName="decisionDate" [showIcon]="true" appendTo="body" class="w-full"></p-datepicker>
+          </div>
+        </div>
+        <div class="flex justify-content-end gap-2 mt-2">
+          <p-button label="Cancel" severity="secondary" [text]="true" type="button" (onClick)="showForm.set(false)"></p-button>
+          <p-button label="Save Entry" type="submit" [disabled]="entryForm.invalid"></p-button>
+        </div>
+      </form>
+    </p-card>
+  }
+
+  @if (isLoading()) {
+    <div class="flex justify-content-center p-6">
+      <p-progressSpinner></p-progressSpinner>
+    </div>
+  } @else {
+    <div class="flex flex-column gap-2">
+      @for (entry of entries(); track entry.id) {
+        <p-card>
+          <div class="flex flex-column gap-2">
+            <div class="flex align-items-center justify-content-between">
+              <span class="font-medium">{{ entry.title }}</span>
+              <div class="flex align-items-center gap-2">
+                @if (entry.amount) {
+                  <span class="text-sm text-secondary">{{ entry.amount | currency:'INR' }}</span>
+                }
+                <span class="text-sm text-secondary">{{ entry.decisionDate | date:'mediumDate' }}</span>
+                <p-button icon="pi pi-trash" [text]="true" severity="danger" (onClick)="deleteEntry(entry)"></p-button>
+              </div>
+            </div>
+            <p class="text-sm m-0">{{ entry.reasoning }}</p>
+
+            @if (entry.outcome) {
+              <div class="p-2 border-round" style="background: rgba(16, 185, 129, 0.08);">
+                <span class="text-xs text-secondary">Reflection ({{ entry.outcomeRecordedAt | date:'mediumDate' }})</span>
+                <p class="text-sm m-0 mt-1">{{ entry.outcome }}</p>
+              </div>
+            } @else {
+              <div class="flex gap-2">
+                <input type="text" pInputText class="flex-1" placeholder="How did this turn out? (optional, add anytime)"
+                  [ngModel]="getOutcomeDraft(entry)" (ngModelChange)="setOutcomeDraft(entry, $event)" />
+                <p-button label="Save" [text]="true" (onClick)="saveOutcome(entry)"></p-button>
+              </div>
+            }
+          </div>
+        </p-card>
+      } @empty {
+        <p class="text-secondary text-sm">No entries yet — start with your next big purchase decision.</p>
+      }
+    </div>
+  }
+</div>

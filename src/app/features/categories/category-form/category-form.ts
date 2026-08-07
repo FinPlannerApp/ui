@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Category } from '../../categories/category';
@@ -23,10 +23,45 @@ export class CategoryForm implements OnInit {
   public validationService = inject(ValidationService);
   private crudService = inject(GenericCrud<any>);
   private notificationService = inject(NotificationService);
+  private categoryService = inject(Category);
 
   categoryForm: FormGroup;
   isTransactionCategory = signal(false); // To know when to show the checkbox
   isSubmitting = signal<boolean>(false);
+
+  existingCategoryNames = signal<string[]>([]);
+
+  // Compares against existing names after stripping case, punctuation,
+  // and simple trailing-s pluralization — "BANK", "bank", and "banks"
+  // all normalize to the same thing. Deliberately simple rather than a
+  // full pluralization engine (categories tend to be short, common
+  // words — "Bank"/"Card"/"Wallet" — not the kind of vocabulary where
+  // irregular plurals come up).
+  private normalizeForComparison(name: string): string {
+    let normalized = name.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (normalized.endsWith('ies') && normalized.length > 3) {
+      normalized = normalized.slice(0, -3) + 'y';
+    } else if (normalized.endsWith('s') && !normalized.endsWith('ss') && normalized.length > 1) {
+      normalized = normalized.slice(0, -1);
+    }
+    return normalized;
+  }
+
+  possibleDuplicate = computed(() => {
+    const typed = this.categoryForm?.get('name')?.value?.trim();
+    if (!typed || typed.length < 2) return null;
+
+    const normalizedTyped = this.normalizeForComparison(typed);
+    const editingId = this.categoryForm?.get('id')?.value;
+
+    // Skip comparing against itself when editing an existing category.
+    const match = this.existingCategoryNames().find((existingName) =>
+      this.normalizeForComparison(existingName) === normalizedTyped &&
+      existingName.toLowerCase() !== typed.toLowerCase() // exact matches are caught by the real uniqueness check already — only warn on the FUZZY case
+    );
+
+    return match ?? null;
+  });
 
   constructor() {
     this.categoryForm = this.fb.group({
@@ -36,10 +71,15 @@ export class CategoryForm implements OnInit {
     });
   }
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     // Check if we are editing a Transaction Category
     if (this.config.data?.endpoint === 'TransactionCategories') {
       this.isTransactionCategory.set(true);
+      const cats = await firstValueFrom(this.categoryService.getTransactionCategories());
+      this.existingCategoryNames.set(cats.map(c => c.name));
+    } else {
+      const cats = await firstValueFrom(this.categoryService.getAccountCategories());
+      this.existingCategoryNames.set(cats.map(c => c.name));
     }
 
     // Patch the form if we are in edit mode

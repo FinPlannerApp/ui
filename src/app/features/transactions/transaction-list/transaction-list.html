@@ -94,8 +94,20 @@
           }
           @if (details.statementClosingDate) {
             <div class="col-6 md:col-3">
-              <div class="text-sm text-secondary">Statement Closes</div>
+              <div class="text-sm text-secondary">Bill Date</div>
               <div class="font-medium">{{ details.statementClosingDate | date:'mediumDate' }}</div>
+            </div>
+          }
+          @if (details.annualFee) {
+            <div class="col-6 md:col-3">
+              <div class="text-sm text-secondary">Annual Fee</div>
+              <div class="font-medium">{{ details.annualFee | currency:'INR' }}</div>
+            </div>
+          }
+          @if (details.interestRate) {
+            <div class="col-6 md:col-3">
+              <div class="text-sm text-secondary">Interest Rate</div>
+              <div class="font-medium">{{ details.interestRate }}%</div>
             </div>
           }
         </div>
@@ -160,6 +172,12 @@
               </div>
             }
           }
+          @if (details.minimumBalance) {
+            <div class="col-6 md:col-3">
+              <div class="text-sm text-secondary">Minimum Balance</div>
+              <div class="font-medium">{{ details.minimumBalance | currency:'INR' }}</div>
+            </div>
+          }
         </div>
         <p class="text-xs text-secondary mt-2 mb-0">
           Estimate based on current balance and rate — not a guarantee of
@@ -167,6 +185,58 @@
         </p>
       </p-card>
     }
+  }
+
+  @if (bucketBreakdown(); as breakdown) {
+    <p-card styleClass="mb-4">
+      <div class="flex align-items-center justify-content-between mb-3">
+        <div class="flex align-items-center gap-2">
+          <i class="pi pi-wallet text-xl"></i>
+          <span class="font-medium">Savings Buckets</span>
+        </div>
+        <p-button icon="pi pi-plus" [text]="true" label="Add Bucket" (onClick)="showBucketForm.set(!showBucketForm())"></p-button>
+      </div>
+
+      @if (showBucketForm()) {
+        <div class="flex gap-2 mb-3 align-items-end">
+          <div class="flex-1">
+            <label class="text-sm text-secondary">Bucket name</label>
+            <input type="text" pInputText class="w-full" placeholder="e.g. Emergency Fund"
+              [ngModel]="newBucketName()" (ngModelChange)="newBucketName.set($event)" />
+          </div>
+          <div class="flex-1">
+            <label class="text-sm text-secondary">Amount</label>
+            <p-inputNumber [ngModel]="newBucketAmount()" (ngModelChange)="newBucketAmount.set($event)"
+              mode="currency" currency="INR" locale="en-IN" class="w-full"></p-inputNumber>
+          </div>
+          <p-button label="Save" (onClick)="addBucket()"></p-button>
+        </div>
+      }
+
+      <div class="flex flex-column gap-2">
+        @for (bucket of breakdown.buckets; track bucket.id) {
+          <div class="flex align-items-center justify-content-between p-2 border-round" style="background: rgba(255,255,255,0.03);">
+            <div class="flex flex-column">
+              <span>{{ bucket.name }}</span>
+              @if (bucketInterestShare(bucket.allocatedAmount); as share) {
+                <span class="text-xs text-secondary">
+                  ~{{ share | currency:'INR' }} / {{ interestFrequencyLabel(currentAccount()?.bankAccountDetails?.interestFrequency) }} at this account's rate
+                </span>
+              }
+            </div>
+            <div class="flex align-items-center gap-2">
+              <span class="font-medium">{{ bucket.allocatedAmount | currency:'INR' }}</span>
+              <p-button icon="pi pi-trash" [text]="true" severity="danger" (onClick)="deleteBucket(bucket.id)"></p-button>
+            </div>
+          </div>
+        }
+
+        <div class="flex align-items-center justify-content-between p-2 text-secondary text-sm">
+          <span>Unallocated</span>
+          <span>{{ breakdown.unallocated | currency:'INR' }}</span>
+        </div>
+      </div>
+    </p-card>
   }
 
   <p-card>

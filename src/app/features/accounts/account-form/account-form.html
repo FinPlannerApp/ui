@@ -3,27 +3,25 @@
     <input id="name" type="text" pInputText formControlName="name" class="w-full" />
   </app-form-field>
 
-  <app-form-field label="Starting Balance" inputId="balance" [control]="accountForm.get('balance')">
+  <app-form-field
+    [label]="selectedAccountType() === AccountType.CreditCard || selectedAccountType() === AccountType.Loan ? 'Starting Balance (negative = amount already owed)' : 'Starting Balance'"
+    inputId="balance" [control]="accountForm.get('balance')">
     <p-inputNumber id="balance" formControlName="balance" mode="currency" currency="INR" locale="en-IN"
       class="w-full"></p-inputNumber>
   </app-form-field>
 
   <app-form-field label="Category" inputId="accountCategory" [control]="accountForm.get('accountCategoryId')">
-    <p-select id="accountCategory" [options]="accountCategories()" formControlName="accountCategoryId"
-      optionLabel="name" optionValue="id" [showClear]="true" placeholder="Select or type to add" class="w-full"
-      appendTo="body" [filter]="true" (onFilter)="filterCategories($event)">
-      <ng-template pTemplate="footer">
-        @if (isNewCategory()) {
-        <div class="p-2 border-top-1 surface-border flex flex-column gap-2">
-          <span class="text-sm text-secondary">Category type</span>
-          <p-select [options]="accountTypeOptions" [ngModel]="newCategoryAccountType()" (ngModelChange)="setNewCategoryAccountType($event)" [ngModelOptions]="{standalone: true}"
-            optionLabel="label" optionValue="value" appendTo="body" class="w-full"></p-select>
-          <p-button label="Create '{{ currentFilter() }}'" class="p-button-link"
-            (onClick)="addNewCategory()"></p-button>
-        </div>
-        }
-      </ng-template>
-    </p-select>
+    <div class="flex gap-2 align-items-start">
+      <p-select id="accountCategory" [options]="accountCategories()" formControlName="accountCategoryId"
+        optionLabel="name" optionValue="id" [showClear]="true" placeholder="Select or type to search" class="w-full flex-1"
+        appendTo="body" [filter]="true" (onFilter)="filterCategories($event)">
+      </p-select>
+      @if (isNewCategory()) {
+        <p-button icon="pi pi-plus" [text]="true" [rounded]="true" severity="success"
+          pTooltip="Add '{{ currentFilter() }}' as a new category" tooltipPosition="top"
+          (onClick)="openCategoryModal()"></p-button>
+      }
+    </div>
   </app-form-field>
 
   <!-- Credit Card fields -->
@@ -45,8 +43,18 @@
         </app-form-field>
       </div>
       <div class="col-12 md:col-6">
-        <app-form-field label="Statement Closing Date" inputId="statementClosingDate">
+        <app-form-field label="Statement Closing Date (Bill Date)" inputId="statementClosingDate">
           <p-datepicker id="statementClosingDate" formControlName="statementClosingDate" [showIcon]="true" appendTo="body" class="w-full"></p-datepicker>
+        </app-form-field>
+      </div>
+      <div class="col-12 md:col-6">
+        <app-form-field label="Annual Fee" inputId="annualFee">
+          <p-inputNumber id="annualFee" formControlName="annualFee" mode="currency" currency="INR" locale="en-IN" class="w-full"></p-inputNumber>
+        </app-form-field>
+      </div>
+      <div class="col-12 md:col-6">
+        <app-form-field label="Interest Rate / APR (%)" inputId="cardInterestRate">
+          <p-inputNumber id="cardInterestRate" formControlName="cardInterestRate" suffix="%" [minFractionDigits]="2" class="w-full"></p-inputNumber>
         </app-form-field>
       </div>
     </div>
@@ -102,7 +110,20 @@
             optionLabel="label" optionValue="value" appendTo="body" class="w-full"></p-select>
         </app-form-field>
       </div>
+      <div class="col-12 md:col-6">
+        <app-form-field label="Minimum Balance" inputId="minimumBalance">
+          <p-inputNumber id="minimumBalance" formControlName="minimumBalance" mode="currency" currency="INR" locale="en-IN" class="w-full"></p-inputNumber>
+        </app-form-field>
+      </div>
     </div>
+  }
+
+  @if (accountForm.get('accountCategoryId')?.value && selectedAccountType() === null) {
+    <p class="text-sm text-secondary mt-2">
+      This category doesn't have a type set yet, so there are no
+      type-specific fields to show. You can set one from the Account
+      Categories screen.
+    </p>
   }
 
   <div class="flex align-items-center justify-content-end gap-2 mt-4 pt-3 border-top-1 surface-border">
