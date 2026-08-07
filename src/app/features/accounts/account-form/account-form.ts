@@ -37,6 +37,20 @@ export class AccountForm {
   isSubmitting = signal<boolean>(false);
   isEditMode = false;
 
+  // THE ACTUAL FIX: a real signal, updated explicitly whenever the
+  // category selection changes (see the valueChanges subscription in the
+  // constructor, and the explicit .set() in ngOnInit's edit-mode branch).
+  // The previous version had `selectedAccountType` read
+  // `accountForm.get('accountCategoryId')?.value` directly inside a
+  // computed() — but a Reactive Forms FormControl's .value is a plain
+  // property, not a signal, so Angular had nothing to track there. The
+  // computed only ever evaluated once, with whatever value happened to
+  // exist at that first read (almost always null, before any category
+  // was picked), and then never recalculated again no matter what the
+  // user actually selected afterward. This is why the "no type set"
+  // message kept showing regardless of which category was chosen.
+  selectedCategoryId = signal<number | null>(null);
+
   interestFrequencyOptions = [
     { label: 'Daily', value: InterestFrequency.Daily },
     { label: 'Monthly', value: InterestFrequency.Monthly },
@@ -45,7 +59,7 @@ export class AccountForm {
   ];
 
   selectedAccountType = computed(() => {
-    const categoryId = this.accountForm?.get('accountCategoryId')?.value;
+    const categoryId = this.selectedCategoryId();
     if (!categoryId) return null;
     const category = this.accountCategories().find(c => c.id === categoryId);
     return category?.accountType ?? null;
@@ -81,7 +95,8 @@ export class AccountForm {
       minimumBalance: [null]
     });
 
-    this.accountForm.get('accountCategoryId')?.valueChanges.subscribe(() => {
+    this.accountForm.get('accountCategoryId')?.valueChanges.subscribe((value) => {
+      this.selectedCategoryId.set(value);
       this.updateBalanceValidator();
       this.accountForm.updateValueAndValidity();
     });
@@ -99,6 +114,10 @@ export class AccountForm {
         ...item,
         accountCategoryId: category ? category.id : null
       });
+      // patchValue triggers valueChanges, which normally handles this —
+      // but explicitly setting it here too removes any dependency on
+      // subscription timing during initial load specifically.
+      this.selectedCategoryId.set(category ? category.id : null);
 
       if (item.creditCardDetails) {
         this.accountForm.patchValue({
