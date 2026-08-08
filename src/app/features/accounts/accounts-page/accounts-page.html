@@ -1,0 +1,369 @@
+<div class="accounts-page flex flex-col gap-6 w-full px-4 md:px-8 py-4">
+  <!-- Toast & Confirmation -->
+  <p-toast></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+
+  <!-- Page Header & Action Bar -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2">
+        <a routerLink="/app/dashboard" class="no-underline text-[var(--text-muted)] hover:text-[var(--primary-color)] transition-colors">
+          <i class="pi pi-arrow-left text-lg"></i>
+        </a>
+        <h1 class="text-2xl md:text-3xl font-bold m-0 gradient-text">Accounts & Balances</h1>
+      </div>
+      <p class="text-sm text-[var(--text-muted)] mt-1 mb-0">
+        Track your cash, savings, credit cards, and loans in real-time.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <p-button icon="pi pi-refresh" [text]="true" [rounded]="true" pTooltip="Refresh Accounts" (onClick)="refreshData()"></p-button>
+      <p-button label="Add Account" icon="pi pi-plus" (onClick)="openCreateForm()"></p-button>
+    </div>
+  </div>
+
+  <!-- Financial Overview KPI Cards Grid -->
+  <div class="grid grid-cols-12 gap-4">
+    <!-- Net Worth Card -->
+    <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+      <div class="glass-card p-4 rounded-2xl flex flex-col justify-between h-full relative overflow-hidden border border-emerald-500/30">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Net Worth</span>
+          <div class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+            <i class="pi pi-chart-line text-lg"></i>
+          </div>
+        </div>
+        <div class="mt-1">
+          <span class="text-2xl font-extrabold tracking-tight" [ngClass]="netWorth() >= 0 ? 'text-emerald-400' : 'text-rose-400'">
+            {{ netWorth() | currency:'INR':'symbol':'1.2-2' }}
+          </span>
+          <p class="text-xs text-[var(--text-muted)] mt-1 mb-0">Assets minus Liabilities</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Liquid Assets Card -->
+    <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+      <div class="glass-card p-4 rounded-2xl flex flex-col justify-between h-full border border-blue-500/20">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Total Assets</span>
+          <div class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center">
+            <i class="pi pi-wallet text-lg"></i>
+          </div>
+        </div>
+        <div class="mt-1">
+          <span class="text-2xl font-extrabold text-blue-400 tracking-tight">
+            {{ totalAssetBalance() | currency:'INR':'symbol':'1.2-2' }}
+          </span>
+          <p class="text-xs text-[var(--text-muted)] mt-1 mb-0">{{ assetAccountsCount() }} asset accounts</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Liabilities Card -->
+    <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+      <div class="glass-card p-4 rounded-2xl flex flex-col justify-between h-full border border-rose-500/20">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Liabilities & Debt</span>
+          <div class="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center">
+            <i class="pi pi-credit-card text-lg"></i>
+          </div>
+        </div>
+        <div class="mt-1">
+          <span class="text-2xl font-extrabold text-rose-400 tracking-tight">
+            {{ totalLiabilities() | currency:'INR':'symbol':'1.2-2' }}
+          </span>
+          <p class="text-xs text-[var(--text-muted)] mt-1 mb-0">{{ liabilityAccountsCount() }} cards & loans</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Accounts Card -->
+    <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+      <div class="glass-card p-4 rounded-2xl flex flex-col justify-between h-full border border-purple-500/20">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Total Accounts</span>
+          <div class="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center">
+            <i class="pi pi-database text-lg"></i>
+          </div>
+        </div>
+        <div class="mt-1">
+          <span class="text-2xl font-extrabold text-purple-400 tracking-tight">
+            {{ totalAccountsCount() }}
+          </span>
+          <p class="text-xs text-[var(--text-muted)] mt-1 mb-0">Managed in portfolio</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Single Clean Controls Toolbar -->
+  <div class="glass-card p-4 rounded-2xl">
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full">
+      
+      <!-- Search Input (Matching 40px height) -->
+      <p-iconfield class="grow h-10">
+        <p-inputicon class="pi pi-search"></p-inputicon>
+        <input
+          type="text"
+          pInputText
+          placeholder="Search accounts..."
+          [ngModel]="searchTerm()"
+          (ngModelChange)="searchTerm.set($event)"
+          class="w-full h-10 p-inputtext-sm rounded-xl" />
+      </p-iconfield>
+
+      <div class="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full sm:w-auto">
+        <!-- Category Dropdown Selector -->
+        <p-select
+          [options]="categoryFilterOptions()"
+          [ngModel]="selectedCategoryFilter()"
+          (ngModelChange)="selectedCategoryFilter.set($event)"
+          optionLabel="label"
+          optionValue="value"
+          class="w-full sm:w-56 h-10 p-inputtext-sm rounded-xl shrink-0"
+          appendTo="body">
+          <ng-template pTemplate="selectedItem" let-opt>
+            <div class="flex items-center gap-2">
+              <i [class]="opt.icon"></i>
+              <span>{{ opt.label }}</span>
+            </div>
+          </ng-template>
+          <ng-template pTemplate="item" let-opt>
+            <div class="flex items-center gap-2 py-1">
+              <i [class]="opt.icon"></i>
+              <span>{{ opt.label }}</span>
+            </div>
+          </ng-template>
+        </p-select>
+
+        <!-- Sort Dropdown (Matching 40px height) -->
+        <p-select
+          [options]="sortOptions"
+          [ngModel]="sortBy()"
+          (ngModelChange)="sortBy.set($event)"
+          optionLabel="label"
+          optionValue="value"
+          class="w-full sm:w-48 h-10 p-inputtext-sm rounded-xl shrink-0"
+          appendTo="body">
+        </p-select>
+
+        <!-- Grid/Table View Switcher (Matching 40px height) -->
+        <div class="flex items-center bg-[var(--glass-bg-solid)] p-1 rounded-xl border border-[var(--glass-border)] h-10 shrink-0">
+          <button
+            type="button"
+            (click)="viewMode.set('grid')"
+            pTooltip="Grid View"
+            class="p-2 h-8 w-8 flex items-center justify-center rounded-lg transition-all cursor-pointer border-none bg-transparent"
+            [ngClass]="viewMode() === 'grid' ? 'bg-[var(--primary-color)] text-white shadow' : 'text-[var(--text-muted)] hover:text-white'">
+            <i class="pi pi-th-large"></i>
+          </button>
+          <button
+            type="button"
+            (click)="viewMode.set('table')"
+            pTooltip="Table View"
+            class="p-2 h-8 w-8 flex items-center justify-center rounded-lg transition-all cursor-pointer border-none bg-transparent"
+            [ngClass]="viewMode() === 'table' ? 'bg-[var(--primary-color)] text-white shadow' : 'text-[var(--text-muted)] hover:text-white'">
+            <i class="pi pi-list"></i>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  @if (isLoading()) {
+    <div class="flex justify-center items-center py-12">
+      <p-progressSpinner styleClass="w-12 h-12"></p-progressSpinner>
+    </div>
+  } @else {
+    <!-- Empty State -->
+    @if (filteredAccounts().length === 0) {
+      <div class="glass-card p-8 rounded-3xl text-center max-w-lg mx-auto my-6 border border-[var(--glass-border)]">
+        <div class="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
+          <i class="pi pi-wallet text-3xl"></i>
+        </div>
+        <h3 class="text-xl font-bold mb-2">No Accounts Found</h3>
+        @if (searchTerm() || selectedCategoryFilter() !== 'all') {
+          <p class="text-sm text-[var(--text-muted)] mb-4">
+            No accounts match your current filter or search criteria. Try adjusting your filters.
+          </p>
+          <p-button label="Reset Filters" icon="pi pi-filter-slash" [text]="true" (onClick)="searchTerm.set(''); selectedCategoryFilter.set('all')"></p-button>
+        } @else {
+          <p class="text-sm text-[var(--text-muted)] mb-5">
+            You haven't added any financial accounts yet. Add your bank accounts, credit cards, or cash wallets to get started!
+          </p>
+          <p-button label="Add Your First Account" icon="pi pi-plus" (onClick)="openCreateForm()"></p-button>
+        }
+      </div>
+    } @else {
+      <!-- GRID VIEW -->
+      @if (viewMode() === 'grid') {
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          @for (acc of filteredAccounts(); track acc.id) {
+            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 hover:-translate-y-1 hover:shadow-xl border"
+                 [ngClass]="getAccountBadgeColor(acc).border">
+              
+              <!-- Account Header (Icon + Marquee Title) -->
+              <div>
+                <div class="flex items-center gap-3 mb-3">
+                  <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-xl shrink-0"
+                       [ngClass]="[getAccountBadgeColor(acc).bg, getAccountBadgeColor(acc).text]">
+                    <i [class]="getAccountIcon(acc)"></i>
+                  </div>
+                  <div class="grow min-w-0 marquee-scroll-container">
+                    <h3 class="font-bold text-lg m-0 leading-snug text-[var(--text-main)] marquee-scroll-text" appAutoMarquee [title]="acc.name">
+                      {{ acc.name }}
+                    </h3>
+                  </div>
+                </div>
+
+                <!-- Account Balance Container -->
+                <div class="my-4 p-3 rounded-xl bg-black/20 backdrop-blur-sm border border-white/5 flex flex-col">
+                  <span class="text-xs text-[var(--text-muted)] font-medium">Current Balance</span>
+                  <span class="text-2xl font-extrabold tracking-tight mt-0.5"
+                        [ngClass]="isLiabilityAccount(acc) || acc.balance < 0 ? 'text-rose-400' : 'text-emerald-400'">
+                    {{ acc.balance | currency:'INR':'symbol':'1.2-2' }}
+                  </span>
+                </div>
+
+                <!-- Credit Card Details Sub-panel (if applicable) -->
+                @if (acc.creditCardDetails) {
+                  <div class="text-xs bg-purple-500/5 p-3 rounded-xl border border-purple-500/10 mb-4 flex flex-col gap-2">
+                    <div class="flex justify-between items-center text-[var(--text-muted)]">
+                      <span>Credit Limit:</span>
+                      <span class="font-semibold text-white">{{ acc.creditCardDetails.creditLimit | currency:'INR':'symbol':'1.0-0' }}</span>
+                    </div>
+                    <div class="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+                      <div class="bg-purple-500 h-full rounded-full transition-all" [style.width.%]="getCreditUtilizationPercent(acc)"></div>
+                    </div>
+                    @if (acc.creditCardDetails.minimumDueAmount) {
+                      <div class="flex justify-between items-center text-xs text-rose-300 pt-1 border-t border-purple-500/10">
+                        <span>Min Due:</span>
+                        <span class="font-semibold">{{ acc.creditCardDetails.minimumDueAmount | currency:'INR':'symbol':'1.0-0' }}</span>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- Loan Details Sub-panel (if applicable) -->
+                @if (acc.loanDetails) {
+                  <div class="text-xs bg-amber-500/5 p-3 rounded-xl border border-amber-500/10 mb-4 flex flex-col gap-1.5">
+                    @if (acc.loanDetails.emiAmount) {
+                      <div class="flex justify-between items-center text-[var(--text-muted)]">
+                        <span>Monthly EMI:</span>
+                        <span class="font-semibold text-amber-300">{{ acc.loanDetails.emiAmount | currency:'INR':'symbol':'1.0-0' }}</span>
+                      </div>
+                    }
+                    @if (acc.loanDetails.tenureMonths) {
+                      <div class="flex justify-between items-center text-[var(--text-muted)]">
+                        <span>Tenure:</span>
+                        <span>{{ acc.loanDetails.tenureMonths }} months</span>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+
+              <!-- Footer Section: Bottom Category Badge & Quick Actions -->
+              <div>
+                @if (acc.accountCategoryName) {
+                  <div class="flex items-center justify-between text-xs mb-3 pt-2 border-t border-white/5">
+                    <span class="text-[var(--text-muted)] font-medium">Category</span>
+                    <p-tag [value]="acc.accountCategoryName" [severity]="getAccountBadgeColor(acc).badgeSeverity" [rounded]="true" styleClass="text-xs px-2.5 py-0.5 font-semibold"></p-tag>
+                  </div>
+                }
+
+                <div class="flex items-center justify-between gap-2 pt-2 border-t border-[var(--glass-border)]">
+                  <button
+                    type="button"
+                    (click)="viewTransactions(acc)"
+                    class="flex items-center gap-1.5 text-xs font-semibold text-[var(--primary-color)] hover:underline cursor-pointer bg-transparent border-none p-0">
+                    <span>Transactions</span>
+                    <i class="pi pi-arrow-right text-xs"></i>
+                  </button>
+
+                  <div class="flex items-center gap-1">
+                    <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" size="small" pTooltip="Edit Account" (onClick)="openEditForm(acc)"></p-button>
+                    <p-button icon="pi pi-trash" [text]="true" [rounded]="true" severity="danger" size="small" pTooltip="Delete Account" (onClick)="confirmDelete(acc)"></p-button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- TABLE VIEW -->
+      @if (viewMode() === 'table') {
+        <div class="glass-card rounded-2xl overflow-x-auto border border-[var(--glass-border)] w-full">
+          <p-table
+            [value]="filteredAccounts()"
+            [paginator]="true"
+            [rows]="10"
+            [rowsPerPageOptions]="[10, 25, 50]"
+            [scrollable]="true"
+            responsiveLayout="scroll"
+            styleClass="p-datatable-sm p-datatable-striped w-full">
+            <ng-template pTemplate="header">
+              <tr>
+                <th pSortableColumn="name" class="min-w-[220px] whitespace-nowrap">Account Name <p-sortIcon field="name"></p-sortIcon></th>
+                <th pSortableColumn="accountCategoryName" class="min-w-[160px] whitespace-nowrap">Category <p-sortIcon field="accountCategoryName"></p-sortIcon></th>
+                <th pSortableColumn="balance" class="text-right min-w-[160px] whitespace-nowrap">Balance <p-sortIcon field="balance"></p-sortIcon></th>
+                <th class="text-center min-w-[140px] whitespace-nowrap">Actions</th>
+              </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-acc>
+              <tr class="hover:bg-white/5 transition-colors cursor-pointer" (click)="viewTransactions(acc)">
+                <td class="whitespace-nowrap">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0"
+                         [ngClass]="[getAccountBadgeColor(acc).bg, getAccountBadgeColor(acc).text]">
+                      <i [class]="getAccountIcon(acc)"></i>
+                    </div>
+                    <span class="font-bold text-white hover:text-[var(--primary-color)] transition-colors">{{ acc.name }}</span>
+                  </div>
+                </td>
+                <td class="whitespace-nowrap">
+                  @if (acc.accountCategoryName) {
+                    <p-tag [value]="acc.accountCategoryName" [severity]="getAccountBadgeColor(acc).badgeSeverity" [rounded]="true" styleClass="font-semibold"></p-tag>
+                  } @else {
+                    <span class="text-xs text-[var(--text-muted)]">—</span>
+                  }
+                </td>
+                <td class="text-right font-bold text-base whitespace-nowrap"
+                    [ngClass]="isLiabilityAccount(acc) || acc.balance < 0 ? 'text-rose-400' : 'text-emerald-400'">
+                  {{ acc.balance | currency:'INR':'symbol':'1.2-2' }}
+                </td>
+                <td class="text-center whitespace-nowrap" (click)="$event.stopPropagation()">
+                  <div class="flex items-center justify-center gap-1">
+                    <p-button icon="pi pi-list" [text]="true" [rounded]="true" size="small" pTooltip="View Transactions" (onClick)="viewTransactions(acc)"></p-button>
+                    <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" size="small" pTooltip="Edit" (onClick)="openEditForm(acc)"></p-button>
+                    <p-button icon="pi pi-trash" [text]="true" [rounded]="true" severity="danger" size="small" pTooltip="Delete" (onClick)="confirmDelete(acc)"></p-button>
+                  </div>
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
+      }
+    }
+  }
+
+  <!-- Helpful Guide Tip Box -->
+  <div class="glass-card p-4 rounded-2xl border border-blue-500/20 bg-blue-500/5 flex items-start gap-3 mt-2">
+    <div class="w-8 h-8 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 mt-0.5">
+      <i class="pi pi-lightbulb text-base"></i>
+    </div>
+    <div>
+      <h4 class="font-bold text-sm m-0 text-blue-300">How Financial Planner tracks accounts</h4>
+      <p class="text-xs text-[var(--text-muted)] mt-1 mb-0 leading-relaxed">
+        Adding your accounts lets you track spending by category, transfer money between wallets, and monitor your total Net Worth.
+        When logging income or expenses, assign them to an account to automatically keep your balances up to date.
+      </p>
+    </div>
+  </div>
+</div>

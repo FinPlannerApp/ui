@@ -1,12 +1,13 @@
 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-  <div class="flex items-center gap-3">
+  <div class="flex flex-wrap items-center gap-3">
     <h1 class="text-2xl sm:text-3xl font-black m-0 tracking-tight">Dashboard</h1>
     <p-datepicker [(ngModel)]="localDate" view="month" dateFormat="mm/yy" (ngModelChange)="onDateChange($event)"
       placeholder="Select Month" [showIcon]="true" iconDisplay="input" styleClass="w-auto"></p-datepicker>
   </div>
-  <div class="flex items-center gap-2 shrink-0">
-    <p-button label="Bulk Transaction Add" icon="pi pi-table" routerLink="/app/bulk-transaction-add" severity="success" styleClass="whitespace-nowrap rounded-xl py-2 text-xs sm:text-sm font-bold"></p-button>
-    <p-button label="View Accounts" icon="pi pi-wallet" routerLink="/app/accounts" [outlined]="true" styleClass="whitespace-nowrap rounded-xl py-2 text-xs sm:text-sm font-bold"></p-button>
+  <!-- Action Buttons (Balanced 2-col Grid on Mobile, Inline Row on Desktop) -->
+  <div class="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
+    <p-button label="Bulk Add" icon="pi pi-table" routerLink="/app/bulk-transaction-add" severity="success" styleClass="w-full sm:w-auto whitespace-nowrap rounded-xl py-2 text-xs sm:text-sm font-bold justify-center text-center"></p-button>
+    <p-button label="View Accounts" icon="pi pi-wallet" routerLink="/app/accounts" [outlined]="true" styleClass="w-full sm:w-auto whitespace-nowrap rounded-xl py-2 text-xs sm:text-sm font-bold justify-center text-center"></p-button>
   </div>
 </div>
 

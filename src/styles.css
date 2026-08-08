@@ -47,10 +47,155 @@
   box-shadow: var(--glass-shadow);
   border-radius: 1rem;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+
   &:hover {
     transform: translateY(-4px);
     box-shadow: 0 12px 40px rgba(16, 185, 129, 0.15);
   }
+}
+
+/* ============================================================
+   Modern Infinite Marquee Text Scroll (With 1.5s Initial Pause)
+   ============================================================ */
+
+.marquee-scroll-container {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  white-space: nowrap;
+}
+
+.marquee-scroll-text {
+  display: inline-block;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+
+/* Activate smooth scrolling ONLY when title exceeds container width */
+.marquee-scroll-text.is-overflowing {
+  max-width: none;
+  overflow: visible;
+  text-overflow: clip;
+  padding-right: 2.5rem !important;
+  /* Ensures the last character is fully visible */
+  animation: marqueeLoop 7s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: transform;
+}
+
+.glass-card:hover .marquee-scroll-text.is-overflowing,
+.marquee-scroll-container:hover .marquee-scroll-text.is-overflowing {
+  animation-play-state: paused;
+}
+
+@keyframes marqueeLoop {
+
+  0%,
+  25% {
+    transform: translateX(0px);
+  }
+
+  65%,
+  75% {
+    transform: translateX(min(0px, calc(120px - 100%)));
+  }
+
+  95%,
+  100% {
+    transform: translateX(0px);
+  }
+}
+
+/* ============================================================
+   Global Responsive PrimeNG Toast Overhaul (MessageService / NotificationService)
+   ============================================================ */
+
+.p-toast {
+  width: 26rem !important;
+  max-width: calc(100vw - 1.5rem) !important;
+  opacity: 0.98 !important;
+  z-index: 99999 !important;
+}
+
+@media (max-width: 640px) {
+  .p-toast {
+    width: calc(100vw - 1.25rem) !important;
+    left: 0.625rem !important;
+    right: 0.625rem !important;
+    margin: 0 !important;
+  }
+}
+
+.p-toast-message {
+  border-radius: 1rem !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5) !important;
+  margin-bottom: 0.75rem !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  word-break: break-word !important;
+}
+
+.p-toast-message-content {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  width: 100% !important;
+}
+
+.p-toast-message-text {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  word-break: break-word !important;
+}
+
+.p-toast-title {
+  font-weight: 800 !important;
+  font-size: 0.875rem !important;
+  margin-bottom: 0.25rem !important;
+}
+
+.p-toast-detail {
+  font-size: 0.8125rem !important;
+  line-height: 1.4 !important;
+  font-weight: 500 !important;
+  word-break: break-word !important;
+}
+
+.p-toast-message-success {
+  background: rgba(16, 185, 129, 0.92) !important;
+  border: 1px solid rgba(52, 211, 153, 0.4) !important;
+  color: #ffffff !important;
+}
+
+.p-toast-message-error {
+  background: rgba(225, 29, 72, 0.94) !important;
+  border: 1px solid rgba(251, 113, 133, 0.4) !important;
+  color: #ffffff !important;
+}
+
+.p-toast-message-warn {
+  background: rgba(217, 119, 6, 0.92) !important;
+  border: 1px solid rgba(251, 191, 36, 0.4) !important;
+  color: #ffffff !important;
+}
+
+.p-toast-message-info {
+  background: rgba(59, 130, 246, 0.92) !important;
+  border: 1px solid rgba(96, 165, 250, 0.4) !important;
+  color: #ffffff !important;
+}
+
+.p-toast-icon-close {
+  color: rgba(255, 255, 255, 0.8) !important;
+  transition: color 0.2s ease !important;
+}
+
+.p-toast-icon-close:hover {
+  color: #ffffff !important;
 }
 
 @utility glass-container {
@@ -75,6 +220,68 @@
 }
 
 /* ============================================================
+   ULTRA-MODERN FLOATING GLASS SCROLLBAR (Vercel / Linear Aesthetic)
+   ============================================================ */
+
+/* Standard W3C & Firefox */
+html, body, *, *::before, *::after {
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent !important;
+}
+
+/* WebKit (Chrome, Edge, Safari, Opera, iOS, Android) */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  width: 6px !important;
+  height: 6px !important;
+}
+
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track,
+*::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb,
+*::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.18) !important;
+  border-radius: 9999px !important;
+  border: 1px solid transparent !important;
+  background-clip: content-box !important;
+  transition: background-color 0.2s ease !important;
+}
+
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover,
+*::-webkit-scrollbar-thumb:hover {
+  background-color: #10b981 !important;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.6) !important;
+}
+
+html::-webkit-scrollbar-thumb:active,
+body::-webkit-scrollbar-thumb:active,
+*::-webkit-scrollbar-thumb:active {
+  background-color: #059669 !important;
+}
+
+/* Remove retro scrollbar top/bottom arrow buttons globally on ALL elements */
+html::-webkit-scrollbar-button,
+body::-webkit-scrollbar-button,
+*::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+html::-webkit-scrollbar-corner,
+body::-webkit-scrollbar-corner,
+*::-webkit-scrollbar-corner {
+  background: transparent !important;
+}
+
+/* ============================================================
    Base Styles
    ============================================================ */
 
@@ -96,13 +303,11 @@ body {
   justify-content: center;
   padding: 2rem;
   position: relative;
-  background: linear-gradient(
-    135deg,
-    var(--bg-gradient-1),
-    var(--bg-gradient-2),
-    var(--bg-gradient-3),
-    var(--bg-gradient-4)
-  );
+  background: linear-gradient(135deg,
+      var(--bg-gradient-1),
+      var(--bg-gradient-2),
+      var(--bg-gradient-3),
+      var(--bg-gradient-4));
   background-size: 400% 400%;
   animation: gradientBG 15s ease infinite;
   overflow: hidden;
@@ -153,30 +358,60 @@ body {
    ============================================================ */
 
 @keyframes gradientBG {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 @keyframes zoomIn {
-  0% { transform: scale(0.9); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 @keyframes fadeIn {
-  0% { opacity: 0; transform: translateY(10px); }
-  100% { opacity: 1; transform: translateY(0); }
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes slideUpBanner {
-  from { transform: translateY(100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 /* Utility animation classes */
 .zoom-in {
   animation: zoomIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
+
 .fade-in {
   opacity: 0;
   animation: fadeIn 1s ease 0.4s forwards;
@@ -215,6 +450,7 @@ body {
 
 /* --- DataTable --- */
 .p-datatable {
+
   & .p-datatable-header,
   & .p-datatable-footer {
     background: transparent !important;
@@ -222,14 +458,14 @@ body {
     color: var(--text-main) !important;
   }
 
-  & .p-datatable-thead > tr > th {
+  & .p-datatable-thead>tr>th {
     background: var(--table-header-bg) !important;
     color: var(--text-main) !important;
     border-color: var(--table-border) !important;
     font-weight: 600;
   }
 
-  & .p-datatable-tbody > tr {
+  & .p-datatable-tbody>tr {
     background: transparent !important;
     color: var(--text-main) !important;
 
@@ -237,7 +473,7 @@ body {
       background: var(--table-row-hover) !important;
     }
 
-    & > td {
+    &>td {
       border-color: var(--table-border) !important;
     }
   }
@@ -290,7 +526,9 @@ button[aria-label="Close"] {
   min-height: 2rem;
   box-shadow: none !important;
 
-  &::before { display: none !important; }
+  &::before {
+    display: none !important;
+  }
 
   &:hover {
     background: var(--table-row-hover) !important;
@@ -332,24 +570,126 @@ button[aria-label="Close"] {
   }
 }
 
-/* --- Form Inputs --- */
+/* --- Form Inputs & Dropdowns (Unified 40px / 2.5rem height) --- */
 .p-inputtext,
 .p-password input,
 .p-dropdown,
+.p-select,
 .p-inputnumber input,
 .p-datepicker input {
-  background: var(--input-bg) !important;
-  border: 1px solid var(--input-border) !important;
-  color: var(--input-text) !important;
+  background: var(--input-bg, rgba(255, 255, 255, 0.05)) !important;
+  border: 1px solid var(--input-border, rgba(255, 255, 255, 0.15)) !important;
+  color: var(--input-text, #f4f4f5) !important;
   border-radius: 12px !important;
-  padding: 0.8rem 1rem !important;
+  height: 2.5rem !important;
   transition: all 0.3s ease !important;
+  box-sizing: border-box !important;
+}
 
-  &:focus {
-    border-color: #10b981 !important;
-    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15) !important;
-    background: var(--input-bg-focus) !important;
-  }
+.p-inputtext:focus,
+.p-password input:focus,
+.p-dropdown:focus,
+.p-select.p-focus,
+.p-select:focus-within,
+.p-inputnumber input:focus,
+.p-datepicker input:focus {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15) !important;
+  background: var(--input-bg-focus, rgba(255, 255, 255, 0.08)) !important;
+}
+
+/* Generic PrimeNG 20 Select Component (p-select) Inner Layout */
+.p-select {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  cursor: pointer !important;
+  outline: none !important;
+  padding: 0 !important;
+}
+
+.p-select .p-select-label {
+  color: var(--input-text, #f4f4f5) !important;
+  padding: 0 0.85rem !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  background: transparent !important;
+  border: none !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  display: flex !important;
+  align-items: center !important;
+  height: 100% !important;
+}
+
+.p-select .p-select-label.p-placeholder {
+  color: var(--text-muted, #9ca3af) !important;
+}
+
+.p-select .p-select-dropdown {
+  color: var(--text-muted, #9ca3af) !important;
+  background: transparent !important;
+  border: none !important;
+  padding-right: 0.75rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Paginator dropdown fix */
+.p-paginator .p-select {
+  height: 2.25rem !important;
+  border-radius: 10px !important;
+  min-width: 4rem !important;
+}
+
+.p-paginator .p-select .p-select-label {
+  padding: 0.25rem 0.5rem !important;
+  font-size: 0.8rem !important;
+}
+
+/* Select Popup Overlay Panel */
+.p-select-overlay,
+.p-select-panel,
+.p-dropdown-panel {
+  background: var(--glass-bg-solid, rgba(18, 18, 24, 0.96)) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.15)) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(16, 185, 129, 0.1) !important;
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  padding: 0.4rem !important;
+  color: var(--text-main, #f4f4f5) !important;
+  z-index: 10000 !important;
+}
+
+.p-select-overlay .p-select-option,
+.p-select-panel .p-select-option,
+.p-dropdown-panel .p-dropdown-item {
+  color: var(--text-main, #f4f4f5) !important;
+  border-radius: 10px !important;
+  padding: 0.6rem 0.85rem !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s ease, color 0.2s ease !important;
+}
+
+.p-select-overlay .p-select-option:hover,
+.p-select-overlay .p-select-option.p-focus,
+.p-select-panel .p-select-option:hover,
+.p-dropdown-panel .p-dropdown-item:hover {
+  background: var(--table-row-hover, rgba(255, 255, 255, 0.1)) !important;
+  color: var(--primary-color, #10b981) !important;
+}
+
+.p-select-overlay .p-select-option.p-select-option-selected,
+.p-dropdown-panel .p-dropdown-item.p-highlight {
+  background: rgba(16, 185, 129, 0.2) !important;
+  color: #34d399 !important;
+  font-weight: 700 !important;
 }
 
 /* IconField fix */
@@ -359,18 +699,23 @@ button[aria-label="Close"] {
   width: 100%;
 }
 
-.p-iconfield-left > .p-inputtext,
-.p-iconfield-left > input {
+.p-iconfield-left>.p-inputtext,
+.p-iconfield-left>input {
   padding-left: 2.75rem !important;
 }
 
-.p-iconfield-right > .p-inputtext,
-.p-iconfield-right > input {
+.p-iconfield-right>.p-inputtext,
+.p-iconfield-right>input {
   padding-right: 2.75rem !important;
 }
 
-.p-iconfield-left > .p-inputicon { left: 1rem; }
-.p-iconfield-right > .p-inputicon { right: 1rem; }
+.p-iconfield-left>.p-inputicon {
+  left: 1rem;
+}
+
+.p-iconfield-right>.p-inputicon {
+  right: 1rem;
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════════
    UNIFIED GLOBAL DATEPICKER OVERHAUL (PrimeNG 19 DatePicker)
@@ -433,15 +778,15 @@ span.p-datepicker.w-auto .p-datepicker-input,
 }
 
 /* Support for DatePicker inside p-iconfield (left icon alignment) */
-.p-iconfield > p-datepicker,
-.p-iconfield > span.p-datepicker,
-.p-iconfield > .p-datepicker-host {
+.p-iconfield>p-datepicker,
+.p-iconfield>span.p-datepicker,
+.p-iconfield>.p-datepicker-host {
   width: 100% !important;
 }
 
-.p-iconfield > p-datepicker .p-datepicker-input,
-.p-iconfield > span.p-datepicker .p-datepicker-input,
-.p-iconfield > .p-datepicker-host .p-datepicker-input {
+.p-iconfield>p-datepicker .p-datepicker-input,
+.p-iconfield>span.p-datepicker .p-datepicker-input,
+.p-iconfield>.p-datepicker-host .p-datepicker-input {
   padding-left: 2.75rem !important;
 }
 
@@ -617,9 +962,9 @@ div.p-datepicker-panel {
   padding: 2px !important;
 }
 
-.p-datepicker-panel table td > span,
-.p-datepicker-overlay table td > span,
-.p-datepicker-panel table td > div {
+.p-datepicker-panel table td>span,
+.p-datepicker-overlay table td>span,
+.p-datepicker-panel table td>div {
   color: #f4f4f5 !important;
   font-weight: 600 !important;
   font-size: 0.875rem !important;
@@ -633,16 +978,16 @@ div.p-datepicker-panel {
   cursor: pointer !important;
 }
 
-.p-datepicker-panel table td > span:hover,
-.p-datepicker-overlay table td > span:hover {
+.p-datepicker-panel table td>span:hover,
+.p-datepicker-overlay table td>span:hover {
   background: rgba(255, 255, 255, 0.12) !important;
   color: #10b981 !important;
 }
 
 /* Selected Date Highlight */
-.p-datepicker-panel table td > span.p-highlight,
-.p-datepicker-overlay table td > span.p-highlight,
-.p-datepicker-panel table td > span[aria-selected="true"] {
+.p-datepicker-panel table td>span.p-highlight,
+.p-datepicker-overlay table td>span.p-highlight,
+.p-datepicker-panel table td>span[aria-selected="true"] {
   background: linear-gradient(135deg, #10b981, #059669) !important;
   color: #ffffff !important;
   font-weight: 800 !important;
@@ -650,8 +995,8 @@ div.p-datepicker-panel {
 }
 
 /* Today Highlight */
-.p-datepicker-panel table td.p-datepicker-today > span,
-.p-datepicker-overlay table td.p-datepicker-today > span {
+.p-datepicker-panel table td.p-datepicker-today>span,
+.p-datepicker-overlay table td.p-datepicker-today>span {
   border: 1px solid #10b981 !important;
   color: #34d399 !important;
 }
@@ -900,7 +1245,10 @@ label {
   &::before {
     content: '';
     position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     border-radius: inherit;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
     pointer-events: none;
@@ -931,7 +1279,9 @@ label {
     color: var(--text-main) !important;
     border: 1px solid var(--glass-border) !important;
 
-    &::before { display: none; }
+    &::before {
+      display: none;
+    }
 
     &:hover:not(:disabled) {
       background: var(--table-row-hover) !important;
@@ -952,7 +1302,9 @@ label {
     color: var(--text-main) !important;
     border: 1px solid var(--glass-border) !important;
 
-    &::before { display: none; }
+    &::before {
+      display: none;
+    }
 
     &:hover:not(:disabled) {
       background: var(--table-row-hover) !important;
@@ -988,7 +1340,9 @@ label {
     margin: 0 !important;
     transition: all 0.3s ease !important;
 
-    &:hover { border-color: #10b981 !important; }
+    &:hover {
+      border-color: #10b981 !important;
+    }
 
     &:focus-within {
       border-color: #10b981 !important;
@@ -1071,10 +1425,23 @@ label {
    ============================================================ */
 
 .excel-grid-wrapper {
-  &::-webkit-scrollbar { width: 8px; height: 8px; }
-  &::-webkit-scrollbar-track { background: var(--table-border); }
-  &::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 4px; }
-  &::-webkit-scrollbar-thumb:hover { background: var(--text-main); }
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--table-border);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--text-muted);
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--text-main);
+  }
 }
 
 .excel-table {
@@ -1083,7 +1450,8 @@ label {
   width: 100%;
   min-width: 93rem;
 
-  & th, & td {
+  & th,
+  & td {
     border: 1px solid var(--table-border);
     padding: 0;
     vertical-align: middle;
@@ -1259,9 +1627,19 @@ label {
   padding-bottom: 0.5rem;
   scrollbar-width: thin;
 
-  &::-webkit-scrollbar { height: 4px; }
-  &::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 4px; }
-  &::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+  }
 }
 
 /* ============================================================
@@ -1277,7 +1655,9 @@ label {
     border-bottom: 2px solid var(--glass-border);
   }
 
-  & h2:first-child { margin-top: 0; }
+  & h2:first-child {
+    margin-top: 0;
+  }
 
   & p {
     margin: 0 0 1rem;
@@ -1285,14 +1665,18 @@ label {
     color: var(--text-main);
   }
 
-  & ul, & ol {
+  & ul,
+  & ol {
     margin: 0 0 1.25rem 1.5rem;
     padding: 0;
     line-height: 1.85;
     color: var(--text-main);
   }
 
-  & ul li, & ol li { margin-bottom: 0.5rem; }
+  & ul li,
+  & ol li {
+    margin-bottom: 0.5rem;
+  }
 
   & strong {
     font-weight: 700;
@@ -1337,12 +1721,16 @@ label {
 body.compact-view {
   font-size: 13px;
 
-  & .layout-main main { padding: 0.5rem !important; }
+  & .layout-main main {
+    padding: 0.5rem !important;
+  }
 
-  & .p-card .p-card-body { padding: 0.75rem; }
+  & .p-card .p-card-body {
+    padding: 0.75rem;
+  }
 
-  & .p-datatable .p-datatable-tbody > tr > td,
-  & .p-datatable .p-datatable-thead > tr > th {
+  & .p-datatable .p-datatable-tbody>tr>td,
+  & .p-datatable .p-datatable-thead>tr>th {
     padding: 0.4rem 0.6rem;
   }
 
@@ -1351,11 +1739,21 @@ body.compact-view {
     font-size: 0.85rem;
   }
 
-  & h1 { font-size: 1.5rem; }
-  & h2 { font-size: 1.25rem; }
-  & h3 { font-size: 1.1rem; }
+  & h1 {
+    font-size: 1.5rem;
+  }
 
-  & .p-dialog .p-dialog-content { padding: 0.75rem; }
+  & h2 {
+    font-size: 1.25rem;
+  }
+
+  & h3 {
+    font-size: 1.1rem;
+  }
+
+  & .p-dialog .p-dialog-content {
+    padding: 0.75rem;
+  }
 }
 
 /* ============================================================
@@ -1399,18 +1797,28 @@ body.compact-view {
 }
 
 @keyframes orbFloat {
-  0% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(40px, -50px) scale(1.1); }
-  100% { transform: translate(-30px, 30px) scale(0.95); }
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate(40px, -50px) scale(1.1);
+  }
+
+  100% {
+    transform: translate(-30px, 30px) scale(0.95);
+  }
 }
 
 @keyframes pulse-glow {
   0% {
     box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
   }
+
   70% {
     box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
   }
+
   100% {
     box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
   }
@@ -1419,4 +1827,3 @@ body.compact-view {
 .glow-info-btn {
   animation: pulse-glow 2s infinite;
 }
-

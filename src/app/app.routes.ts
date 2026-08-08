@@ -97,15 +97,7 @@ export const routes: Routes = [
     children: [
       {
         path: 'accounts',
-        loadComponent: () => import('./features/shared/resource-page/resource-page').then(m => m.ResourcePage),
-        data: {
-          title: 'Accounts',
-          endpoint: 'Accounts',
-          columns: accountColumns,
-          backLinkPath: '/app/dashboard',
-          backLinkLabel: 'Back to Dashboard',
-          loadFormComponent: () => import('./features/accounts/account-form/account-form').then(m => m.AccountForm)
-        }
+        loadComponent: () => import('./features/accounts/accounts-page/accounts-page').then(m => m.AccountsPage)
       },
       {
         path: 'accounts/:id/transactions',

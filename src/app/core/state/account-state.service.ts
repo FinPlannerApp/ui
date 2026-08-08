@@ -78,6 +78,23 @@ export class AccountState {
     }
 
     /**
+     * Deletes an account by ID and refreshes state.
+     * @param accountId ID of the account to delete.
+     */
+    async deleteAccount(accountId: number): Promise<void> {
+        this._isLoading.set(true);
+        try {
+            const response = await firstValueFrom(this.api.delete<boolean>(this.endpoint, accountId));
+            if (!response.isSuccess) {
+                throw new Error(response.error?.description || 'Failed to delete account');
+            }
+            await this.refresh();
+        } finally {
+            this._isLoading.set(false);
+        }
+    }
+
+    /**
      * Refreshes the account state and the dashboard state.
      * @returns A Promise that resolves when both states are refreshed.
      */

@@ -1,6 +1,7 @@
 <div class="public-layout layout-wrapper min-h-screen flex flex-col auth-background p-0">
     <!-- Sticky Frosted Navbar -->
-    <header class="sticky top-0 z-[100] w-full bg-[var(--glass-bg-solid)] backdrop-blur-xl border-b border-[var(--glass-border)]">
+    <header
+        class="sticky top-0 z-[100] w-full bg-[var(--glass-bg-solid)] backdrop-blur-xl border-b border-[var(--glass-border)]">
         <div class="flex items-center justify-between w-full px-4 py-3 md:px-8 gap-4 md:gap-8">
             <!-- Logo -->
             <a routerLink="/" class="no-underline flex items-center gap-2 cursor-pointer">
@@ -10,22 +11,27 @@
 
             <!-- Desktop Nav Links -->
             <nav class="hidden md:flex items-center gap-5">
-                <a routerLink="/features" routerLinkActive="!text-[var(--primary-color)] !font-bold" [routerLinkActiveOptions]="{exact: true}"
+                <a routerLink="/features" routerLinkActive="!text-[var(--primary-color)] !font-bold"
+                    [routerLinkActiveOptions]="{exact: true}"
                     class="no-underline text-[var(--text-main)] font-medium text-[0.95rem] transition-colors duration-200 hover:text-[var(--primary-color)] whitespace-nowrap relative">Features</a>
-                <a routerLink="/blog" routerLinkActive="!text-[var(--primary-color)] !font-bold" [routerLinkActiveOptions]="{exact: true}"
+                <a routerLink="/blog" routerLinkActive="!text-[var(--primary-color)] !font-bold"
+                    [routerLinkActiveOptions]="{exact: true}"
                     class="no-underline text-[var(--text-main)] font-medium text-[0.95rem] transition-colors duration-200 hover:text-[var(--primary-color)] whitespace-nowrap relative">Blog</a>
-                <a routerLink="/feedback" routerLinkActive="!text-[var(--primary-color)] !font-bold" [routerLinkActiveOptions]="{exact: false}"
+                <a routerLink="/feedback" routerLinkActive="!text-[var(--primary-color)] !font-bold"
+                    [routerLinkActiveOptions]="{exact: false}"
                     class="no-underline text-[var(--text-main)] font-medium text-[0.95rem] transition-colors duration-200 hover:text-[var(--primary-color)] whitespace-nowrap relative">Feedback</a>
-                <a routerLink="/about" routerLinkActive="!text-[var(--primary-color)] !font-bold" [routerLinkActiveOptions]="{exact: true}"
+                <a routerLink="/about" routerLinkActive="!text-[var(--primary-color)] !font-bold"
+                    [routerLinkActiveOptions]="{exact: true}"
                     class="no-underline text-[var(--text-main)] font-medium text-[0.95rem] transition-colors duration-200 hover:text-[var(--primary-color)] whitespace-nowrap relative">About</a>
-                <a routerLink="/contact" routerLinkActive="!text-[var(--primary-color)] !font-bold" [routerLinkActiveOptions]="{exact: true}"
+                <a routerLink="/contact" routerLinkActive="!text-[var(--primary-color)] !font-bold"
+                    [routerLinkActiveOptions]="{exact: true}"
                     class="no-underline text-[var(--text-main)] font-medium text-[0.95rem] transition-colors duration-200 hover:text-[var(--primary-color)] whitespace-nowrap relative">Contact</a>
             </nav>
 
             <!-- Right Side Actions -->
             <div class="flex items-center gap-3">
-                <p-button [icon]="themeEngine.isDark() ? 'pi pi-sun' : 'pi pi-moon'" [text]="true"
-                    [rounded]="true" (onClick)="themeEngine.toggleDarkMode()">
+                <p-button [icon]="themeEngine.isDark() ? 'pi pi-sun' : 'pi pi-moon'" [text]="true" [rounded]="true"
+                    (onClick)="themeEngine.toggleDarkMode()">
                 </p-button>
 
                 @if(isLoggedIn()) {
@@ -50,7 +56,8 @@
     </main>
 
     <!-- Footer -->
-    <footer class="w-full bg-[var(--glass-bg-solid)] backdrop-blur-xl border-t border-[var(--glass-border)] pt-12 px-4 pb-4 md:px-8">
+    <footer
+        class="w-full bg-[var(--glass-bg-solid)] backdrop-blur-xl border-t border-[var(--glass-border)] pt-12 px-4 pb-4 md:px-8">
         <div class="flex justify-between items-start w-full gap-8 md:gap-12 flex-wrap">
             <div class="flex-1 min-w-[200px]">
                 <a routerLink="/" class="no-underline flex items-center gap-2 mb-3">
@@ -63,24 +70,40 @@
             <div class="flex gap-8 md:gap-16">
                 <div class="flex flex-col gap-2">
                     <span class="font-bold text-sm mb-1">Product</span>
-                    <a routerLink="/features" class="no-underline text-[var(--text-muted)] text-sm transition-colors duration-200 hover:text-[var(--primary-color)]">Features</a>
-                    <a routerLink="/blog" class="no-underline text-[var(--text-muted)] text-sm transition-colors duration-200 hover:text-[var(--primary-color)]">Blog</a>
-                    <a routerLink="/feedback" class="no-underline text-[var(--text-muted)] text-sm transition-colors duration-200 hover:text-[var(--primary-color)]">Feedback Hub</a>
+                    <a routerLink="/features"
+                        class="no-underline text-[var(--text-muted)] text-sm transition-colors duration-200 hover:text-[var(--primary-color)]">Features</a>
+                    <a routerLink="/blog"
+                        class="no-underline text-[var(--text-muted)] text-sm transition-colors duration-200 hover:text-[var(--primary-color)]">Blog</a>
+                    <a routerLink="/feedback"
+                        class="no-underline text-[var(--text-muted)] text-sm transition-colors duration-200 hover:text-[var(--primary-color)]">Feedback
+                        Hub</a>
                 </div>
                 <div class="flex flex-col gap-2">
                     <span class="font-bold text-sm mb-1">Company</span>
-                    <a routerLink="/about" class="no-underline text-[var(--text-muted)] text-sm transition-colors duration-200 hover:text-[var(--primary-color)]">About</a>
-                    <a routerLink="/contact" class="no-underline text-[var(--text-muted)] text-sm transition-colors duration-200 hover:text-[var(--primary-color)]">Contact</a>
-                    <a routerLink="/register" class="no-underline text-[var(--text-muted)] text-sm transition-colors duration-200 hover:text-[var(--primary-color)]">Get Started</a>
+                    <a routerLink="/about"
+                        class="no-underline text-[var(--text-muted)] text-sm transition-colors duration-200 hover:text-[var(--primary-color)]">About</a>
+                    <a routerLink="/contact"
+                        class="no-underline text-[var(--text-muted)] text-sm transition-colors duration-200 hover:text-[var(--primary-color)]">Contact</a>
+                    <a routerLink="/register"
+                        class="no-underline text-[var(--text-muted)] text-sm transition-colors duration-200 hover:text-[var(--primary-color)]">Get
+                        Started</a>
                 </div>
             </div>
 
-            <div class="min-w-[120px]">
+            <div class="min-w-[140px]">
                 <span class="font-bold text-sm mb-2 block">Follow Us</span>
-                <div class="flex gap-3">
-                    <a href="#" class="text-[var(--text-muted)] transition-all duration-200 hover:text-[var(--primary-color)] hover:-translate-y-0.5"><i class="pi pi-twitter text-xl"></i></a>
-                    <a href="#" class="text-[var(--text-muted)] transition-all duration-200 hover:text-[var(--primary-color)] hover:-translate-y-0.5"><i class="pi pi-github text-xl"></i></a>
-                    <a href="#" class="text-[var(--text-muted)] transition-all duration-200 hover:text-[var(--primary-color)] hover:-translate-y-0.5"><i class="pi pi-discord text-xl"></i></a>
+                <div class="flex gap-3 items-center flex-wrap">
+                    <!-- <a href="https://x.com" target="_blank" rel="noopener noreferrer" aria-label="X (Twitter)" title="Follow us on X (Twitter)" class="text-[var(--text-muted)] transition-all duration-200 hover:text-[var(--primary-color)] hover:-translate-y-0.5"><i class="pi pi-twitter text-xl"></i></a> -->
+                    <a href="https://github.com/SMARTSKA97" target="_blank" rel="noopener noreferrer"
+                        aria-label="GitHub" title="Follow us on GitHub"
+                        class="text-[var(--text-muted)] transition-all duration-200 hover:text-[var(--primary-color)] hover:-translate-y-0.5"><i
+                            class="pi pi-github text-xl"></i></a>
+                    <a href="https://www.linkedin.com/in/ska97/" target="_blank" rel="noopener noreferrer"
+                        aria-label="LinkedIn" title="Follow us on LinkedIn"
+                        class="text-[var(--text-muted)] transition-all duration-200 hover:text-[var(--primary-color)] hover:-translate-y-0.5"><i
+                            class="pi pi-linkedin text-xl"></i></a>
+                    <!-- <a href="https://discord.com" target="_blank" rel="noopener noreferrer" aria-label="Discord" title="Join our Discord community" class="text-[var(--text-muted)] transition-all duration-200 hover:text-[var(--primary-color)] hover:-translate-y-0.5"><i class="pi pi-discord text-xl"></i></a>
+                        <a href="https://youtube.com/" target="_blank" rel="noopener noreferrer" aria-label="YouTube" title="Subscribe on YouTube" class="text-[var(--text-muted)] transition-all duration-200 hover:text-[var(--primary-color)] hover:-translate-y-0.5"><i class="pi pi-youtube text-xl"></i></a> -->
                 </div>
             </div>
         </div>

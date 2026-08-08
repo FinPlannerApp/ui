@@ -1,266 +1,434 @@
-<p-confirmDialog></p-confirmDialog>
-<p-toast></p-toast>
+<div class="transactions-page flex flex-col gap-6 w-full px-4 md:px-8 py-4">
+  <!-- Toast & Confirmation -->
+  <p-confirmDialog></p-confirmDialog>
+  <p-toast></p-toast>
 
-<div class="transactions-page p-4">
-  <!-- FILTER BAR (GitLab style + Local Signals) -->
-  <div class="filter-bar flex flex-wrap gap-2">
-    <div class="flex items-center gap-2 mr-auto">
-      <p-button label="Back to Accounts" icon="pi pi-arrow-left" severity="secondary" [outlined]="true"
-        routerLink="/app/accounts"></p-button>
-      <p-button label="New Transaction" icon="pi pi-plus" (onClick)="showTransactionForm()"
-        severity="primary"></p-button>
+  <!-- Account Header Banner & Top Action Bar -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <!-- Account Title & Back Arrow (Clean Alignment) -->
+    <div class="flex items-start sm:items-center gap-3 min-w-0">
+      <a routerLink="/app/accounts"
+         pTooltip="Back to Accounts"
+         class="no-underline text-[var(--text-muted)] hover:text-[var(--primary-color)] transition-colors p-2.5 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center shrink-0 mt-1 sm:mt-0">
+        <i class="pi pi-arrow-left text-lg"></i>
+      </a>
+
+      <div class="min-w-0 grow">
+        <div class="flex items-center gap-2.5 flex-wrap">
+          <h1 class="text-xl sm:text-2xl md:text-3xl font-extrabold m-0 gradient-text truncate" [title]="currentAccount()?.name || 'Account Transactions'">
+            {{ currentAccount()?.name || 'Account Transactions' }}
+          </h1>
+          @if (currentAccount()?.accountCategoryName) {
+            <p-tag 
+              [value]="currentAccount()!.accountCategoryName" 
+              [severity]="getAccountBadgeColor(currentAccount()).badgeSeverity" 
+              [rounded]="true" 
+              styleClass="text-xs px-2.5 py-0.5 font-bold shrink-0">
+            </p-tag>
+          }
+        </div>
+        <p class="text-xs sm:text-sm text-[var(--text-muted)] mt-1 mb-0 leading-tight">
+          Viewing monthly activity, income, expenses, and savings breakdown.
+        </p>
+      </div>
     </div>
 
-    <p-fieldset legend="Period">
-      <p-datepicker [ngModel]="selectedDate()" view="month" dateFormat="mm/yy" (ngModelChange)="onDateChange($event)"
-        placeholder="Select Month" [showIcon]="true" iconDisplay="input" [style]="{'width': '12rem'}"></p-datepicker>
-    </p-fieldset>
-    <p-fieldset legend="Category">
-      <p-select [options]="categoryOptions()" [ngModel]="selectedCategory()"
-        (ngModelChange)="selectedCategory.set($event); onCategoryChange()" optionLabel="label" optionValue="value"
-        placeholder="All Categories" [showClear]="true" [style]="{'min-width': '12rem'}" class="p-inputtext-sm">
-      </p-select>
-    </p-fieldset>
-
-    <div class="flex items-center gap-1">
-      <p-iconfield>
-        <p-inputicon class="pi pi-search"></p-inputicon>
-        <input pInputText type="text" name="transactionSearch" autocomplete="off" [ngModel]="globalSearch()"
-          (ngModelChange)="globalSearch.set($event)" (keyup.enter)="onSearch()" placeholder="Search..."
-          class="w-15rem p-inputtext-sm" />
-      </p-iconfield>
-      <p-button icon="pi pi-search" [text]="true" severity="primary" size="small" (onClick)="onSearch()"
-        pTooltip="Run Search"></p-button>
-      @if (globalSearch()) {
-      <p-button icon="pi pi-times" [text]="true" severity="secondary" size="small" (onClick)="clearSearch()"
-        pTooltip="Clear Search"></p-button>
-      }
+    <!-- Action Buttons (Refresh + New Transaction) -->
+    <div class="flex items-center gap-2 shrink-0">
+      <p-button icon="pi pi-refresh" [text]="true" [rounded]="true" pTooltip="Refresh Transactions" (onClick)="loadData()"></p-button>
+      <p-button label="New Transaction" icon="pi pi-plus" (onClick)="showTransactionForm()" styleClass="rounded-xl font-bold px-4 py-2 text-xs sm:text-sm"></p-button>
     </div>
   </div>
 
-  <!-- SUMMARY CARDS (Stat Card Style) -->
-  @if(summary()) {
-  <div class="grid grid-cols-12 gap-4 mb-4">
-    <div class="col-span-12 sm:col-span-6 lg:col-span-3">
-      <app-stat-card label="B/F Amount" [value]="((summary()?.broughtForwardAmount || 0) | currency:'INR')!"
-        icon="pi pi-history" iconColor="var(--orange-500)" secondaryValue="Opening balance for this month">
-      </app-stat-card>
+  <!-- Financial Overview KPI Stat Cards -->
+  @if (summary()) {
+    <div class="grid grid-cols-12 gap-4">
+      <!-- B/F Opening Balance Card -->
+      <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+        <div class="glass-card p-4 rounded-2xl flex flex-col justify-between h-full border border-amber-500/20">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">B/F Opening Balance</span>
+            <div class="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center">
+              <i class="pi pi-history text-lg"></i>
+            </div>
+          </div>
+          <div class="mt-1">
+            <span class="text-2xl font-extrabold text-amber-400 tracking-tight">
+              {{ (summary()?.broughtForwardAmount || 0) | currency:'INR':'symbol':'1.2-2' }}
+            </span>
+            <p class="text-xs text-[var(--text-muted)] mt-1 mb-0">Opening balance for this month</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Current / Closing Balance Card -->
+      <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+        <div class="glass-card p-4 rounded-2xl flex flex-col justify-between h-full border border-blue-500/20">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Closing Balance</span>
+            <div class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center">
+              <i class="pi pi-wallet text-lg"></i>
+            </div>
+          </div>
+          <div class="mt-1">
+            <span class="text-2xl font-extrabold text-blue-400 tracking-tight">
+              {{ (summary()?.currentBalance || 0) | currency:'INR':'symbol':'1.2-2' }}
+            </span>
+            <p class="text-xs text-[var(--text-muted)] mt-1 mb-0">Real-time available balance</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Monthly Income Card -->
+      <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+        <div class="glass-card p-4 rounded-2xl flex flex-col justify-between h-full border border-emerald-500/20">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Monthly Income</span>
+            <div class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+              <i class="pi pi-arrow-up text-lg"></i>
+            </div>
+          </div>
+          <div class="mt-1">
+            <span class="text-2xl font-extrabold text-emerald-400 tracking-tight">
+              {{ (summary()?.totalIncome || 0) | currency:'INR':'symbol':'1.2-2' }}
+            </span>
+            <p class="text-xs text-[var(--text-muted)] mt-1 mb-0">Inflows recorded this month</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Monthly Expenses Card -->
+      <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+        <div class="glass-card p-4 rounded-2xl flex flex-col justify-between h-full border border-rose-500/20">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Monthly Expenses</span>
+            <div class="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center">
+              <i class="pi pi-arrow-down text-lg"></i>
+            </div>
+          </div>
+          <div class="mt-1">
+            <span class="text-2xl font-extrabold text-rose-400 tracking-tight">
+              {{ (summary()?.totalExpenses || 0) | currency:'INR':'symbol':'1.2-2' }}
+            </span>
+            <p class="text-xs text-[var(--text-muted)] mt-1 mb-0">Outflows recorded this month</p>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="col-span-12 sm:col-span-6 lg:col-span-3">
-      <app-stat-card label="Closing Balance" [value]="(summary()?.currentBalance | currency:'INR')!" icon="pi pi-wallet"
-        iconColor="var(--blue-500)"></app-stat-card>
-    </div>
-    <div class="col-span-12 sm:col-span-6 lg:col-span-3">
-      <app-stat-card label="Monthly Income" [value]="(summary()?.totalIncome | currency:'INR')!" icon="pi pi-arrow-up"
-        iconColor="var(--green-500)"></app-stat-card>
-    </div>
-    <div class="col-span-12 sm:col-span-6 lg:col-span-3">
-      <app-stat-card label="Monthly Expenses" [value]="(summary()?.totalExpenses | currency:'INR')!"
-        icon="pi pi-arrow-down" iconColor="var(--red-500)"></app-stat-card>
-    </div>
-  </div>
   }
 
-  <!-- Account type-specific details — only one of these three shows,
-       matching whichever AccountType this account's category actually is.
-       Cash/Other accounts show nothing here, same as everywhere else this
-       distinction is made. -->
+  <!-- Account Type Specific Sub-Card (Credit Card / Loan / Bank Interest) -->
   @if (currentAccount(); as account) {
-
-    @if (account.accountType === AccountType.CreditCard && account.creditCardDetails; as details) {
-      <p-card styleClass="mb-4">
+    @if (account.creditCardDetails; as details) {
+      <div class="glass-card p-4 rounded-2xl border border-purple-500/20 bg-purple-500/5">
         <div class="flex items-center gap-2 mb-3">
-          <i class="pi pi-credit-card text-xl"></i>
-          <span class="font-medium">Credit Card Details</span>
+          <i class="pi pi-credit-card text-purple-400 text-lg"></i>
+          <span class="font-bold text-sm text-purple-300">Credit Card Overview</span>
         </div>
-        <div class="grid grid-cols-12 gap-4 grid-cols-12 gap-4">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
           @if (details.creditLimit) {
-            <div class="col-span-6 md:col-span-3">
-              <div class="text-sm text-secondary">Credit Limit</div>
-              <div class="font-medium">{{ details.creditLimit | currency:'INR' }}</div>
+            <div>
+              <span class="text-[var(--text-muted)] block">Credit Limit</span>
+              <span class="font-bold text-white text-sm">{{ details.creditLimit | currency:'INR':'symbol':'1.0-0' }}</span>
             </div>
           }
           @if (details.minimumDueAmount) {
-            <div class="col-span-6 md:col-span-3">
-              <div class="text-sm text-secondary">Minimum Due</div>
-              <div class="font-medium">{{ details.minimumDueAmount | currency:'INR' }}</div>
+            <div>
+              <span class="text-[var(--text-muted)] block">Minimum Due</span>
+              <span class="font-bold text-rose-400 text-sm">{{ details.minimumDueAmount | currency:'INR':'symbol':'1.0-0' }}</span>
             </div>
           }
           @if (details.dueDate) {
-            <div class="col-span-6 md:col-span-3">
-              <div class="text-sm text-secondary">Due Date</div>
-              <div class="font-medium">{{ details.dueDate | date:'mediumDate' }}</div>
-            </div>
-          }
-          @if (details.statementClosingDate) {
-            <div class="col-span-6 md:col-span-3">
-              <div class="text-sm text-secondary">Bill Date</div>
-              <div class="font-medium">{{ details.statementClosingDate | date:'mediumDate' }}</div>
-            </div>
-          }
-          @if (details.annualFee) {
-            <div class="col-span-6 md:col-span-3">
-              <div class="text-sm text-secondary">Annual Fee</div>
-              <div class="font-medium">{{ details.annualFee | currency:'INR' }}</div>
+            <div>
+              <span class="text-[var(--text-muted)] block">Due Date</span>
+              <span class="font-bold text-amber-300 text-sm">{{ details.dueDate | date:'mediumDate' }}</span>
             </div>
           }
           @if (details.interestRate) {
-            <div class="col-span-6 md:col-span-3">
-              <div class="text-sm text-secondary">Interest Rate</div>
-              <div class="font-medium">{{ details.interestRate }}%</div>
+            <div>
+              <span class="text-[var(--text-muted)] block">Interest Rate</span>
+              <span class="font-bold text-white text-sm">{{ details.interestRate }}% APR</span>
             </div>
           }
         </div>
-      </p-card>
+      </div>
     }
 
-    @if (account.accountType === AccountType.Loan && account.loanDetails; as details) {
-      <p-card styleClass="mb-4">
+    @if (account.loanDetails; as details) {
+      <div class="glass-card p-4 rounded-2xl border border-amber-500/20 bg-amber-500/5">
         <div class="flex items-center gap-2 mb-3">
-          <i class="pi pi-money-bill text-xl"></i>
-          <span class="font-medium">Loan Details</span>
+          <i class="pi pi-building-columns text-amber-400 text-lg"></i>
+          <span class="font-bold text-sm text-amber-300">Loan Overview</span>
         </div>
-        <div class="grid grid-cols-12 gap-4 grid-cols-12 gap-4">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
           @if (details.principalAmount) {
-            <div class="col-span-6 md:col-span-3">
-              <div class="text-sm text-secondary">Principal</div>
-              <div class="font-medium">{{ details.principalAmount | currency:'INR' }}</div>
-            </div>
-          }
-          @if (details.interestRate) {
-            <div class="col-span-6 md:col-span-3">
-              <div class="text-sm text-secondary">Interest Rate</div>
-              <div class="font-medium">{{ details.interestRate }}%</div>
+            <div>
+              <span class="text-[var(--text-muted)] block">Principal Amount</span>
+              <span class="font-bold text-white text-sm">{{ details.principalAmount | currency:'INR':'symbol':'1.0-0' }}</span>
             </div>
           }
           @if (details.emiAmount) {
-            <div class="col-span-6 md:col-span-3">
-              <div class="text-sm text-secondary">EMI</div>
-              <div class="font-medium">{{ details.emiAmount | currency:'INR' }}</div>
+            <div>
+              <span class="text-[var(--text-muted)] block">Monthly EMI</span>
+              <span class="font-bold text-amber-400 text-sm">{{ details.emiAmount | currency:'INR':'symbol':'1.0-0' }}</span>
             </div>
           }
           @if (details.nextEmiDueDate) {
-            <div class="col-span-6 md:col-span-3">
-              <div class="text-sm text-secondary">Next EMI Due</div>
-              <div class="font-medium">{{ details.nextEmiDueDate | date:'mediumDate' }}</div>
+            <div>
+              <span class="text-[var(--text-muted)] block">Next Due Date</span>
+              <span class="font-bold text-cyan-300 text-sm">{{ details.nextEmiDueDate | date:'mediumDate' }}</span>
+            </div>
+          }
+          @if (details.interestRate) {
+            <div>
+              <span class="text-[var(--text-muted)] block">Interest Rate</span>
+              <span class="font-bold text-white text-sm">{{ details.interestRate }}%</span>
             </div>
           }
         </div>
-      </p-card>
+      </div>
     }
 
-    @if (account.accountType === AccountType.Bank && account.bankAccountDetails; as details) {
-      <p-card styleClass="mb-4">
-        <div class="flex items-center gap-2 mb-3">
-          <i class="pi pi-percentage text-xl"></i>
-          <span class="font-medium">Interest Details</span>
-        </div>
-        <div class="grid grid-cols-12 gap-4 grid-cols-12 gap-4">
-          @if (details.interestRate) {
-            <div class="col-span-6 md:col-span-3">
-              <div class="text-sm text-secondary">Interest Rate</div>
-              <div class="font-medium">{{ details.interestRate }}% p.a.</div>
+    @if (account.bankAccountDetails; as details) {
+      @if (details.interestRate) {
+        <div class="glass-card p-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/5">
+          <div class="flex items-center gap-2 mb-3">
+            <i class="pi pi-percentage text-emerald-400 text-lg"></i>
+            <span class="font-bold text-sm text-emerald-300">Bank Savings Interest</span>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+            <div>
+              <span class="text-[var(--text-muted)] block">Interest Rate</span>
+              <span class="font-bold text-emerald-400 text-sm">{{ details.interestRate }}% p.a.</span>
             </div>
-            <div class="col-span-6 md:col-span-3">
-              <div class="text-sm text-secondary">Compounds</div>
-              <div class="font-medium">{{ interestFrequencyAdverb(details.interestFrequency) }}</div>
+            <div>
+              <span class="text-[var(--text-muted)] block">Compounding</span>
+              <span class="font-bold text-white text-sm">{{ interestFrequencyAdverb(details.interestFrequency) }}</span>
             </div>
             @if (estimatedInterest() !== null) {
-              <div class="col-span-6 md:col-span-3">
-                <div class="text-sm text-secondary">Est. per {{ interestFrequencyLabel(details.interestFrequency) }}</div>
-                <div class="font-medium">{{ estimatedInterest() | currency:'INR' }}</div>
+              <div>
+                <span class="text-[var(--text-muted)] block">Est. Yield / {{ interestFrequencyLabel(details.interestFrequency) }}</span>
+                <span class="font-bold text-emerald-300 text-sm">{{ estimatedInterest() | currency:'INR':'symbol':'1.2-2' }}</span>
               </div>
             }
-          }
-          @if (details.minimumBalance) {
-            <div class="col-span-6 md:col-span-3">
-              <div class="text-sm text-secondary">Minimum Balance</div>
-              <div class="font-medium">{{ details.minimumBalance | currency:'INR' }}</div>
-            </div>
-          }
+            @if (details.minimumBalance) {
+              <div>
+                <span class="text-[var(--text-muted)] block">Minimum Balance</span>
+                <span class="font-bold text-white text-sm">{{ details.minimumBalance | currency:'INR':'symbol':'1.0-0' }}</span>
+              </div>
+            }
+          </div>
         </div>
-        <p class="text-xs text-secondary mt-2 mb-0">
-          Estimate based on current balance and rate — not a guarantee of
-          what your bank actually credits.
-        </p>
-      </p-card>
+      }
     }
   }
 
+  <!-- Savings Buckets Section -->
   @if (bucketBreakdown(); as breakdown) {
-    <p-card styleClass="mb-4">
-      <div class="flex items-center justify-between mb-3">
-        <div class="flex items-center gap-2">
-          <i class="pi pi-wallet text-xl"></i>
-          <span class="font-medium">Savings Buckets</span>
+    <div class="glass-card p-4 rounded-2xl border border-cyan-500/20 bg-cyan-500/5 flex flex-col gap-3">
+      <!-- Header Row (Stack on mobile so title never gets cut off to 'Saving...') -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 w-full">
+        <div class="flex items-center gap-2 flex-wrap min-w-0">
+          <i class="pi pi-box text-cyan-400 text-base shrink-0"></i>
+          <span class="font-bold text-sm text-cyan-300 whitespace-nowrap">Savings Buckets</span>
+          <span class="text-xs text-[var(--text-muted)] font-normal whitespace-nowrap">({{ breakdown.buckets.length }} allocated)</span>
         </div>
-        <p-button icon="pi pi-plus" [text]="true" label="Add Bucket" (onClick)="showBucketForm.set(!showBucketForm())"></p-button>
+        <p-button
+          [label]="showBucketForm() ? 'Cancel' : 'Add Bucket'"
+          [icon]="showBucketForm() ? 'pi pi-times' : 'pi pi-plus'"
+          [text]="true"
+          size="small"
+          styleClass="w-full sm:w-auto text-xs font-bold shrink-0 justify-center text-center py-1"
+          (onClick)="showBucketForm.set(!showBucketForm())">
+        </p-button>
       </div>
 
+      <!-- Add Bucket Form Drawer -->
       @if (showBucketForm()) {
-        <div class="flex gap-2 mb-3 items-end">
-          <div class="flex-1">
-            <label class="text-sm text-secondary">Bucket name</label>
-            <input type="text" pInputText class="w-full" placeholder="e.g. Emergency Fund"
-              [ngModel]="newBucketName()" (ngModelChange)="newBucketName.set($event)" />
+        <div class="p-4 rounded-xl bg-black/30 border border-cyan-500/20 grid grid-cols-1 sm:grid-cols-12 gap-3 items-end mt-1 w-full">
+          <div class="sm:col-span-6">
+            <label class="text-xs text-[var(--text-muted)] font-medium block mb-1">Bucket Name</label>
+            <input type="text" pInputText placeholder="e.g. Emergency Fund"
+                   [ngModel]="newBucketName()" (ngModelChange)="newBucketName.set($event)"
+                   class="w-full h-10 p-inputtext-sm rounded-xl" />
           </div>
-          <div class="flex-1">
-            <label class="text-sm text-secondary">Amount</label>
+          <div class="sm:col-span-3">
+            <label class="text-xs text-[var(--text-muted)] font-medium block mb-1">Amount (₹)</label>
             <p-inputNumber [ngModel]="newBucketAmount()" (ngModelChange)="newBucketAmount.set($event)"
-              mode="currency" currency="INR" locale="en-IN" class="w-full"></p-inputNumber>
+                           mode="currency" currency="INR" locale="en-IN"
+                           styleClass="w-full h-10"
+                           inputStyleClass="w-full h-10 p-inputtext-sm rounded-xl"
+                           placeholder="0.00">
+            </p-inputNumber>
           </div>
-          <p-button label="Save" (onClick)="addBucket()"></p-button>
+          <div class="sm:col-span-3">
+            <p-button label="Save Bucket" icon="pi pi-check" (onClick)="addBucket()" styleClass="w-full h-10 rounded-xl px-4 font-bold shrink-0 justify-center text-center"></p-button>
+          </div>
         </div>
       }
 
-      <div class="flex flex-col gap-2">
+      <!-- Buckets List & Unallocated Bar -->
+      <div class="flex flex-col gap-2 mt-1">
         @for (bucket of breakdown.buckets; track bucket.id) {
-          <div class="flex items-center justify-between p-2 rounded" style="background: rgba(255,255,255,0.03);">
-            <div class="flex flex-col">
-              <span>{{ bucket.name }}</span>
+          <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
+            <div class="flex flex-col min-w-0 pr-2">
+              <span class="font-bold text-sm text-white truncate">{{ bucket.name }}</span>
               @if (bucketInterestShare(bucket.allocatedAmount); as share) {
-                <span class="text-xs text-secondary">
-                  ~{{ share | currency:'INR' }} / {{ interestFrequencyLabel(currentAccount()?.bankAccountDetails?.interestFrequency) }} at this account's rate
+                <span class="text-xs text-emerald-400 font-medium truncate">
+                  ~{{ share | currency:'INR':'symbol':'1.2-2' }} / {{ interestFrequencyLabel(currentAccount()?.bankAccountDetails?.interestFrequency) }} yield
                 </span>
               }
             </div>
-            <div class="flex items-center gap-2">
-              <span class="font-medium">{{ bucket.allocatedAmount | currency:'INR' }}</span>
-              <p-button icon="pi pi-trash" [text]="true" severity="danger" (onClick)="deleteBucket(bucket.id)"></p-button>
+            <div class="flex items-center gap-3 shrink-0">
+              <span class="font-extrabold text-sm text-cyan-300">{{ bucket.allocatedAmount | currency:'INR':'symbol':'1.2-2' }}</span>
+              <p-button icon="pi pi-trash" [text]="true" [rounded]="true" severity="danger" size="small" pTooltip="Delete Bucket" (onClick)="deleteBucket(bucket.id)"></p-button>
             </div>
           </div>
         }
 
-        <div class="flex items-center justify-between p-2 text-secondary text-sm">
-          <span>Unallocated</span>
-          <span>{{ breakdown.unallocated | currency:'INR' }}</span>
+        <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-dashed border-white/10 text-xs flex-wrap gap-2">
+          <span class="text-[var(--text-muted)] font-semibold uppercase tracking-wider whitespace-nowrap">Unallocated Balance</span>
+          <span class="font-extrabold text-sm text-emerald-400 whitespace-nowrap">{{ breakdown.unallocated | currency:'INR':'symbol':'1.2-2' }}</span>
         </div>
       </div>
-    </p-card>
+    </div>
   }
 
-  <p-card>
-    <ng-template pTemplate="header">
-      <!-- Removed redundant button as it is present in filter bar -->
-    </ng-template>
+  <!-- Unified Filter & Toolbar Controls (Grid Math Prevents Any Overlapping/Overflowing) -->
+  <div class="glass-card p-4 rounded-2xl">
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-3 w-full items-center">
+      
+      <!-- Month Picker (Full on mobile, 4 cols on tablet, 3 cols on desktop) -->
+      <div class="md:col-span-4 lg:col-span-3">
+        <p-datepicker
+          [ngModel]="selectedDate()"
+          view="month"
+          dateFormat="mm/yy"
+          (ngModelChange)="onDateChange($event)"
+          placeholder="Select Month"
+          [showIcon]="true"
+          iconDisplay="input"
+          styleClass="w-full h-10"
+          inputStyleClass="w-full h-10 p-inputtext-sm rounded-xl"
+          class="w-full block"
+          appendTo="body">
+        </p-datepicker>
+      </div>
 
-    @if (ready()) {
-    <app-data-table [data]="transactions()" [columns]="transactionColumns" [loading]="isLoading()" [lazy]="true"
-      [totalRecords]="totalRecords()" [rows]="rows()" (onLazyLoad)="onLazyLoad($event)">
-      <ng-template #actions let-item>
-        <div class="flex gap-2">
-          <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" (onClick)="showTransactionForm(item)"></p-button>
-          <p-button icon="pi pi-trash" [text]="true" [rounded]="true" severity="danger"
-            (onClick)="deleteTransaction(item)"></p-button>
-          <p-button icon="pi pi-sync" [text]="true" [rounded]="true" (onClick)="showSwitchAccountForm(item)"
-            pTooltip="Switch Account" tooltipPosition="top"></p-button>
-        </div>
-      </ng-template>
-    </app-data-table>
-    } @else {
-    <div class="flex justify-center p-4">
-      <p-progressSpinner></p-progressSpinner>
+      <!-- Category Dropdown (Full on mobile, 4 cols on tablet, 4 cols on desktop) -->
+      <div class="md:col-span-4 lg:col-span-4">
+        <p-select
+          [options]="categoryOptions()"
+          [ngModel]="selectedCategory()"
+          (ngModelChange)="selectedCategory.set($event); onCategoryChange()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="All Categories"
+          [showClear]="true"
+          styleClass="w-full h-10"
+          class="w-full block h-10 p-inputtext-sm rounded-xl"
+          appendTo="body">
+        </p-select>
+      </div>
+
+      <!-- Search Input (Full on mobile, 4 cols on tablet, 5 cols on desktop) -->
+      <div class="md:col-span-4 lg:col-span-5">
+        <p-iconfield class="w-full block h-10">
+          <p-inputicon class="pi pi-search"></p-inputicon>
+          <input
+            type="text"
+            pInputText
+            placeholder="Search description..."
+            [ngModel]="globalSearch()"
+            (ngModelChange)="globalSearch.set($event)"
+            (keyup.enter)="onSearch()"
+            class="w-full h-10 p-inputtext-sm rounded-xl" />
+        </p-iconfield>
+      </div>
+
     </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  @if (isLoading()) {
+    <div class="flex justify-center items-center py-12">
+      <p-progressSpinner styleClass="w-12 h-12"></p-progressSpinner>
+    </div>
+  } @else {
+    <!-- Empty State -->
+    @if (transactions().length === 0) {
+      <div class="glass-card p-8 rounded-3xl text-center max-w-lg mx-auto my-6 border border-[var(--glass-border)]">
+        <div class="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
+          <i class="pi pi-receipt text-3xl"></i>
+        </div>
+        <h3 class="text-xl font-bold mb-2">No Transactions Found</h3>
+        @if (globalSearch() || selectedCategory()) {
+          <p class="text-sm text-[var(--text-muted)] mb-4">
+            No transactions match your current search query or category filter.
+          </p>
+          <p-button label="Clear Filters" icon="pi pi-filter-slash" [text]="true" (onClick)="clearSearch(); selectedCategory.set(null); loadData()"></p-button>
+        } @else {
+          <p class="text-sm text-[var(--text-muted)] mb-5">
+            No transactions recorded for this account in {{ selectedDate() | date:'MMMM yyyy' }}.
+          </p>
+          <p-button label="Add Transaction" icon="pi pi-plus" (onClick)="showTransactionForm()"></p-button>
+        }
+      </div>
+    } @else {
+      <!-- Transactions Table Card -->
+      <div class="glass-card rounded-2xl overflow-x-auto border border-[var(--glass-border)] w-full">
+        <p-table
+          [value]="transactions()"
+          [paginator]="true"
+          [rows]="rows()"
+          [rowsPerPageOptions]="[10, 25, 50]"
+          [totalRecords]="totalRecords()"
+          [lazy]="true"
+          (onLazyLoad)="onLazyLoad($event)"
+          [scrollable]="true"
+          responsiveLayout="scroll"
+          styleClass="p-datatable-sm p-datatable-striped w-full">
+          
+          <ng-template pTemplate="header">
+            <tr>
+              <th pSortableColumn="date" class="min-w-[140px] whitespace-nowrap">Date <p-sortIcon field="date"></p-sortIcon></th>
+              <th pSortableColumn="description" class="min-w-[240px] whitespace-nowrap">Description <p-sortIcon field="description"></p-sortIcon></th>
+              <th pSortableColumn="categoryName" class="min-w-[160px] whitespace-nowrap">Category <p-sortIcon field="categoryName"></p-sortIcon></th>
+              <th pSortableColumn="amount" class="text-right min-w-[160px] whitespace-nowrap">Amount <p-sortIcon field="amount"></p-sortIcon></th>
+              <th class="text-center min-w-[140px] whitespace-nowrap">Actions</th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-tx>
+            <tr class="hover:bg-white/5 transition-colors">
+              <td class="whitespace-nowrap font-medium text-xs text-[var(--text-muted)]">
+                {{ tx.date | date:'mediumDate' }}
+              </td>
+              <td class="whitespace-nowrap font-bold text-white">
+                {{ tx.description }}
+              </td>
+              <td class="whitespace-nowrap">
+                @if (tx.categoryName) {
+                  <p-tag [value]="tx.categoryName" severity="secondary" [rounded]="true" styleClass="font-semibold text-xs"></p-tag>
+                } @else {
+                  <span class="text-xs text-[var(--text-muted)]">—</span>
+                }
+              </td>
+              <td class="text-right font-extrabold text-base whitespace-nowrap"
+                  [ngClass]="tx.type === 1 ? 'text-emerald-400' : 'text-rose-400'">
+                {{ tx.type === 1 ? '+' : '-' }}{{ tx.amount | currency:'INR':'symbol':'1.2-2' }}
+              </td>
+              <td class="text-center whitespace-nowrap">
+                <div class="flex items-center justify-center gap-1">
+                  <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" size="small" pTooltip="Edit Transaction" (onClick)="showTransactionForm(tx)"></p-button>
+                  <p-button icon="pi pi-sync" [text]="true" [rounded]="true" size="small" pTooltip="Switch Account" (onClick)="showSwitchAccountForm(tx)"></p-button>
+                  <p-button icon="pi pi-trash" [text]="true" [rounded]="true" severity="danger" size="small" pTooltip="Delete Transaction" (onClick)="deleteTransaction(tx)"></p-button>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
     }
-  </p-card>
+  }
 </div>
