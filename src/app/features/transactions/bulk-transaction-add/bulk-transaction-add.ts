@@ -50,6 +50,8 @@ export class BulkTransactionAdd {
     private router = inject(Router);
 
     rows = signal<BulkTransactionRow[]>([]);
+    viewMode = signal<'grid' | 'card'>('grid');
+    
     transactionTypes = [
         { label: 'Expense', value: TransactionType.Expense },
         { label: 'Income', value: TransactionType.Income }
@@ -68,6 +70,9 @@ export class BulkTransactionAdd {
 
     showImportSummary = signal(false);
     importSummaryData = signal({ total: 0, valid: 0, invalid: 0 });
+
+    batchAccount = signal<any>(null);
+    batchCategory = signal<any>(null);
 
     constructor() {
         this.loadInitialData();
@@ -129,6 +134,18 @@ export class BulkTransactionAdd {
         return this.rows().filter(r => !r.isDeleted);
     }
 
+    validRowsCount = computed(() => {
+        return this.activeRows.filter(r => this.isValid(r)).length;
+    });
+
+    invalidRowsCount = computed(() => {
+        return this.activeRows.filter(r => !this.isValid(r) && (r.amount !== null || (r.description && r.description.trim() !== '') || r.accountId !== null)).length;
+    });
+
+    totalRowsCount = computed(() => {
+        return this.activeRows.length;
+    });
+
     totalIncome = computed(() => {
         return this.activeRows
             .filter(r => r.type === TransactionType.Income)
@@ -144,6 +161,81 @@ export class BulkTransactionAdd {
     netAmount = computed(() => {
         return this.totalIncome() - this.totalExpenses();
     });
+
+    duplicateRow(index: number) {
+        this.rows.update(current => {
+            const targetIdx = current.findIndex(r => r.index === index);
+            if (targetIdx !== -1) {
+                const target = current[targetIdx];
+                const cloned: BulkTransactionRow = {
+                    index: current.length,
+                    date: new Date(target.date),
+                    accountId: target.accountId,
+                    transactionCategoryId: target.transactionCategoryId,
+                    destinationAccountId: target.destinationAccountId,
+                    description: target.description ? `${target.description} (Copy)` : '',
+                    type: target.type,
+                    amount: target.amount,
+                    status: 'invalid',
+                    isDeleted: false
+                };
+                cloned.status = this.isValid(cloned) ? 'valid' : 'invalid';
+                current.splice(targetIdx + 1, 0, cloned);
+            }
+            return [...current];
+        });
+        this.messageService.add({ severity: 'info', summary: 'Row Duplicated', detail: 'Created copy of selected transaction row.' });
+    }
+
+    addMultipleRows(count: number = 5) {
+        for (let i = 0; i < count; i++) {
+            this.addEmptyRow();
+        }
+        this.messageService.add({ severity: 'info', summary: 'Rows Added', detail: `Added ${count} new spreadsheet rows.` });
+    }
+
+    clearInvalidRows() {
+        this.rows.update(current => {
+            current.forEach(r => {
+                if (!r.isDeleted && !this.isValid(r)) {
+                    r.isDeleted = true;
+                }
+            });
+            return [...current];
+        });
+        if (this.activeRows.length === 0) {
+            this.addEmptyRow();
+        }
+        this.messageService.add({ severity: 'info', summary: 'Grid Cleaned', detail: 'Removed all incomplete and unpopulated rows.' });
+    }
+
+    applyBatchAccount(account: any) {
+        if (!account) return;
+        this.rows.update(current => {
+            current.forEach(r => {
+                if (!r.isDeleted && (!r.accountId || typeof r.accountId === 'string')) {
+                    r.accountId = account;
+                    r.status = this.isValid(r) ? 'valid' : 'invalid';
+                }
+            });
+            return [...current];
+        });
+        this.messageService.add({ severity: 'info', summary: 'Batch Account Applied', detail: `Assigned ${account.name} to unassigned rows.` });
+    }
+
+    applyBatchCategory(category: any) {
+        if (!category) return;
+        this.rows.update(current => {
+            current.forEach(r => {
+                if (!r.isDeleted && (!r.transactionCategoryId || typeof r.transactionCategoryId === 'string')) {
+                    r.transactionCategoryId = category;
+                    r.status = this.isValid(r) ? 'valid' : 'invalid';
+                }
+            });
+            return [...current];
+        });
+        this.messageService.add({ severity: 'info', summary: 'Batch Category Applied', detail: `Assigned ${category.name} to unassigned rows.` });
+    }
 
     resolveStringsToObject(row: BulkTransactionRow) {
         if (typeof row.accountId === 'string' && row.accountId.trim().length > 0) {
@@ -244,7 +336,8 @@ export class BulkTransactionAdd {
         const nameToInject = typeof initialName === 'string' ? initialName.trim() : '';
         const ref = this.dialogService.open(AccountForm, {
             header: 'Add New Account',
-            width: '60vw',
+            width: '460px',
+            style: { maxWidth: '92vw' },
             data: { endpoint: 'Accounts', itemToEdit: nameToInject ? { name: nameToInject } : undefined }
         });
 
@@ -263,7 +356,8 @@ export class BulkTransactionAdd {
         const nameToInject = typeof initialName === 'string' ? initialName.trim() : '';
         const ref = this.dialogService.open(CategoryForm, {
             header: 'Add New Category',
-            width: '50vw',
+            width: '460px',
+            style: { maxWidth: '92vw' },
             data: { endpoint: 'TransactionCategories', itemToEdit: nameToInject ? { name: nameToInject } : undefined }
         });
 

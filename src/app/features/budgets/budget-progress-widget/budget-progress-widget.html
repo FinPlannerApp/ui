@@ -13,12 +13,12 @@
         </div>
         } @else {
         @for (budget of budgets(); track budget.budgetId) {
-        <div class="budget-item">
-            <div class="flex justify-between mb-2">
-                <span class="font-semibold text-color text-sm">
+        <div class="budget-item min-w-0">
+            <div class="flex justify-between items-center mb-1.5 min-w-0 gap-2">
+                <span class="font-semibold text-color text-xs sm:text-sm truncate min-w-0 flex-1" [title]="budget.categoryName || 'General Spending'">
                     {{ budget.categoryName || 'General Spending' }}
                 </span>
-                <span class="text-xs text-secondary">
+                <span class="text-[11px] sm:text-xs text-secondary shrink-0 whitespace-nowrap pl-1 font-medium">
                     {{ budget.spentAmount | currency:'INR' }} / {{ budget.budgetAmount | currency:'INR' }}
                 </span>
             </div>
@@ -28,14 +28,13 @@
                 [color]="budget.percentageUsed >= 100 ? '#ef4444' : (budget.percentageUsed >= 80 ? '#f59e0b' : '#3b82f6')">
             </p-progressBar>
 
-            <div class="flex justify-between mt-1">
-                <span class="text-xs"
+            <div class="flex justify-between items-center mt-1 text-xs gap-2">
+                <span class="text-[11px] sm:text-xs shrink-0"
                     [ngClass]="{'text-red-500 font-bold': budget.percentageUsed >= 100, 'text-secondary': budget.percentageUsed < 100}">
                     {{ budget.percentageUsed | number:'1.0-0' }}% used
                 </span>
-                <span class="text-xs text-secondary italic">
-                    {{ budget.remainingAmount > 0 ? (budget.remainingAmount | currency:'INR') + ' left' : 'Limit
-                    exceeded' }}
+                <span class="text-[11px] sm:text-xs text-secondary italic truncate text-right min-w-0">
+                    {{ budget.remainingAmount > 0 ? (budget.remainingAmount | currency:'INR') + ' left' : 'Limit exceeded' }}
                 </span>
             </div>
         </div>

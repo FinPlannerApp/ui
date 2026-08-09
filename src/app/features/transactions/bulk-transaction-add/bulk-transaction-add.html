@@ -1,193 +1,699 @@
-<div class="bulk-add-container flex flex-col h-full glass-panel">
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 header-section">
-        <div>
-            <h1 class="text-3xl font-bold m-0 text-color">Bulk Transaction Add</h1>
-            <p class="text-[var(--text-muted)] mt-2 mb-0">Use keyboard arrows and Tab to navigate. Rows save sequentially.
-                Highlighted rows contain errors.</p>
-        </div>
-        <div class="mt-3 md:mt-0 flex flex-col items-center md:flex-row gap-2">
-            <p-button label="Go to Dashboard" icon="pi pi-arrow-left" outlined="true" severity="secondary"
-                (onClick)="cancel()"></p-button>
-            <p-button label="Download Template" icon="pi pi-download" outlined="true" severity="secondary"
-                (onClick)="exportTemplate()"></p-button>
-            <p-button label="Import File" icon="pi pi-upload" outlined="true" severity="secondary"
-                (onClick)="triggerFileInput()"></p-button>
-            <p-button label="Clear Grid" icon="pi pi-refresh" outlined="true" severity="danger"
-                (onClick)="rows.set([]); addEmptyRow();"></p-button>
+<div class="bulk-add-container flex flex-col h-full gap-3 sm:gap-4 p-2 sm:p-5">
+    
+    <!-- Top Excel Ribbon & Actions Header -->
+    <div class="p-2.5 sm:p-4 rounded-3xl glass-card border border-white/10 shadow-xl overflow-hidden">
+        
+        <!-- MOBILE / SMALL SCREEN LAYOUT (< 768px): 2 Compact Balanced Rows -->
+        <div class="flex flex-col gap-2 md:hidden">
+            <!-- Row 1: Title & Back Button -->
+            <div class="flex items-center justify-between gap-2 min-w-0">
+                <div class="flex items-center gap-2 min-w-0">
+                    <div class="w-8 h-8 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 shadow-md">
+                        <i class="pi pi-table text-sm"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h1 class="text-sm font-black m-0 text-main tracking-tight truncate">Bulk Studio</h1>
+                    </div>
+                </div>
 
+                <button 
+                    type="button"
+                    (click)="cancel()"
+                    pTooltip="Back to Dashboard"
+                    class="px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl bg-white/5 border border-white/10 text-main text-[11px] sm:text-xs font-bold flex items-center gap-1 hover:bg-white/10 transition-all shrink-0"
+                >
+                    <i class="pi pi-arrow-left text-xs"></i>
+                    <span class="hidden sm:inline">Dashboard</span>
+                </button>
+            </div>
+
+            <!-- Row 2: View Switcher & Action Buttons in 1 Single Compact Row -->
+            <div class="flex items-center justify-between gap-1.5 border-t border-white/10 pt-2 w-full overflow-x-auto no-scrollbar">
+                <!-- View Mode Switcher -->
+                <div class="flex items-center p-0.5 rounded-xl bg-white/5 border border-white/10 shrink-0">
+                    <button 
+                        type="button" 
+                        (click)="viewMode.set('grid')"
+                        [ngClass]="viewMode() === 'grid' ? 'bg-emerald-500 text-white shadow-md' : 'text-muted hover:text-main'"
+                        class="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-lg text-[11px] font-extrabold flex items-center gap-1 transition-all cursor-pointer"
+                    >
+                        <i class="pi pi-table text-[10px]"></i>
+                        <span>Grid</span>
+                    </button>
+                    <button 
+                        type="button" 
+                        (click)="viewMode.set('card')"
+                        [ngClass]="viewMode() === 'card' ? 'bg-emerald-500 text-white shadow-md' : 'text-muted hover:text-main'"
+                        class="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-lg text-[11px] font-extrabold flex items-center gap-1 transition-all cursor-pointer"
+                    >
+                        <i class="pi pi-th-large text-[10px]"></i>
+                        <span>Cards</span>
+                    </button>
+                </div>
+
+                <!-- Quick Action Buttons -->
+                <div class="flex items-center gap-1 shrink-0">
+                    <button 
+                        type="button"
+                        (click)="triggerFileInput()"
+                        pTooltip="Import Excel File"
+                        class="px-2 py-1 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-[11px] font-extrabold flex items-center gap-1 shadow-md shadow-emerald-500/20 hover:opacity-90 transition-all cursor-pointer"
+                    >
+                        <i class="pi pi-upload text-[10px]"></i>
+                        <span>Import</span>
+                    </button>
+
+                    <button 
+                        type="button"
+                        (click)="exportTemplate()"
+                        pTooltip="Download Excel Template"
+                        class="w-7 h-7 rounded-xl bg-white/5 border border-white/10 text-muted hover:text-main text-xs flex items-center justify-center transition-all cursor-pointer shrink-0"
+                    >
+                        <i class="pi pi-download text-[10px]"></i>
+                    </button>
+
+                    <button 
+                        type="button"
+                        (click)="clearInvalidRows()"
+                        pTooltip="Clear Empty/Invalid Rows"
+                        class="w-7 h-7 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 text-xs flex items-center justify-center transition-all cursor-pointer shrink-0"
+                    >
+                        <i class="pi pi-filter-slash text-[10px]"></i>
+                    </button>
+                </div>
+            </div>
         </div>
+
+        <!-- DESKTOP / TABLET SCREEN LAYOUT (>= 768px): Single Luxury Glass Ribbon -->
+        <div class="hidden md:flex items-center justify-between gap-4">
+            <!-- Header Title -->
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-10 h-10 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 shadow-lg shadow-emerald-500/10">
+                    <i class="pi pi-table text-xl"></i>
+                </div>
+                <div class="min-w-0">
+                    <h1 class="text-xl font-black m-0 text-main tracking-tight truncate">Bulk Transaction Studio</h1>
+                    <p class="text-xs text-muted m-0 font-medium truncate">Fast multi-row entry, Excel import & auto calculations</p>
+                </div>
+            </div>
+
+            <!-- Ribbon Toolbar Buttons -->
+            <div class="flex items-center gap-2 shrink-0">
+                <!-- View Mode Switcher -->
+                <div class="flex items-center p-1 rounded-2xl bg-white/5 border border-white/10 shrink-0">
+                    <button 
+                        type="button" 
+                        (click)="viewMode.set('grid')"
+                        [ngClass]="viewMode() === 'grid' ? 'bg-emerald-500 text-white shadow-md' : 'text-muted hover:text-main'"
+                        class="px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer outline-none"
+                        pTooltip="Grid View (Excel Sheet)"
+                    >
+                        <i class="pi pi-table text-xs"></i>
+                        <span>Grid</span>
+                    </button>
+                    <button 
+                        type="button" 
+                        (click)="viewMode.set('card')"
+                        [ngClass]="viewMode() === 'card' ? 'bg-emerald-500 text-white shadow-md' : 'text-muted hover:text-main'"
+                        class="px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer outline-none"
+                        pTooltip="Card View (Mobile Touch)"
+                    >
+                        <i class="pi pi-th-large text-xs"></i>
+                        <span>Cards</span>
+                    </button>
+                </div>
+
+                <!-- Import Excel -->
+                <button 
+                    type="button"
+                    (click)="triggerFileInput()"
+                    pTooltip="Import Excel File"
+                    class="px-3.5 py-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-xs font-extrabold flex items-center gap-1.5 shadow-lg shadow-emerald-500/20 hover:opacity-90 transition-all cursor-pointer shrink-0"
+                >
+                    <i class="pi pi-upload text-xs"></i>
+                    <span>Import Excel</span>
+                </button>
+
+                <!-- Download Template -->
+                <button 
+                    type="button"
+                    (click)="exportTemplate()"
+                    pTooltip="Download Excel Template"
+                    class="px-3 py-2 rounded-2xl bg-white/5 border border-white/10 text-main text-xs font-extrabold flex items-center gap-1.5 hover:bg-white/10 transition-all cursor-pointer shrink-0"
+                >
+                    <i class="pi pi-download text-xs"></i>
+                    <span>Template</span>
+                </button>
+
+                <!-- Clean / Clear Invalid -->
+                <button 
+                    type="button"
+                    (click)="clearInvalidRows()"
+                    pTooltip="Clear Empty/Invalid Rows"
+                    class="p-2 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-extrabold flex items-center justify-center hover:bg-amber-500/20 transition-all cursor-pointer shrink-0"
+                >
+                    <i class="pi pi-filter-slash text-xs"></i>
+                </button>
+
+                <!-- Go Back -->
+                <button 
+                    type="button"
+                    (click)="cancel()"
+                    pTooltip="Back to Dashboard"
+                    class="px-3 py-2 rounded-2xl bg-white/5 border border-white/10 text-main text-xs font-extrabold flex items-center gap-1.5 hover:bg-white/10 transition-all cursor-pointer shrink-0"
+                >
+                    <i class="pi pi-arrow-left text-xs"></i>
+                    <span>Dashboard</span>
+                </button>
+            </div>
+        </div>
+
     </div>
 
-    <div class="excel-grid-wrapper grow overflow-auto border rounded glass-panel-inner">
-        <table class="excel-table w-full relative" (paste)="onPaste($event)">
-            <thead class="sticky top-0 z-1 shadow-lg shadow-sm glass-header">
-                <tr>
-                    <th class="w-3rem text-center">Sr.No.</th>
-                    <th class="w-1rem text-center"></th>
-                    <th class="w-12rem text-center">Date</th>
-                    <th class="w-16rem text-center">Account</th>
-                    <th class="w-16rem text-center">Category</th>
-                    <th class="w-20rem text-center">Description</th>
-                    <th class="w-10rem text-center">Type</th>
-                    <th class="w-12rem text-center">Amount</th>
-                    <th class="w-3rem text-center"><i class="pi pi-cog"></i></th>
-                </tr>
-            </thead>
-            <tbody>
+    <!-- Live KPI & Validation Summary Bar -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
+        
+        <div class="p-2.5 sm:p-3 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between gap-2 min-w-0">
+            <div class="min-w-0 flex-1 pr-1">
+                <span class="text-[10px] font-black uppercase tracking-wider text-muted block mb-0.5 truncate">Total Rows</span>
+                <span class="text-base sm:text-lg font-black text-main block truncate">{{ totalRowsCount() }}</span>
+            </div>
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-white/5 flex items-center justify-center text-muted shrink-0">
+                <i class="pi pi-list text-xs sm:text-sm"></i>
+            </div>
+        </div>
+
+        <div class="p-2.5 sm:p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between gap-2 min-w-0">
+            <div class="min-w-0 flex-1 pr-1">
+                <span class="text-[10px] font-black uppercase tracking-wider text-emerald-400 block mb-0.5 truncate">Valid Ready</span>
+                <span class="text-base sm:text-lg font-black text-emerald-400 block truncate">{{ validRowsCount() }}</span>
+            </div>
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                <i class="pi pi-check-circle text-xs sm:text-sm"></i>
+            </div>
+        </div>
+
+        <div class="p-2.5 sm:p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between gap-2 min-w-0">
+            <div class="min-w-0 flex-1 pr-1">
+                <span class="text-[10px] font-black uppercase tracking-wider text-amber-400 block mb-0.5 truncate">Incomplete</span>
+                <span class="text-base sm:text-lg font-black text-amber-400 block truncate">{{ invalidRowsCount() }}</span>
+            </div>
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                <i class="pi pi-exclamation-triangle text-xs sm:text-sm"></i>
+            </div>
+        </div>
+
+        <div class="p-2.5 sm:p-3 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-between gap-2 min-w-0">
+            <div class="min-w-0 flex-1 pr-1">
+                <span class="text-[10px] font-black uppercase tracking-wider text-sky-400 block mb-0.5 truncate">Total Income</span>
+                <span class="text-sm sm:text-base font-black text-sky-400 block truncate" [title]="totalIncome() | currency:'INR'">{{ totalIncome() | currency:'INR' }}</span>
+            </div>
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-sky-500/20 flex items-center justify-center text-sky-400 shrink-0">
+                <i class="pi pi-arrow-up text-xs sm:text-sm"></i>
+            </div>
+        </div>
+
+        <div class="p-2.5 sm:p-3 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-between gap-2 min-w-0">
+            <div class="min-w-0 flex-1 pr-1">
+                <span class="text-[10px] font-black uppercase tracking-wider text-rose-400 block mb-0.5 truncate">Total Expense</span>
+                <span class="text-sm sm:text-base font-black text-rose-400 block truncate" [title]="totalExpenses() | currency:'INR'">{{ totalExpenses() | currency:'INR' }}</span>
+            </div>
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-rose-500/20 flex items-center justify-center text-rose-400 shrink-0">
+                <i class="pi pi-arrow-down text-xs sm:text-sm"></i>
+            </div>
+        </div>
+
+        <div class="p-2.5 sm:p-3 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-between gap-2 min-w-0">
+            <div class="min-w-0 flex-1 pr-1">
+                <span class="text-[10px] font-black uppercase tracking-wider text-purple-400 block mb-0.5 truncate">Net Balance</span>
+                <span class="text-sm sm:text-base font-black block truncate" [title]="netAmount() | currency:'INR'" [ngClass]="netAmount() >= 0 ? 'text-emerald-400' : 'text-rose-400'">
+                    {{ netAmount() | currency:'INR' }}
+                </span>
+            </div>
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-400 shrink-0">
+                <i class="pi pi-calculator text-xs sm:text-sm"></i>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MAIN GRID / CARD SPREADSHEET AREA -->
+    @if (viewMode() === 'grid') {
+        
+        <!-- EXCEL GLASS SPREADSHEET GRID -->
+        <div class="excel-grid-wrapper grow min-h-[380px] sm:min-h-[420px] rounded-3xl border border-white/10 overflow-auto shadow-2xl">
+            <table class="excel-table w-full relative border-collapse" (paste)="onPaste($event)">
+                <thead class="sticky top-0 z-20 shadow-md">
+                    <tr class="excel-header-row">
+                        <th class="w-12 text-center excel-row-num">#</th>
+                        <th class="w-10 text-center">ST</th>
+                        <th class="min-w-[130px] text-left pl-3">Date</th>
+                        <th class="min-w-[190px] text-left pl-3">Account</th>
+                        <th class="min-w-[190px] text-left pl-3">Category</th>
+                        <th class="min-w-[240px] text-left pl-3">Description</th>
+                        <th class="min-w-[140px] text-left pl-3">Type</th>
+                        <th class="min-w-[150px] text-right pr-3">Amount (₹)</th>
+                        <th class="w-20 text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (row of activeRows; track row.index; let i = $index) {
+                    <tr [ngClass]="{
+                        'error-row': row.status === 'error', 
+                        'invalid-row': row.status === 'invalid' && (row.amount !== null || row.description !== ''),
+                        'valid-row': row.status === 'valid'
+                    }">
+                        <!-- Row Number -->
+                        <td class="text-center font-mono font-bold text-xs excel-row-num excel-cell">
+                            {{ i + 1 }}
+                        </td>
+
+                        <!-- Status Icon -->
+                        <td class="text-center excel-cell">
+                            @if (row.status === 'error') {
+                                <i class="pi pi-exclamation-circle text-rose-400 text-sm" [pTooltip]="row.errorMessage || 'Save error'"></i>
+                            } @else if (row.status === 'valid') {
+                                <i class="pi pi-check-circle text-emerald-400 text-sm" pTooltip="Ready to save"></i>
+                            } @else if (row.status === 'invalid') {
+                                <i class="pi pi-exclamation-triangle text-amber-400 text-sm" pTooltip="Incomplete fields"></i>
+                            } @else if (row.status === 'saving') {
+                                <i class="pi pi-spin pi-spinner text-sky-400 text-sm"></i>
+                            } @else {
+                                <span class="w-2 h-2 rounded-full bg-white/20 inline-block"></span>
+                            }
+                        </td>
+
+                        <!-- Date Picker Cell -->
+                        <td class="excel-cell">
+                            <p-datepicker 
+                                [(ngModel)]="row.date" 
+                                (ngModelChange)="onRowChange(row)" 
+                                appendTo="body"
+                                dateFormat="yy-mm-dd" 
+                                class="w-full h-full block" 
+                                [showIcon]="false"
+                                inputStyleClass="excel-input w-full h-full px-3 text-xs font-semibold bg-transparent border-none outline-none"
+                            ></p-datepicker>
+                        </td>
+
+                        <!-- Account Cell with Inline Create Button -->
+                        <td class="excel-cell">
+                            <div class="relative w-full h-full flex items-center">
+                                <p-autoComplete 
+                                    [suggestions]="filteredAccounts()" 
+                                    [(ngModel)]="row.accountId" 
+                                    field="name"
+                                    optionLabel="name" 
+                                    (completeMethod)="filterAccounts($event)"
+                                    (onSelect)="onRowChange(row)" 
+                                    (ngModelChange)="onRowChange(row)" 
+                                    [dropdown]="false"
+                                    placeholder="Select Account" 
+                                    appendTo="body" 
+                                    class="w-full h-full block"
+                                    inputStyleClass="excel-input w-full h-full px-3 text-xs font-semibold bg-transparent border-none outline-none pr-8"
+                                >
+                                    <ng-template let-item pTemplate="item">
+                                        <span class="text-xs font-semibold">{{ item.name || item }}</span>
+                                    </ng-template>
+                                </p-autoComplete>
+
+                                @if (isMissingItem(row.accountId)) {
+                                    <button 
+                                        type="button"
+                                        (click)="openAccountModal(row.index, row.accountId)"
+                                        class="absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-xs hover:bg-emerald-500/30 transition-all cursor-pointer z-10"
+                                        pTooltip="Add New Account"
+                                    >
+                                        <i class="pi pi-plus text-[10px]"></i>
+                                    </button>
+                                }
+                            </div>
+                        </td>
+
+                        <!-- Category Cell with Inline Create Button -->
+                        <td class="excel-cell">
+                            <div class="relative w-full h-full flex items-center">
+                                <p-autoComplete 
+                                    [suggestions]="filteredCategories()" 
+                                    [(ngModel)]="row.transactionCategoryId"
+                                    field="name" 
+                                    optionLabel="name" 
+                                    (completeMethod)="filterCategories($event)"
+                                    (onSelect)="onRowChange(row)" 
+                                    (ngModelChange)="onRowChange(row)" 
+                                    [dropdown]="false"
+                                    placeholder="Select Category" 
+                                    appendTo="body" 
+                                    class="w-full h-full block"
+                                    inputStyleClass="excel-input w-full h-full px-3 text-xs font-semibold bg-transparent border-none outline-none pr-8"
+                                >
+                                    <ng-template let-item pTemplate="item">
+                                        <span class="text-xs font-semibold">{{ item.name }}</span>
+                                    </ng-template>
+                                </p-autoComplete>
+
+                                @if (isMissingItem(row.transactionCategoryId)) {
+                                    <button 
+                                        type="button"
+                                        (click)="openCategoryModal(row.index, row.transactionCategoryId)"
+                                        class="absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-xs hover:bg-emerald-500/30 transition-all cursor-pointer z-10"
+                                        pTooltip="Add New Category"
+                                    >
+                                        <i class="pi pi-plus text-[10px]"></i>
+                                    </button>
+                                }
+                            </div>
+                        </td>
+
+                        <!-- Description Cell -->
+                        <td class="excel-cell">
+                            <input 
+                                type="text" 
+                                class="excel-input w-full h-full px-3 text-xs font-semibold bg-transparent border-none outline-none"
+                                [(ngModel)]="row.description" 
+                                (ngModelChange)="onRowChange(row)"
+                                placeholder="Enter description..." 
+                            />
+                        </td>
+
+                        <!-- Transaction Type Cell / Transfer Account -->
+                        <td class="excel-cell">
+                            @if (row.transactionCategoryId?.isTransferCategory) {
+                                <div class="relative w-full h-full flex items-center">
+                                    <p-autoComplete 
+                                        [suggestions]="filteredAccounts()" 
+                                        [(ngModel)]="row.destinationAccountId"
+                                        field="name" 
+                                        optionLabel="name" 
+                                        (completeMethod)="filterAccounts($event)"
+                                        (onSelect)="onRowChange(row)" 
+                                        (ngModelChange)="onRowChange(row)" 
+                                        [dropdown]="false"
+                                        placeholder="To Account" 
+                                        appendTo="body" 
+                                        class="w-full h-full block"
+                                        inputStyleClass="excel-input w-full h-full px-3 text-xs font-semibold bg-transparent border-none outline-none"
+                                    >
+                                        <ng-template let-item pTemplate="item">
+                                            <span class="text-xs font-semibold">{{ item.name || item }}</span>
+                                        </ng-template>
+                                    </p-autoComplete>
+                                </div>
+                            } @else {
+                                <p-select 
+                                    [options]="transactionTypes" 
+                                    [(ngModel)]="row.type" 
+                                    optionLabel="label"
+                                    optionValue="value" 
+                                    (onChange)="onRowChange(row)" 
+                                    appendTo="body"
+                                    class="w-full h-full block bg-transparent"
+                                ></p-select>
+                            }
+                        </td>
+
+                        <!-- Amount Cell -->
+                        <td class="excel-cell text-right">
+                            <p-inputNumber 
+                                [(ngModel)]="row.amount" 
+                                (ngModelChange)="onRowChange(row)" 
+                                mode="currency"
+                                currency="INR" 
+                                locale="en-IN" 
+                                class="w-full h-full block"
+                                inputStyleClass="text-right w-full h-full px-3 text-xs font-extrabold bg-transparent border-none outline-none"
+                            ></p-inputNumber>
+                        </td>
+
+                        <!-- Row Action Icons (Duplicate & Delete) -->
+                        <td class="excel-cell text-center">
+                            <div class="flex items-center justify-center gap-1 h-full px-1">
+                                <button 
+                                    type="button" 
+                                    (click)="duplicateRow(row.index)"
+                                    pTooltip="Duplicate Row"
+                                    class="w-7 h-7 rounded-lg bg-white/5 border border-white/10 text-muted hover:text-emerald-400 hover:bg-emerald-500/10 flex items-center justify-center transition-all cursor-pointer"
+                                >
+                                    <i class="pi pi-copy text-xs"></i>
+                                </button>
+
+                                <button 
+                                    type="button" 
+                                    (click)="deleteRow(row.index)"
+                                    pTooltip="Delete Row"
+                                    class="w-7 h-7 rounded-lg bg-white/5 border border-white/10 text-muted hover:text-rose-400 hover:bg-rose-500/10 flex items-center justify-center transition-all cursor-pointer"
+                                >
+                                    <i class="pi pi-trash text-xs"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+    } @else {
+
+        <!-- MOBILE / TOUCH CARD VIEW -->
+        <div class="grow overflow-y-auto pr-1">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 @for (row of activeRows; track row.index; let i = $index) {
-                <tr [ngClass]="{'error-row': row.status === 'error', 'invalid-row': row.status === 'invalid'}">
-                    <td class="text-center font-bold text-[var(--text-muted)] border-right-1 border-[var(--glass-border)]">{{ i +
-                        1 }}</td>
-                    <td class="status-cell">
-                        @if (row.status === 'error') {
-                        <i class="pi pi-exclamation-circle text-red-500" [title]="row.errorMessage"></i>
-                        } @else if (row.status === 'valid') {
-                        <i class="pi pi-check-circle text-green-500"></i>
-                        } @else if (row.status === 'invalid') {
-                        <i class="pi pi-exclamation-triangle text-yellow-500"
-                            title="Missing required fields or unrecognized objects"></i>
-                        } @else if (row.status === 'saving') {
-                        <i class="pi pi-spin pi-spinner text-blue-500"></i>
-                        }
-                    </td>
-                    <td class="p-0">
-                        <p-datepicker [(ngModel)]="row.date" (ngModelChange)="onRowChange(row)" appendTo="body"
-                            dateFormat="yy-mm-dd" class="w-full h-full" [showIcon]="false"
-                            inputStyleClass="excel-input p-inputtext p-component w-full h-full border-none rounded-none outline-none focus:shadow-none"></p-datepicker>
-                    </td>
-                    <td class="dropdown-cell relative p-0">
-                        <div class="relative w-full h-full flex items-center">
-                            <p-autoComplete [suggestions]="filteredAccounts()" [(ngModel)]="row.accountId" field="name"
-                                optionLabel="name" (completeMethod)="filterAccounts($event)"
-                                (onSelect)="onRowChange(row)" (ngModelChange)="onRowChange(row)" [dropdown]="false"
-                                placeholder="Search Account" appendTo="body" class="excel-dropdown block w-full h-full"
-                                inputStyleClass="excel-input p-inputtext p-component w-full h-full border-none rounded-none outline-none focus:shadow-none bg-transparent pl-2 pr-5">
-                                <ng-template let-item pTemplate="item">
-                                    <span>{{ item.name || item }}</span>
-                                </ng-template>
-                                <ng-template let-item pTemplate="selectedItem">
-                                    <span>{{ item.name || item }}</span>
-                                </ng-template>
-                            </p-autoComplete>
-                            @if (isMissingItem(row.accountId)) {
-                            <p-button icon="pi pi-plus" [rounded]="true" size="small" class="absolute"
-                                [style]="{'width': '2rem', 'height': '2rem', 'right': '0.5rem', 'top': '50%', 'transform': 'translateY(-50%)', 'z-index': '2'}"
-                                (onClick)="openAccountModal(row.index, row.accountId)" pTooltip="Add {{row.accountId}}"
-                                tooltipPosition="top"></p-button>
-                            }
+                    <div 
+                        class="p-4 rounded-3xl bg-white/5 border transition-all flex flex-col gap-3 relative"
+                        [ngClass]="{
+                            'border-rose-500/40 bg-rose-500/5': row.status === 'error',
+                            'border-emerald-500/30 bg-emerald-500/5': row.status === 'valid',
+                            'border-white/10': row.status !== 'valid' && row.status !== 'error'
+                        }"
+                    >
+                        <!-- Card Header: Row Number + Status + Actions -->
+                        <div class="flex items-center justify-between border-b border-white/10 pb-2.5">
+                            <div class="flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-lg bg-white/10 flex items-center justify-center font-mono font-bold text-xs text-muted">
+                                    {{ i + 1 }}
+                                </span>
+                                @if (row.status === 'valid') {
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Valid</span>
+                                } @else if (row.status === 'error') {
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-500/20 text-rose-400 border border-rose-500/30">Error</span>
+                                } @else {
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/20 text-amber-400 border border-amber-500/30">Incomplete</span>
+                                }
+                            </div>
+
+                            <div class="flex items-center gap-1.5">
+                                <button 
+                                    type="button" 
+                                    (click)="duplicateRow(row.index)"
+                                    pTooltip="Duplicate"
+                                    class="w-8 h-8 rounded-xl bg-white/5 border border-white/10 text-muted hover:text-emerald-400 flex items-center justify-center"
+                                >
+                                    <i class="pi pi-copy text-xs"></i>
+                                </button>
+                                <button 
+                                    type="button" 
+                                    (click)="deleteRow(row.index)"
+                                    pTooltip="Delete"
+                                    class="w-8 h-8 rounded-xl bg-white/5 border border-white/10 text-muted hover:text-rose-400 flex items-center justify-center"
+                                >
+                                    <i class="pi pi-trash text-xs"></i>
+                                </button>
+                            </div>
                         </div>
-                    </td>
-                    <td class="dropdown-cell relative p-0">
-                        <div class="relative w-full h-full flex items-center">
-                            <p-autoComplete [suggestions]="filteredCategories()" [(ngModel)]="row.transactionCategoryId"
-                                field="name" optionLabel="name" (completeMethod)="filterCategories($event)"
-                                (onSelect)="onRowChange(row)" (ngModelChange)="onRowChange(row)" [dropdown]="false"
-                                placeholder="Search Category" appendTo="body" class="excel-dropdown block w-full h-full"
-                                inputStyleClass="excel-input p-inputtext p-component w-full h-full border-none rounded-none outline-none focus:shadow-none bg-transparent pl-2 pr-5">
-                                <ng-template let-item pTemplate="item">
-                                    <span>{{ item.name }}</span>
-                                </ng-template>
-                            </p-autoComplete>
-                            @if (isMissingItem(row.transactionCategoryId)) {
-                            <p-button icon="pi pi-plus" [rounded]="true" size="small" class="absolute"
-                                [style]="{'width': '2rem', 'height': '2rem', 'right': '0.5rem', 'top': '50%', 'transform': 'translateY(-50%)', 'z-index': '2'}"
-                                (onClick)="openCategoryModal(row.index, row.transactionCategoryId)"
-                                pTooltip="Add {{row.transactionCategoryId}}" tooltipPosition="top"></p-button>
-                            }
+
+                        <!-- Card Inputs Stack -->
+                        <div class="flex flex-col gap-2.5">
+                            <div>
+                                <label class="text-[11px] font-bold text-muted block mb-1">Date</label>
+                                <p-datepicker 
+                                    [(ngModel)]="row.date" 
+                                    (ngModelChange)="onRowChange(row)" 
+                                    appendTo="body"
+                                    dateFormat="yy-mm-dd" 
+                                    styleClass="w-full"
+                                ></p-datepicker>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2 min-w-0">
+                                <div class="min-w-0 flex-1">
+                                    <label class="text-[11px] font-bold text-muted block mb-1">Account</label>
+                                    <div class="relative w-full flex items-center">
+                                        <p-autoComplete 
+                                            [suggestions]="filteredAccounts()" 
+                                            [(ngModel)]="row.accountId" 
+                                            field="name"
+                                            optionLabel="name" 
+                                            (completeMethod)="filterAccounts($event)"
+                                            (onSelect)="onRowChange(row)" 
+                                            (ngModelChange)="onRowChange(row)"
+                                            placeholder="Account" 
+                                            appendTo="body" 
+                                            class="w-full block min-w-0"
+                                            styleClass="w-full"
+                                            inputStyleClass="w-full text-xs font-semibold pr-8"
+                                        >
+                                            <ng-template let-item pTemplate="item">
+                                                <span class="text-xs font-semibold">{{ item.name || item }}</span>
+                                            </ng-template>
+                                        </p-autoComplete>
+
+                                        @if (isMissingItem(row.accountId)) {
+                                            <button 
+                                                type="button"
+                                                (click)="openAccountModal(row.index, row.accountId)"
+                                                class="absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-xs hover:bg-emerald-500/30 transition-all cursor-pointer z-10"
+                                                pTooltip="Add New Account"
+                                            >
+                                                <i class="pi pi-plus text-[10px]"></i>
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <label class="text-[11px] font-bold text-muted block mb-1">Category</label>
+                                    <div class="relative w-full flex items-center">
+                                        <p-autoComplete 
+                                            [suggestions]="filteredCategories()" 
+                                            [(ngModel)]="row.transactionCategoryId"
+                                            field="name" 
+                                            optionLabel="name" 
+                                            (completeMethod)="filterCategories($event)"
+                                            (onSelect)="onRowChange(row)" 
+                                            (ngModelChange)="onRowChange(row)"
+                                            placeholder="Category" 
+                                            appendTo="body" 
+                                            class="w-full block min-w-0"
+                                            styleClass="w-full"
+                                            inputStyleClass="w-full text-xs font-semibold pr-8"
+                                        >
+                                            <ng-template let-item pTemplate="item">
+                                                <span class="text-xs font-semibold">{{ item.name }}</span>
+                                            </ng-template>
+                                        </p-autoComplete>
+
+                                        @if (isMissingItem(row.transactionCategoryId)) {
+                                            <button 
+                                                type="button"
+                                                (click)="openCategoryModal(row.index, row.transactionCategoryId)"
+                                                class="absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-xs hover:bg-emerald-500/30 transition-all cursor-pointer z-10"
+                                                pTooltip="Add New Category"
+                                            >
+                                                <i class="pi pi-plus text-[10px]"></i>
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="min-w-0">
+                                <label class="text-[11px] font-bold text-muted block mb-1">Description</label>
+                                <input 
+                                    type="text" 
+                                    class="p-inputtext w-full text-xs font-semibold"
+                                    [(ngModel)]="row.description" 
+                                    (ngModelChange)="onRowChange(row)"
+                                    placeholder="Description" 
+                                />
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2 min-w-0">
+                                <div class="min-w-0 flex-1">
+                                    <label class="text-[11px] font-bold text-muted block mb-1">Type</label>
+                                    <p-select 
+                                        [options]="transactionTypes" 
+                                        [(ngModel)]="row.type" 
+                                        optionLabel="label"
+                                        optionValue="value" 
+                                        (onChange)="onRowChange(row)" 
+                                        appendTo="body"
+                                        class="w-full block min-w-0"
+                                        styleClass="w-full"
+                                    ></p-select>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <label class="text-[11px] font-bold text-muted block mb-1">Amount (₹)</label>
+                                    <p-inputNumber 
+                                        [(ngModel)]="row.amount" 
+                                        (ngModelChange)="onRowChange(row)" 
+                                        mode="currency"
+                                        currency="INR" 
+                                        locale="en-IN" 
+                                        class="w-full block min-w-0"
+                                        styleClass="w-full"
+                                        inputStyleClass="w-full text-xs font-extrabold"
+                                    ></p-inputNumber>
+                                </div>
+                            </div>
                         </div>
-                    </td>
-                    <td class="p-0 border-x-1 border-surface">
-                        <input type="text" class="excel-input p-inputtext p-component w-full h-full bg-transparent px-3"
-                            style="border-left: 1px solid var(--border-[var(--glass-border)]) !important; border-right: 1px solid var(--border-[var(--glass-border)]) !important;"
-                            [(ngModel)]="row.description" (ngModelChange)="onRowChange(row)"
-                            placeholder="Description" />
-                    </td>
-                    <td class="dropdown-cell relative p-0">
-                        @if (row.transactionCategoryId?.isTransferCategory) {
-                        <div class="relative w-full h-full flex items-center">
-                            <p-autoComplete [suggestions]="filteredAccounts()" [(ngModel)]="row.destinationAccountId"
-                                field="name" optionLabel="name" (completeMethod)="filterAccounts($event)"
-                                (onSelect)="onRowChange(row)" (ngModelChange)="onRowChange(row)" [dropdown]="false"
-                                placeholder="To Account" appendTo="body" class="excel-dropdown block w-full h-full"
-                                inputStyleClass="excel-input p-inputtext p-component w-full h-full border-none rounded-none outline-none focus:shadow-none bg-transparent pl-2 pr-5">
-                                <ng-template let-item pTemplate="item">
-                                    <span>{{ item.name || item }}</span>
-                                </ng-template>
-                                <ng-template let-item pTemplate="selectedItem">
-                                    <span>{{ item.name || item }}</span>
-                                </ng-template>
-                            </p-autoComplete>
-                            @if (isMissingItem(row.destinationAccountId)) {
-                            <p-button icon="pi pi-plus" [rounded]="true" size="small" class="absolute"
-                                (onClick)="openAccountModal(row.index, row.destinationAccountId)"
-                                pTooltip="Add {{row.destinationAccountId}}" tooltipPosition="top"></p-button>
-                            }
-                        </div>
-                        } @else {
-                        <p-select [options]="transactionTypes" [(ngModel)]="row.type" optionLabel="label"
-                            optionValue="value" (onChange)="onRowChange(row)" appendTo="body"
-                            class="excel-dropdown w-full h-full bg-transparent"></p-select>
-                        }
-                    </td>
-                    <td class="amount-cell p-0">
-                        <p-inputNumber [(ngModel)]="row.amount" (ngModelChange)="onRowChange(row)" mode="currency"
-                            currency="INR" locale="en-IN" class="w-full h-full block excel-input-number"
-                            inputStyleClass="text-right w-full h-full border-none rounded-none outline-none focus:shadow-none bg-transparent"></p-inputNumber>
-                    </td>
-                    <td class="text-center pr-3">
-                        <p-button icon="pi pi-trash" severity="danger" [text]="true" size="small" class="w-full"
-                            (onClick)="deleteRow(row.index)" pTooltip="Delete Row"></p-button>
-                    </td>
-                </tr>
+
+                    </div>
                 }
-            </tbody>
-        </table>
+            </div>
+        </div>
+
+    }
+
+    <!-- STICKY GLASS FOOTER BAR -->
+    <div class="p-2.5 sm:p-4 rounded-3xl glass-card border border-white/10 shadow-2xl flex flex-row items-center justify-between gap-2 sm:gap-4 mt-auto">
+        <!-- Helpful Excel Keyboard Nav Tip -->
+        <div class="hidden sm:flex items-center gap-2 text-xs font-medium text-muted min-w-0">
+            <div class="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                <i class="pi pi-lightbulb text-xs"></i>
+            </div>
+            <span class="truncate">Tip: Use Tab & Enter to navigate cells quickly</span>
+        </div>
+
+        <!-- Action Buttons Group -->
+        <div class="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto shrink-0">
+            <button 
+                type="button"
+                (click)="addEmptyRow()"
+                class="flex-1 sm:flex-initial px-3 sm:px-4 py-2 rounded-2xl bg-white/5 border border-white/10 text-main text-xs font-extrabold flex items-center justify-center gap-1.5 hover:bg-white/10 transition-all cursor-pointer whitespace-nowrap"
+            >
+                <i class="pi pi-plus text-xs"></i>
+                <span>Add Row</span>
+            </button>
+
+            <button 
+                type="button"
+                (click)="confirmSave($event)"
+                [disabled]="validRowsCount() === 0 || isSaving()"
+                class="flex-1 sm:flex-initial px-3 sm:px-5 py-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-xs font-extrabold flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/25 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer whitespace-nowrap"
+            >
+                @if (isSaving()) {
+                    <i class="pi pi-spin pi-spinner text-xs"></i>
+                } @else {
+                    <i class="pi pi-check text-xs"></i>
+                }
+                <span>Save {{ validRowsCount() }} {{ validRowsCount() === 1 ? 'Row' : 'Rows' }}</span>
+            </button>
+        </div>
     </div>
 
-    <div
-        class="sticky-footer glass-footer border-t p-3 flex flex-wrap justify-end items-center gap-4 shadow-top mt-3">
-        <div class="flex items-center">
-            <span class="text-sm font-semibold mr-2 text-[var(--text-muted)] uppercase tracking-wider">Total Income:</span>
-            <span class="text-xl font-bold text-green-500">{{ totalIncome() | currency:'INR' }}</span>
-        </div>
-        <div class="flex items-center">
-            <span class="text-sm font-semibold mr-2 text-[var(--text-muted)] uppercase tracking-wider">Total
-                Expenditure:</span>
-            <span class="text-xl font-bold text-red-500">{{ totalExpenses() | currency:'INR' }}</span>
-        </div>
-        <div class="flex items-center border-left-none md:border-l border-[var(--glass-border)] pl-0 md:pl-4">
-            <span class="text-sm font-semibold mr-2 text-[var(--text-muted)] uppercase tracking-wider">Net Amount:</span>
-            <span class="text-2xl font-bold" [ngClass]="netAmount() >= 0 ? 'text-green-500' : 'text-red-500'">
-                {{ netAmount() | currency:'INR' }}
-            </span>
-        </div>
-        <div class="ml-auto">
-            <p-button label="Save All" icon="pi pi-save" (onClick)="confirmSave($event)"
-                [loading]="isSaving()"></p-button>
-        </div>
-    </div>
 </div>
 
-<p-dialog header="Import Summary" [(visible)]="showImportSummary" [modal]="true" [style]="{ width: '25rem' }">
-    <div class="flex flex-col gap-3 py-3 text-color">
-        <div class="flex items-center justify-between">
-            <span class="font-semibold">Total Records Added:</span>
-            <span class="text-xl font-bold">{{ importSummaryData().total }}</span>
+<!-- Excel Import Summary Dialog -->
+<p-dialog header="Import Summary" [(visible)]="showImportSummary" [modal]="true" [style]="{ width: '26rem', maxWidth: '95vw' }" styleClass="glass-card">
+    <div class="flex flex-col gap-3 py-2 text-main">
+        <div class="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/10">
+            <span class="font-semibold text-xs text-muted">Total Records Imported</span>
+            <span class="text-lg font-black text-main">{{ importSummaryData().total }}</span>
         </div>
-        <div class="flex items-center justify-between text-green-600">
-            <span class="font-semibold">Valid Rows:</span>
-            <span class="text-xl font-bold">{{ importSummaryData().valid }}</span>
+        <div class="flex items-center justify-between p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+            <span class="font-semibold text-xs">Valid & Ready Rows</span>
+            <span class="text-lg font-black">{{ importSummaryData().valid }}</span>
         </div>
-        <div class="flex items-center justify-between text-red-500 bg-red-50 p-2 rounded">
-            <span class="font-semibold">Invalid/Incomplete Rows:</span>
-            <span class="text-xl font-bold">{{ importSummaryData().invalid }}</span>
+        <div class="flex items-center justify-between p-3 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400">
+            <span class="font-semibold text-xs">Incomplete / Invalid Rows</span>
+            <span class="text-lg font-black">{{ importSummaryData().invalid }}</span>
         </div>
-        <small class="text-[var(--text-muted)] mt-2">Invalid rows are highlighted in red. Please provide missing
-            Categories/Accounts and complete all standard required fields (like Descriptions) inside the grid to make
-            them valid.</small>
+        <p class="text-xs text-muted leading-relaxed m-0 mt-1">
+            Invalid rows are highlighted inside the spreadsheet. Select or add missing accounts/categories directly in the grid to resolve them.
+        </p>
     </div>
     <ng-template pTemplate="footer">
-        <p-button label="Review Data" icon="pi pi-check" (onClick)="showImportSummary.set(false)"
-            autofocus="true"></p-button>
+        <p-button label="Review Spreadsheet" icon="pi pi-check" (onClick)="showImportSummary.set(false)" styleClass="w-full text-xs font-extrabold rounded-2xl py-2.5"></p-button>
     </ng-template>
 </p-dialog>

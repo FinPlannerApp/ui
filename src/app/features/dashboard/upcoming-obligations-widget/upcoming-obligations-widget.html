@@ -3,11 +3,11 @@
     <div class="flex items-center justify-between w-full gap-2 mb-1">
       
       <!-- Header Left: Icon + Title + Count Badge -->
-      <div class="flex items-center gap-2 min-w-0">
-        <i class="pi pi-calendar text-amber-400 text-lg sm:text-xl shrink-0"></i>
-        <span class="text-base sm:text-xl font-extrabold text-main truncate">Upcoming Obligations</span>
+      <div class="flex items-center gap-2 min-w-0 flex-1">
+        <i class="pi pi-calendar text-amber-400 text-base sm:text-xl shrink-0"></i>
+        <span class="text-sm sm:text-xl font-extrabold text-main truncate">Upcoming Obligations</span>
         @if (totalCount() > 0) {
-          <span class="text-xs font-black px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 shrink-0">
+          <span class="text-[10px] sm:text-xs font-black px-1.5 sm:px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 shrink-0">
             {{ totalCount() }}
           </span>
         }
@@ -21,10 +21,10 @@
             (click)="showDrawer.set(true)"
             pTooltip="View All Obligations & Schedule" 
             tooltipPosition="left"
-            class="glow-info-btn group relative px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/40 text-amber-400 flex items-center gap-1.5 cursor-pointer hover:bg-amber-500/20 hover:scale-105 transition-all duration-300 shadow-md shadow-amber-500/20 outline-none whitespace-nowrap"
+            class="glow-info-btn group relative px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-amber-500/10 border border-amber-500/40 text-amber-400 flex items-center gap-1 sm:gap-1.5 cursor-pointer hover:bg-amber-500/20 hover:scale-105 transition-all duration-300 shadow-md shadow-amber-500/20 outline-none whitespace-nowrap"
           >
-            <span class="text-xs font-extrabold">+{{ totalCount() - 4 }} More</span>
-            <i class="pi pi-arrow-right text-xs font-bold group-hover:translate-x-0.5 transition-transform"></i>
+            <span class="text-[11px] sm:text-xs font-extrabold">+{{ totalCount() - 4 }} More</span>
+            <i class="pi pi-arrow-right text-[10px] sm:text-xs font-bold group-hover:translate-x-0.5 transition-transform"></i>
           </button>
         } @else {
           <button 
@@ -32,9 +32,9 @@
             (click)="showDrawer.set(true)"
             pTooltip="View All Obligations & Schedule" 
             tooltipPosition="left"
-            class="glow-info-btn group relative w-9 h-9 rounded-full bg-amber-500/10 border border-amber-500/40 text-amber-400 flex items-center justify-center cursor-pointer hover:bg-amber-500/20 hover:scale-105 transition-all duration-300 shadow-md shadow-amber-500/20 outline-none"
+            class="glow-info-btn group relative w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-amber-500/10 border border-amber-500/40 text-amber-400 flex items-center justify-center cursor-pointer hover:bg-amber-500/20 hover:scale-105 transition-all duration-300 shadow-md shadow-amber-500/20 outline-none"
           >
-            <i class="pi pi-list text-base font-bold group-hover:scale-110 transition-transform"></i>
+            <i class="pi pi-list text-sm sm:text-base font-bold group-hover:scale-110 transition-transform"></i>
           </button>
         }
       </div>
@@ -57,26 +57,26 @@
       <p class="text-xs text-muted m-0 mt-0.5">You have no recurring bills due in the next 30 days.</p>
     </div>
   } @else {
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 mt-1">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 mt-1">
       @for (obligation of displayedObligations(); track $index) {
-        <div class="p-3.5 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between hover:bg-white/[0.08] transition-all">
-          <div class="flex items-center gap-3">
+        <div class="p-2.5 sm:p-3.5 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between gap-2 hover:bg-white/[0.08] transition-all overflow-hidden min-w-0">
+          <div class="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
             <div 
-              class="w-10 h-10 rounded-2xl border flex items-center justify-center shrink-0"
+              class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl border flex items-center justify-center shrink-0"
               [ngClass]="obligation.source === 'CreditCard' ? 'bg-sky-500/10 border-sky-500/30 text-sky-400' : 'bg-amber-500/10 border-amber-500/30 text-amber-400'"
             >
-              <i class="pi text-lg" [ngClass]="obligation.source === 'CreditCard' ? 'pi-credit-card' : 'pi-receipt'"></i>
+              <i class="pi text-base sm:text-lg" [ngClass]="obligation.source === 'CreditCard' ? 'pi-credit-card' : 'pi-receipt'"></i>
             </div>
-            <div class="flex flex-col overflow-hidden">
-              <span class="text-sm font-extrabold text-main truncate">{{ obligation.description }}</span>
-              <span class="text-xs text-muted font-medium truncate">{{ obligation.accountName }}</span>
+            <div class="flex flex-col min-w-0 flex-1">
+              <span class="text-xs sm:text-sm font-extrabold text-main truncate" [title]="obligation.description">{{ obligation.description }}</span>
+              <span class="text-[11px] sm:text-xs text-muted font-medium truncate" [title]="obligation.accountName">{{ obligation.accountName }}</span>
             </div>
           </div>
 
-          <div class="flex flex-col items-end shrink-0 pl-2">
-            <span class="text-sm sm:text-base font-extrabold" [ngClass]="obligation.source === 'CreditCard' ? 'text-sky-400' : 'text-amber-400'">{{ displayAmount(obligation) }}</span>
+          <div class="flex flex-col items-end shrink-0 pl-1.5 text-right">
+            <span class="text-xs sm:text-base font-extrabold whitespace-nowrap" [ngClass]="obligation.source === 'CreditCard' ? 'text-sky-400' : 'text-amber-400'">{{ displayAmount(obligation) }}</span>
             <span 
-              class="text-xs font-bold px-2 py-0.5 rounded-full mt-1" 
+              class="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full mt-0.5 sm:mt-1 whitespace-nowrap" 
               [ngClass]="daysUntil(obligation.dueDate) === 0 ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-white/10 text-muted'"
             >
               {{ daysUntil(obligation.dueDate) === 0 ? 'Due today' : 'In ' + daysUntil(obligation.dueDate) + ' days' }}
@@ -97,13 +97,13 @@
   styleClass="glass-sidebar"
 >
   <ng-template pTemplate="header">
-    <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+    <div class="flex items-center gap-3 min-w-0">
+      <div class="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
         <i class="pi pi-calendar-plus text-xl"></i>
       </div>
-      <div>
-        <h2 class="text-lg font-extrabold text-main m-0">Upcoming Obligations Schedule</h2>
-        <p class="text-xs text-muted m-0">All bills and recurring payments due in the next 30 days</p>
+      <div class="min-w-0 flex-1">
+        <h2 class="text-base sm:text-lg font-extrabold text-main m-0 truncate">Upcoming Obligations Schedule</h2>
+        <p class="text-xs text-muted m-0 truncate">All bills and recurring payments due in next 30 days</p>
       </div>
     </div>
   </ng-template>
@@ -112,13 +112,13 @@
     <div class="flex flex-col gap-5 py-2">
       
       <!-- Obligations Summary Banner -->
-      <div class="p-4 rounded-3xl bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/20 flex items-center justify-between">
-        <div>
+      <div class="p-3.5 sm:p-4 rounded-3xl bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/20 flex items-center justify-between gap-2">
+        <div class="min-w-0 flex-1">
           <span class="text-xs font-bold uppercase tracking-wider text-muted block mb-1">Total Due (Next 30 Days)</span>
-          <div class="text-3xl font-black text-amber-400 leading-none">{{ totalUpcomingAmount() | currency:'INR' }}</div>
+          <div class="text-2xl sm:text-3xl font-black text-amber-400 leading-none truncate">{{ totalUpcomingAmount() | currency:'INR' }}</div>
         </div>
-        <div class="text-right">
-          <span class="px-3 py-1 rounded-full text-xs font-extrabold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+        <div class="text-right shrink-0">
+          <span class="px-2.5 sm:px-3 py-1 rounded-full text-xs font-extrabold bg-amber-500/20 text-amber-400 border border-amber-500/30 whitespace-nowrap">
             {{ totalCount() }} Obligations
           </span>
         </div>
@@ -133,28 +133,28 @@
 
         <div class="flex flex-col gap-3">
           @for (obligation of obligations(); track $index) {
-            <div class="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between hover:bg-white/[0.08] transition-all">
-              <div class="flex items-center gap-3">
+            <div class="p-3 sm:p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between gap-2 hover:bg-white/[0.08] transition-all min-w-0">
+              <div class="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
                 <div 
-                  class="w-10 h-10 rounded-2xl border flex items-center justify-center shrink-0"
+                  class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl border flex items-center justify-center shrink-0"
                   [ngClass]="obligation.source === 'CreditCard' ? 'bg-sky-500/10 border-sky-500/30 text-sky-400' : 'bg-amber-500/10 border-amber-500/30 text-amber-400'"
                 >
-                  <i class="pi text-lg" [ngClass]="obligation.source === 'CreditCard' ? 'pi-credit-card' : 'pi-receipt'"></i>
+                  <i class="pi text-base sm:text-lg" [ngClass]="obligation.source === 'CreditCard' ? 'pi-credit-card' : 'pi-receipt'"></i>
                 </div>
-                <div class="flex flex-col">
-                  <span class="text-sm font-extrabold text-main">{{ obligation.description }}</span>
-                  <div class="flex items-center gap-2 text-xs text-muted mt-0.5">
-                    <span><i class="pi pi-wallet text-xs mr-1"></i>{{ obligation.accountName }}</span>
-                    <span>•</span>
-                    <span class="capitalize font-medium">{{ obligation.source === 'CreditCard' ? 'Credit Card Bill' : 'Recurring Bill' }}</span>
+                <div class="flex flex-col min-w-0 flex-1">
+                  <span class="text-xs sm:text-sm font-extrabold text-main truncate">{{ obligation.description }}</span>
+                  <div class="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-muted mt-0.5 min-w-0">
+                    <span class="truncate"><i class="pi pi-wallet text-xs mr-1"></i>{{ obligation.accountName }}</span>
+                    <span class="shrink-0">•</span>
+                    <span class="capitalize font-medium shrink-0">{{ obligation.source === 'CreditCard' ? 'Credit Card Bill' : 'Recurring Bill' }}</span>
                   </div>
                 </div>
               </div>
 
-              <div class="flex flex-col items-end shrink-0 pl-2">
-                <span class="text-base font-extrabold" [ngClass]="obligation.source === 'CreditCard' ? 'text-sky-400' : 'text-amber-400'">{{ displayAmount(obligation) }}</span>
+              <div class="flex flex-col items-end shrink-0 pl-1.5 text-right">
+                <span class="text-xs sm:text-base font-extrabold whitespace-nowrap" [ngClass]="obligation.source === 'CreditCard' ? 'text-sky-400' : 'text-amber-400'">{{ displayAmount(obligation) }}</span>
                 <span 
-                  class="text-xs font-bold px-2.5 py-0.5 rounded-full mt-1.5" 
+                  class="text-[10px] sm:text-xs font-bold px-2 sm:px-2.5 py-0.5 rounded-full mt-1 whitespace-nowrap" 
                   [ngClass]="daysUntil(obligation.dueDate) === 0 ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-white/10 text-muted'"
                 >
                   {{ daysUntil(obligation.dueDate) === 0 ? 'Due today' : 'In ' + daysUntil(obligation.dueDate) + ' days' }}

@@ -114,55 +114,55 @@
             (onClick)="toggleInsight('amount')" 
             [outlined]="insightType() !== 'amount'"
             [severity]="insightType() === 'amount' ? 'primary' : 'secondary'"
-            styleClass="w-full text-xs font-extrabold rounded-2xl justify-center text-center whitespace-nowrap py-2.5 px-2"
+            styleClass="w-full text-[11px] sm:text-xs font-extrabold rounded-2xl justify-center text-center whitespace-nowrap py-2 px-1.5 sm:py-2.5 sm:px-2"
           ></p-button>
           <p-button 
             label="🕒 Recent Activity" 
             (onClick)="toggleInsight('timeline')"
             [outlined]="insightType() !== 'timeline'"
             [severity]="insightType() === 'timeline' ? 'primary' : 'secondary'"
-            styleClass="w-full text-xs font-extrabold rounded-2xl justify-center text-center whitespace-nowrap py-2.5 px-2"
+            styleClass="w-full text-[11px] sm:text-xs font-extrabold rounded-2xl justify-center text-center whitespace-nowrap py-2 px-1.5 sm:py-2.5 sm:px-2"
           ></p-button>
           <p-button 
             label="📊 Category Peaks" 
             (onClick)="toggleInsight('category')"
             [outlined]="insightType() !== 'category'"
             [severity]="insightType() === 'category' ? 'primary' : 'secondary'"
-            styleClass="w-full text-xs font-extrabold rounded-2xl justify-center text-center whitespace-nowrap py-2.5 px-2"
+            styleClass="w-full text-[11px] sm:text-xs font-extrabold rounded-2xl justify-center text-center whitespace-nowrap py-2 px-1.5 sm:py-2.5 sm:px-2"
           ></p-button>
           <p-button 
             label="🏦 Account Peaks" 
             (onClick)="toggleInsight('account')" 
             [outlined]="insightType() !== 'account'"
             [severity]="insightType() === 'account' ? 'primary' : 'secondary'"
-            styleClass="w-full text-xs font-extrabold rounded-2xl justify-center text-center whitespace-nowrap py-2.5 px-2"
+            styleClass="w-full text-[11px] sm:text-xs font-extrabold rounded-2xl justify-center text-center whitespace-nowrap py-2 px-1.5 sm:py-2.5 sm:px-2"
           ></p-button>
         </div>
 
-        <div class="p-4 rounded-2xl bg-white/[0.03] border border-white/10">
+        <div class="p-3 sm:p-4 rounded-2xl bg-white/[0.03] border border-white/10">
           @switch (insightType()) {
             @case ('amount') {
-              <div class="flex justify-between items-center mb-4">
-                <h3 class="m-0 text-base font-extrabold flex items-center gap-2 text-amber-400">
-                  <i class="pi pi-sort-alt"></i>
-                  {{ isAscending() ? 'Smallest 5 Transactions' : 'Largest 5 Transactions' }}
+              <div class="flex justify-between items-center mb-4 min-w-0 gap-2">
+                <h3 class="m-0 text-sm sm:text-base font-extrabold flex items-center gap-2 text-amber-400 truncate min-w-0 flex-1">
+                  <i class="pi pi-sort-alt shrink-0"></i>
+                  <span class="truncate">{{ isAscending() ? 'Smallest 5 Transactions' : 'Largest 5 Transactions' }}</span>
                 </h3>
-                <span class="text-muted text-xs cursor-pointer hover:text-amber-400 transition-colors flex items-center gap-1" (click)="isAscending.set(!isAscending())">
+                <span class="text-muted text-xs cursor-pointer hover:text-amber-400 transition-colors flex items-center gap-1 shrink-0 whitespace-nowrap" (click)="isAscending.set(!isAscending())">
                   <i class="pi pi-sync text-xs"></i>Reverse Order
                 </span>
               </div>
               <div class="flex gap-3 overflow-x-auto pb-2 snap-x">
                 @for (tx of (isAscending() ? insights()?.lowestAmountTransactions : insights()?.highestAmountTransactions); track tx.id) {
-                  <div class="min-w-[220px] sm:min-w-[240px] max-w-[260px] p-3.5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-all flex flex-col justify-between shrink-0 snap-start">
-                    <div class="flex justify-between items-start mb-2 gap-2">
-                      <span class="font-extrabold text-sm text-main truncate">{{ tx.description }}</span>
-                      <span class="font-black text-sm shrink-0" [ngClass]="tx.type === 1 ? 'text-emerald-400' : 'text-rose-400'">
+                  <div class="min-w-[200px] sm:min-w-[240px] max-w-[260px] p-3.5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-all flex flex-col justify-between shrink-0 snap-start">
+                    <div class="flex justify-between items-start mb-2 gap-2 min-w-0">
+                      <span class="font-extrabold text-sm text-main truncate min-w-0 flex-1" [title]="tx.description">{{ tx.description }}</span>
+                      <span class="font-black text-sm shrink-0 whitespace-nowrap" [ngClass]="tx.type === 1 ? 'text-emerald-400' : 'text-rose-400'">
                         {{ tx.type === 1 ? '+' : '-' }}{{ tx.amount | currency:'INR' }}
                       </span>
                     </div>
-                    <div class="flex items-center justify-between text-xs text-muted font-medium pt-2 border-t border-white/5 gap-1">
+                    <div class="flex items-center justify-between text-xs text-muted font-medium pt-2 border-t border-white/5 gap-1 min-w-0">
                       <span class="shrink-0"><i class="pi pi-calendar text-xs mr-1 text-amber-400"></i>{{ tx.date | date:'shortDate' }}</span>
-                      <span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-xs font-semibold shrink-0"><i class="pi pi-tag text-xs mr-1"></i>{{ tx.categoryName }}</span>
+                      <span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-xs font-semibold truncate min-w-0"><i class="pi pi-tag text-xs mr-1 shrink-0"></i>{{ tx.categoryName }}</span>
                     </div>
                   </div>
                 } @empty {
@@ -172,26 +172,26 @@
             }
 
             @case ('timeline') {
-              <div class="flex justify-between items-center mb-4">
-                <h3 class="m-0 text-base font-extrabold flex items-center gap-2 text-amber-400">
-                  <i class="pi pi-clock"></i>
-                  {{ isAscending() ? 'First 5 Transactions' : 'Last 5 Transactions' }}
+              <div class="flex justify-between items-center mb-4 min-w-0 gap-2">
+                <h3 class="m-0 text-sm sm:text-base font-extrabold flex items-center gap-2 text-amber-400 truncate min-w-0 flex-1">
+                  <i class="pi pi-clock shrink-0"></i>
+                  <span class="truncate">{{ isAscending() ? 'First 5 Transactions' : 'Last 5 Transactions' }}</span>
                 </h3>
-                <span class="text-muted text-xs cursor-pointer hover:text-amber-400 transition-colors flex items-center gap-1" (click)="isAscending.set(!isAscending())">
+                <span class="text-muted text-xs cursor-pointer hover:text-amber-400 transition-colors flex items-center gap-1 shrink-0 whitespace-nowrap" (click)="isAscending.set(!isAscending())">
                   <i class="pi pi-sync text-xs"></i>Reverse Order
                 </span>
               </div>
               <div class="flex gap-3 overflow-x-auto pb-2 snap-x">
                 @for (tx of (isAscending() ? insights()?.oldestTransactions : insights()?.latestTransactions); track tx.id) {
-                  <div class="min-w-[220px] sm:min-w-[240px] max-w-[260px] p-3.5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-all flex flex-col justify-between shrink-0 snap-start">
-                    <div class="flex justify-between items-start mb-2 gap-2">
-                      <span class="font-extrabold text-sm text-main truncate">{{ tx.description }}</span>
-                      <span class="font-black text-sm shrink-0" [ngClass]="tx.type === 1 ? 'text-emerald-400' : 'text-rose-400'">
+                  <div class="min-w-[200px] sm:min-w-[240px] max-w-[260px] p-3.5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-all flex flex-col justify-between shrink-0 snap-start">
+                    <div class="flex justify-between items-start mb-2 gap-2 min-w-0">
+                      <span class="font-extrabold text-sm text-main truncate min-w-0 flex-1" [title]="tx.description">{{ tx.description }}</span>
+                      <span class="font-black text-sm shrink-0 whitespace-nowrap" [ngClass]="tx.type === 1 ? 'text-emerald-400' : 'text-rose-400'">
                         {{ tx.type === 1 ? '+' : '-' }}{{ tx.amount | currency:'INR' }}
                       </span>
                     </div>
                     <div class="flex items-center text-xs text-muted font-medium pt-2 border-t border-white/5">
-                      <i class="pi pi-calendar text-xs mr-1.5 text-amber-400"></i>{{ tx.date | date:'shortDate' }}
+                      <i class="pi pi-calendar text-xs mr-1.5 text-amber-400 shrink-0"></i>{{ tx.date | date:'shortDate' }}
                     </div>
                   </div>
                 } @empty {

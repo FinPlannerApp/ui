@@ -16,17 +16,17 @@
 
   <!-- Transaction Categories only -->
   @if(isTransactionCategory()) {
-  <div class="field-checkbox mt-3">
+  <div class="field-checkbox mt-3 flex items-center gap-2 cursor-pointer">
     <p-checkbox formControlName="isTransferCategory" [binary]="true" inputId="isTransfer"></p-checkbox>
-    <label for="isTransfer" class="ml-2">Is this a transfer category?</label>
+    <label for="isTransfer" class="text-xs sm:text-sm font-medium cursor-pointer select-none">Is this a transfer category?</label>
   </div>
   }
 
   <!-- Account Categories only -->
   @if(!isTransactionCategory()) {
-  <div class="field-checkbox mt-3">
+  <div class="field-checkbox mt-3 flex items-center gap-2 cursor-pointer">
     <p-checkbox formControlName="isLiability" [binary]="true" inputId="isLiability"></p-checkbox>
-    <label for="isLiability" class="ml-2">Is this a liability (credit card, loan, EMI)?</label>
+    <label for="isLiability" class="text-xs sm:text-sm font-medium cursor-pointer select-none">Is this a liability (credit card, loan, EMI)?</label>
   </div>
 
   <app-form-field label="Account Type" inputId="accountType" [control]="categoryForm.get('accountType')">

@@ -448,6 +448,12 @@ body {
   }
 }
 
+@media (max-width: 640px) {
+  .p-card .p-card-body {
+    padding: 0.85rem !important;
+  }
+}
+
 /* --- DataTable --- */
 .p-datatable {
 
@@ -947,13 +953,20 @@ div.p-datepicker-panel {
 
 /* Table Headers (Weekdays) */
 .p-datepicker-panel table th,
-.p-datepicker-overlay table th {
-  color: #a1a1aa !important;
-  font-weight: 700 !important;
+.p-datepicker-panel table th *,
+.p-datepicker-overlay table th,
+.p-datepicker-overlay table th *,
+.p-datepicker-day-name,
+.p-datepicker-weekday,
+.p-datepicker-weekdays th {
+  color: #38bdf8 !important;
+  font-weight: 800 !important;
   font-size: 0.75rem !important;
   text-transform: uppercase !important;
   letter-spacing: 0.05em !important;
   padding: 0.5rem 0 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 /* Calendar Date Cells */
@@ -1826,4 +1839,158 @@ body.compact-view {
 
 .glow-info-btn {
   animation: pulse-glow 2s infinite;
+}
+
+/* ============================================================
+   AUTHENTIC MODERN EXCEL SPREADSHEET & BULK ADD COMPONENT STYLES
+   ============================================================ */
+
+.excel-grid-wrapper {
+  background: rgba(15, 23, 42, 0.6) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 1.25rem !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  position: relative;
+  overflow: auto;
+}
+
+.excel-table {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  width: 100%;
+}
+
+.excel-header-row th {
+  background: rgba(16, 185, 129, 0.12) !important;
+  backdrop-filter: blur(12px) !important;
+  border-bottom: 2px solid rgba(16, 185, 129, 0.4) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #10b981 !important;
+  font-weight: 800 !important;
+  font-size: 0.75rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  padding: 0.75rem 0.5rem !important;
+  white-space: nowrap;
+}
+
+.excel-header-row th:last-child {
+  border-right: none !important;
+}
+
+.excel-table tbody tr {
+  transition: background-color 0.15s ease !important;
+}
+
+.excel-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+.excel-table tbody tr.valid-row {
+  background: rgba(16, 185, 129, 0.03) !important;
+}
+
+.excel-table tbody tr.invalid-row {
+  background: rgba(245, 158, 11, 0.04) !important;
+}
+
+.excel-table tbody tr.error-row {
+  background: rgba(239, 68, 68, 0.08) !important;
+}
+
+.excel-cell {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+  height: 2.75rem !important;
+  padding: 0 !important;
+  position: relative;
+}
+
+.excel-cell:last-child {
+  border-right: none !important;
+}
+
+.excel-row-num {
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--text-muted, #9ca3af);
+  background: rgba(255, 255, 255, 0.02);
+  border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
+  user-select: none;
+}
+
+.excel-cell input,
+.excel-cell .excel-input,
+.excel-cell .p-inputtext,
+.excel-cell .p-select,
+.excel-cell .p-datepicker-input {
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  height: 100% !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  color: var(--text-main, #f4f4f5) !important;
+  box-shadow: none !important;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.excel-cell input:focus,
+.excel-cell .excel-input:focus,
+.excel-cell .p-inputtext:focus,
+.excel-cell .p-select.p-focus,
+.excel-cell .p-datepicker-input:focus {
+  background: rgba(16, 185, 129, 0.12) !important;
+  box-shadow: inset 0 0 0 2px #10b981 !important;
+}
+
+.excel-ribbon-btn {
+  border-radius: 0.75rem !important;
+  font-weight: 700 !important;
+  font-size: 0.8125rem !important;
+  padding: 0.5rem 0.85rem !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Prevent overflow of PrimeNG components in grid columns and card layouts */
+p-autocomplete,
+p-inputnumber,
+p-select,
+p-datepicker,
+.p-autocomplete,
+.p-inputnumber,
+.p-select,
+.p-datepicker-host {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.p-autocomplete input,
+.p-inputnumber input,
+.p-select .p-select-label,
+.p-datepicker input {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* Ensure checkbox and label align inline across all modal dialog forms */
+.field-checkbox {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.6rem !important;
+  cursor: pointer !important;
+}
+
+.field-checkbox label {
+  margin-left: 0 !important;
+  cursor: pointer !important;
+  user-select: none !important;
 }
