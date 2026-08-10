@@ -8,6 +8,7 @@ import { sharedPrimeModules } from '../../../shared/prime-imports';
 import { AccountState } from '../../../core/state/account-state.service';
 import { Account } from '../account';
 import { AccountForm } from '../account-form/account-form';
+import { AdjustBalance } from '../adjust-balance/adjust-balance';
 import { NotificationService } from '../../../core/services/notification.service';
 import { BreadcrumbService } from '../../../core/layout/breadcrumb.service';
 import { Category, AccountCategory } from '../../categories/category';
@@ -273,5 +274,26 @@ export class AccountsPage implements OnInit {
 
   viewTransactions(acc: Account): void {
     this.router.navigate(['/app/accounts', acc.id, 'transactions']);
+  }
+
+  openAdjustBalance(acc: Account): void {
+    this.ref = this.dialogService.open(AdjustBalance, {
+      header: 'Adjust Balance',
+      width: '28rem',
+      modal: true,
+      data: {
+        accountId: acc.id,
+        accountName: acc.name,
+        currentBalance: acc.balance
+      }
+    });
+
+    if (this.ref) {
+      this.ref.onClose.subscribe((changed: boolean) => {
+        if (changed) {
+          this.refreshData();
+        }
+      });
+    }
   }
 }

@@ -122,17 +122,21 @@ export class ResourcePage<T extends { id: number }> implements OnInit {
   }
 
   refreshData() {
-    this.onLazyLoad(this.lastLazyLoadEvent || { first: 0, rows: 10 });
+    this.onLazyLoad({
+      first: 0,
+      rows: this.lastLazyLoadEvent?.rows || 10,
+      sortField: this.lastLazyLoadEvent?.sortField,
+      sortOrder: this.lastLazyLoadEvent?.sortOrder
+    });
   }
 
   onSearch(): void {
-    // Re-trigger lazy load with the current signal values
-    this.onLazyLoad(this.lastLazyLoadEvent || { first: 0, rows: 10 });
+    this.refreshData();
   }
 
   clearSearch(): void {
     this.searchTerm.set('');
-    this.onSearch();
+    this.refreshData();
   }
 
   onLazyLoad(event: any): void {

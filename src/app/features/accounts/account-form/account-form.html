@@ -4,11 +4,19 @@
   </app-form-field>
 
   <app-form-field
-    [label]="selectedAccountType() === AccountType.CreditCard || selectedAccountType() === AccountType.Loan ? 'Starting Balance (negative = amount already owed)' : 'Starting Balance'"
+    [label]="isEditMode ? 'Current Balance' : (selectedAccountType() === AccountType.CreditCard || selectedAccountType() === AccountType.Loan ? 'Starting Balance (negative = amount already owed)' : 'Starting Balance')"
     inputId="balance" [control]="accountForm.get('balance')">
     <p-inputNumber id="balance" formControlName="balance" mode="currency" currency="INR" locale="en-IN"
       class="w-full"></p-inputNumber>
   </app-form-field>
+
+  @if (isEditMode) {
+    <p class="text-xs text-secondary -mt-2 mb-2">
+      To correct this account's balance, use "Adjust Balance" instead — it
+      keeps a record of the correction rather than silently changing this
+      number.
+    </p>
+  }
 
   <app-form-field label="Category" inputId="accountCategory" [control]="accountForm.get('accountCategoryId')">
     <div class="flex gap-2 items-start">

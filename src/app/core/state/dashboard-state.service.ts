@@ -33,7 +33,6 @@ export class DashboardState {
     public selectedDate = this._selectedDate.asReadonly();
 
     constructor() {
-        this.load();
     }
 
     async load(): Promise<void> {

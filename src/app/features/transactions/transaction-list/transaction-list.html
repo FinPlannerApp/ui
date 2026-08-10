@@ -33,9 +33,12 @@
       </div>
     </div>
 
-    <!-- Action Buttons (Refresh + New Transaction) -->
+    <!-- Action Buttons (Refresh + Adjust Balance + New Transaction) -->
     <div class="flex items-center gap-2 shrink-0">
       <p-button icon="pi pi-refresh" [text]="true" [rounded]="true" pTooltip="Refresh Transactions" (onClick)="loadData()"></p-button>
+      @if (currentAccount()) {
+        <p-button label="Adjust Balance" icon="pi pi-sliders-h" severity="warn" [outlined]="true" (onClick)="openAdjustBalance()" styleClass="rounded-xl font-bold px-3 py-2 text-xs sm:text-sm"></p-button>
+      }
       <p-button label="New Transaction" icon="pi pi-plus" (onClick)="showTransactionForm()" styleClass="rounded-xl font-bold px-4 py-2 text-xs sm:text-sm"></p-button>
     </div>
   </div>
@@ -349,86 +352,81 @@
     </div>
   </div>
 
-  <!-- Loading Spinner -->
-  @if (isLoading()) {
-    <div class="flex justify-center items-center py-12">
-      <p-progressSpinner styleClass="w-12 h-12"></p-progressSpinner>
+  <!-- Transactions Table & Empty State Container -->
+  @if (transactions().length === 0 && !isLoading()) {
+    <!-- Empty State -->
+    <div class="glass-card p-8 rounded-3xl text-center max-w-lg mx-auto my-6 border border-[var(--glass-border)]">
+      <div class="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
+        <i class="pi pi-receipt text-3xl"></i>
+      </div>
+      <h3 class="text-xl font-bold mb-2">No Transactions Found</h3>
+      @if (globalSearch() || selectedCategory()) {
+        <p class="text-sm text-[var(--text-muted)] mb-4">
+          No transactions match your current search query or category filter.
+        </p>
+        <p-button label="Clear Filters" icon="pi pi-filter-slash" [text]="true" (onClick)="clearSearch(); selectedCategory.set(null); loadData()"></p-button>
+      } @else {
+        <p class="text-sm text-[var(--text-muted)] mb-5">
+          No transactions recorded for this account in {{ selectedDate() | date:'MMMM yyyy' }}.
+        </p>
+        <p-button label="Add Transaction" icon="pi pi-plus" (onClick)="showTransactionForm()"></p-button>
+      }
     </div>
   } @else {
-    <!-- Empty State -->
-    @if (transactions().length === 0) {
-      <div class="glass-card p-8 rounded-3xl text-center max-w-lg mx-auto my-6 border border-[var(--glass-border)]">
-        <div class="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
-          <i class="pi pi-receipt text-3xl"></i>
-        </div>
-        <h3 class="text-xl font-bold mb-2">No Transactions Found</h3>
-        @if (globalSearch() || selectedCategory()) {
-          <p class="text-sm text-[var(--text-muted)] mb-4">
-            No transactions match your current search query or category filter.
-          </p>
-          <p-button label="Clear Filters" icon="pi pi-filter-slash" [text]="true" (onClick)="clearSearch(); selectedCategory.set(null); loadData()"></p-button>
-        } @else {
-          <p class="text-sm text-[var(--text-muted)] mb-5">
-            No transactions recorded for this account in {{ selectedDate() | date:'MMMM yyyy' }}.
-          </p>
-          <p-button label="Add Transaction" icon="pi pi-plus" (onClick)="showTransactionForm()"></p-button>
-        }
-      </div>
-    } @else {
-      <!-- Transactions Table Card -->
-      <div class="glass-card rounded-2xl overflow-x-auto border border-[var(--glass-border)] w-full">
-        <p-table
-          [value]="transactions()"
-          [paginator]="true"
-          [rows]="rows()"
-          [rowsPerPageOptions]="[10, 25, 50]"
-          [totalRecords]="totalRecords()"
-          [lazy]="true"
-          (onLazyLoad)="onLazyLoad($event)"
-          [scrollable]="true"
-          responsiveLayout="scroll"
-          styleClass="p-datatable-sm p-datatable-striped w-full">
-          
-          <ng-template pTemplate="header">
-            <tr>
-              <th pSortableColumn="date" class="min-w-[140px] whitespace-nowrap">Date <p-sortIcon field="date"></p-sortIcon></th>
-              <th pSortableColumn="description" class="min-w-[240px] whitespace-nowrap">Description <p-sortIcon field="description"></p-sortIcon></th>
-              <th pSortableColumn="categoryName" class="min-w-[160px] whitespace-nowrap">Category <p-sortIcon field="categoryName"></p-sortIcon></th>
-              <th pSortableColumn="amount" class="text-right min-w-[160px] whitespace-nowrap">Amount <p-sortIcon field="amount"></p-sortIcon></th>
-              <th class="text-center min-w-[140px] whitespace-nowrap">Actions</th>
-            </tr>
-          </ng-template>
+    <!-- Transactions Table Card -->
+    <div class="glass-card rounded-2xl overflow-x-auto border border-[var(--glass-border)] w-full">
+      <p-table
+        [value]="transactions()"
+        [loading]="isLoading()"
+        [paginator]="true"
+        [rows]="rows()"
+        [rowsPerPageOptions]="[10, 25, 50]"
+        [totalRecords]="totalRecords()"
+        [lazy]="true"
+        (onLazyLoad)="onLazyLoad($event)"
+        [scrollable]="true"
+        responsiveLayout="scroll"
+        styleClass="p-datatable-sm p-datatable-striped w-full">
+        
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="date" class="min-w-[140px] whitespace-nowrap">Date <p-sortIcon field="date"></p-sortIcon></th>
+            <th pSortableColumn="description" class="min-w-[240px] whitespace-nowrap">Description <p-sortIcon field="description"></p-sortIcon></th>
+            <th pSortableColumn="categoryName" class="min-w-[160px] whitespace-nowrap">Category <p-sortIcon field="categoryName"></p-sortIcon></th>
+            <th pSortableColumn="amount" class="text-right min-w-[160px] whitespace-nowrap">Amount <p-sortIcon field="amount"></p-sortIcon></th>
+            <th class="text-center min-w-[140px] whitespace-nowrap">Actions</th>
+          </tr>
+        </ng-template>
 
-          <ng-template pTemplate="body" let-tx>
-            <tr class="hover:bg-white/5 transition-colors">
-              <td class="whitespace-nowrap font-medium text-xs text-[var(--text-muted)]">
-                {{ tx.date | date:'mediumDate' }}
-              </td>
-              <td class="whitespace-nowrap font-bold text-white">
-                {{ tx.description }}
-              </td>
-              <td class="whitespace-nowrap">
-                @if (tx.categoryName) {
-                  <p-tag [value]="tx.categoryName" severity="secondary" [rounded]="true" styleClass="font-semibold text-xs"></p-tag>
-                } @else {
-                  <span class="text-xs text-[var(--text-muted)]">—</span>
-                }
-              </td>
-              <td class="text-right font-extrabold text-base whitespace-nowrap"
-                  [ngClass]="tx.type === 1 ? 'text-emerald-400' : 'text-rose-400'">
-                {{ tx.type === 1 ? '+' : '-' }}{{ tx.amount | currency:'INR':'symbol':'1.2-2' }}
-              </td>
-              <td class="text-center whitespace-nowrap">
-                <div class="flex items-center justify-center gap-1">
-                  <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" size="small" pTooltip="Edit Transaction" (onClick)="showTransactionForm(tx)"></p-button>
-                  <p-button icon="pi pi-sync" [text]="true" [rounded]="true" size="small" pTooltip="Switch Account" (onClick)="showSwitchAccountForm(tx)"></p-button>
-                  <p-button icon="pi pi-trash" [text]="true" [rounded]="true" severity="danger" size="small" pTooltip="Delete Transaction" (onClick)="deleteTransaction(tx)"></p-button>
-                </div>
-              </td>
-            </tr>
-          </ng-template>
-        </p-table>
-      </div>
-    }
+        <ng-template pTemplate="body" let-tx>
+          <tr class="hover:bg-white/5 transition-colors">
+            <td class="whitespace-nowrap font-medium text-xs text-[var(--text-muted)]">
+              {{ tx.date | date:'mediumDate' }}
+            </td>
+            <td class="whitespace-nowrap font-bold text-white">
+              {{ tx.description }}
+            </td>
+            <td class="whitespace-nowrap">
+              @if (tx.categoryName) {
+                <p-tag [value]="tx.categoryName" severity="secondary" [rounded]="true" styleClass="font-semibold text-xs"></p-tag>
+              } @else {
+                <span class="text-xs text-[var(--text-muted)]">—</span>
+              }
+            </td>
+            <td class="text-right font-extrabold text-base whitespace-nowrap"
+                [ngClass]="tx.type === 1 ? 'text-emerald-400' : 'text-rose-400'">
+              {{ tx.type === 1 ? '+' : '-' }}{{ tx.amount | currency:'INR':'symbol':'1.2-2' }}
+            </td>
+            <td class="text-center whitespace-nowrap">
+              <div class="flex items-center justify-center gap-1">
+                <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" size="small" pTooltip="Edit Transaction" (onClick)="showTransactionForm(tx)"></p-button>
+                <p-button icon="pi pi-sync" [text]="true" [rounded]="true" size="small" pTooltip="Switch Account" (onClick)="showSwitchAccountForm(tx)"></p-button>
+                <p-button icon="pi pi-trash" [text]="true" [rounded]="true" severity="danger" size="small" pTooltip="Delete Transaction" (onClick)="deleteTransaction(tx)"></p-button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
   }
 </div>

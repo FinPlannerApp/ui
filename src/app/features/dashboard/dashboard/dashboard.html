@@ -16,8 +16,8 @@
   <p-progressSpinner></p-progressSpinner>
 </div>
 } @else if (summary()) {
-<!-- Summary Cards Grid (5 Cards Balanced Row) -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-4">
+<!-- Summary Cards Grid (6 Cards Balanced Row) -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-4">
   <div>
     <app-stat-card label="Net Worth" [value]="(summary()?.netWorth | currency:'INR')!" icon="pi pi-wallet"
       iconColor="var(--blue-500)"></app-stat-card>
@@ -27,6 +27,12 @@
     <app-stat-card label="Real Available Cash" [value]="(summary()?.realAvailableCash | currency:'INR')!"
       icon="pi pi-money-bill" iconColor="var(--teal-500)"
       secondaryValue="Liquid cash minus unpaid credit card debt"></app-stat-card>
+  </div>
+
+  <div>
+    <app-stat-card label="Reserved for Payment" [value]="(summary()?.reservedForPayment | currency:'INR')!"
+      icon="pi pi-lock" iconColor="var(--orange-500)"
+      secondaryValue="What's actually due on your credit cards right now"></app-stat-card>
   </div>
 
   <div>

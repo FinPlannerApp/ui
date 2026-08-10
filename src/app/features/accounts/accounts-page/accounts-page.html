@@ -122,7 +122,7 @@
           (ngModelChange)="selectedCategoryFilter.set($event)"
           optionLabel="label"
           optionValue="value"
-          class="w-full sm:w-56 h-10 p-inputtext-sm rounded-xl shrink-0"
+          class="w-full sm:w-56 sm:max-w-[14rem] h-10 p-inputtext-sm rounded-xl shrink-0"
           appendTo="body">
           <ng-template pTemplate="selectedItem" let-opt>
             <div class="flex items-center gap-2">
@@ -145,7 +145,7 @@
           (ngModelChange)="sortBy.set($event)"
           optionLabel="label"
           optionValue="value"
-          class="w-full sm:w-48 h-10 p-inputtext-sm rounded-xl shrink-0"
+          class="w-full sm:w-48 sm:max-w-[12rem] h-10 p-inputtext-sm rounded-xl shrink-0"
           appendTo="body">
         </p-select>
 
@@ -286,6 +286,7 @@
                   </button>
 
                   <div class="flex items-center gap-1">
+                    <p-button icon="pi pi-sliders-h" [text]="true" [rounded]="true" severity="warn" size="small" pTooltip="Adjust Balance" (onClick)="openAdjustBalance(acc)"></p-button>
                     <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" size="small" pTooltip="Edit Account" (onClick)="openEditForm(acc)"></p-button>
                     <p-button icon="pi pi-trash" [text]="true" [rounded]="true" severity="danger" size="small" pTooltip="Delete Account" (onClick)="confirmDelete(acc)"></p-button>
                   </div>
@@ -341,6 +342,7 @@
                 <td class="text-center whitespace-nowrap" (click)="$event.stopPropagation()">
                   <div class="flex items-center justify-center gap-1">
                     <p-button icon="pi pi-list" [text]="true" [rounded]="true" size="small" pTooltip="View Transactions" (onClick)="viewTransactions(acc)"></p-button>
+                    <p-button icon="pi pi-sliders-h" [text]="true" [rounded]="true" severity="warn" size="small" pTooltip="Adjust Balance" (onClick)="openAdjustBalance(acc)"></p-button>
                     <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" size="small" pTooltip="Edit" (onClick)="openEditForm(acc)"></p-button>
                     <p-button icon="pi pi-trash" [text]="true" [rounded]="true" severity="danger" size="small" pTooltip="Delete" (onClick)="confirmDelete(acc)"></p-button>
                   </div>

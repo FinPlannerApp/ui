@@ -160,7 +160,7 @@ export class TransactionsPage implements OnInit {
       globalSearch: this.globalSearch
     });
 
-    if (this.lastQueryKey === currentQueryKey && this.transactions.length > 0) {
+    if (this.lastQueryKey === currentQueryKey) {
       return;
     }
 

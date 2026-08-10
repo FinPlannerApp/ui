@@ -1,0 +1,37 @@
+<div class="flex flex-col gap-3">
+  <p class="text-sm text-secondary m-0">
+    Correcting <strong>{{ accountName }}</strong>. This creates a visible
+    "Balance Adjustment" transaction explaining the correction — it
+    doesn't silently overwrite the number.
+  </p>
+
+  <div class="field">
+    <label class="text-sm text-secondary">Current Balance</label>
+    <div class="text-lg font-medium">{{ currentBalance | currency:'INR' }}</div>
+  </div>
+
+  <div class="field">
+    <label class="text-sm text-secondary">What should it actually be?</label>
+    <p-inputNumber [ngModel]="newBalance()" (ngModelChange)="newBalance.set($event)"
+      mode="currency" currency="INR" locale="en-IN" class="w-full"></p-inputNumber>
+  </div>
+
+  @if (delta() !== 0) {
+    <div class="p-2 rounded-xl text-sm" [style.background]="delta() > 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(179, 38, 30, 0.1)'">
+      This will record a
+      <strong>{{ delta() > 0 ? 'gain' : 'reduction' }} of {{ (delta() < 0 ? -delta() : delta()) | currency:'INR' }}</strong>
+      as a Balance Adjustment transaction.
+    </div>
+  }
+
+  <div class="field">
+    <label class="text-sm text-secondary">Reason (optional, but worth adding)</label>
+    <input type="text" pInputText class="w-full" placeholder="e.g. Reconciled against actual statement"
+      [ngModel]="reason()" (ngModelChange)="reason.set($event)" />
+  </div>
+
+  <div class="flex justify-end gap-2 mt-2">
+    <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="ref.close(false)"></p-button>
+    <p-button label="Save Adjustment" (onClick)="save()" [loading]="isSubmitting()" [disabled]="delta() === 0"></p-button>
+  </div>
+</div>

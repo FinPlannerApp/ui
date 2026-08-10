@@ -37,6 +37,8 @@ export interface RecurringTransaction {
     nextProcessDate: string;
     isActive: boolean;
     lastProcessedDate?: string;
+    isObligation?: boolean;
+    linkedLoanAccountId?: number | null;
 }
 
 export interface UpsertRecurringTransactionRequest {
@@ -50,4 +52,6 @@ export interface UpsertRecurringTransactionRequest {
     startDate: string;
     endDate?: string;
     isActive: boolean;
+    isObligation?: boolean;
+    linkedLoanAccountId?: number | null;
 }

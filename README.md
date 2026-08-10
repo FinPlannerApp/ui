@@ -1,12 +1,12 @@
 # 💰 Financial Planner — Frontend
 
-> A modern, production-grade Angular 18+ personal finance tracking application with glassmorphism UI, Angular Signals state management, and deep integration with a .NET 8 backend.
+> A modern, production-grade Angular 20 personal finance tracking application with glassmorphism UI, Angular Signals state management, and deep integration with a .NET 10 backend.
 
 ## Tech Stack
 
 | Technology | Purpose |
 |------------|---------|
-| **Angular 18+** | Frontend framework (Standalone Components, OnPush, Signals) |
+| **Angular 20** | Frontend framework (Standalone Components, OnPush, Signals) |
 | **PrimeNG** | UI component library (tables, forms, charts, datepicker, dialogs) |
 | **PrimeFlex** | Responsive CSS utility grid |
 | **Chart.js** | Dashboard doughnut chart |

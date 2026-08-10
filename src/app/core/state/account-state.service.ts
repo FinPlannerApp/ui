@@ -28,14 +28,15 @@ export class AccountState {
     public totalBalance = computed(() => this._accounts().reduce((sum, acc) => sum + acc.balance, 0));
 
     constructor() {
-        this.loadAccounts();
     }
 
     /**
      * Loads all accounts from the API and updates the state signal.
+     * @param force If true, forces a network refetch even if accounts are already loaded.
      * @returns A Promise that resolves when loading is complete.
      */
-    async loadAccounts(): Promise<void> {
+    async loadAccounts(force: boolean = false): Promise<void> {
+        if (!force && this._accounts().length > 0) return;
         this._isLoading.set(true);
         try {
             // Fetch all accounts. PageSize 999 for now to get all for client-side state

@@ -644,15 +644,23 @@ button[aria-label="Close"] {
 }
 
 /* Paginator dropdown fix */
-.p-paginator .p-select {
+.p-paginator .p-select,
+.p-paginator .p-paginator-rpp-options,
+.p-paginator p-select {
   height: 2.25rem !important;
   border-radius: 10px !important;
-  min-width: 4rem !important;
+  min-width: 4.5rem !important;
+  width: auto !important;
+  max-width: 6.5rem !important;
+  flex: 0 0 auto !important;
+  display: inline-flex !important;
 }
 
-.p-paginator .p-select .p-select-label {
+.p-paginator .p-select .p-select-label,
+.p-paginator .p-paginator-rpp-options .p-select-label {
   padding: 0.25rem 0.5rem !important;
   font-size: 0.8rem !important;
+  width: auto !important;
 }
 
 /* Select Popup Overlay Panel */
@@ -1956,26 +1964,34 @@ body.compact-view {
 }
 
 /* Prevent overflow of PrimeNG components in grid columns and card layouts */
-p-autocomplete,
-p-inputnumber,
-p-select,
-p-datepicker,
-.p-autocomplete,
+p-autocomplete:not(.w-auto),
+p-inputnumber:not(.w-auto),
+p-select:not(.w-auto):not(.shrink-0),
+p-datepicker:not(.w-auto),
+.p-autocomplete:not(.p-paginator-rpp-options),
 .p-inputnumber,
-.p-select,
+.p-select:not(.p-paginator-rpp-options),
 .p-datepicker-host {
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: 100% !important;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Ensure paginator dropdown retains inline flex width without force 100% */
+.p-paginator .p-select,
+.p-paginator-rpp-options {
+  width: auto !important;
+  min-width: 4.5rem !important;
+  max-width: 6.5rem !important;
 }
 
 .p-autocomplete input,
 .p-inputnumber input,
 .p-select .p-select-label,
 .p-datepicker input {
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: 100% !important;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   box-sizing: border-box !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;

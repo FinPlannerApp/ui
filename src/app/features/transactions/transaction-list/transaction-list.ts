@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { Transaction, TransactionService } from '../transaction';
+import { Category } from '../../categories/category';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
@@ -15,6 +16,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TransactionForm } from '../transaction-form/transaction-form';
 import { TransactionSwitchForm } from '../transaction-switch-form/transaction-switch-form';
+import { AdjustBalance } from '../../accounts/adjust-balance/adjust-balance';
 import { AccountSummary } from '../../dashboard/dashboard';
 import { DashboardService } from '../../dashboard/dashboard';
 import { AccountState } from '../../../core/state/account-state.service';
@@ -59,6 +61,7 @@ export class TransactionList implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private transactionService = inject(TransactionService);
+  private categoryService = inject(Category);
   private dashboardService = inject(DashboardService);
   private messageService = inject(MessageService);
   private dialogService = inject(DialogService);
@@ -210,8 +213,8 @@ export class TransactionList implements OnInit {
 
     // Load available categories for filtering
     try {
-      const result = await firstValueFrom(this.transactionService.getAllTransactions({ pageNumber: 1, pageSize: 1, filters: {} }));
-      this.categoryOptions.set(result.availableCategories.map(c => ({ label: c, value: c })));
+      const categories = await firstValueFrom(this.categoryService.getTransactionCategories());
+      this.categoryOptions.set(categories.map(c => ({ label: c.name, value: c.name })));
     } catch (e) {
       console.warn('Could not load category options');
     }
@@ -298,7 +301,7 @@ export class TransactionList implements OnInit {
       globalSearch: this.globalSearch(),
     });
 
-    if (this.lastQueryKey === currentQueryKey && this.transactions().length > 0) {
+    if (this.lastQueryKey === currentQueryKey) {
       return;
     }
 
@@ -428,6 +431,31 @@ export class TransactionList implements OnInit {
           this.notificationService.showError('Failed to switch transaction target');
         }
       }
+    }
+  }
+
+  openAdjustBalance(): void {
+    const acc = this.currentAccount();
+    if (!acc) return;
+
+    this.ref = this.dialogService.open(AdjustBalance, {
+      header: 'Adjust Balance',
+      width: '28rem',
+      modal: true,
+      data: {
+        accountId: acc.id,
+        accountName: acc.name,
+        currentBalance: acc.balance
+      }
+    });
+
+    if (this.ref) {
+      this.ref.onClose.subscribe((changed: boolean) => {
+        if (changed) {
+          this.loadData();
+          this.accountState.refresh();
+        }
+      });
     }
   }
 }

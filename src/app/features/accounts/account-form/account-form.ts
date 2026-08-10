@@ -113,10 +113,14 @@ export class AccountForm {
         ...item,
         accountCategoryId: category ? category.id : null
       });
-      // patchValue triggers valueChanges, which normally handles this —
-      // but explicitly setting it here too removes any dependency on
-      // subscription timing during initial load specifically.
-      this.selectedCategoryId.set(category ? category.id : null);
+      if (category) {
+        this.selectedCategoryId.set(category.id);
+      }
+
+      // Balance is only meant to be set once, at creation — any correction
+      // after that should go through Adjust Balance instead, which creates
+      // a visible transaction rather than a silent overwrite.
+      this.accountForm.get('balance')?.disable();
 
       if (item.creditCardDetails) {
         this.accountForm.patchValue({
@@ -238,12 +242,13 @@ export class AccountForm {
   async onSubmit(): Promise<void> {
     if (this.accountForm.valid && !this.isSubmitting()) {
       this.isSubmitting.set(true);
+      const rawValue = this.accountForm.getRawValue();
       const payload = {
-        id: this.accountForm.value.id,
-        name: this.accountForm.value.name,
-        balance: this.accountForm.value.balance,
-        accountCategoryId: this.accountForm.value.accountCategoryId,
-        purpose: this.accountForm.value.purpose,
+        id: rawValue.id,
+        name: rawValue.name,
+        balance: rawValue.balance,
+        accountCategoryId: rawValue.accountCategoryId,
+        purpose: rawValue.purpose,
         ...this.buildDetailsPayload()
       };
 

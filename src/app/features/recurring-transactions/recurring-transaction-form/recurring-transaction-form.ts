@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal, ChangeDetectorRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal, computed, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { firstValueFrom } from 'rxjs';
@@ -26,6 +26,10 @@ export class RecurringTransactionForm implements OnInit {
     isSubmitting = signal(false);
     accounts = signal<any[]>([]);
     categories = signal<any[]>([]);
+
+    loanAccounts = computed(() =>
+        this.accounts().filter(a => a.accountType === 2 || a.accountCategory?.accountType === 2 || a.loanDetails != null || a.isLiability)
+    );
 
     frequencies = [
         { label: 'One-time', value: RecurrenceFrequency.OneTime },
@@ -83,6 +87,8 @@ export class RecurringTransactionForm implements OnInit {
             startDate: [new Date(), Validators.required],
             endDate: [null],
             isObligation: [false],
+            isLoanEmi: [false],
+            linkedLoanAccountId: [null],
             isActive: [true]
         });
     }
@@ -105,6 +111,7 @@ export class RecurringTransactionForm implements OnInit {
             const item = { ...this.config.data.itemToEdit };
             if (item.startDate) item.startDate = new Date(item.startDate);
             if (item.endDate) item.endDate = new Date(item.endDate);
+            if (item.linkedLoanAccountId) item.isLoanEmi = true;
             this.recurringForm.patchValue(item);
 
             // Decompose the stored bitmask back into individual toggle
@@ -156,15 +163,24 @@ export class RecurringTransactionForm implements OnInit {
             return;
         }
 
+        const formVal = this.recurringForm.getRawValue();
+        const isExpense = formVal.type === 1;
+        const isLoanEmi = formVal.isLoanEmi;
+
+        if (isExpense && isLoanEmi && !formVal.linkedLoanAccountId) {
+            this.notificationService.showError('Please select a loan account for this EMI payment.');
+            return;
+        }
+
         if (!this.isSubmitting()) {
             this.isSubmitting.set(true);
             const payload = {
-                ...this.recurringForm.getRawValue(),
-                // Only meaningful for Custom — explicitly null otherwise,
-                // so switching away from Custom on an edit correctly clears
-                // any previously-set days rather than leaving stale data.
-                customDays: isCustom ? this.computeCustomDaysBitmask() : null
+                ...formVal,
+                // Only meaningful for Custom — explicitly null otherwise
+                customDays: isCustom ? this.computeCustomDaysBitmask() : null,
+                linkedLoanAccountId: (isExpense && isLoanEmi) ? formVal.linkedLoanAccountId : null
             };
+            delete payload.isLoanEmi;
             const endpoint = 'RecurringTransactions';
 
             try {

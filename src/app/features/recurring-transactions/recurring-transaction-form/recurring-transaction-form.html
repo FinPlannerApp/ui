@@ -80,6 +80,22 @@
         <label for="isObligation">This is a must-pay obligation (rent, EMI, insurance) — not a subscription I could cancel</label>
     </div>
 
+    @if (recurringForm.get('type')?.value === 1) {
+        <div class="flex flex-col gap-2">
+            <div class="flex items-center gap-2">
+                <p-checkbox formControlName="isLoanEmi" [binary]="true" inputId="isLoanEmi"></p-checkbox>
+                <label for="isLoanEmi">This is an EMI payment for a loan</label>
+            </div>
+            @if (recurringForm.get('isLoanEmi')?.value) {
+                <app-form-field label="Which loan?" inputId="linkedLoanAccountId" [control]="recurringForm.get('linkedLoanAccountId')">
+                    <p-select formControlName="linkedLoanAccountId" [options]="loanAccounts()" optionLabel="name" optionValue="id"
+                        placeholder="Select Loan Account" appendTo="body" id="linkedLoanAccountId">
+                    </p-select>
+                </app-form-field>
+            }
+        </div>
+    }
+
     <div class="flex items-center gap-2">
         <p-checkbox formControlName="isActive" [binary]="true" inputId="isActive"></p-checkbox>
         <label for="isActive">Active</label>

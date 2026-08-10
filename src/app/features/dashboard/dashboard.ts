@@ -15,6 +15,7 @@ export interface DashboardSummary {
   monthlyExpenses: number;
   broughtForwardAmount: number;
   realAvailableCash: number;
+  reservedForPayment: number;
 }
 
 export interface SpendingByCategory {
