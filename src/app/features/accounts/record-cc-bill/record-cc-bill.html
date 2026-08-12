@@ -1,0 +1,45 @@
+<div class="flex flex-col gap-3">
+  <p class="text-sm text-secondary m-0">
+    Record official statement bill for <strong>{{ accountName }}</strong> to track interest, bank fees, and unlogged charges.
+  </p>
+
+  @if (!result()) {
+    <div class="field">
+      <label class="text-sm text-secondary font-medium">Bill Amount (Statement Total)</label>
+      <p-inputNumber [ngModel]="billAmount()" (ngModelChange)="billAmount.set($event)"
+        mode="currency" currency="INR" locale="en-IN" class="w-full" placeholder="e.g. 15000"></p-inputNumber>
+    </div>
+
+    <div class="field">
+      <label class="text-sm text-secondary font-medium">Minimum Due (optional)</label>
+      <p-inputNumber [ngModel]="minimumDue()" (ngModelChange)="minimumDue.set($event)"
+        mode="currency" currency="INR" locale="en-IN" class="w-full" placeholder="e.g. 1500"></p-inputNumber>
+    </div>
+
+    <div class="field">
+      <label class="text-sm text-secondary font-medium">Payment Due Date (optional)</label>
+      <p-datepicker [ngModel]="dueDate()" (ngModelChange)="dueDate.set($event)"
+        [showIcon]="true" appendTo="body" class="w-full" placeholder="Select due date"></p-datepicker>
+    </div>
+
+    <div class="flex justify-end gap-2 mt-2">
+      <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="ref.close(false)"></p-button>
+      <p-button label="Save Bill" (onClick)="save()" [loading]="isSubmitting()" [disabled]="billAmount() === null || billAmount()! < 0"></p-button>
+    </div>
+  } @else {
+    <div class="p-3 rounded-xl border border-amber-500/20 bg-amber-500/10 flex flex-col gap-2">
+      <p class="text-sm m-0 text-amber-200">
+        Recorded bill (<strong>{{ result()!.recordedBillAmount | currency:'INR' }}</strong>) is
+        <strong>{{ result()!.impliedInterestAndFees | currency:'INR' }}</strong> higher than your logged
+        transactions ({{ result()!.computedFromTransactions | currency:'INR' }}).
+      </p>
+      <p class="text-xs text-secondary m-0">
+        That gap is likely interest, fees, or transactions you forgot to log. Worth checking your bank statement if larger than expected.
+      </p>
+    </div>
+
+    <div class="flex justify-end mt-2">
+      <p-button label="Done" (onClick)="close()"></p-button>
+    </div>
+  }
+</div>

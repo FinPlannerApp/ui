@@ -1,0 +1,209 @@
+<p-toast></p-toast>
+
+@if (!onlineStatus.isOnline()) {
+  <div class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm bg-amber-500/10 text-amber-400 border-b border-amber-500/20">
+    <i class="pi pi-wifi"></i>
+    <span>You're offline — showing the last synced data. New expenses and settlements need a connection.</span>
+  </div>
+}
+
+<div class="flex flex-col gap-6 w-full px-4 md:px-8 py-4">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div class="flex items-start sm:items-center gap-3 min-w-0">
+      <a routerLink="/app/split"
+         class="no-underline text-[var(--text-muted)] hover:text-[var(--primary-color)] transition-colors p-2.5 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center shrink-0 mt-1 sm:mt-0">
+        <i class="pi pi-arrow-left"></i>
+      </a>
+      <h1 class="text-xl sm:text-2xl md:text-3xl font-extrabold m-0 gradient-text truncate">{{ group()?.name }}</h1>
+    </div>
+    <div class="flex gap-2">
+      <p-button icon="pi pi-share-alt" [text]="true" (onClick)="copyShareLink()" pTooltip="Copy share link"
+        styleClass="rounded-xl"></p-button>
+      <p-button label="Add Expense" icon="pi pi-plus" (onClick)="openAddExpense()"
+        styleClass="rounded-xl font-bold px-3 py-2 text-xs sm:text-sm flex-1 sm:flex-none"></p-button>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <div class="flex justify-center p-8">
+      <p-progressSpinner></p-progressSpinner>
+    </div>
+  } @else {
+    <!-- Members strip -->
+    <div class="flex items-center gap-2 flex-wrap">
+      @for (member of group()?.members; track member.id) {
+        <span class="px-3 py-1.5 rounded-full text-xs sm:text-sm bg-white/5 text-[var(--text-primary)]">{{ member.name }}</span>
+      }
+      <button (click)="showAddMember.set(true)"
+        class="px-3 py-1.5 rounded-full text-xs sm:text-sm bg-white/5 hover:bg-white/10 border-none cursor-pointer text-[var(--text-muted)]">
+        <i class="pi pi-plus mr-1"></i>Add person
+      </button>
+    </div>
+
+    @if (showAddMember()) {
+      <div class="glass-card p-4 rounded-2xl flex flex-col sm:flex-row gap-3">
+        <input type="text" pInputText class="w-full sm:flex-1" placeholder="Name"
+          [ngModel]="newMemberName()" (ngModelChange)="newMemberName.set($event)" />
+        <input type="text" pInputText class="w-full sm:flex-1" placeholder="UPI ID (optional)"
+          [ngModel]="newMemberUpi()" (ngModelChange)="newMemberUpi.set($event)" />
+        <div class="flex gap-2">
+          <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="showAddMember.set(false)"></p-button>
+          <p-button label="Add" (onClick)="addMember()"></p-button>
+        </div>
+      </div>
+    }
+
+    <!-- Tabs -->
+    <div class="flex gap-1 p-1 rounded-xl bg-white/5 w-fit">
+      <button (click)="activeTab.set('expenses')"
+        class="px-4 py-2 rounded-lg text-xs sm:text-sm border-none cursor-pointer transition-colors"
+        [class.bg-white/10]="activeTab() === 'expenses'"
+        [class.text-[var(--text-primary)]]="activeTab() === 'expenses'"
+        [class.text-[var(--text-muted)]]="activeTab() !== 'expenses'">
+        Expenses
+      </button>
+      <button (click)="activeTab.set('balances')"
+        class="px-4 py-2 rounded-lg text-xs sm:text-sm border-none cursor-pointer transition-colors"
+        [class.bg-white/10]="activeTab() === 'balances'"
+        [class.text-[var(--text-primary)]]="activeTab() === 'balances'"
+        [class.text-[var(--text-muted)]]="activeTab() !== 'balances'">
+        Balances
+      </button>
+    </div>
+
+    <!-- Expenses tab -->
+    @if (activeTab() === 'expenses') {
+      <div class="flex flex-col gap-2">
+        @for (expense of expenses(); track expense.id) {
+          <div class="glass-card p-4 rounded-2xl flex items-center justify-between gap-3">
+            <div class="flex flex-col min-w-0">
+              <span class="font-semibold text-sm sm:text-base text-[var(--text-primary)] truncate">{{ expense.description }}</span>
+              <span class="text-xs text-[var(--text-muted)]">
+                Paid by {{ expense.payers[0]?.memberName }} · {{ expense.date | date:'mediumDate' }}
+              </span>
+            </div>
+            <span class="text-base sm:text-lg font-bold shrink-0">{{ expense.amount | currency:'INR' }}</span>
+          </div>
+        } @empty {
+          <div class="glass-card p-8 rounded-2xl text-center">
+            <p class="text-sm text-[var(--text-muted)] m-0">No expenses logged yet.</p>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Balances tab -->
+    @if (activeTab() === 'balances') {
+      <div class="flex flex-col gap-4">
+        <div class="grid grid-cols-12 gap-3">
+          @for (b of balances()?.balances; track b.memberId) {
+            <div class="col-span-12 sm:col-span-6 lg:col-span-4">
+              <div class="glass-card p-4 rounded-2xl flex items-center justify-between"
+                [class.border]="true"
+                [class.border-emerald-500/20]="b.netBalance > 0"
+                [class.border-red-500/20]="b.netBalance < 0"
+                [class.border-white/5]="b.netBalance === 0">
+                <span class="text-sm sm:text-base font-medium">{{ b.memberName }}</span>
+                <span class="text-sm sm:text-base font-bold"
+                  [class.text-emerald-400]="b.netBalance > 0"
+                  [class.text-red-400]="b.netBalance < 0">
+                  {{ b.netBalance > 0 ? '+' : '' }}{{ b.netBalance | currency:'INR' }}
+                </span>
+              </div>
+            </div>
+          }
+        </div>
+
+        @if ((balances()?.simplifiedPlan?.length ?? 0) > 0) {
+          <div class="flex flex-col gap-2">
+            <h3 class="text-sm sm:text-base font-bold text-[var(--text-muted)] m-0">Settle up</h3>
+            @for (debt of balances()?.simplifiedPlan; track debt.fromMemberId + '-' + debt.toMemberId) {
+              <div class="glass-card p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <span class="text-sm sm:text-base">
+                  <strong>{{ debt.fromMemberName }}</strong> owes <strong>{{ debt.toMemberName }}</strong>
+                  <span class="font-bold ml-1">{{ debt.amount | currency:'INR' }}</span>
+                </span>
+                <p-button label="Pay via UPI" icon="pi pi-qrcode" (onClick)="settleDebt(debt)"
+                  styleClass="rounded-xl text-xs sm:text-sm w-full sm:w-auto"></p-button>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="glass-card p-6 rounded-2xl text-center">
+            <i class="pi pi-check-circle text-2xl text-emerald-400 mb-2"></i>
+            <p class="text-sm text-[var(--text-muted)] m-0">Everyone's settled up.</p>
+          </div>
+        }
+      </div>
+    }
+  }
+</div>
+
+<!-- Add Expense dialog -->
+<p-dialog [(visible)]="showAddExpense" header="Add Expense" [modal]="true"
+  [style]="{ width: '95vw', maxWidth: '32rem' }" [breakpoints]="{ '640px': '100vw' }" styleClass="glass-card">
+  <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-1.5">
+      <label class="text-xs sm:text-sm text-[var(--text-muted)]">What was it for?</label>
+      <input type="text" pInputText class="w-full" placeholder="e.g. Dinner at the beach shack"
+        [ngModel]="expDescription()" (ngModelChange)="expDescription.set($event)" />
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs sm:text-sm text-[var(--text-muted)]">Amount</label>
+        <p-inputNumber [ngModel]="expAmount()" (ngModelChange)="expAmount.set($event)"
+          mode="currency" currency="INR" locale="en-IN" class="w-full"></p-inputNumber>
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs sm:text-sm text-[var(--text-muted)]">Date</label>
+        <p-datepicker [ngModel]="expDate()" (ngModelChange)="expDate.set($event)"
+          [showIcon]="true" appendTo="body" class="w-full"></p-datepicker>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <label class="text-xs sm:text-sm text-[var(--text-muted)]">Paid by</label>
+      <p-select [options]="memberOptions()" [ngModel]="expPayerId()" (ngModelChange)="expPayerId.set($event)"
+        optionLabel="label" optionValue="value" appendTo="body" class="w-full"></p-select>
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <label class="text-xs sm:text-sm text-[var(--text-muted)]">Split</label>
+      <p-select [options]="splitTypeOptions" [ngModel]="expSplitType()" (ngModelChange)="expSplitType.set($event)"
+        optionLabel="label" optionValue="value" appendTo="body" class="w-full"></p-select>
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <label class="text-xs sm:text-sm text-[var(--text-muted)]">Split between</label>
+      @for (member of group()?.members; track member.id) {
+        <div class="flex items-center gap-3 p-2 rounded-xl bg-white/5">
+          <input type="checkbox" [checked]="expParticipantIds().has(member.id)"
+            (change)="toggleParticipant(member.id)" class="w-4 h-4" />
+          <span class="text-sm flex-1">{{ member.name }}</span>
+
+          @if (expParticipantIds().has(member.id)) {
+            @if (expSplitType() === SplitType.Exact) {
+              <p-inputNumber [ngModel]="expExactAmounts()[member.id]" (ngModelChange)="updateExactAmount(member.id, $event)"
+                mode="currency" currency="INR" locale="en-IN" styleClass="w-28"></p-inputNumber>
+            }
+            @if (expSplitType() === SplitType.Percentage) {
+              <p-inputNumber [ngModel]="expPercentages()[member.id]" (ngModelChange)="updatePercentage(member.id, $event)"
+                suffix="%" styleClass="w-24"></p-inputNumber>
+            }
+            @if (expSplitType() === SplitType.Shares) {
+              <p-inputNumber [ngModel]="expShares()[member.id]" (ngModelChange)="updateShares(member.id, $event)"
+                styleClass="w-20"></p-inputNumber>
+            }
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="showAddExpense.set(false)"></p-button>
+    <p-button label="Save Expense" (onClick)="saveExpense()"></p-button>
+  </ng-template>
+</p-dialog>

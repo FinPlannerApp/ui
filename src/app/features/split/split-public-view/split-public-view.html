@@ -1,0 +1,78 @@
+@if (!onlineStatus.isOnline()) {
+  <div class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm bg-amber-500/10 text-amber-400 border-b border-amber-500/20 justify-center">
+    <i class="pi pi-wifi"></i>
+    <span>Offline — showing the last synced data for this group.</span>
+  </div>
+}
+
+<div class="min-h-screen flex flex-col gap-6 w-full px-4 py-6 max-w-2xl mx-auto">
+  @if (isLoading()) {
+    <div class="flex justify-center p-8">
+      <p-progressSpinner></p-progressSpinner>
+    </div>
+  } @else if (loadFailed() || !view()) {
+    <div class="glass-card p-8 rounded-2xl text-center">
+      <i class="pi pi-exclamation-triangle text-3xl text-amber-400 mb-3"></i>
+      <p class="text-sm text-[var(--text-muted)] m-0">This link isn't valid, or the group no longer exists.</p>
+    </div>
+  } @else {
+    <div class="text-center flex flex-col gap-1">
+      <h1 class="text-2xl sm:text-3xl font-extrabold m-0 gradient-text">{{ view()!.groupName }}</h1>
+      <p class="text-xs text-[var(--text-muted)] m-0">Shared via FinPlanner Split</p>
+    </div>
+
+    <!-- Balances -->
+    <div class="flex flex-col gap-2">
+      <h3 class="text-sm font-bold text-[var(--text-muted)] m-0">Balances</h3>
+      @for (b of view()!.balances.balances; track b.memberId) {
+        <div class="glass-card p-4 rounded-2xl flex items-center justify-between">
+          <span class="text-sm sm:text-base font-medium">{{ b.memberName }}</span>
+          <span class="text-sm sm:text-base font-bold"
+            [class.text-emerald-400]="b.netBalance > 0"
+            [class.text-red-400]="b.netBalance < 0">
+            {{ b.netBalance > 0 ? '+' : '' }}{{ b.netBalance | currency:'INR' }}
+          </span>
+        </div>
+      }
+    </div>
+
+    <!-- Settle up plan -->
+    @if (view()!.balances.simplifiedPlan.length > 0) {
+      <div class="flex flex-col gap-2">
+        <h3 class="text-sm font-bold text-[var(--text-muted)] m-0">Who owes whom</h3>
+        @for (debt of view()!.balances.simplifiedPlan; track debt.fromMemberId + '-' + debt.toMemberId) {
+          <div class="glass-card p-4 rounded-2xl">
+            <span class="text-sm sm:text-base">
+              <strong>{{ debt.fromMemberName }}</strong> owes <strong>{{ debt.toMemberName }}</strong>
+              <span class="font-bold ml-1">{{ debt.amount | currency:'INR' }}</span>
+            </span>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Expenses -->
+    <div class="flex flex-col gap-2">
+      <h3 class="text-sm font-bold text-[var(--text-muted)] m-0">Expenses</h3>
+      @for (expense of view()!.expenses; track expense.id) {
+        <div class="glass-card p-4 rounded-2xl flex items-center justify-between gap-3">
+          <div class="flex flex-col min-w-0">
+            <span class="font-semibold text-sm text-[var(--text-primary)] truncate">{{ expense.description }}</span>
+            <span class="text-xs text-[var(--text-muted)]">
+              Paid by {{ expense.payers[0]?.memberName }} · {{ expense.date | date:'mediumDate' }}
+            </span>
+          </div>
+          <span class="text-sm sm:text-base font-bold shrink-0">{{ expense.amount | currency:'INR' }}</span>
+        </div>
+      } @empty {
+        <div class="glass-card p-6 rounded-2xl text-center">
+          <p class="text-sm text-[var(--text-muted)] m-0">No expenses logged yet.</p>
+        </div>
+      }
+    </div>
+
+    <p class="text-center text-xs text-[var(--text-muted)] mt-4">
+      Read-only view — ask whoever created this group to log new expenses.
+    </p>
+  }
+</div>

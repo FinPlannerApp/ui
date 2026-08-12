@@ -2,18 +2,27 @@ import { Component, inject, Inject, PLATFORM_ID, computed, signal } from '@angul
 import { isPlatformBrowser, CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { ConfirmationService } from 'primeng/api';
+import { firstValueFrom } from 'rxjs';
+import { GenericApi } from '../../../core/services/generic-api';
+import { NotificationService } from '../../../core/services/notification.service';
 import { ThemeEngine } from '../../../core/services/theme';
 import { Auth } from '../../../core/services/auth';
 import { sharedPrimeModules } from '../../../shared/prime-imports';
 
 @Component({
   selector: 'app-settings',
+  standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, ...sharedPrimeModules],
+  providers: [ConfirmationService],
   templateUrl: './settings.html',
 })
 export class Settings {
   public themeEngine = inject(ThemeEngine);
   private authService = inject(Auth);
+  private api = inject(GenericApi);
+  private notificationService = inject(NotificationService);
+  private confirmationService = inject(ConfirmationService);
   private isBrowser: boolean;
 
   profile = {
@@ -53,6 +62,22 @@ export class Settings {
 
   saveProfile() {
     // TODO: Implement profile save via API
+  }
+
+  async runOpeningBalanceBackfill(): Promise<void> {
+    this.confirmationService.confirm({
+      header: 'Backfill Opening Balances',
+      message: 'This creates a real "Opening Balance" transaction on any account with a starting balance from before this feature existed. It\'s accurate and safe to run, but it will add new entries to your transaction history on old dates. Continue?',
+      icon: 'pi pi-info-circle',
+      accept: async () => {
+        try {
+          const result = await firstValueFrom(this.api.post<number>('Accounts/backfill-opening-balances', {}));
+          this.notificationService.showSuccess(`Created ${result.value} opening balance transaction(s).`);
+        } catch (err: any) {
+          this.notificationService.showError(err?.message || 'Backfill failed.');
+        }
+      }
+    });
   }
 
   logout() {

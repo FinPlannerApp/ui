@@ -42,6 +42,14 @@
             <p-select [options]="frequencyOptions" [ngModel]="formFrequency()" (ngModelChange)="formFrequency.set($event)"
               optionLabel="label" optionValue="value" class="w-full"></p-select>
           </div>
+          <div class="col-12 md:col-6">
+            <label class="text-sm text-secondary">Started On</label>
+            <p-datepicker [ngModel]="formStartDate()" (ngModelChange)="formStartDate.set($event)"
+              [showIcon]="true" appendTo="body" class="w-full"></p-datepicker>
+            <p class="text-xs text-secondary mt-1 mb-0">
+              When you actually started paying for this — not when you're adding it here.
+            </p>
+          </div>
         </div>
 
         <div class="field">

@@ -17,6 +17,7 @@ import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TransactionForm } from '../transaction-form/transaction-form';
 import { TransactionSwitchForm } from '../transaction-switch-form/transaction-switch-form';
 import { AdjustBalance } from '../../accounts/adjust-balance/adjust-balance';
+import { RecordCcBill } from '../../accounts/record-cc-bill/record-cc-bill';
 import { AccountSummary } from '../../dashboard/dashboard';
 import { DashboardService } from '../../dashboard/dashboard';
 import { AccountState } from '../../../core/state/account-state.service';
@@ -446,6 +447,30 @@ export class TransactionList implements OnInit {
         accountId: acc.id,
         accountName: acc.name,
         currentBalance: acc.balance
+      }
+    });
+
+    if (this.ref) {
+      this.ref.onClose.subscribe((changed: boolean) => {
+        if (changed) {
+          this.loadData();
+          this.accountState.refresh();
+        }
+      });
+    }
+  }
+
+  openRecordCcBill(): void {
+    const acc = this.currentAccount();
+    if (!acc) return;
+
+    this.ref = this.dialogService.open(RecordCcBill, {
+      header: 'Record Credit Card Bill',
+      width: '28rem',
+      modal: true,
+      data: {
+        accountId: acc.id,
+        accountName: acc.name
       }
     });
 

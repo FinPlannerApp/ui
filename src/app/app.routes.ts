@@ -213,8 +213,21 @@ export const routes: Routes = [
         path: 'goals',
         loadComponent: () => import('./features/goals/goals/goals').then(m => m.Goals)
       },
+      {
+        path: 'split',
+        loadComponent: () => import('./features/split/split-groups/split-groups').then(m => m.SplitGroups)
+      },
+      {
+        path: 'split/:id',
+        loadComponent: () => import('./features/split/split-group-detail/split-group-detail').then(m => m.SplitGroupDetail)
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
+  },
+
+  {
+    path: 'split/public/:token',
+    loadComponent: () => import('./features/split/split-public-view/split-public-view').then(m => m.SplitPublicView)
   },
 
   { path: '**', redirectTo: '', pathMatch: 'full' }

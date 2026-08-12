@@ -55,7 +55,10 @@
         "**/api/AccountCategories/**",
         "**/api/Budgets",
         "**/api/Budgets/**",
-        "**/api/Dashboard/**"
+        "**/api/Dashboard/**",
+        "**/api/Split/groups",
+        "**/api/Split/groups/**",
+        "**/api/Split/public/**"
       ],
       "cacheConfig": {
         "maxSize": 50,

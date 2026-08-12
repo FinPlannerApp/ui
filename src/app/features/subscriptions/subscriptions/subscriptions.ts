@@ -34,6 +34,7 @@ export class Subscriptions implements OnInit {
   formAmount = signal<number | null>(null);
   formAccountId = signal<number | null>(null);
   formFrequency = signal<RecurrenceFrequency>(RecurrenceFrequency.Monthly);
+  formStartDate = signal<Date>(new Date());
   formTag = signal('');
   formCancellationUrl = signal('');
 
@@ -91,6 +92,7 @@ export class Subscriptions implements OnInit {
     this.formAmount.set(null);
     this.formAccountId.set(null);
     this.formFrequency.set(RecurrenceFrequency.Monthly);
+    this.formStartDate.set(new Date());
     this.formTag.set('');
     this.formCancellationUrl.set('');
     this.showForm.set(true);
@@ -112,7 +114,7 @@ export class Subscriptions implements OnInit {
         accountId,
         categoryId: null,
         frequency: this.formFrequency(),
-        startDate: new Date().toISOString(),
+        startDate: this.formStartDate().toISOString(),
         tag: this.formTag().trim() || null,
         cancellationUrl: this.formCancellationUrl().trim() || null
       });

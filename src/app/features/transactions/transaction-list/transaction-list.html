@@ -124,9 +124,12 @@
   @if (currentAccount(); as account) {
     @if (account.creditCardDetails; as details) {
       <div class="glass-card p-4 rounded-2xl border border-purple-500/20 bg-purple-500/5">
-        <div class="flex items-center gap-2 mb-3">
-          <i class="pi pi-credit-card text-purple-400 text-lg"></i>
-          <span class="font-bold text-sm text-purple-300">Credit Card Overview</span>
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-credit-card text-purple-400 text-lg"></i>
+            <span class="font-bold text-sm text-purple-300">Credit Card Overview</span>
+          </div>
+          <p-button label="Record Statement Bill" icon="pi pi-receipt" severity="help" [outlined]="true" size="small" (onClick)="openRecordCcBill()" styleClass="rounded-xl font-bold px-3 py-1 text-xs"></p-button>
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
           @if (details.creditLimit) {
