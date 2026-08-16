@@ -1,0 +1,19 @@
+<div class="flex flex-col items-center justify-center gap-3 p-6 sm:p-8 text-center glass-card rounded-2xl w-full max-w-md mx-auto my-4 transition-all duration-200">
+  <i class="{{ icon() }} text-3xl sm:text-4xl transition-transform hover:scale-110"
+     [class.text-[var(--text-muted)]]="variant() === 'empty'"
+     [class.text-red-400]="variant() === 'error'"
+     [class.text-amber-400]="variant() === 'offline'"></i>
+
+  <h3 class="text-sm sm:text-base font-bold m-0 tracking-wide" [class.text-red-400]="variant() === 'error'">
+    {{ title() }}
+  </h3>
+
+  @if (message()) {
+    <p class="text-xs sm:text-sm text-[var(--text-muted)] m-0 max-w-xs sm:max-w-sm leading-relaxed">{{ message() }}</p>
+  }
+
+  @if (actionLabel()) {
+    <p-button [label]="actionLabel()!" size="small" (onClick)="action.emit()"
+      styleClass="rounded-xl mt-2 font-semibold shadow-sm hover:shadow transition-all text-xs sm:text-sm px-4 py-2"></p-button>
+  }
+</div>

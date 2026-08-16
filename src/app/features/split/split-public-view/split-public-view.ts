@@ -10,8 +10,7 @@ import { OnlineStatusService } from '../../../core/services/online-status.servic
   selector: 'app-split-public-view',
   standalone: true,
   imports: [CommonModule, ...sharedPrimeModules],
-  templateUrl: './split-public-view.html',
-  styleUrl: './split-public-view.scss'
+  templateUrl: './split-public-view.html'
 })
 export class SplitPublicView implements OnInit {
   private route = inject(ActivatedRoute);

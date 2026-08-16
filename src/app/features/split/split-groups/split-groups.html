@@ -64,10 +64,9 @@
         </div>
       } @empty {
         <div class="col-span-12">
-          <div class="glass-card p-8 rounded-2xl text-center">
-            <i class="pi pi-map text-3xl text-[var(--text-muted)] mb-3"></i>
-            <p class="text-sm text-[var(--text-muted)] m-0">No trips yet — create one to start splitting expenses.</p>
-          </div>
+          <app-empty-state icon="pi pi-map" title="No trips yet"
+            message="Create one to start splitting expenses." actionLabel="New Trip / Group"
+            (action)="openCreateForm()"></app-empty-state>
         </div>
       }
     </div>

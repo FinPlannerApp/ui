@@ -1,5 +1,6 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { BlogLoaderService } from './blog-loader.service';
 
 export const BLOG_POSTS = [
   // ─── v6.0.0 — PWA + UI OVERHAUL ───────────────────────────────────────────
@@ -951,12 +952,30 @@ export const BLOG_POSTS = [
   imports: [RouterLink],
   templateUrl: './blog.html',
 })
-export class Blog {
+export class Blog implements OnInit {
+  private blogLoader = inject(BlogLoaderService);
   sortAscending = signal(false); // default: newest first (descending)
+  posts = signal<any[]>(BLOG_POSTS);
+
+  async ngOnInit(): Promise<void> {
+    const meta = await this.blogLoader.loadAllMeta();
+    if (meta && meta.length > 0) {
+      const mapped = meta.map(m => ({
+        id: m.slug,
+        tag: m.tag || 'Blog',
+        tagColor: m.tagColor || '#6366f1',
+        title: m.title,
+        excerpt: m.excerpt,
+        date: m.publishedAt ? new Date(m.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent',
+        _dateValue: m.publishedAt ? new Date(m.publishedAt) : new Date()
+      }));
+      this.posts.set(mapped);
+    }
+  }
 
   sortedPosts = computed(() => {
     const asc = this.sortAscending();
-    return [...BLOG_POSTS].sort((a, b) =>
+    return [...this.posts()].sort((a, b) =>
       asc
         ? a._dateValue.getTime() - b._dateValue.getTime()
         : b._dateValue.getTime() - a._dateValue.getTime()

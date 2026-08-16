@@ -1,0 +1,59 @@
+<div class="min-h-[85vh] flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 w-full max-w-lg mx-auto">
+  @if (isLoading()) {
+    <div class="flex justify-center p-12">
+      <p-progressSpinner styleClass="w-12 h-12"></p-progressSpinner>
+    </div>
+  } @else if (loadFailed() || !preview() || !preview()!.isValid) {
+    <div class="glass-card p-6 sm:p-8 rounded-3xl text-center flex flex-col items-center gap-3 w-full border border-amber-500/20 bg-amber-500/5">
+      <i class="pi pi-exclamation-triangle text-4xl text-amber-400"></i>
+      <h2 class="text-lg font-bold m-0 text-white">Invite Unavailable</h2>
+      <p class="text-xs sm:text-sm text-[var(--text-muted)] m-0 leading-relaxed max-w-xs">
+        @if (preview()?.invalidReason === 'expired') {
+          This invite link has expired. Please ask the trip admin for a new invitation.
+        } @else if (preview()?.invalidReason === 'revoked') {
+          This invite has been revoked by the group admin.
+        } @else if (preview()?.invalidReason === 'fully used') {
+          This invite link has already reached its maximum participant limit.
+        } @else {
+          This invite link is invalid or no longer exists.
+        }
+      </p>
+    </div>
+  } @else {
+    <div class="glass-card p-6 sm:p-8 rounded-3xl flex flex-col gap-6 text-center w-full shadow-2xl border border-white/10">
+      <div class="w-14 h-14 rounded-2xl bg-[var(--primary-color)]/20 border border-[var(--primary-color)]/30 flex items-center justify-center mx-auto text-[var(--primary-color)]">
+        <i class="pi pi-users text-2xl"></i>
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <span class="text-xs font-extrabold uppercase tracking-widest text-[var(--text-muted)]">Trip Invitation</span>
+        <h1 class="text-2xl sm:text-3xl font-extrabold m-0 gradient-text leading-tight">{{ preview()!.groupName }}</h1>
+        <div class="inline-flex items-center justify-center gap-2 mt-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-[var(--text-muted)] w-fit mx-auto">
+          <i class="pi pi-users text-xs"></i>
+          <span>{{ preview()!.memberCount }} {{ preview()!.memberCount === 1 ? 'person' : 'people' }} actively splitting</span>
+        </div>
+      </div>
+
+      @if (!isLoggedIn()) {
+        <div class="flex flex-col gap-3 pt-2 border-t border-white/10">
+          <p class="text-xs sm:text-sm text-[var(--text-muted)] m-0 leading-relaxed">
+            Log in to your FinPlanner account to accept this invitation and sync your splits.
+          </p>
+          <p-button label="Log In to Accept" icon="pi pi-sign-in" (onClick)="goToLogin()"
+            styleClass="w-full rounded-2xl font-bold py-3 text-xs sm:text-sm shadow-md"></p-button>
+          <a routerLink="/register" class="text-xs text-[var(--text-muted)] hover:text-[var(--primary-color)] transition-colors no-underline">Don't have an account? Register free</a>
+        </div>
+      } @else {
+        <div class="flex flex-col gap-4 text-left pt-2 border-t border-white/10">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs sm:text-sm font-semibold text-[var(--text-muted)]">Your display name for this trip</label>
+            <input type="text" pInputText class="w-full text-sm rounded-xl py-2.5" placeholder="e.g. Alex M."
+              [ngModel]="displayName()" (ngModelChange)="displayName.set($event)" />
+          </div>
+          <p-button label="Join Trip Now" icon="pi pi-check" (onClick)="join()" [loading]="isJoining()"
+            styleClass="w-full rounded-2xl font-bold py-3 text-xs sm:text-sm shadow-md"></p-button>
+        </div>
+      }
+    </div>
+  }
+</div>

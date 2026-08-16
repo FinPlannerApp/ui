@@ -63,18 +63,23 @@
           <div class="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
             <div 
               class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl border flex items-center justify-center shrink-0"
-              [ngClass]="obligation.source === 'CreditCard' ? 'bg-sky-500/10 border-sky-500/30 text-sky-400' : 'bg-amber-500/10 border-amber-500/30 text-amber-400'"
+              [ngClass]="obligation.source === 'CreditCard' ? 'bg-sky-500/10 border-sky-500/30 text-sky-400' : (obligation.source === 'Loan' ? 'bg-rose-500/10 border-rose-500/30 text-rose-400' : 'bg-amber-500/10 border-amber-500/30 text-amber-400')"
             >
-              <i class="pi text-base sm:text-lg" [ngClass]="obligation.source === 'CreditCard' ? 'pi-credit-card' : 'pi-receipt'"></i>
+              <i class="pi text-base sm:text-lg" [ngClass]="obligation.source === 'CreditCard' ? 'pi-credit-card' : (obligation.source === 'Loan' ? 'pi-building-columns' : 'pi-receipt')"></i>
             </div>
             <div class="flex flex-col min-w-0 flex-1">
               <span class="text-xs sm:text-sm font-extrabold text-main truncate" [title]="obligation.description">{{ obligation.description }}</span>
               <span class="text-[11px] sm:text-xs text-muted font-medium truncate" [title]="obligation.accountName">{{ obligation.accountName }}</span>
+              @if (obligation.isShortfallRisk) {
+                <span class="text-[10px] text-rose-400 flex items-center gap-1 font-bold mt-0.5">
+                  <i class="pi pi-exclamation-triangle"></i> Insufficient balance
+                </span>
+              }
             </div>
           </div>
 
           <div class="flex flex-col items-end shrink-0 pl-1.5 text-right">
-            <span class="text-xs sm:text-base font-extrabold whitespace-nowrap" [ngClass]="obligation.source === 'CreditCard' ? 'text-sky-400' : 'text-amber-400'">{{ displayAmount(obligation) }}</span>
+            <span class="text-xs sm:text-base font-extrabold whitespace-nowrap" [ngClass]="obligation.source === 'CreditCard' ? 'text-sky-400' : (obligation.source === 'Loan' ? 'text-rose-400' : 'text-amber-400')">{{ displayAmount(obligation) }}</span>
             <span 
               class="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full mt-0.5 sm:mt-1 whitespace-nowrap" 
               [ngClass]="daysUntil(obligation.dueDate) === 0 ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-white/10 text-muted'"
@@ -137,22 +142,27 @@
               <div class="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
                 <div 
                   class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl border flex items-center justify-center shrink-0"
-                  [ngClass]="obligation.source === 'CreditCard' ? 'bg-sky-500/10 border-sky-500/30 text-sky-400' : 'bg-amber-500/10 border-amber-500/30 text-amber-400'"
+                  [ngClass]="obligation.source === 'CreditCard' ? 'bg-sky-500/10 border-sky-500/30 text-sky-400' : (obligation.source === 'Loan' ? 'bg-rose-500/10 border-rose-500/30 text-rose-400' : 'bg-amber-500/10 border-amber-500/30 text-amber-400')"
                 >
-                  <i class="pi text-base sm:text-lg" [ngClass]="obligation.source === 'CreditCard' ? 'pi-credit-card' : 'pi-receipt'"></i>
+                  <i class="pi text-base sm:text-lg" [ngClass]="obligation.source === 'CreditCard' ? 'pi-credit-card' : (obligation.source === 'Loan' ? 'pi-building-columns' : 'pi-receipt')"></i>
                 </div>
                 <div class="flex flex-col min-w-0 flex-1">
                   <span class="text-xs sm:text-sm font-extrabold text-main truncate">{{ obligation.description }}</span>
-                  <div class="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-muted mt-0.5 min-w-0">
+                  <div class="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-muted mt-0.5 min-w-0 flex-wrap">
                     <span class="truncate"><i class="pi pi-wallet text-xs mr-1"></i>{{ obligation.accountName }}</span>
                     <span class="shrink-0">•</span>
-                    <span class="capitalize font-medium shrink-0">{{ obligation.source === 'CreditCard' ? 'Credit Card Bill' : 'Recurring Bill' }}</span>
+                    <span class="capitalize font-medium shrink-0">{{ obligation.source === 'CreditCard' ? 'Credit Card Bill' : (obligation.source === 'Loan' ? 'Loan EMI' : 'Recurring Bill') }}</span>
+                    @if (obligation.isShortfallRisk) {
+                      <span class="text-[10px] text-rose-400 flex items-center gap-1 font-bold">
+                        <i class="pi pi-exclamation-triangle"></i> Insufficient balance
+                      </span>
+                    }
                   </div>
                 </div>
               </div>
 
               <div class="flex flex-col items-end shrink-0 pl-1.5 text-right">
-                <span class="text-xs sm:text-base font-extrabold whitespace-nowrap" [ngClass]="obligation.source === 'CreditCard' ? 'text-sky-400' : 'text-amber-400'">{{ displayAmount(obligation) }}</span>
+                <span class="text-xs sm:text-base font-extrabold whitespace-nowrap" [ngClass]="obligation.source === 'CreditCard' ? 'text-sky-400' : (obligation.source === 'Loan' ? 'text-rose-400' : 'text-amber-400')">{{ displayAmount(obligation) }}</span>
                 <span 
                   class="text-[10px] sm:text-xs font-bold px-2 sm:px-2.5 py-0.5 rounded-full mt-1 whitespace-nowrap" 
                   [ngClass]="daysUntil(obligation.dueDate) === 0 ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-white/10 text-muted'"

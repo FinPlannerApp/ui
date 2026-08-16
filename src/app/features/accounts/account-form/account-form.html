@@ -39,7 +39,7 @@
 
   <!-- Credit Card fields -->
   @if (selectedAccountType() === AccountType.CreditCard) {
-    <div class="grid grid-cols-12 gap-4 grid-cols-12 gap-4">
+    <div class="grid grid-cols-12 gap-4">
       <div class="col-span-12 md:col-span-6">
         <app-form-field label="Credit Limit" inputId="creditLimit">
           <p-inputNumber id="creditLimit" formControlName="creditLimit" mode="currency" currency="INR" locale="en-IN" class="w-full"></p-inputNumber>
@@ -75,7 +75,7 @@
 
   <!-- Loan fields -->
   @if (selectedAccountType() === AccountType.Loan) {
-    <div class="grid grid-cols-12 gap-4 grid-cols-12 gap-4">
+    <div class="grid grid-cols-12 gap-4">
       <div class="col-span-12 md:col-span-6">
         <app-form-field label="Principal Amount" inputId="principalAmount">
           <p-inputNumber id="principalAmount" formControlName="principalAmount" mode="currency" currency="INR" locale="en-IN" class="w-full"></p-inputNumber>
@@ -106,12 +106,18 @@
           <p-datepicker id="loanStartDate" formControlName="loanStartDate" [showIcon]="true" appendTo="body" class="w-full"></p-datepicker>
         </app-form-field>
       </div>
+      <div class="col-span-12">
+        <app-form-field label="Designated Paying Account (for shortfall warnings)" inputId="designatedPayingAccountId">
+          <p-select id="designatedPayingAccountId" [options]="payingAccountOptions()" formControlName="designatedPayingAccountId"
+            optionLabel="label" optionValue="value" [showClear]="true" placeholder="Select account (optional)" appendTo="body" class="w-full"></p-select>
+        </app-form-field>
+      </div>
     </div>
   }
 
   <!-- Bank fields -->
   @if (selectedAccountType() === AccountType.Bank) {
-    <div class="grid grid-cols-12 gap-4 grid-cols-12 gap-4">
+    <div class="grid grid-cols-12 gap-4">
       <div class="col-span-12 md:col-span-6">
         <app-form-field label="Interest Rate (%)" inputId="bankInterestRate">
           <p-inputNumber id="bankInterestRate" formControlName="bankInterestRate" suffix="%" [minFractionDigits]="2" class="w-full"></p-inputNumber>

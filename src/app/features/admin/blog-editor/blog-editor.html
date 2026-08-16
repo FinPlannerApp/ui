@@ -1,0 +1,66 @@
+<div class="flex flex-col gap-4 p-3 sm:p-5 md:p-8 w-full max-w-7xl mx-auto">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+    <h1 class="text-xl sm:text-2xl md:text-3xl font-extrabold gradient-text m-0">Blog Post CMS Editor</h1>
+    <div class="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+      <label class="flex items-center gap-2 text-xs sm:text-sm cursor-pointer select-none px-3 py-1.5 rounded-xl bg-white/5 border border-white/10">
+        <p-checkbox [ngModel]="isPublished()" (ngModelChange)="isPublished.set($event)" [binary]="true"></p-checkbox>
+        <span class="font-bold tracking-wide" [class.text-emerald-400]="isPublished()" [class.text-amber-400]="!isPublished()">
+          {{ isPublished() ? 'Published' : 'Draft' }}
+        </span>
+      </label>
+      <p-button label="Save Post" icon="pi pi-check" (onClick)="save()" [loading]="isSaving()"
+        styleClass="rounded-xl px-4 py-2 text-xs sm:text-sm font-bold shadow-md"></p-button>
+    </div>
+  </div>
+
+  <div class="flex flex-col gap-1.5">
+    <label class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Title</label>
+    <input type="text" pInputText placeholder="e.g. Introducing FinPlanner v6.0"
+      [ngModel]="title()" (ngModelChange)="title.set($event)" (blur)="slugify()" class="w-full text-base sm:text-lg font-bold rounded-xl" />
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div class="flex flex-col gap-1.5">
+      <label class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">URL Slug</label>
+      <input type="text" pInputText placeholder="url-slug"
+        [ngModel]="slug()" (ngModelChange)="slug.set($event)" class="w-full text-xs font-mono rounded-xl" />
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <label class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Media Upload</label>
+      <div class="flex items-center gap-2">
+        <input type="file" accept="image/*" (change)="uploadImage($event)" #fileInput hidden />
+        <p-button label="Upload Image (Auto WebP)" icon="pi pi-image" [loading]="isUploadingImage()"
+          (onClick)="fileInput.click()" size="small" severity="secondary" [outlined]="true"
+          styleClass="w-full rounded-xl text-xs sm:text-sm font-semibold"></p-button>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex flex-col gap-1.5">
+    <label class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Short Excerpt</label>
+    <input type="text" pInputText placeholder="Short summary for the blog list page"
+      [ngModel]="excerpt()" (ngModelChange)="excerpt.set($event)" class="w-full text-xs sm:text-sm rounded-xl" />
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-2">
+    <div class="flex flex-col gap-2">
+      <label class="text-xs text-[var(--text-muted)] font-extrabold uppercase tracking-wider flex items-center justify-between">
+        <span>Markdown Editor</span>
+        <span class="text-[10px] font-normal lowercase text-[var(--text-muted)]">github markdown format</span>
+      </label>
+      <textarea [ngModel]="contentMarkdown()" (ngModelChange)="contentMarkdown.set($event)"
+        class="w-full h-80 sm:h-96 md:h-[450px] p-3.5 rounded-2xl bg-black/30 border border-white/10 text-xs sm:text-sm font-mono leading-relaxed focus:outline-none focus:border-[var(--primary-color)] transition-colors resize-y"
+        placeholder="Write post content in markdown..."></textarea>
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <label class="text-xs text-[var(--text-muted)] font-extrabold uppercase tracking-wider flex items-center justify-between">
+        <span>Live Sanitized Preview</span>
+        <span class="text-[10px] font-normal lowercase text-[var(--text-muted)]">rendered preview</span>
+      </label>
+      <div class="w-full h-80 sm:h-96 md:h-[450px] p-4 rounded-2xl bg-black/20 border border-white/10 overflow-y-auto prose prose-invert max-w-none text-xs sm:text-sm leading-relaxed"
+        [innerHTML]="previewHtml()"></div>
+    </div>
+  </div>
+</div>

@@ -102,3 +102,34 @@ export interface PublicGroupView {
   expenses: SplitExpense[];
   balances: GroupBalances;
 }
+
+export interface InvitePreview {
+  groupName: string;
+  memberCount: number;
+  isValid: boolean;
+  invalidReason: string | null;
+}
+
+export interface CreateInviteRequest {
+  groupId: number;
+  expiresAt: string | null;
+  maxUses: number | null;
+}
+
+export interface InviteCreated {
+  token: string;
+  expiresAt: string | null;
+  maxUses: number | null;
+}
+
+export interface ImportToLedgerRequest {
+  groupId: number;
+  accountId: number;
+}
+
+export interface ImportToLedgerResult {
+  transactionsCreated: number;
+  alreadyImportedCount: number;
+}
+
+

@@ -1,4 +1,5 @@
 <p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
 
 @if (!onlineStatus.isOnline()) {
   <div class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm bg-amber-500/10 text-amber-400 border-b border-amber-500/20">
@@ -17,11 +18,20 @@
       </a>
       <h1 class="text-xl sm:text-2xl md:text-3xl font-extrabold m-0 gradient-text truncate">{{ group()?.name }}</h1>
     </div>
-    <div class="flex gap-2">
+    <div class="flex gap-2 items-center flex-wrap">
       <p-button icon="pi pi-share-alt" [text]="true" (onClick)="copyShareLink()" pTooltip="Copy share link"
         styleClass="rounded-xl"></p-button>
-      <p-button label="Add Expense" icon="pi pi-plus" (onClick)="openAddExpense()"
-        styleClass="rounded-xl font-bold px-3 py-2 text-xs sm:text-sm flex-1 sm:flex-none"></p-button>
+      @if (!isGroupClosed()) {
+        <p-button label="Close Group" icon="pi pi-lock" severity="secondary" (onClick)="closeGroup()"
+          styleClass="rounded-xl text-xs sm:text-sm"></p-button>
+        <p-button label="Add Expense" icon="pi pi-plus" (onClick)="openAddExpense()"
+          styleClass="rounded-xl font-bold px-3 py-2 text-xs sm:text-sm flex-1 sm:flex-none"></p-button>
+      } @else {
+        <p-button label="Import to My Ledger" icon="pi pi-wallet" (onClick)="openImportDialog()"
+          styleClass="rounded-xl text-xs sm:text-sm font-bold"></p-button>
+        <p-button label="Share Summary" icon="pi pi-share-alt" [text]="true" (onClick)="shareSettlementSummary()"
+          styleClass="rounded-xl text-xs sm:text-sm"></p-button>
+      }
     </div>
   </div>
 
@@ -35,11 +45,24 @@
       @for (member of group()?.members; track member.id) {
         <span class="px-3 py-1.5 rounded-full text-xs sm:text-sm bg-white/5 text-[var(--text-primary)]">{{ member.name }}</span>
       }
-      <button (click)="showAddMember.set(true)"
-        class="px-3 py-1.5 rounded-full text-xs sm:text-sm bg-white/5 hover:bg-white/10 border-none cursor-pointer text-[var(--text-muted)]">
-        <i class="pi pi-plus mr-1"></i>Add person
-      </button>
+      @if (!isGroupClosed()) {
+        <button (click)="showAddMember.set(true)"
+          class="px-3 py-1.5 rounded-full text-xs sm:text-sm bg-white/5 hover:bg-white/10 border-none cursor-pointer text-[var(--text-muted)]">
+          <i class="pi pi-plus mr-1"></i>Add person
+        </button>
+        <button (click)="createInvite()"
+          class="px-3 py-1.5 rounded-full text-xs sm:text-sm bg-white/5 hover:bg-white/10 border-none cursor-pointer text-[var(--text-muted)]">
+          <i class="pi pi-link mr-1"></i>Invite via link
+        </button>
+      }
     </div>
+
+    @if (generatedInviteLink()) {
+      <div class="glass-card p-4 rounded-2xl flex flex-col sm:flex-row items-center gap-3">
+        <input type="text" pInputText [value]="generatedInviteLink()" readonly class="w-full flex-1 text-xs" />
+        <p-button label="Copy" icon="pi pi-copy" (onClick)="copyInviteLink()" styleClass="w-full sm:w-auto"></p-button>
+      </div>
+    }
 
     @if (showAddMember()) {
       <div class="glass-card p-4 rounded-2xl flex flex-col sm:flex-row gap-3">
@@ -86,9 +109,9 @@
             <span class="text-base sm:text-lg font-bold shrink-0">{{ expense.amount | currency:'INR' }}</span>
           </div>
         } @empty {
-          <div class="glass-card p-8 rounded-2xl text-center">
-            <p class="text-sm text-[var(--text-muted)] m-0">No expenses logged yet.</p>
-          </div>
+          <app-empty-state icon="pi pi-receipt" title="No expenses logged yet"
+            message="Add the first expense for this trip." actionLabel="Add Expense"
+            (action)="openAddExpense()"></app-empty-state>
         }
       </div>
     }
@@ -124,8 +147,10 @@
                   <strong>{{ debt.fromMemberName }}</strong> owes <strong>{{ debt.toMemberName }}</strong>
                   <span class="font-bold ml-1">{{ debt.amount | currency:'INR' }}</span>
                 </span>
-                <p-button label="Pay via UPI" icon="pi pi-qrcode" (onClick)="settleDebt(debt)"
-                  styleClass="rounded-xl text-xs sm:text-sm w-full sm:w-auto"></p-button>
+                @if (!isGroupClosed()) {
+                  <p-button label="Pay via UPI" icon="pi pi-qrcode" (onClick)="settleDebt(debt)"
+                    styleClass="rounded-xl text-xs sm:text-sm w-full sm:w-auto"></p-button>
+                }
               </div>
             }
           </div>
@@ -133,6 +158,27 @@
           <div class="glass-card p-6 rounded-2xl text-center">
             <i class="pi pi-check-circle text-2xl text-emerald-400 mb-2"></i>
             <p class="text-sm text-[var(--text-muted)] m-0">Everyone's settled up.</p>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Settlement History section (shown when group is closed) -->
+    @if (isGroupClosed()) {
+      <div class="flex flex-col gap-2 mt-4">
+        <h3 class="text-sm font-bold text-[var(--text-muted)] m-0">Settlement History</h3>
+        @for (s of settlementHistory(); track s.id) {
+          <div class="glass-card p-3 rounded-xl flex items-center justify-between text-sm">
+            <span>{{ s.fromMemberName }} → {{ s.toMemberName }}</span>
+            <div class="flex items-center gap-2">
+              <span class="font-medium">{{ s.amount | currency:'INR' }}</span>
+              <p-tag [severity]="s.status === 1 ? 'success' : 'warn'"
+                [value]="s.status === 1 ? 'Completed' : 'Pending'"></p-tag>
+            </div>
+          </div>
+        } @empty {
+          <div class="glass-card p-4 rounded-xl text-center">
+            <p class="text-xs text-[var(--text-muted)] m-0">No settlements recorded.</p>
           </div>
         }
       </div>
@@ -205,5 +251,25 @@
   <ng-template pTemplate="footer">
     <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="showAddExpense.set(false)"></p-button>
     <p-button label="Save Expense" (onClick)="saveExpense()"></p-button>
+  </ng-template>
+</p-dialog>
+
+<!-- Import to Ledger dialog -->
+<p-dialog [(visible)]="showImportDialog" header="Import to Your Ledger" [modal]="true"
+  [style]="{ width: '90vw', maxWidth: '26rem' }" styleClass="glass-card">
+  <div class="flex flex-col gap-4">
+    <p class="text-sm text-[var(--text-muted)] m-0">
+      This creates a real transaction for your share of each expense in
+      this group, dated to when each expense actually happened.
+    </p>
+    <div class="flex flex-col gap-1.5">
+      <label class="text-xs sm:text-sm text-[var(--text-muted)]">Import into which account?</label>
+      <p-select [options]="accountState.accounts()" [ngModel]="importAccountId()" (ngModelChange)="importAccountId.set($event)"
+        optionLabel="name" optionValue="id" placeholder="Select account" appendTo="body" class="w-full"></p-select>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="showImportDialog.set(false)"></p-button>
+    <p-button label="Import" (onClick)="confirmImport()"></p-button>
   </ng-template>
 </p-dialog>

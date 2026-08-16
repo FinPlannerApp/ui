@@ -7,12 +7,13 @@ import { SplitService } from '../split.service';
 import { SplitGroup } from '../../../core/models/split.model';
 import { NotificationService } from '../../../core/services/notification.service';
 
+import { EmptyState } from '../../../shared/empty-state/empty-state';
+
 @Component({
   selector: 'app-split-groups',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ...sharedPrimeModules],
-  templateUrl: './split-groups.html',
-  styleUrl: './split-groups.scss'
+  imports: [CommonModule, FormsModule, RouterLink, ...sharedPrimeModules, EmptyState],
+  templateUrl: './split-groups.html'
 })
 export class SplitGroups implements OnInit {
   private splitService = inject(SplitService);

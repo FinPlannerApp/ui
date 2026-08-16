@@ -221,6 +221,10 @@ export const routes: Routes = [
         path: 'split/:id',
         loadComponent: () => import('./features/split/split-group-detail/split-group-detail').then(m => m.SplitGroupDetail)
       },
+      {
+        path: 'admin/blog-editor',
+        loadComponent: () => import('./features/admin/blog-editor/blog-editor').then(m => m.BlogEditor)
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },
@@ -228,6 +232,11 @@ export const routes: Routes = [
   {
     path: 'split/public/:token',
     loadComponent: () => import('./features/split/split-public-view/split-public-view').then(m => m.SplitPublicView)
+  },
+
+  {
+    path: 'split/join/:token',
+    loadComponent: () => import('./features/split/split-invite-landing/split-invite-landing').then(m => m.SplitInviteLanding)
   },
 
   { path: '**', redirectTo: '', pathMatch: 'full' }

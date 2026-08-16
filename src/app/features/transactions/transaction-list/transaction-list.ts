@@ -18,6 +18,7 @@ import { TransactionForm } from '../transaction-form/transaction-form';
 import { TransactionSwitchForm } from '../transaction-switch-form/transaction-switch-form';
 import { AdjustBalance } from '../../accounts/adjust-balance/adjust-balance';
 import { RecordCcBill } from '../../accounts/record-cc-bill/record-cc-bill';
+import { PayCcBill } from '../../accounts/pay-cc-bill/pay-cc-bill';
 import { AccountSummary } from '../../dashboard/dashboard';
 import { DashboardService } from '../../dashboard/dashboard';
 import { AccountState } from '../../../core/state/account-state.service';
@@ -80,6 +81,7 @@ export class TransactionList implements OnInit {
   summary = signal<AccountSummary | null>(null);
 
   bucketBreakdown = signal<AccountBucketBreakdown | null>(null);
+  cashbackInsights = signal<any | null>(null);
   showBucketForm = signal(false);
   newBucketName = signal('');
   newBucketAmount = signal<number | null>(null);
@@ -236,6 +238,20 @@ export class TransactionList implements OnInit {
     }
   }
 
+  async loadCashbackInsights(): Promise<void> {
+    const acc = this.currentAccount();
+    if (!acc || acc.accountType !== AccountType.CreditCard) return;
+    try {
+      const result = await firstValueFrom(this.api.get<any>('Accounts/cashback-insights'));
+      if (result.isSuccess) {
+        this.cashbackInsights.set(result.value);
+        this.cdr.markForCheck();
+      }
+    } catch (err) {
+      // Non-critical supplementary data
+    }
+  }
+
   async addBucket(): Promise<void> {
     const id = this.accountId();
     const name = this.newBucketName().trim();
@@ -328,6 +344,7 @@ export class TransactionList implements OnInit {
       this.totalRecords.set(paginatedResult.totalRecords);
       this.summary.set(summaryData);
       await this.loadBuckets();
+      await this.loadCashbackInsights();
 
       const accountName = this.currentAccount()?.name || 'Account';
       this.breadcrumbService.setItems([
@@ -471,6 +488,31 @@ export class TransactionList implements OnInit {
       data: {
         accountId: acc.id,
         accountName: acc.name
+      }
+    });
+
+    if (this.ref) {
+      this.ref.onClose.subscribe((changed: boolean) => {
+        if (changed) {
+          this.loadData();
+          this.accountState.refresh();
+        }
+      });
+    }
+  }
+
+  openPayCcBill(): void {
+    const acc = this.currentAccount();
+    if (!acc) return;
+
+    this.ref = this.dialogService.open(PayCcBill, {
+      header: 'Pay Credit Card Bill',
+      width: '28rem',
+      modal: true,
+      data: {
+        accountId: acc.id,
+        accountName: acc.name,
+        outstandingBalance: Math.abs(acc.balance)
       }
     });
 

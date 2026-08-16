@@ -64,6 +64,12 @@ export class AccountForm {
     return category?.accountType ?? null;
   });
 
+  payingAccountOptions = computed(() =>
+    this.accountState.accounts()
+      .filter(a => a.id !== this.accountForm.get('id')?.value)
+      .map(a => ({ label: a.name, value: a.id }))
+  );
+
   constructor() {
     this.accountForm = this.fb.group({
       id: [null],
@@ -87,6 +93,7 @@ export class AccountForm {
       tenureMonths: [null],
       nextEmiDueDate: [null],
       loanStartDate: [null],
+      designatedPayingAccountId: [null],
 
       // Bank fields
       bankInterestRate: [null],
@@ -139,7 +146,8 @@ export class AccountForm {
           emiAmount: item.loanDetails.emiAmount,
           tenureMonths: item.loanDetails.tenureMonths,
           nextEmiDueDate: item.loanDetails.nextEmiDueDate ? new Date(item.loanDetails.nextEmiDueDate) : null,
-          loanStartDate: item.loanDetails.startDate ? new Date(item.loanDetails.startDate) : null
+          loanStartDate: item.loanDetails.startDate ? new Date(item.loanDetails.startDate) : null,
+          designatedPayingAccountId: item.loanDetails.designatedPayingAccountId ?? null
         });
       }
       if (item.bankAccountDetails) {
@@ -229,7 +237,8 @@ export class AccountForm {
         emiAmount: raw.emiAmount,
         tenureMonths: raw.tenureMonths,
         nextEmiDueDate: toIso(raw.nextEmiDueDate),
-        startDate: toIso(raw.loanStartDate)
+        startDate: toIso(raw.loanStartDate),
+        designatedPayingAccountId: raw.designatedPayingAccountId
       } : null,
       bankAccountDetails: type === AccountType.Bank ? {
         interestRate: raw.bankInterestRate,

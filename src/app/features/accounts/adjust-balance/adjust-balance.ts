@@ -11,8 +11,7 @@ import { NotificationService } from '../../../core/services/notification.service
   selector: 'app-adjust-balance',
   standalone: true,
   imports: [CommonModule, FormsModule, ...sharedPrimeModules],
-  templateUrl: './adjust-balance.html',
-  styleUrl: './adjust-balance.scss'
+  templateUrl: './adjust-balance.html'
 })
 export class AdjustBalance {
   public ref = inject(DynamicDialogRef);

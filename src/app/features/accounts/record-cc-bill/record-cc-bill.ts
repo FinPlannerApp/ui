@@ -18,8 +18,7 @@ export interface CreditCardBillResult {
   selector: 'app-record-cc-bill',
   standalone: true,
   imports: [CommonModule, FormsModule, ...sharedPrimeModules],
-  templateUrl: './record-cc-bill.html',
-  styleUrl: './record-cc-bill.scss'
+  templateUrl: './record-cc-bill.html'
 })
 export class RecordCcBill {
   public ref = inject(DynamicDialogRef);

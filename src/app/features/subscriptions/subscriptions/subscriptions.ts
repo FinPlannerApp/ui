@@ -15,8 +15,7 @@ import { GenericApi } from '../../../core/services/generic-api';
   selector: 'app-subscriptions',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, ...sharedPrimeModules],
-  templateUrl: './subscriptions.html',
-  styleUrl: './subscriptions.scss'
+  templateUrl: './subscriptions.html'
 })
 export class Subscriptions implements OnInit {
   private subscriptionService = inject(SubscriptionService);

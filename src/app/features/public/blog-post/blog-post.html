@@ -5,17 +5,16 @@
         <span>Back to Blog</span>
     </a>
 
-    @if(post) {
+    @if (post(); as p) {
     <article class="glass-card p-4 md:p-6 rounded-3xl">
-        <span class="inline-block text-xs font-bold px-3 py-2 rounded-xl mb-4" [style.background]="post.tagColor"
-            style="color: white;">{{ post.tag }}</span>
+        <span class="inline-block text-xs font-bold px-3 py-2 rounded-xl mb-4 text-white" [style.background]="p.tagColor">{{ p.tag }}</span>
 
-        <h1 class="text-4xl md:text-5xl font-bold mb-3 mt-0">{{ post.title }}</h1>
+        <h1 class="text-4xl md:text-5xl font-bold mb-3 mt-0">{{ p.title }}</h1>
 
         <div class="flex items-center gap-3 text-[var(--text-muted)] mb-5 pb-5 border-b border-[var(--glass-border)]">
             <div class="flex items-center gap-2">
                 <i class="pi pi-calendar"></i>
-                <span>{{ post.date }}</span>
+                <span>{{ p.date }}</span>
             </div>
             <span>•</span>
             <div class="flex items-center gap-2">
@@ -24,7 +23,7 @@
             </div>
         </div>
 
-        <div class="blog-content text-lg line-height-3" [innerHTML]="post.content">
+        <div class="blog-content text-lg line-height-3" [innerHTML]="p.content">
         </div>
     </article>
     } @else {
