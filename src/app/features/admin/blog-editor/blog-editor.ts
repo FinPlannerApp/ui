@@ -71,19 +71,14 @@ export class BlogEditor implements OnInit {
     this.isUploadingImage.set(true);
     try {
       const formData = new FormData();
-      formData.append('file', file, file.name);
+      formData.append('file', file);
 
-      const res = await firstValueFrom(
-        this.api.post<any>('Blog/admin/upload-image', formData)
-      );
+      const result = await firstValueFrom(this.api.postFormData<string>('Blog/admin/upload-image', formData));
+      if (!result.isSuccess) throw new Error('Upload failed.');
 
-      if (res.isSuccess) {
-        const publicUrl = res.value.publicUrl;
-        this.contentMarkdown.update(md => `${md}\n\n![${file.name}](${publicUrl})\n`);
-        this.notificationService.showSuccess('Image uploaded and inserted as WebP.');
-      } else {
-        throw new Error('Image upload failed.');
-      }
+      const publicUrl = typeof result.value === 'string' ? result.value : (result.value as any)?.publicUrl;
+      this.contentMarkdown.update(md => `${md}\n\n![${file.name}](${publicUrl})\n`);
+      this.notificationService.showSuccess('Image uploaded and inserted as WebP.');
     } catch (err: any) {
       this.notificationService.showError(err?.message || 'Image upload failed.');
     } finally {

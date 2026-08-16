@@ -67,4 +67,8 @@ export class GenericApi {
   post<T>(endpoint: string, data: any): Observable<ApiResult<T>> {
     return this.http.post<ApiResult<T>>(this.buildUrl(endpoint), data);
   }
+
+  postFormData<T>(endpoint: string, formData: FormData): Observable<ApiResult<T>> {
+    return this.http.post<ApiResult<T>>(this.buildUrl(endpoint), formData);
+  }
 }
