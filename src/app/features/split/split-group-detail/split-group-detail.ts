@@ -7,7 +7,7 @@ import { sharedPrimeModules } from '../../../shared/prime-imports';
 import { SplitService } from '../split.service';
 import {
   ExpenseParticipantLine, GroupBalances, SettlementMethod, SimplifiedDebt,
-  SplitExpense, SplitGroup, SplitType
+  SplitExpense, SplitGroup, SplitMember, SplitType
 } from '../../../core/models/split.model';
 import { NotificationService } from '../../../core/services/notification.service';
 import { DraftPersistenceService } from '../../../core/services/draft-persistence.service';
@@ -65,6 +65,29 @@ export class SplitGroupDetail implements OnInit {
   newMemberName = signal('');
   newMemberUpi = signal('');
 
+  editingMemberId = signal<number | null>(null);
+  editMemberUpi = signal('');
+
+  startEditUpi(member: SplitMember): void {
+    this.editingMemberId.set(member.id);
+    this.editMemberUpi.set(member.upiId ?? '');
+  }
+
+  cancelEditUpi(): void {
+    this.editingMemberId.set(null);
+  }
+
+  async saveEditUpi(memberId: number): Promise<void> {
+    try {
+      await this.splitService.updateMemberUpi(memberId, this.editMemberUpi().trim());
+      this.notificationService.showSuccess('UPI updated.');
+      this.editingMemberId.set(null);
+      await this.loadAll();
+    } catch (err: any) {
+      this.notificationService.showError(err?.message || 'Failed to update UPI.');
+    }
+  }
+
   // ── Add expense ──────────────────────────────────────────────────────────────
   showAddExpense = signal(false);
   expDescription = signal('');
@@ -72,6 +95,35 @@ export class SplitGroupDetail implements OnInit {
   expDate = signal<Date>(new Date());
   expSplitType = signal<SplitType>(SplitType.Equal);
   expPayerId = signal<number | null>(null);
+  splitPayment = signal(false); // opt-in toggle for multi-payer mode
+  expPayers = signal<{ memberId: number | null; amount: number | null }[]>([{ memberId: null, amount: null }]);
+
+  togglePaymentSplit(): void {
+    this.splitPayment.update(v => !v);
+    if (this.splitPayment()) {
+      // Seed the first row with whatever was already selected in the
+      // single-payer dropdown, so switching modes doesn't lose what
+      // the user already picked.
+      this.expPayers.set([{ memberId: this.expPayerId(), amount: this.expAmount() }]);
+    }
+  }
+
+  addPayerRow(): void {
+    this.expPayers.update(rows => [...rows, { memberId: null, amount: null }]);
+  }
+
+  removePayerRow(index: number): void {
+    if (this.expPayers().length === 1) return;
+    this.expPayers.update(rows => rows.filter((_, i) => i !== index));
+  }
+
+  updatePayerRow(index: number, patch: Partial<{ memberId: number | null; amount: number | null }>): void {
+    this.expPayers.update(rows => rows.map((r, i) => i === index ? { ...r, ...patch } : r));
+  }
+
+  payersTotal = computed(() =>
+    this.expPayers().reduce((sum, r) => sum + (r.amount ?? 0), 0)
+  );
   expParticipantIds = signal<Set<number>>(new Set());
   expExactAmounts = signal<Record<number, number>>({});
   expPercentages = signal<Record<number, number>>({});
@@ -237,6 +289,8 @@ export class SplitGroupDetail implements OnInit {
       this.expSplitType.set(draft.splitType ?? SplitType.Equal);
       this.expParticipantIds.set(new Set(draft.participantIds ?? []));
       this.expPayerId.set(this.group()?.members[0]?.id ?? null);
+      this.splitPayment.set(false);
+      this.expPayers.set([{ memberId: null, amount: null }]);
       this.notificationService.showSuccess('Restored your unfinished expense from earlier.');
     } else {
       this.expDescription.set('');
@@ -248,6 +302,8 @@ export class SplitGroupDetail implements OnInit {
       this.expExactAmounts.set({});
       this.expPercentages.set({});
       this.expShares.set({});
+      this.splitPayment.set(false);
+      this.expPayers.set([{ memberId: null, amount: null }]);
     }
     this.showAddExpense.set(true);
   }
@@ -273,12 +329,36 @@ export class SplitGroupDetail implements OnInit {
   async saveExpense(): Promise<void> {
     const amount = this.expAmount();
     const description = this.expDescription().trim();
-    const payerId = this.expPayerId();
     const participantIds = Array.from(this.expParticipantIds());
 
-    if (!description || amount === null || amount <= 0 || payerId === null || participantIds.length === 0) {
-      this.notificationService.showError('Description, amount, payer, and at least one participant are required.');
+    if (!description || amount === null || amount <= 0 || participantIds.length === 0) {
+      this.notificationService.showError('Description, amount, and at least one participant are required.');
       return;
+    }
+
+    let payers: { memberId: number; amountPaid: number }[];
+
+    if (this.splitPayment()) {
+      const rows = this.expPayers();
+      if (rows.some(r => r.memberId === null || r.amount === null || r.amount <= 0)) {
+        this.notificationService.showError('Every payer needs a person selected and an amount greater than zero.');
+        return;
+      }
+      const total = this.payersTotal();
+      if (Math.abs(total - amount) > 0.01) {
+        this.notificationService.showError(
+          `Payers add up to ₹${total.toFixed(2)}, but the expense total is ₹${amount.toFixed(2)}.`
+        );
+        return;
+      }
+      payers = rows.map(r => ({ memberId: r.memberId!, amountPaid: r.amount! }));
+    } else {
+      const payerId = this.expPayerId();
+      if (payerId === null) {
+        this.notificationService.showError('Select who paid.');
+        return;
+      }
+      payers = [{ memberId: payerId, amountPaid: amount }];
     }
 
     const type = this.expSplitType();
@@ -297,7 +377,7 @@ export class SplitGroupDetail implements OnInit {
         date: this.expDate().toISOString(),
         category: null,
         splitType: type,
-        payers: [{ memberId: payerId, amountPaid: amount }],
+        payers,
         participants
       });
       this.showAddExpense.set(false);

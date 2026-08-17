@@ -43,7 +43,13 @@
     <!-- Members strip -->
     <div class="flex items-center gap-2 flex-wrap">
       @for (member of group()?.members; track member.id) {
-        <span class="px-3 py-1.5 rounded-full text-xs sm:text-sm bg-white/5 text-[var(--text-primary)]">{{ member.name }}</span>
+        <button (click)="startEditUpi(member)"
+          class="px-3 py-1.5 rounded-full text-xs sm:text-sm bg-white/5 hover:bg-white/10 border-none cursor-pointer text-[var(--text-primary)] flex items-center gap-1.5">
+          {{ member.name }}
+          @if (member.upiId) {
+            <i class="pi pi-check-circle text-emerald-400" style="font-size: 0.65rem;" pTooltip="UPI set"></i>
+          }
+        </button>
       }
       @if (!isGroupClosed()) {
         <button (click)="showAddMember.set(true)"
@@ -56,6 +62,19 @@
         </button>
       }
     </div>
+
+    @if (editingMemberId() !== null) {
+      <div class="glass-card p-4 rounded-2xl flex flex-col sm:flex-row gap-3 items-center">
+        <span class="text-sm text-[var(--text-muted)] whitespace-nowrap">UPI ID</span>
+        <input type="text" pInputText class="w-full sm:flex-1" placeholder="e.g. name@upi"
+          [ngModel]="editMemberUpi()" (ngModelChange)="editMemberUpi.set($event)" />
+        <div class="flex gap-2 w-full sm:w-auto">
+          <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="cancelEditUpi()"
+            styleClass="flex-1 sm:flex-none"></p-button>
+          <p-button label="Save" (onClick)="saveEditUpi(editingMemberId()!)" styleClass="flex-1 sm:flex-none"></p-button>
+        </div>
+      </div>
+    }
 
     @if (generatedInviteLink()) {
       <div class="glass-card p-4 rounded-2xl flex flex-col sm:flex-row items-center gap-3">
@@ -210,9 +229,48 @@
     </div>
 
     <div class="flex flex-col gap-1.5">
-      <label class="text-xs sm:text-sm text-[var(--text-muted)]">Paid by</label>
-      <p-select [options]="memberOptions()" [ngModel]="expPayerId()" (ngModelChange)="expPayerId.set($event)"
-        optionLabel="label" optionValue="value" appendTo="body" class="w-full"></p-select>
+      <div class="flex items-center justify-between">
+        <label class="text-xs sm:text-sm text-[var(--text-muted)]">Paid by</label>
+        <button (click)="togglePaymentSplit()"
+          class="text-xs text-[var(--primary-color)] bg-transparent border-none cursor-pointer p-0">
+          {{ splitPayment() ? 'Single payer instead' : 'Split payment across multiple people' }}
+        </button>
+      </div>
+
+      @if (!splitPayment()) {
+        <p-select [options]="memberOptions()" [ngModel]="expPayerId()" (ngModelChange)="expPayerId.set($event)"
+          optionLabel="label" optionValue="value" appendTo="body" class="w-full"></p-select>
+      } @else {
+        <div class="flex flex-col gap-2">
+          @for (row of expPayers(); track $index) {
+            <div class="flex items-center gap-2">
+              <p-select [options]="memberOptions()" [ngModel]="row.memberId"
+                (ngModelChange)="updatePayerRow($index, { memberId: $event })"
+                optionLabel="label" optionValue="value" appendTo="body" class="flex-1"
+                placeholder="Who paid"></p-select>
+              <p-inputNumber [ngModel]="row.amount" (ngModelChange)="updatePayerRow($index, { amount: $event })"
+                mode="currency" currency="INR" locale="en-IN" class="w-28 sm:w-36" placeholder="Amount"></p-inputNumber>
+              @if (expPayers().length > 1) {
+                <button (click)="removePayerRow($index)"
+                  class="text-red-400 bg-transparent border-none cursor-pointer text-sm">✕</button>
+              }
+            </div>
+          }
+          <button (click)="addPayerRow()"
+            class="text-xs text-[var(--primary-color)] bg-transparent border-none cursor-pointer p-0 text-left">
+            + Add another payer
+          </button>
+          <div class="flex items-center justify-between text-xs pt-1">
+            <span class="text-[var(--text-muted)]">Payers total</span>
+            <span [class.text-red-400]="expAmount() !== null && payersTotal() !== expAmount()">
+              {{ payersTotal() | currency:'INR' }}
+              @if (expAmount() !== null) {
+                / {{ expAmount() | currency:'INR' }}
+              }
+            </span>
+          </div>
+        </div>
+      }
     </div>
 
     <div class="flex flex-col gap-1.5">
