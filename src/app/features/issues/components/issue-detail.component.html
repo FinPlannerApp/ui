@@ -210,9 +210,9 @@
   </p-card>
 
   <!-- Grid layout for Comments and Activity Feed -->
-  <div class="grid grid-cols-12 gap-4 grid-cols-12 gap-4">
+  <div class="grid grid-cols-12 gap-4">
     <!-- Discussion / Comments Column -->
-    <div class="col-span-12 md:col-8">
+    <div class="col-span-12 lg:col-span-8">
       <p-card styleClass="shadow-lg h-full">
         <div class="flex items-center gap-2 mb-4">
           <i class="pi pi-comments text-xl"></i>
@@ -222,12 +222,12 @@
         <!-- Add Comment -->
         <div class="mb-4 p-3 surface-ground rounded">
           <p-editor [(ngModel)]="newCommentValue" [style]="{'height':'120px'}" placeholder="Share your thoughts, add context, or suggest a fix..."></p-editor>
-          <div class="flex justify-between items-center mt-2">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mt-2">
             <div class="flex items-center gap-2">
               <span class="text-sm font-semibold text-[var(--text-muted)]">Comment Type:</span>
-              <p-select [options]="commentTypeOptions" [(ngModel)]="newCommentTypeValue" placeholder="Select Type" size="small" styleClass="w-10rem"></p-select>
+              <p-select [options]="commentTypeOptions" [(ngModel)]="newCommentTypeValue" placeholder="Select Type" size="small" styleClass="w-full sm:w-36"></p-select>
             </div>
-            <p-button label="Post Comment" icon="pi pi-send" size="small" (onClick)="submitComment()" [disabled]="isHtmlEmpty(newComment())"></p-button>
+            <p-button label="Post Comment" icon="pi pi-send" size="small" (onClick)="submitComment()" [disabled]="isHtmlEmpty(newComment())" styleClass="w-full sm:w-auto"></p-button>
           </div>
         </div>
 
@@ -247,7 +247,7 @@
     </div>
 
     <!-- Activity Feed Timeline Column -->
-    <div class="col-span-12 md:col-span-4">
+    <div class="col-span-12 lg:col-span-4">
       <p-card styleClass="shadow-lg h-full">
         <div class="flex items-center gap-2 mb-4">
           <i class="pi pi-history text-xl"></i>

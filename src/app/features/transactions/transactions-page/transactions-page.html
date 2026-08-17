@@ -1,103 +1,108 @@
 <div class="transactions-page">
 
   <!-- FILTER BAR -->
-  <div class="filter-bar mb-4 flex flex-wrap items-center gap-3">
-    <div class="flex items-center gap-2 mr-auto">
-      <p-button label="Back to Dashboard" icon="pi pi-arrow-left" severity="secondary" outlined="true"
-        (onClick)="goToDashboard()"></p-button>
-      <p-button label="Bulk Add" icon="pi pi-plus-circle" severity="primary" (onClick)="goToBulkAdd()"></p-button>
+  <div class="glass-card p-4 rounded-2xl mb-4 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+    <div class="flex items-center gap-2">
+      <p-button label="Back to Dashboard" icon="pi pi-arrow-left" severity="secondary" [outlined]="true"
+        (onClick)="goToDashboard()" styleClass="rounded-xl text-xs sm:text-sm"></p-button>
+      <p-button label="Bulk Add" icon="pi pi-plus-circle" severity="primary" (onClick)="goToBulkAdd()"
+        styleClass="rounded-xl text-xs sm:text-sm font-bold"></p-button>
     </div>
 
-    <p-fieldset legend="Period">
-      <p-datepicker [(ngModel)]="selectedDate" view="month" dateFormat="mm/yy" (ngModelChange)="onDateChange($event)"
-        placeholder="Select Month" [showIcon]="true" iconDisplay="input" [style]="{'width': '12rem'}"></p-datepicker>
-    </p-fieldset>
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-wrap">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center gap-1.5">
+        <span class="text-xs text-[var(--text-muted)] font-semibold uppercase tracking-wider">Period</span>
+        <p-datepicker [(ngModel)]="selectedDate" view="month" dateFormat="mm/yy" (ngModelChange)="onDateChange($event)"
+          placeholder="Select Month" [showIcon]="true" iconDisplay="input" styleClass="w-full sm:w-36"></p-datepicker>
+      </div>
 
-    <p-fieldset legend="Category">
-      <p-select [options]="categoryOptions" [(ngModel)]="selectedCategory" optionLabel="label" optionValue="value"
-        placeholder="All Categories" [showClear]="true" (onChange)="onCategoryChange()"
-        [style]="{'min-width': '12rem'}" class="p-inputtext-sm">
-      </p-select>
-    </p-fieldset>
+      <div class="flex flex-col sm:flex-row items-start sm:items-center gap-1.5">
+        <span class="text-xs text-[var(--text-muted)] font-semibold uppercase tracking-wider">Category</span>
+        <p-select [options]="categoryOptions" [(ngModel)]="selectedCategory" optionLabel="label" optionValue="value"
+          placeholder="All Categories" [showClear]="true" (onChange)="onCategoryChange()"
+          styleClass="w-full sm:w-44" class="p-inputtext-sm">
+        </p-select>
+      </div>
 
-    <div class="flex items-center gap-1">
-      <p-iconfield>
-        <p-inputicon class="pi pi-search"></p-inputicon>
-        <input pInputText type="text" name="transactionSearch" autocomplete="off" [(ngModel)]="globalSearch"
-          (keyup.enter)="onSearch()" placeholder="Search..." class="w-15rem p-inputtext-sm" />
-      </p-iconfield>
-      <p-button icon="pi pi-search" [text]="true" severity="primary" size="small" (onClick)="onSearch()"
-        pTooltip="Run Search"></p-button>
-      @if (globalSearch) {
-      <p-button icon="pi pi-times" [text]="true" severity="secondary" size="small" (onClick)="clearSearch()"
-        pTooltip="Clear Search"></p-button>
-      }
+      <div class="flex items-center gap-1.5 w-full sm:w-auto">
+        <p-iconfield class="flex-1 sm:w-48">
+          <p-inputicon class="pi pi-search"></p-inputicon>
+          <input pInputText type="text" name="transactionSearch" autocomplete="off" [(ngModel)]="globalSearch"
+            (keyup.enter)="onSearch()" placeholder="Search..." class="w-full p-inputtext-sm" />
+        </p-iconfield>
+        <p-button icon="pi pi-search" [text]="true" severity="primary" size="small" (onClick)="onSearch()"
+          pTooltip="Run Search"></p-button>
+        @if (globalSearch) {
+          <p-button icon="pi pi-times" [text]="true" severity="secondary" size="small" (onClick)="clearSearch()"
+            pTooltip="Clear Search"></p-button>
+        }
+      </div>
     </div>
   </div>
 
   <!-- SUMMARY CARDS -->
-  <div class="summary-cards-grid mb-4">
-    <div class="summary-card-wrapper">
-      <p-card>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-4">
+    <div class="summary-card-wrapper h-full">
+      <p-card styleClass="h-full shadow-lg">
         <ng-template pTemplate="header">
-          <div class="summary-card-header">
-            <i class="pi pi-history summary-icon bf-icon"></i>
-            <span class="text-sm font-semibold text-[var(--text-muted)]">Balance B/F</span>
+          <div class="summary-card-header flex items-center gap-2 p-3 pb-0">
+            <i class="pi pi-history summary-icon bf-icon text-lg text-blue-400"></i>
+            <span class="text-xs sm:text-sm font-semibold text-[var(--text-muted)]">Balance B/F</span>
           </div>
         </ng-template>
-        <p class="summary-value" [class.text-green-500]="balanceBF >= 0" [class.text-red-500]="balanceBF < 0">
+        <p class="summary-value text-base sm:text-lg font-bold m-0 mt-2" [class.text-green-500]="balanceBF >= 0" [class.text-red-500]="balanceBF < 0">
           {{ balanceBF | currency:'INR' }}
         </p>
       </p-card>
     </div>
-    <div class="summary-card-wrapper">
-      <p-card>
+    <div class="summary-card-wrapper h-full">
+      <p-card styleClass="h-full shadow-lg">
         <ng-template pTemplate="header">
-          <div class="summary-card-header">
-            <i class="pi pi-arrow-down summary-icon income-icon"></i>
-            <span class="text-sm font-semibold text-[var(--text-muted)]">Total Income</span>
+          <div class="summary-card-header flex items-center gap-2 p-3 pb-0">
+            <i class="pi pi-arrow-down summary-icon income-icon text-lg text-emerald-400"></i>
+            <span class="text-xs sm:text-sm font-semibold text-[var(--text-muted)]">Total Income</span>
           </div>
         </ng-template>
-        <p class="summary-value text-green-500">
+        <p class="summary-value text-base sm:text-lg font-bold text-green-500 m-0 mt-2">
           {{ totalIncome | currency:'INR' }}
         </p>
       </p-card>
     </div>
-    <div class="summary-card-wrapper">
-      <p-card>
+    <div class="summary-card-wrapper h-full">
+      <p-card styleClass="h-full shadow-lg">
         <ng-template pTemplate="header">
-          <div class="summary-card-header">
-            <i class="pi pi-arrow-up summary-icon expense-icon"></i>
-            <span class="text-sm font-semibold text-[var(--text-muted)]">Total Expenditure</span>
+          <div class="summary-card-header flex items-center gap-2 p-3 pb-0">
+            <i class="pi pi-arrow-up summary-icon expense-icon text-lg text-rose-400"></i>
+            <span class="text-xs sm:text-sm font-semibold text-[var(--text-muted)]">Total Expenditure</span>
           </div>
         </ng-template>
-        <p class="summary-value text-red-500">
+        <p class="summary-value text-base sm:text-lg font-bold text-red-500 m-0 mt-2">
           {{ totalExpenses | currency:'INR' }}
         </p>
       </p-card>
     </div>
-    <div class="summary-card-wrapper">
-      <p-card>
+    <div class="summary-card-wrapper h-full">
+      <p-card styleClass="h-full shadow-lg">
         <ng-template pTemplate="header">
-          <div class="summary-card-header">
-            <i class="pi pi-wallet summary-icon savings-icon"></i>
-            <span class="text-sm font-semibold text-[var(--text-muted)]">Total Savings</span>
+          <div class="summary-card-header flex items-center gap-2 p-3 pb-0">
+            <i class="pi pi-wallet summary-icon savings-icon text-lg text-amber-400"></i>
+            <span class="text-xs sm:text-sm font-semibold text-[var(--text-muted)]">Total Savings</span>
           </div>
         </ng-template>
-        <p class="summary-value" [class.text-green-500]="totalSavings >= 0" [class.text-red-500]="totalSavings < 0">
+        <p class="summary-value text-base sm:text-lg font-bold m-0 mt-2" [class.text-green-500]="totalSavings >= 0" [class.text-red-500]="totalSavings < 0">
           {{ totalSavings | currency:'INR' }}
         </p>
       </p-card>
     </div>
-    <div class="summary-card-wrapper">
-      <p-card>
+    <div class="summary-card-wrapper h-full">
+      <p-card styleClass="h-full shadow-lg">
         <ng-template pTemplate="header">
-          <div class="summary-card-header">
-            <i class="pi pi-verified summary-icon closing-icon"></i>
-            <span class="text-sm font-semibold text-[var(--text-muted)]">Closing Balance</span>
+          <div class="summary-card-header flex items-center gap-2 p-3 pb-0">
+            <i class="pi pi-verified summary-icon closing-icon text-lg text-teal-400"></i>
+            <span class="text-xs sm:text-sm font-semibold text-[var(--text-muted)]">Closing Balance</span>
           </div>
         </ng-template>
-        <p class="summary-value" [class.text-green-500]="closingBalance >= 0" [class.text-red-500]="closingBalance < 0">
+        <p class="summary-value text-base sm:text-lg font-bold m-0 mt-2" [class.text-green-500]="closingBalance >= 0" [class.text-red-500]="closingBalance < 0">
           {{ closingBalance | currency:'INR' }}
         </p>
       </p-card>

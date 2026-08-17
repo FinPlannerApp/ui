@@ -9,7 +9,7 @@
       <!-- Issue Type Selector -->
       <div class="flex flex-col gap-2">
         <label class="font-semibold">What type of feedback?</label>
-        <div class="flex gap-2">
+        <div class="flex flex-col sm:flex-row gap-2">
           <p-button [outlined]="form.get('type')?.value !== 'Bug'" severity="danger"
             label="🐛 Bug Report" (onClick)="form.patchValue({type: 'Bug'})" styleClass="flex-1"></p-button>
           <p-button [outlined]="form.get('type')?.value !== 'Feature'" severity="success"
