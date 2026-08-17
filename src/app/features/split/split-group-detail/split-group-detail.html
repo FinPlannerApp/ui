@@ -243,16 +243,22 @@
       } @else {
         <div class="flex flex-col gap-2">
           @for (row of expPayers(); track $index) {
-            <div class="flex items-center gap-2">
-              <p-select [options]="memberOptions()" [ngModel]="row.memberId"
-                (ngModelChange)="updatePayerRow($index, { memberId: $event })"
-                optionLabel="label" optionValue="value" appendTo="body" class="flex-1"
-                placeholder="Who paid"></p-select>
-              <p-inputNumber [ngModel]="row.amount" (ngModelChange)="updatePayerRow($index, { amount: $event })"
-                mode="currency" currency="INR" locale="en-IN" class="w-28 sm:w-36" placeholder="Amount"></p-inputNumber>
+            <div class="flex items-center gap-2 w-full">
+              <div class="flex-1 min-w-0">
+                <p-select [options]="memberOptions()" [ngModel]="row.memberId"
+                  (ngModelChange)="updatePayerRow($index, { memberId: $event })"
+                  optionLabel="label" optionValue="value" appendTo="body"
+                  styleClass="w-full" class="w-full"
+                  placeholder="Who paid"></p-select>
+              </div>
+              <div class="w-28 sm:w-36 shrink-0">
+                <p-inputNumber [ngModel]="row.amount" (ngModelChange)="updatePayerRow($index, { amount: $event })"
+                  mode="currency" currency="INR" locale="en-IN"
+                  styleClass="w-full" class="w-full" placeholder="Amount"></p-inputNumber>
+              </div>
               @if (expPayers().length > 1) {
                 <button (click)="removePayerRow($index)"
-                  class="text-red-400 bg-transparent border-none cursor-pointer text-sm">✕</button>
+                  class="text-red-400 bg-transparent border-none cursor-pointer text-sm shrink-0 p-1">✕</button>
               }
             </div>
           }
@@ -330,4 +336,24 @@
     <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="showImportDialog.set(false)"></p-button>
     <p-button label="Import" (onClick)="confirmImport()"></p-button>
   </ng-template>
+</p-dialog>
+
+<p-dialog [visible]="qrCodeDataUrl() !== null" (visibleChange)="closeQrDialog()"
+  header="Scan to Pay" [modal]="true" [style]="{ width: '20rem' }">
+  @if (qrPaymentDetails()) {
+    <div class="flex flex-col items-center gap-3 text-center">
+      <img [src]="qrCodeDataUrl()" alt="UPI payment QR code" class="rounded-xl" />
+      <p class="text-sm m-0">
+        Pay <strong>{{ qrPaymentDetails()!.amount | currency:'INR' }}</strong>
+        to <strong>{{ qrPaymentDetails()!.payeeName }}</strong>
+      </p>
+      <p class="text-xs text-[var(--text-muted)] m-0">
+        Scan with any UPI app — GPay, PhonePe, Paytm, or your bank's app.
+      </p>
+      <a [href]="qrPaymentDetails()!.upiDeepLink"
+        class="text-xs text-[var(--primary-color)] no-underline">
+        On this phone? Tap to open your UPI app directly
+      </a>
+    </div>
+  }
 </p-dialog>

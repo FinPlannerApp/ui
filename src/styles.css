@@ -604,9 +604,24 @@ button[aria-label="Close"] {
   background: var(--input-bg-focus, rgba(255, 255, 255, 0.08)) !important;
 }
 
-/* Generic PrimeNG 20 Select Component (p-select) Inner Layout */
+p-inputnumber,
+span.p-inputnumber,
+.p-inputnumber {
+  width: 100% !important;
+  display: flex !important;
+}
+
+/* Generic PrimeNG Select Component (p-select) Host & Inner Layout */
+p-select,
+span.p-select,
+.p-select-host {
+  width: 100% !important;
+  display: flex !important;
+}
+
 .p-select {
-  display: inline-flex !important;
+  display: flex !important;
+  width: 100% !important;
   align-items: center !important;
   justify-content: space-between !important;
   cursor: pointer !important;

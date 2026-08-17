@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import * as QRCode from 'qrcode';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ConfirmationService } from 'primeng/api';
@@ -59,6 +60,14 @@ export class SplitGroupDetail implements OnInit {
   importAccountId = signal<number | null>(null);
   settlementHistory = signal<any[]>([]);
   isGroupClosed = computed(() => this.group()?.status !== 0); // 0 = Active
+
+  qrCodeDataUrl = signal<string | null>(null);
+  qrPaymentDetails = signal<{ upiDeepLink: string; payeeName: string; amount: number } | null>(null);
+
+  closeQrDialog(): void {
+    this.qrCodeDataUrl.set(null);
+    this.qrPaymentDetails.set(null);
+  }
 
   // ── Add member ──────────────────────────────────────────────────────────────
   showAddMember = signal(false);
@@ -403,7 +412,13 @@ export class SplitGroupDetail implements OnInit {
 
       try {
         const paymentRequest = await this.splitService.getPaymentRequest(settlement.id);
-        window.open(paymentRequest.upiDeepLink, '_blank');
+        const dataUrl = await QRCode.toDataURL(paymentRequest.upiDeepLink, { width: 240, margin: 1 });
+        this.qrCodeDataUrl.set(dataUrl);
+        this.qrPaymentDetails.set({
+          upiDeepLink: paymentRequest.upiDeepLink,
+          payeeName: debt.toMemberName,
+          amount: debt.amount
+        });
       } catch {
         this.notificationService.showError(`${debt.toMemberName} hasn't added a UPI ID — mark this paid manually once settled.`);
       }
