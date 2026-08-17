@@ -2,6 +2,7 @@
   "name": "financialplanner",
   "compatibility_date": "2025-10-03",
   "assets": {
-    "directory": "dist/angular-app/browser"
+    "directory": "dist/angular-app/browser",
+    "not_found_handling": "single-page-application"
   }
 }
