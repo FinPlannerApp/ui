@@ -22,7 +22,7 @@
       <p-button icon="pi pi-share-alt" [text]="true" (onClick)="copyShareLink()" pTooltip="Copy share link"
         styleClass="rounded-xl"></p-button>
       @if (!isGroupClosed()) {
-        <p-button label="Close Group" icon="pi pi-lock" severity="secondary" (onClick)="closeGroup()"
+        <p-button label="Lock Group" icon="pi pi-lock" severity="secondary" (onClick)="lockGroup()"
           styleClass="rounded-xl text-xs sm:text-sm"></p-button>
         <p-button label="Add Expense" icon="pi pi-plus" (onClick)="openAddExpense()"
           styleClass="rounded-xl font-bold px-3 py-2 text-xs sm:text-sm flex-1 sm:flex-none"></p-button>
@@ -122,10 +122,22 @@
             <div class="flex flex-col min-w-0">
               <span class="font-semibold text-sm sm:text-base text-[var(--text-primary)] truncate">{{ expense.description }}</span>
               <span class="text-xs text-[var(--text-muted)]">
-                Paid by {{ expense.payers[0]?.memberName }} · {{ expense.date | date:'mediumDate' }}
+                Paid by {{ expense.payers.length === 1 ? expense.payers[0]?.memberName : (expense.payers.length + ' people') }} · {{ expense.date | date:'mediumDate' }}
               </span>
             </div>
-            <span class="text-base sm:text-lg font-bold shrink-0">{{ expense.amount | currency:'INR' }}</span>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="text-base sm:text-lg font-bold">{{ expense.amount | currency:'INR' }}</span>
+              @if (!isGroupClosed()) {
+                <button (click)="openEditExpense(expense)" pTooltip="Edit Expense"
+                  class="text-xs text-[var(--text-muted)] hover:text-[var(--primary-color)] bg-transparent border-none cursor-pointer p-1">
+                  <i class="pi pi-pencil"></i>
+                </button>
+                <button (click)="deleteExpense(expense)" pTooltip="Delete Expense"
+                  class="text-xs text-red-400 hover:text-red-300 bg-transparent border-none cursor-pointer p-1">
+                  <i class="pi pi-trash"></i>
+                </button>
+              }
+            </div>
           </div>
         } @empty {
           <app-empty-state icon="pi pi-receipt" title="No expenses logged yet"
@@ -166,8 +178,8 @@
                   <strong>{{ debt.fromMemberName }}</strong> owes <strong>{{ debt.toMemberName }}</strong>
                   <span class="font-bold ml-1">{{ debt.amount | currency:'INR' }}</span>
                 </span>
-                @if (!isGroupClosed()) {
-                  <p-button label="Pay via UPI" icon="pi pi-qrcode" (onClick)="settleDebt(debt)"
+                @if (canSettle()) {
+                  <p-button label="Pay via UPI" icon="pi pi-qrcode" (onClick)="openSettleDialog(debt)"
                     styleClass="rounded-xl text-xs sm:text-sm w-full sm:w-auto"></p-button>
                 }
               </div>
@@ -187,12 +199,20 @@
       <div class="flex flex-col gap-2 mt-4">
         <h3 class="text-sm font-bold text-[var(--text-muted)] m-0">Settlement History</h3>
         @for (s of settlementHistory(); track s.id) {
-          <div class="glass-card p-3 rounded-xl flex items-center justify-between text-sm">
+          <div class="glass-card p-3 rounded-xl flex items-center justify-between text-sm flex-wrap gap-2">
             <span>{{ s.fromMemberName }} → {{ s.toMemberName }}</span>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
               <span class="font-medium">{{ s.amount | currency:'INR' }}</span>
-              <p-tag [severity]="s.status === 1 ? 'success' : 'warn'"
-                [value]="s.status === 1 ? 'Completed' : 'Pending'"></p-tag>
+              <p-tag [value]="s.status === 1 ? 'Completed' : (s.status === 2 ? 'Awaiting confirmation' : 'Pending')"
+                [severity]="s.status === 1 ? 'success' : (s.status === 2 ? 'warn' : 'secondary')"></p-tag>
+              @if (s.status === 0) {
+                <p-button label="Mark as sent" size="small" [text]="true"
+                  (onClick)="onMarkPaymentSent(s.id)"></p-button>
+              }
+              @if (s.status === 2) {
+                <p-button label="Confirm received" size="small" severity="success"
+                  (onClick)="onConfirmPaymentReceived(s.id)"></p-button>
+              }
             </div>
           </div>
         } @empty {
@@ -354,6 +374,27 @@
         class="text-xs text-[var(--primary-color)] no-underline">
         On this phone? Tap to open your UPI app directly
       </a>
+    </div>
+  }
+</p-dialog>
+
+<p-dialog [visible]="settlingDebt() !== null" (visibleChange)="closeSettleDialog()"
+  header="Settle Up" [modal]="true" [style]="{ width: '20rem' }">
+  @if (settlingDebt()) {
+    <div class="flex flex-col gap-3">
+      <p class="text-sm m-0">
+        {{ settlingDebt()!.fromMemberName }} owes {{ settlingDebt()!.toMemberName }}
+        <strong>{{ settlingDebt()!.amount | currency:'INR' }}</strong>
+      </p>
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs text-[var(--text-muted)] font-medium">Amount to pay now</label>
+        <p-inputNumber [ngModel]="settleAmount()" (ngModelChange)="settleAmount.set($event)"
+          mode="currency" currency="INR" locale="en-IN" class="w-full"></p-inputNumber>
+      </div>
+      <div class="flex justify-end gap-2 mt-2">
+        <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="closeSettleDialog()"></p-button>
+        <p-button label="Continue to Payment" (onClick)="confirmSettle()"></p-button>
+      </div>
     </div>
   }
 </p-dialog>

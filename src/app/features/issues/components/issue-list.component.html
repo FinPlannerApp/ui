@@ -166,7 +166,7 @@
       <!-- Pagination -->
       @if (totalItems() > pageSize()) {
       <div class="mt-4">
-        <p-paginator [rows]="pageSize()" [totalRecords]="totalItems()" [rowsPerPageOptions]="[10, 25, 50]"
+        <p-paginator [first]="(currentPage() - 1) * pageSize()" [rows]="pageSize()" [totalRecords]="totalItems()" [rowsPerPageOptions]="[10, 25, 50]"
           (onPageChange)="onPageChange($event)"></p-paginator>
       </div>
       }

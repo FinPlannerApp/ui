@@ -16,6 +16,7 @@ export interface PaymentRow {
   cashbackAmount: number | null;
   cashbackType: number | null; // 0 = Direct, 1 = Indirect
   cashbackAccountId: number | null;
+  interestCategoryId: number | null;
   suggestions: AccountSuggestion[];
   showSuggestions: boolean;
 }
@@ -62,6 +63,7 @@ export class PayCcBill implements OnInit {
 
   isSubmitting = signal(false);
   result = signal<CreditCardPaymentBatchResult | null>(null);
+  categories = signal<{ id: number; name: string }[]>([]);
 
   rows = signal<PaymentRow[]>([this.newRow()]);
 
@@ -77,6 +79,8 @@ export class PayCcBill implements OnInit {
 
   async ngOnInit(): Promise<void> {
     await this.accountState.loadAccounts();
+    const result = await firstValueFrom(this.api.get<{ id: number; name: string }[]>('TransactionCategories'));
+    if (result.isSuccess) this.categories.set(result.value ?? []);
   }
 
   private newRow(): PaymentRow {
@@ -87,6 +91,7 @@ export class PayCcBill implements OnInit {
       cashbackAmount: null,
       cashbackType: null,
       cashbackAccountId: null,
+      interestCategoryId: null,
       suggestions: [],
       showSuggestions: false
     };
@@ -160,7 +165,8 @@ export class PayCcBill implements OnInit {
           paymentAppName: r.paymentAppName || null,
           cashbackAmount: r.cashbackAmount,
           cashbackType: r.cashbackType,
-          cashbackAccountId: r.cashbackAccountId
+          cashbackAccountId: r.cashbackAccountId,
+          interestCategoryId: r.interestCategoryId
         }))
       };
 

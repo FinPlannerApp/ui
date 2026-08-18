@@ -47,8 +47,8 @@ export interface CreateExpenseRequest {
   participants: ExpenseParticipantLine[];
 }
 
-export interface PayerLine { memberName: string; amountPaid: number; }
-export interface ParticipantLine { memberName: string; shareAmount: number; }
+export interface PayerLine { memberId: number; memberName: string; amountPaid: number; }
+export interface ParticipantLine { memberId: number; memberName: string; shareAmount: number; }
 
 export interface SplitExpense {
   id: number;

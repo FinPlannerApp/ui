@@ -82,11 +82,30 @@ export class SplitService {
     return result.value;
   }
 
-  async markSettlementPaid(settlementId: number): Promise<void> {
-    const result = await firstValueFrom(this.api.post<any>(`Split/settlements/${settlementId}/mark-paid`, {}));
+  async updateExpense(expenseId: number, req: CreateExpenseRequest): Promise<SplitExpense> {
+    const result = await firstValueFrom(this.api.put<SplitExpense>(`Split/expenses/${expenseId}`, req));
     if (!result.isSuccess) {
-      throw new Error(result.error?.description || 'Failed to mark settlement as paid.');
+      throw new Error(result.error?.description || 'Failed to update expense.');
     }
+    return result.value;
+  }
+
+  async deleteExpense(expenseId: number): Promise<{ wasAlreadyImported: boolean }> {
+    const result = await firstValueFrom(this.api.delete<{ wasAlreadyImported: boolean }>(`Split/expenses/${expenseId}`));
+    if (!result.isSuccess) {
+      throw new Error(result.error?.description || 'Failed to delete expense.');
+    }
+    return result.value;
+  }
+
+  async markPaymentSent(settlementId: number): Promise<void> {
+    const result = await firstValueFrom(this.api.post<any>(`Split/settlements/${settlementId}/mark-sent`, {}));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to mark as sent.');
+  }
+
+  async confirmPaymentReceived(settlementId: number): Promise<void> {
+    const result = await firstValueFrom(this.api.post<any>(`Split/settlements/${settlementId}/confirm-received`, {}));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to confirm receipt.');
   }
 
   async getPaymentRequest(settlementId: number): Promise<PaymentRequest> {
@@ -123,9 +142,9 @@ export class SplitService {
     return result.value;
   }
 
-  async closeGroup(groupId: number): Promise<void> {
-    const result = await firstValueFrom(this.api.post<any>(`Split/groups/${groupId}/close`, {}));
-    if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to close group.');
+  async lockGroup(groupId: number): Promise<void> {
+    const result = await firstValueFrom(this.api.post<any>(`Split/groups/${groupId}/lock`, {}));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to lock group.');
   }
 
   async importToLedger(req: ImportToLedgerRequest): Promise<ImportToLedgerResult> {

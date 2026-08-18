@@ -73,6 +73,14 @@
           </div>
         </div>
 
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">Category (if this includes interest)</label>
+          <p-select [options]="categories()" [ngModel]="row.interestCategoryId"
+            (ngModelChange)="updateRow($index, { interestCategoryId: $event })"
+            optionLabel="name" optionValue="id" appendTo="body" styleClass="w-full" class="w-full"
+            placeholder="No category" [showClear]="true"></p-select>
+        </div>
+
         @if (row.cashbackAmount) {
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
             <div class="flex flex-col gap-1.5">

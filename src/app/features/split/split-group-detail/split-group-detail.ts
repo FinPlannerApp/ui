@@ -59,7 +59,66 @@ export class SplitGroupDetail implements OnInit {
   showImportDialog = signal(false);
   importAccountId = signal<number | null>(null);
   settlementHistory = signal<any[]>([]);
-  isGroupClosed = computed(() => this.group()?.status !== 0); // 0 = Active
+  isGroupClosed = computed(() => this.group()?.status !== 0); // 0 = Active — still governs expenses (add/edit/delete)
+  canSettle = computed(() => {
+    const status = this.group()?.status;
+    return status === 0 || status === 1; // Active or Locked — settlements stay available through both
+  });
+
+  // Partial Settlement
+  settlingDebt = signal<SimplifiedDebt | null>(null);
+  settleAmount = signal<number | null>(null);
+
+  openSettleDialog(debt: SimplifiedDebt): void {
+    this.settlingDebt.set(debt);
+    this.settleAmount.set(debt.amount);
+  }
+
+  closeSettleDialog(): void {
+    this.settlingDebt.set(null);
+    this.settleAmount.set(null);
+  }
+
+  async confirmSettle(): Promise<void> {
+    const debt = this.settlingDebt();
+    const amount = this.settleAmount();
+    if (!debt || amount === null || amount <= 0) {
+      this.notificationService.showError('Enter an amount greater than zero.');
+      return;
+    }
+    if (amount > debt.amount) {
+      this.notificationService.showError(`Can't pay more than the ₹${debt.amount.toFixed(2)} owed.`);
+      return;
+    }
+
+    try {
+      await this.settleDebt(debt, amount);
+      this.closeSettleDialog();
+    } catch (err: any) {
+      this.notificationService.showError(err?.message || 'Failed to create settlement.');
+    }
+  }
+
+  // Two-step confirmation handlers
+  async onMarkPaymentSent(settlementId: number): Promise<void> {
+    try {
+      await this.splitService.markPaymentSent(settlementId);
+      this.notificationService.showSuccess('Marked as sent — waiting for the other side to confirm.');
+      await this.loadAll();
+    } catch (err: any) {
+      this.notificationService.showError(err?.message || 'Failed to mark as sent.');
+    }
+  }
+
+  async onConfirmPaymentReceived(settlementId: number): Promise<void> {
+    try {
+      await this.splitService.confirmPaymentReceived(settlementId);
+      this.notificationService.showSuccess('Confirmed — balances updated.');
+      await this.loadAll();
+    } catch (err: any) {
+      this.notificationService.showError(err?.message || 'Failed to confirm.');
+    }
+  }
 
   qrCodeDataUrl = signal<string | null>(null);
   qrPaymentDetails = signal<{ upiDeepLink: string; payeeName: string; amount: number } | null>(null);
@@ -208,18 +267,18 @@ export class SplitGroupDetail implements OnInit {
 
   // ── Close, Import & Summary ─────────────────────────────────────────────────
 
-  async closeGroup(): Promise<void> {
+  async lockGroup(): Promise<void> {
     this.confirmationService.confirm({
-      header: 'Close Group',
-      message: 'This locks the group and makes it eligible for importing to your personal ledger. You can still view everything afterward — this just marks the trip as settled.',
+      header: 'Lock Group',
+      message: 'This stops new expenses, but you can still settle up remaining balances afterward.',
       icon: 'pi pi-lock',
       accept: async () => {
         try {
-          await this.splitService.closeGroup(this.groupId);
-          this.notificationService.showSuccess('Group closed.');
+          await this.splitService.lockGroup(this.groupId);
+          this.notificationService.showSuccess('Group locked.');
           await this.loadAll();
         } catch (err: any) {
-          this.notificationService.showError(err?.message || 'Failed to close group.');
+          this.notificationService.showError(err?.message || 'Failed to lock group.');
         }
       }
     });
@@ -288,9 +347,11 @@ export class SplitGroupDetail implements OnInit {
     }
   }
 
-  // ── Add expense ──────────────────────────────────────────────────────────────
+  // ── Add/Edit/Delete expense ──────────────────────────────────────────────────
+  editingExpenseId = signal<number | null>(null);
 
   openAddExpense(): void {
+    this.editingExpenseId.set(null);
     const draft = this.draftService.load<any>(this.draftKey);
     if (draft && (draft.description || draft.amount)) {
       this.expDescription.set(draft.description ?? '');
@@ -315,6 +376,44 @@ export class SplitGroupDetail implements OnInit {
       this.expPayers.set([{ memberId: null, amount: null }]);
     }
     this.showAddExpense.set(true);
+  }
+
+  openEditExpense(expense: SplitExpense): void {
+    this.editingExpenseId.set(expense.id);
+    this.expDescription.set(expense.description);
+    this.expAmount.set(expense.amount);
+    this.expDate.set(new Date(expense.date));
+    this.expSplitType.set(expense.splitType);
+    this.expParticipantIds.set(new Set(expense.participants.map(p => p.memberId)));
+    if (expense.payers.length > 1) {
+      this.splitPayment.set(true);
+      this.expPayers.set(expense.payers.map(p => ({ memberId: p.memberId, amount: p.amountPaid })));
+    } else {
+      this.splitPayment.set(false);
+      this.expPayerId.set(expense.payers[0]?.memberId ?? null);
+    }
+    this.showAddExpense.set(true);
+  }
+
+  async deleteExpense(expense: SplitExpense): Promise<void> {
+    this.confirmationService.confirm({
+      message: `Delete "${expense.description}"? This can't be undone.`,
+      accept: async () => {
+        try {
+          const result = await this.splitService.deleteExpense(expense.id);
+          if (result.wasAlreadyImported) {
+            this.notificationService.showError(
+              'Deleted here, but this expense was already imported to a real account — that transaction still exists and needs removing separately.'
+            );
+          } else {
+            this.notificationService.showSuccess('Expense deleted.');
+          }
+          await this.loadAll();
+        } catch (err: any) {
+          this.notificationService.showError(err?.message || 'Failed to delete.');
+        }
+      }
+    });
   }
 
   toggleParticipant(memberId: number): void {
@@ -379,7 +478,7 @@ export class SplitGroupDetail implements OnInit {
     });
 
     try {
-      await this.splitService.addExpense({
+      const payload = {
         groupId: this.groupId,
         description,
         amount,
@@ -388,25 +487,33 @@ export class SplitGroupDetail implements OnInit {
         splitType: type,
         payers,
         participants
-      });
+      };
+
+      if (this.editingExpenseId()) {
+        await this.splitService.updateExpense(this.editingExpenseId()!, payload);
+        this.notificationService.showSuccess('Expense updated.');
+      } else {
+        await this.splitService.addExpense(payload);
+        this.notificationService.showSuccess('Expense added.');
+      }
+      this.editingExpenseId.set(null);
       this.showAddExpense.set(false);
       this.draftService.clear(this.draftKey);
       await this.loadAll();
-      this.notificationService.showSuccess('Expense added.');
     } catch (err: any) {
-      this.notificationService.showError(err?.message || 'Failed to add expense.');
+      this.notificationService.showError(err?.message || 'Failed to save expense.');
     }
   }
 
   // ── Settle ───────────────────────────────────────────────────────────────────
 
-  async settleDebt(debt: SimplifiedDebt): Promise<void> {
+  async settleDebt(debt: SimplifiedDebt, amount: number): Promise<void> {
     try {
       const settlement = await this.splitService.createSettlement({
         groupId: this.groupId,
         fromMemberId: debt.fromMemberId,
         toMemberId: debt.toMemberId,
-        amount: debt.amount,
+        amount,
         method: SettlementMethod.Upi
       });
 
@@ -417,7 +524,7 @@ export class SplitGroupDetail implements OnInit {
         this.qrPaymentDetails.set({
           upiDeepLink: paymentRequest.upiDeepLink,
           payeeName: debt.toMemberName,
-          amount: debt.amount
+          amount
         });
       } catch {
         this.notificationService.showError(`${debt.toMemberName} hasn't added a UPI ID — mark this paid manually once settled.`);

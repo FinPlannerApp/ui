@@ -969,7 +969,10 @@ export class Blog implements OnInit {
         date: m.publishedAt ? new Date(m.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent',
         _dateValue: m.publishedAt ? new Date(m.publishedAt) : new Date()
       }));
-      this.posts.set(mapped);
+      // Merge with the existing hardcoded posts rather than replace —
+      // publishing one new post through the admin editor shouldn't
+      // make every existing post vanish from the public list.
+      this.posts.set([...mapped, ...BLOG_POSTS]);
     }
   }
 

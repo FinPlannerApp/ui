@@ -60,8 +60,15 @@ export class GenericApi {
     return this.http.post<ApiResult<T>>(this.buildUrl(endpoint, 'upsert'), data);
   }
 
-  delete<T>(endpoint: string, id: number): Observable<ApiResult<T>> {
-    return this.http.post<ApiResult<T>>(this.buildUrl(endpoint, 'delete'), { id });
+  delete<T>(endpoint: string, id?: number): Observable<ApiResult<T>> {
+    if (typeof id === 'number') {
+      return this.http.post<ApiResult<T>>(this.buildUrl(endpoint, 'delete'), { id });
+    }
+    return this.http.delete<ApiResult<T>>(this.buildUrl(endpoint));
+  }
+
+  put<T>(endpoint: string, data: any): Observable<ApiResult<T>> {
+    return this.http.put<ApiResult<T>>(this.buildUrl(endpoint), data);
   }
 
   post<T>(endpoint: string, data: any): Observable<ApiResult<T>> {
