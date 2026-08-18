@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { publicGuard } from './core/guards/public-guard';
 import { authGuard } from './core/guards/auth-guard';
+import { adminGuard } from './core/guards/admin-guard';
 import { ColumnDefinition } from './shared/components/data-table/data-table';
 
 // --- Column Definitions (kept static — they are tiny plain objects, not components) ---
@@ -223,6 +224,7 @@ export const routes: Routes = [
       },
       {
         path: 'admin/blog-editor',
+        canActivate: [adminGuard],
         loadComponent: () => import('./features/admin/blog-editor/blog-editor').then(m => m.BlogEditor)
       },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
