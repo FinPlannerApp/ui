@@ -1,6 +1,7 @@
 import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { BlogLoaderService } from './blog-loader.service';
+import { Auth } from '../../../core/services/auth';
 
 export const BLOG_POSTS = [
   // ─── v6.0.0 — PWA + UI OVERHAUL ───────────────────────────────────────────
@@ -954,6 +955,7 @@ export const BLOG_POSTS = [
 })
 export class Blog implements OnInit {
   private blogLoader = inject(BlogLoaderService);
+  auth = inject(Auth);
   sortAscending = signal(false); // default: newest first (descending)
   posts = signal<any[]>(BLOG_POSTS);
 
