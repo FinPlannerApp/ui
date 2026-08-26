@@ -1,17 +1,10 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal, computed, ChangeDetectorRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, OnDestroy, signal, computed, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Subject, Subscription } from 'rxjs';
 import { Transaction, TransactionService } from '../transaction';
 import { Category } from '../../categories/category';
-import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { ButtonModule } from 'primeng/button';
-import { CardModule } from 'primeng/card';
-import { DatePickerModule } from 'primeng/datepicker';
-import { SelectModule } from 'primeng/select';
-import { InputTextModule } from 'primeng/inputtext';
-import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TransactionForm } from '../transaction-form/transaction-form';
@@ -27,13 +20,10 @@ import { BreadcrumbService } from '../../../core/layout/breadcrumb.service';
 import { sharedPrimeModules } from '../../../shared/prime-imports';
 import { GenericApi } from '../../../core/services/generic-api';
 import { AccountBucketBreakdown } from '../../../core/models/savings-bucket.model';
-import { InputNumberModule } from 'primeng/inputnumber';
 import { StatCard } from '../../../shared/components/stat-card/stat-card';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ToastModule } from 'primeng/toast';
-import { FloatLabelModule } from 'primeng/floatlabel';
 import { AccountType, InterestFrequency } from '../../../core/models/account-type.model';
 import { Account } from '../../accounts/account';
+import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 
 @Component({
   selector: 'app-transaction-list',
@@ -42,24 +32,15 @@ import { Account } from '../../accounts/account';
     CommonModule,
     FormsModule,
     RouterLink,
-    CardModule,
-    ButtonModule,
-    ProgressSpinnerModule,
-    ToastModule,
-    ConfirmDialogModule,
-    DatePickerModule,
-    SelectModule,
-    InputTextModule,
-    InputNumberModule,
-    TooltipModule,
-    FloatLabelModule,
+    EmptyState,
+    StatCard,
     ...sharedPrimeModules
   ],
   templateUrl: './transaction-list.html',
   providers: [DialogService, MessageService, ConfirmationService],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class TransactionList implements OnInit {
+export class TransactionList implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private transactionService = inject(TransactionService);
@@ -73,6 +54,9 @@ export class TransactionList implements OnInit {
   private breadcrumbService = inject(BreadcrumbService);
   private cdr = inject(ChangeDetectorRef);
   private api = inject(GenericApi);
+
+  private searchSubject = new Subject<string>();
+  private searchSub?: Subscription;
 
   transactions = signal<Transaction[]>([]);
   isLoading = signal(false);
@@ -112,8 +96,8 @@ export class TransactionList implements OnInit {
 
     const periodsPerYear = details.interestFrequency === InterestFrequency.Daily ? 365
       : details.interestFrequency === InterestFrequency.Monthly ? 12
-      : details.interestFrequency === InterestFrequency.Quarterly ? 4
-      : 1;
+        : details.interestFrequency === InterestFrequency.Quarterly ? 4
+          : 1;
 
     return (account!.balance * (details.interestRate / 100)) / periodsPerYear;
   });
@@ -226,6 +210,10 @@ export class TransactionList implements OnInit {
     this.cdr.markForCheck();
   }
 
+  ngOnDestroy(): void {
+    this.searchSub?.unsubscribe();
+  }
+
   async loadBuckets(): Promise<void> {
     const id = this.accountId();
     if (id === null) return;
@@ -288,7 +276,7 @@ export class TransactionList implements OnInit {
     }
   }
 
-  async loadData(event?: any): Promise<void> {
+  async loadData(event?: any, force: boolean = false): Promise<void> {
     const id = this.accountId();
     if (id === null || this.isLoading()) return;
 
@@ -318,7 +306,7 @@ export class TransactionList implements OnInit {
       globalSearch: this.globalSearch(),
     });
 
-    if (this.lastQueryKey === currentQueryKey) {
+    if (!force && this.lastQueryKey === currentQueryKey) {
       return;
     }
 
@@ -373,7 +361,7 @@ export class TransactionList implements OnInit {
   }
 
   onSearch(): void {
-    this.loadData();
+    this.searchSubject.next(this.globalSearch());
   }
 
   clearSearch(): void {
@@ -402,8 +390,9 @@ export class TransactionList implements OnInit {
     if (this.ref) {
       const result = await firstValueFrom(this.ref.onClose);
       if (result) {
+        this.lastQueryKey = null;
         await this.accountState.refresh();
-        this.loadData();
+        await this.loadData(null, true);
         this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Transaction saved successfully' });
       }
     }
@@ -419,8 +408,9 @@ export class TransactionList implements OnInit {
         try {
           await firstValueFrom(this.transactionService.deleteTransaction(this.accountId()!, transaction.id));
           this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Transaction deleted' });
+          this.lastQueryKey = null;
           await this.accountState.refresh();
-          await this.loadData();
+          await this.loadData(null, true);
         } catch (err) {
           this.notificationService.showError('Failed to delete transaction');
         }
@@ -443,8 +433,9 @@ export class TransactionList implements OnInit {
         try {
           await firstValueFrom(this.transactionService.switchAccount(this.accountId()!, transaction.id, result.destinationAccountId));
           this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Transaction transferred successfully' });
+          this.lastQueryKey = null;
           await this.accountState.refresh();
-          await this.loadData();
+          await this.loadData(null, true);
         } catch (err: any) {
           this.notificationService.showError('Failed to switch transaction target');
         }
@@ -468,10 +459,11 @@ export class TransactionList implements OnInit {
     });
 
     if (this.ref) {
-      this.ref.onClose.subscribe((changed: boolean) => {
+      this.ref.onClose.subscribe(async (changed: boolean) => {
         if (changed) {
-          this.loadData();
-          this.accountState.refresh();
+          this.lastQueryKey = null;
+          await this.accountState.refresh();
+          await this.loadData(null, true);
         }
       });
     }
@@ -492,10 +484,11 @@ export class TransactionList implements OnInit {
     });
 
     if (this.ref) {
-      this.ref.onClose.subscribe((changed: boolean) => {
+      this.ref.onClose.subscribe(async (changed: boolean) => {
         if (changed) {
-          this.loadData();
-          this.accountState.refresh();
+          this.lastQueryKey = null;
+          await this.accountState.refresh();
+          await this.loadData(null, true);
         }
       });
     }
@@ -517,10 +510,11 @@ export class TransactionList implements OnInit {
     });
 
     if (this.ref) {
-      this.ref.onClose.subscribe((changed: boolean) => {
+      this.ref.onClose.subscribe(async (changed: boolean) => {
         if (changed) {
-          this.loadData();
-          this.accountState.refresh();
+          this.lastQueryKey = null;
+          await this.accountState.refresh();
+          await this.loadData(null, true);
         }
       });
     }

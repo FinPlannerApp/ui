@@ -63,13 +63,15 @@ function initializeApp(
   };
 }
 
+import { loadingInterceptor } from './core/interceptors/loading-interceptor';
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
     provideRouter(routes),
     provideHttpClient(
-      withInterceptors([authInterceptor, errorInterceptor, statusInterceptor]),
+      withInterceptors([loadingInterceptor, authInterceptor, errorInterceptor, statusInterceptor]),
       withXsrfConfiguration({
         cookieName: 'XSRF-TOKEN',
         headerName: 'X-XSRF-TOKEN'

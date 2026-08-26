@@ -75,11 +75,24 @@ export class Merchants implements OnInit {
     if (!name) return;
 
     try {
-      await this.merchantService.upsert({
+      const savedMerchant = await this.merchantService.upsert({
         id: this.editingId() ?? undefined,
         name,
         aliases: this.formAliases()
       });
+
+      if (savedMerchant) {
+        this.merchants.update(current => {
+          const idx = current.findIndex(m => m.id === savedMerchant.id);
+          if (idx !== -1) {
+            const copy = [...current];
+            copy[idx] = savedMerchant;
+            return copy;
+          }
+          return [savedMerchant, ...current];
+        });
+      }
+
       this.notificationService.showSuccess('Merchant saved.');
       this.showForm.set(false);
       await this.load();
@@ -96,6 +109,7 @@ export class Merchants implements OnInit {
       accept: async () => {
         try {
           await this.merchantService.delete(merchant.id);
+          this.merchants.update(current => current.filter(m => m.id !== merchant.id));
           this.notificationService.showSuccess('Merchant deleted.');
           await this.load();
         } catch (err: any) {

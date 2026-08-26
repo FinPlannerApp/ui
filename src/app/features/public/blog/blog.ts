@@ -4,6 +4,42 @@ import { BlogLoaderService } from './blog-loader.service';
 import { Auth } from '../../../core/services/auth';
 
 export const BLOG_POSTS = [
+  {
+    id: 'mastering-personal-cash-flow-guide-2026',
+    tag: 'Guide',
+    tagColor: '#10b981',
+    title: 'Mastering Personal Cash Flow: The Complete 2026 Financial Planner Guide',
+    excerpt: 'Discover how smart account categorization, automated recurring tracking, and real-time net worth signals empower complete financial control in 2026.',
+    date: 'Aug 26, 2026',
+    _dateValue: new Date('2026-08-26'),
+    content: `
+      <h2>1. Net Worth vs. Monthly Cash Flow</h2>
+      <p>Achieving financial independence begins with clarity over your daily cash flow. Whether you are managing daily merchant spend, credit card statements, or long-term investments, keeping track of where every rupee goes is the single most powerful habit for building sustainable wealth.</p>
+      <ul>
+        <li><strong>Net Worth</strong> = Total Assets (Savings + Investments) − Total Liabilities (Credit Card Debt + Loans)</li>
+        <li><strong>Monthly Cash Flow</strong> = Inflows (Income) − Outflows (Expenses + Debt Repayments)</li>
+      </ul>
+      <p>Tracking both metrics simultaneously allows you to see both your immediate liquidity and your long-term wealth trajectory.</p>
+
+      <h2>2. Optimizing Assets & Liabilities</h2>
+      <h3>Managing Assets</h3>
+      <p>Divide your assets into clear operational buckets:</p>
+      <ul>
+        <li><strong>Emergency Funds:</strong> 3 to 6 months of living expenses stored in high-yield liquid accounts.</li>
+        <li><strong>Goal-Oriented Buckets:</strong> Designated savings for planned major purchases, vacations, or tax commitments.</li>
+      </ul>
+
+      <h3>Controlling Debt</h3>
+      <ul>
+        <li><strong>Credit Card Billing Cycles:</strong> Always align your budget with your statement closing date and due date to avoid interest charges.</li>
+        <li><strong>Pay Off High Interest First:</strong> Prioritize revolving credit card debt before expanding discretionary investments.</li>
+      </ul>
+
+      <h2>3. Automation is Key to Discipline</h2>
+      <p>Manually recording every small daily expense can lead to budgeting fatigue. By utilizing <strong>recurring subscription tracking</strong> and <strong>scheduled balance adjustments</strong>, your financial dashboard remains up-to-date with zero hassle.</p>
+      <p><em>Pro Tip: Set up recurring transfer reminders for your savings buckets on the day your salary is credited. Pay your future self first!</em></p>
+    `
+  },
   // ─── v6.0.0 — PWA + UI OVERHAUL ───────────────────────────────────────────
   {
     id: 'v6-0-0-release',
@@ -948,37 +984,79 @@ export const BLOG_POSTS = [
   }
 ];
 
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+
 @Component({
   selector: 'app-blog',
-  imports: [RouterLink],
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './blog.html',
 })
 export class Blog implements OnInit {
   private blogLoader = inject(BlogLoaderService);
   auth = inject(Auth);
   sortAscending = signal(false); // default: newest first (descending)
-  posts = signal<any[]>(BLOG_POSTS);
+  posts = signal<any[]>([]);
+
+  searchQuery = signal('');
+  selectedTag = signal('All');
+  currentPage = signal(1);
+  pageSize = signal(6);
+  totalItems = signal(0);
+  isLoading = signal(false);
+
+  availableTags = ['All', 'Guide', 'Release', 'Security', 'Feature', 'Architecture'];
 
   async ngOnInit(): Promise<void> {
-    const meta = await this.blogLoader.loadAllMeta();
-    if (meta && meta.length > 0) {
-      const mapped = meta.map(m => ({
-        id: m.slug,
-        tag: m.tag || 'Blog',
-        tagColor: m.tagColor || '#6366f1',
-        title: m.title,
-        excerpt: m.excerpt,
-        date: m.publishedAt ? new Date(m.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent',
-        _dateValue: m.publishedAt ? new Date(m.publishedAt) : new Date()
-      }));
-      // Merge with the existing hardcoded posts rather than replace —
-      // publishing one new post through the admin editor shouldn't
-      // make every existing post vanish from the public list.
-      this.posts.set([...mapped, ...BLOG_POSTS]);
+    await this.loadServerSide();
+  }
+
+  async loadServerSide(): Promise<void> {
+    this.isLoading.set(true);
+    try {
+      const res = await this.blogLoader.loadPaged(
+        this.currentPage(),
+        this.pageSize(),
+        this.searchQuery(),
+        this.selectedTag()
+      );
+
+      if (res.items && res.items.length > 0) {
+        const mapped = res.items.map(m => ({
+          id: m.slug,
+          tag: m.tag || (m.slug.includes('release') ? 'Release' : 'Guide'),
+          tagColor: m.tagColor || (m.slug.includes('release') ? '#6366f1' : '#10b981'),
+          title: m.title,
+          excerpt: m.excerpt,
+          date: m.publishedAt ? new Date(m.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent',
+          _dateValue: m.publishedAt ? new Date(m.publishedAt) : new Date()
+        }));
+        this.posts.set(mapped);
+        this.totalItems.set(res.totalCount);
+      } else {
+        // Fallback to client filtered static list if DB returned 0
+        const query = this.searchQuery().toLowerCase().trim();
+        const tag = this.selectedTag();
+        const filtered = BLOG_POSTS.filter(p => {
+          const matchesSearch = !query || p.title.toLowerCase().includes(query) || p.excerpt.toLowerCase().includes(query);
+          const matchesTag = tag === 'All' || p.tag.toLowerCase().includes(tag.toLowerCase()) || (tag === 'Release' && p.id.includes('release'));
+          return matchesSearch && matchesTag;
+        });
+        const start = (this.currentPage() - 1) * this.pageSize();
+        this.posts.set(filtered.slice(start, start + this.pageSize()));
+        this.totalItems.set(filtered.length);
+      }
+    } catch {
+      // Fallback
+      this.posts.set(BLOG_POSTS.slice(0, this.pageSize()));
+      this.totalItems.set(BLOG_POSTS.length);
+    } finally {
+      this.isLoading.set(false);
     }
   }
 
-  sortedPosts = computed(() => {
+  filteredPosts = computed(() => {
     const asc = this.sortAscending();
     return [...this.posts()].sort((a, b) =>
       asc
@@ -986,6 +1064,29 @@ export class Blog implements OnInit {
         : b._dateValue.getTime() - a._dateValue.getTime()
     );
   });
+
+  totalPages = computed(() => Math.ceil(this.totalItems() / this.pageSize()) || 1);
+
+  paginatedPosts = computed(() => this.filteredPosts());
+
+  setTag(tag: string): void {
+    this.selectedTag.set(tag);
+    this.currentPage.set(1);
+    this.loadServerSide();
+  }
+
+  onSearchChange(query: string): void {
+    this.searchQuery.set(query);
+    this.currentPage.set(1);
+    this.loadServerSide();
+  }
+
+  setPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages()) {
+      this.currentPage.set(page);
+      this.loadServerSide();
+    }
+  }
 
   toggleSort(): void {
     this.sortAscending.update(v => !v);

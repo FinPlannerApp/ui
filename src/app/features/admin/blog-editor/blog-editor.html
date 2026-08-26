@@ -49,8 +49,9 @@
         <span>Markdown Editor</span>
         <span class="text-[10px] font-normal lowercase text-[var(--text-muted)]">github markdown format</span>
       </label>
-      <textarea [ngModel]="contentMarkdown()" (ngModelChange)="contentMarkdown.set($event)"
-        class="w-full h-80 sm:h-96 md:h-[450px] p-3.5 rounded-2xl bg-black/30 border border-white/10 text-xs sm:text-sm font-mono leading-relaxed focus:outline-none focus:border-[var(--primary-color)] transition-colors resize-y"
+      <textarea #editorTextarea [ngModel]="contentMarkdown()" (ngModelChange)="contentMarkdown.set($event)"
+        (scroll)="onEditorScroll(editorTextarea, previewPane)"
+        class="w-full h-80 sm:h-96 md:h-[500px] p-3.5 rounded-2xl bg-black/40 border border-white/10 text-xs sm:text-sm font-mono leading-relaxed focus:outline-none focus:border-[var(--primary-color)] transition-colors resize-y"
         placeholder="Write post content in markdown..."></textarea>
     </div>
 
@@ -59,7 +60,8 @@
         <span>Live Sanitized Preview</span>
         <span class="text-[10px] font-normal lowercase text-[var(--text-muted)]">rendered preview</span>
       </label>
-      <div class="w-full h-80 sm:h-96 md:h-[450px] p-4 rounded-2xl bg-black/20 border border-white/10 overflow-y-auto prose prose-invert max-w-none text-xs sm:text-sm leading-relaxed"
+      <div #previewPane (scroll)="onPreviewScroll(editorTextarea, previewPane)"
+        class="markdown-preview w-full h-80 sm:h-96 md:h-[500px] p-5 rounded-2xl bg-black/20 border border-white/10 overflow-y-auto text-xs sm:text-sm leading-relaxed"
         [innerHTML]="previewHtml()"></div>
     </div>
   </div>

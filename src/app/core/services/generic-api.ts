@@ -11,7 +11,7 @@ export interface ErrorDetail {
 export interface ApiResult<T> {
   value: T;
   isSuccess: boolean;
-  error: ErrorDetail;
+  error?: ErrorDetail;
 }
 
 // This interface matches the PaginatedResult<T> from the backend

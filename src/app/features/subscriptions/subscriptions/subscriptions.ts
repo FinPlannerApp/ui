@@ -133,6 +133,7 @@ export class Subscriptions implements OnInit {
       accept: async () => {
         try {
           await this.subscriptionService.cancel(sub.recurringTransactionId);
+          this.subscriptions.update(list => list.filter(s => s.recurringTransactionId !== sub.recurringTransactionId));
           this.notificationService.showSuccess('Subscription cancelled.');
           await this.loadSubscriptions();
         } catch (err: any) {

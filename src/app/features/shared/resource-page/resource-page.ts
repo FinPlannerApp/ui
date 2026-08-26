@@ -1,35 +1,26 @@
-import { Component, inject, Input, OnInit, Type, ChangeDetectionStrategy, ChangeDetectorRef, signal } from '@angular/core';
+import { Component, inject, Input, OnInit, OnDestroy, Type, ChangeDetectionStrategy, ChangeDetectorRef, signal } from '@angular/core';
 import { ConfirmationService } from 'primeng/api';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { GenericCrud } from '../../../core/services/generic-crud';
 import { ColumnDefinition, DataTable } from '../../../shared/components/data-table/data-table';
-import { firstValueFrom } from 'rxjs';
-import { CommonModule } from '@angular/common';
-import { CardModule } from 'primeng/card';
-import { ButtonModule } from 'primeng/button';
-import { TableModule } from 'primeng/table';
-import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ToastModule } from 'primeng/toast';
+import { firstValueFrom, Subject, Subscription } from 'rxjs';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { NotificationService } from '../../../core/services/notification.service';
 import { FormsModule } from '@angular/forms';
-import { InputTextModule } from 'primeng/inputtext';
 import { BreadcrumbService } from '../../../core/layout/breadcrumb.service';
-import { SelectModule } from 'primeng/select';
 import { GenericApi } from '../../../core/services/generic-api';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
-import { TooltipModule } from 'primeng/tooltip';
+import { sharedPrimeModules } from '../../../shared/prime-imports';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-resource-page',
-  imports: [CommonModule, FormsModule, InputTextModule, CardModule, ButtonModule, TableModule, DataTable, ProgressSpinnerModule, ConfirmDialogModule, ToastModule, RouterLink, SelectModule, IconFieldModule, InputIconModule, TooltipModule],
+  imports: [CommonModule, FormsModule, RouterLink, DataTable, ...sharedPrimeModules],
   templateUrl: './resource-page.html',
   providers: [DialogService, ConfirmationService, GenericCrud],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ResourcePage<T extends { id: number }> implements OnInit {
+export class ResourcePage<T extends { id: number }> implements OnInit, OnDestroy {
   // Use modern inject() for cleaner code
   public crudService = inject(GenericCrud<T>);
   private dialogService = inject(DialogService);
@@ -39,6 +30,9 @@ export class ResourcePage<T extends { id: number }> implements OnInit {
   private cdr = inject(ChangeDetectorRef);
   private breadcrumbService = inject(BreadcrumbService);
   private apiService = inject(GenericApi);
+
+  private searchSubject = new Subject<string>();
+  private searchSub?: Subscription;
 
   // Filters (Using Signals)
   searchTerm = signal<string>('');
@@ -71,7 +65,7 @@ export class ResourcePage<T extends { id: number }> implements OnInit {
   ref: DynamicDialogRef | null = null;
   ready = false;
   lastLazyLoadEvent: any;
-  
+
   async ngOnInit(): Promise<void> {
     const routeData = await firstValueFrom(this.route.data);
     const params = await firstValueFrom(this.route.paramMap);
@@ -112,6 +106,10 @@ export class ResourcePage<T extends { id: number }> implements OnInit {
 
     this.ready = true;
     this.cdr.markForCheck();
+  }
+
+  ngOnDestroy(): void {
+    this.searchSub?.unsubscribe();
   }
 
   async fetchCategories() {

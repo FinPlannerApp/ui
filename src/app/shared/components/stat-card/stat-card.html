@@ -1,21 +1,26 @@
-<p-card [style]="{'height': '100%'}">
-  <div class="flex flex-col gap-2 min-w-0">
-    <div class="flex items-center justify-between min-w-0 gap-2">
-      <span class="text-xs sm:text-sm font-medium text-muted-color truncate min-w-0 flex-1">{{ label() }}</span>
-      <i [class]="icon()" [style]="{'color': iconColor()}" class="text-lg sm:text-xl shrink-0"></i>
+<div class="glass-card p-4 rounded-2xl flex flex-col justify-between h-full border min-w-0" [ngClass]="badgeStyles().cardBorder">
+  <div class="flex items-center justify-between mb-2 gap-2 min-w-0">
+    <span class="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] truncate min-w-0">{{ label() }}</span>
+    <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" [ngClass]="[badgeStyles().iconBg, badgeStyles().iconText]">
+      <i [class]="icon()" class="text-lg"></i>
     </div>
-    <div class="flex items-end justify-between min-w-0 gap-2">
-      <div class="min-w-0 flex-1">
-        <span class="text-xl sm:text-2xl font-bold line-height-1 truncate block" [title]="value()">{{ value() }}</span>
-        @if (secondaryValue()) {
-          <div class="text-[11px] sm:text-xs text-muted-color mt-1 truncate" [title]="secondaryValue()">{{ secondaryValue() }}</div>
-        }
-      </div>
+  </div>
+
+  <div class="mt-1 min-w-0">
+    <div class="flex items-baseline justify-between gap-2 min-w-0">
+      <span class="text-xl sm:text-2xl font-extrabold tracking-tight truncate min-w-0" [ngClass]="badgeStyles().valueText" [title]="value()">
+        {{ value() }}
+      </span>
       @if (trend()) {
-        <span [class]="trendClass" class="text-xs sm:text-sm font-medium shrink-0">
+        <span [class]="trendClass()" class="text-xs font-bold shrink-0">
           {{ trend() }}
         </span>
       }
     </div>
+    @if (subtitle()) {
+      <p class="text-xs text-[var(--text-muted)] mt-1 mb-0 truncate" [title]="subtitle()">
+        {{ subtitle() }}
+      </p>
+    }
   </div>
-</p-card>
+</div>

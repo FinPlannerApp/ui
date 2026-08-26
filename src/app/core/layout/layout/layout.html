@@ -1,4 +1,24 @@
-<div class="layout-wrapper min-h-screen flex flex-col">
+<div class="layout-wrapper min-h-screen flex flex-col relative">
+  <!-- Global Top Progress Bar -->
+  @if(loadingService.isLoading()) {
+    <div class="fixed top-0 left-0 right-0 z-[1000]">
+      <p-progressBar mode="indeterminate" [style]="{ height: '3px' }"></p-progressBar>
+    </div>
+  }
+
+  <!-- Global Screen Freeze Overlay for Mutating API Operations -->
+  @if(loadingService.isMutating()) {
+    <div class="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-[9999] flex items-center justify-center transition-all duration-300">
+      <div class="bg-[var(--glass-bg-solid)] border border-[var(--glass-border)] rounded-2xl p-6 shadow-2xl flex items-center gap-4">
+        <p-progressSpinner styleClass="w-8 h-8" strokeWidth="4"></p-progressSpinner>
+        <div class="flex flex-col">
+          <span class="font-bold text-sm text-[var(--text-main)]">Processing transaction...</span>
+          <span class="text-xs text-[var(--text-muted)]">Please wait while your data is synchronized securely</span>
+        </div>
+      </div>
+    </div>
+  }
+
   <!-- Header -->
   <header
     class="p-3 bg-[var(--glass-bg-solid)] backdrop-blur-xl border-b border-[var(--glass-border)] flex items-center justify-between sticky top-0 z-500">

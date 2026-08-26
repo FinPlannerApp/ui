@@ -1,34 +1,57 @@
+<!-- Reading Progress Bar -->
+<div class="fixed top-0 left-0 h-1 bg-gradient-to-r from-emerald-400 via-sky-400 to-indigo-500 z-50 transition-all duration-150"
+    [style.width.%]="scrollProgress()"></div>
+
 <div class="px-4 py-8 md:px-8 max-w-4xl mx-auto">
-    <a routerLink="/blog"
-        class="no-underline text-[var(--text-muted)] flex items-center gap-2 mb-5 hover:text-[var(--primary-color)] transition-colors">
-        <i class="pi pi-arrow-left"></i>
-        <span>Back to Blog</span>
-    </a>
+    <div class="flex items-center justify-between gap-4 mb-6">
+        <a routerLink="/blog"
+            class="no-underline text-[var(--text-muted)] flex items-center gap-2 hover:text-[var(--primary-color)] transition-colors text-sm font-semibold">
+            <i class="pi pi-arrow-left"></i>
+            <span>Back to Blog Directory</span>
+        </a>
+
+        <button (click)="copyArticleLink()"
+            class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-bold cursor-pointer transition-all">
+            <i class="pi pi-share-alt text-emerald-400"></i>
+            <span>Copy Link</span>
+        </button>
+    </div>
 
     @if (post(); as p) {
-    <article class="glass-card p-4 md:p-6 rounded-3xl">
-        <span class="inline-block text-xs font-bold px-3 py-2 rounded-xl mb-4 text-white" [style.background]="p.tagColor">{{ p.tag }}</span>
+    <article class="glass-card p-5 md:p-8 rounded-3xl">
+        <div class="flex items-center justify-between mb-4">
+            <span class="inline-block text-xs font-bold px-3 py-1.5 rounded-xl text-white" [style.background]="p.tagColor">{{ p.tag }}</span>
+            
+            @if (auth.isAdmin()) {
+                <a [routerLink]="['/app/admin/blog-editor']" [queryParams]="{ slug: p.slug || p.id }"
+                    class="text-xs font-extrabold px-3.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 no-underline transition-all flex items-center gap-1.5 shadow-md">
+                    <i class="pi pi-pencil text-xs"></i> Edit Article (Admin)
+                </a>
+            }
+        </div>
 
-        <h1 class="text-4xl md:text-5xl font-bold mb-3 mt-0">{{ p.title }}</h1>
+        <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-4 mt-0 tracking-tight leading-tight">{{ p.title }}</h1>
 
-        <div class="flex items-center gap-3 text-[var(--text-muted)] mb-5 pb-5 border-b border-[var(--glass-border)]">
+        <div class="flex flex-wrap items-center gap-3 text-xs sm:text-sm text-[var(--text-muted)] mb-6 pb-6 border-b border-[var(--glass-border)]">
             <div class="flex items-center gap-2">
-                <i class="pi pi-calendar"></i>
+                <i class="pi pi-calendar text-emerald-400"></i>
                 <span>{{ p.date }}</span>
             </div>
             <span>•</span>
             <div class="flex items-center gap-2">
-                <i class="pi pi-clock"></i>
-                <span>3 min read</span>
+                <i class="pi pi-clock text-sky-400"></i>
+                <span>{{ readingTime() }}</span>
             </div>
         </div>
 
-        <div class="blog-content text-lg line-height-3" [innerHTML]="p.content">
+        <div class="blog-content text-base sm:text-lg line-height-3" [innerHTML]="p.content">
         </div>
+
+        <app-blog-comments [postSlug]="p.slug || p.id"></app-blog-comments>
     </article>
     } @else {
-    <div class="text-center py-8">
-        <i class="pi pi-exclamation-circle text-6xl text-[var(--text-muted)] mb-4"></i>
+    <div class="text-center py-12 glass-card rounded-3xl p-8">
+        <i class="pi pi-exclamation-circle text-6xl text-[var(--text-muted)] mb-4 block"></i>
         <h2 class="text-2xl font-bold mb-2">Post Not Found</h2>
         <p class="text-[var(--text-muted)] mb-4">The blog article you are looking for doesn't exist or has been moved.</p>
         <p-button routerLink="/blog" label="Return to Blog Directory" icon="pi pi-home"></p-button>

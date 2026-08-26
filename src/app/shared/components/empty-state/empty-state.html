@@ -1,0 +1,21 @@
+<div class="glass-card p-8 rounded-3xl text-center max-w-lg mx-auto my-6 border border-[var(--glass-border)]">
+  <div class="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4 shadow-inner">
+    <i [class]="icon" class="text-3xl"></i>
+  </div>
+  <h3 class="text-xl font-bold mb-2 text-[var(--text-main)]">{{ title }}</h3>
+  @if (description) {
+    <p class="text-sm text-[var(--text-muted)] mb-5 leading-relaxed">
+      {{ description }}
+    </p>
+  }
+  @if (actionLabel) {
+    <p-button
+      [label]="actionLabel"
+      [icon]="actionIcon"
+      [severity]="actionSeverity"
+      [text]="actionText"
+      styleClass="rounded-xl font-bold px-4 py-2"
+      (onClick)="handleAction()">
+    </p-button>
+  }
+</div>

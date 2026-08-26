@@ -46,76 +46,44 @@
   <!-- Financial Overview KPI Stat Cards -->
   @if (summary()) {
     <div class="grid grid-cols-12 gap-4">
-      <!-- B/F Opening Balance Card -->
       <div class="col-span-12 sm:col-span-6 lg:col-span-3">
-        <div class="glass-card p-4 rounded-2xl flex flex-col justify-between h-full border border-amber-500/20">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">B/F Opening Balance</span>
-            <div class="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center">
-              <i class="pi pi-history text-lg"></i>
-            </div>
-          </div>
-          <div class="mt-1">
-            <span class="text-2xl font-extrabold text-amber-400 tracking-tight">
-              {{ (summary()?.broughtForwardAmount || 0) | currency:'INR':'symbol':'1.2-2' }}
-            </span>
-            <p class="text-xs text-[var(--text-muted)] mt-1 mb-0">Opening balance for this month</p>
-          </div>
-        </div>
+        <app-stat-card
+          label="B/F Opening Balance"
+          [value]="((summary()?.broughtForwardAmount || 0) | currency:'INR':'symbol':'1.2-2')!"
+          subtitle="Opening balance for this month"
+          icon="pi pi-history"
+          variant="amber">
+        </app-stat-card>
       </div>
 
-      <!-- Current / Closing Balance Card -->
       <div class="col-span-12 sm:col-span-6 lg:col-span-3">
-        <div class="glass-card p-4 rounded-2xl flex flex-col justify-between h-full border border-blue-500/20">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Closing Balance</span>
-            <div class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center">
-              <i class="pi pi-wallet text-lg"></i>
-            </div>
-          </div>
-          <div class="mt-1">
-            <span class="text-2xl font-extrabold text-blue-400 tracking-tight">
-              {{ (summary()?.currentBalance || 0) | currency:'INR':'symbol':'1.2-2' }}
-            </span>
-            <p class="text-xs text-[var(--text-muted)] mt-1 mb-0">Real-time available balance</p>
-          </div>
-        </div>
+        <app-stat-card
+          label="Closing Balance"
+          [value]="((summary()?.currentBalance || 0) | currency:'INR':'symbol':'1.2-2')!"
+          subtitle="Real-time available balance"
+          icon="pi pi-wallet"
+          variant="info">
+        </app-stat-card>
       </div>
 
-      <!-- Monthly Income Card -->
       <div class="col-span-12 sm:col-span-6 lg:col-span-3">
-        <div class="glass-card p-4 rounded-2xl flex flex-col justify-between h-full border border-emerald-500/20">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Monthly Income</span>
-            <div class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-              <i class="pi pi-arrow-up text-lg"></i>
-            </div>
-          </div>
-          <div class="mt-1">
-            <span class="text-2xl font-extrabold text-emerald-400 tracking-tight">
-              {{ (summary()?.totalIncome || 0) | currency:'INR':'symbol':'1.2-2' }}
-            </span>
-            <p class="text-xs text-[var(--text-muted)] mt-1 mb-0">Inflows recorded this month</p>
-          </div>
-        </div>
+        <app-stat-card
+          label="Monthly Income"
+          [value]="((summary()?.totalIncome || 0) | currency:'INR':'symbol':'1.2-2')!"
+          subtitle="Inflows recorded this month"
+          icon="pi pi-arrow-up"
+          variant="success">
+        </app-stat-card>
       </div>
 
-      <!-- Monthly Expenses Card -->
       <div class="col-span-12 sm:col-span-6 lg:col-span-3">
-        <div class="glass-card p-4 rounded-2xl flex flex-col justify-between h-full border border-rose-500/20">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Monthly Expenses</span>
-            <div class="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center">
-              <i class="pi pi-arrow-down text-lg"></i>
-            </div>
-          </div>
-          <div class="mt-1">
-            <span class="text-2xl font-extrabold text-rose-400 tracking-tight">
-              {{ (summary()?.totalExpenses || 0) | currency:'INR':'symbol':'1.2-2' }}
-            </span>
-            <p class="text-xs text-[var(--text-muted)] mt-1 mb-0">Outflows recorded this month</p>
-          </div>
-        </div>
+        <app-stat-card
+          label="Monthly Expenses"
+          [value]="((summary()?.totalExpenses || 0) | currency:'INR':'symbol':'1.2-2')!"
+          subtitle="Outflows recorded this month"
+          icon="pi pi-arrow-down"
+          variant="danger">
+        </app-stat-card>
       </div>
     </div>
   }
@@ -382,24 +350,24 @@
 
   <!-- Transactions Table & Empty State Container -->
   @if (transactions().length === 0 && !isLoading()) {
-    <!-- Empty State -->
-    <div class="glass-card p-8 rounded-3xl text-center max-w-lg mx-auto my-6 border border-[var(--glass-border)]">
-      <div class="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
-        <i class="pi pi-receipt text-3xl"></i>
-      </div>
-      <h3 class="text-xl font-bold mb-2">No Transactions Found</h3>
-      @if (globalSearch() || selectedCategory()) {
-        <p class="text-sm text-[var(--text-muted)] mb-4">
-          No transactions match your current search query or category filter.
-        </p>
-        <p-button label="Clear Filters" icon="pi pi-filter-slash" [text]="true" (onClick)="clearSearch(); selectedCategory.set(null); loadData()"></p-button>
-      } @else {
-        <p class="text-sm text-[var(--text-muted)] mb-5">
-          No transactions recorded for this account in {{ selectedDate() | date:'MMMM yyyy' }}.
-        </p>
-        <p-button label="Add Transaction" icon="pi pi-plus" (onClick)="showTransactionForm()"></p-button>
-      }
-    </div>
+    @if (globalSearch() || selectedCategory()) {
+      <app-empty-state
+        icon="pi pi-filter-slash"
+        title="No Transactions Match Filter"
+        description="No transactions match your current search query or category filter."
+        actionLabel="Clear Filters"
+        [actionText]="true"
+        (onAction)="clearSearch(); selectedCategory.set(null); loadData()">
+      </app-empty-state>
+    } @else {
+      <app-empty-state
+        icon="pi pi-receipt"
+        title="No Transactions Found"
+        [description]="'No transactions recorded for this account in ' + (selectedDate() | date:'MMMM yyyy')"
+        actionLabel="Add Transaction"
+        (onAction)="showTransactionForm()">
+      </app-empty-state>
+    }
   } @else {
     <!-- Transactions Table Card -->
     <div class="glass-card rounded-2xl overflow-x-auto border border-[var(--glass-border)] w-full">
@@ -413,6 +381,9 @@
         [lazy]="true"
         (onLazyLoad)="onLazyLoad($event)"
         [scrollable]="true"
+        scrollHeight="500px"
+        [virtualScroll]="true"
+        [virtualScrollItemSize]="48"
         responsiveLayout="scroll"
         styleClass="p-datatable-sm p-datatable-striped w-full">
         
@@ -452,6 +423,16 @@
                 <p-button icon="pi pi-trash" [text]="true" [rounded]="true" severity="danger" size="small" pTooltip="Delete Transaction" (onClick)="deleteTransaction(tx)"></p-button>
               </div>
             </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="loadingbody">
+          <tr *ngFor="let i of [1,2,3,4,5]">
+            <td><p-skeleton width="80px" height="1.2rem" borderRadius="6px"></p-skeleton></td>
+            <td><p-skeleton width="180px" height="1.2rem" borderRadius="6px"></p-skeleton></td>
+            <td><p-skeleton width="100px" height="1.2rem" borderRadius="12px"></p-skeleton></td>
+            <td class="text-right"><p-skeleton width="90px" height="1.2rem" borderRadius="6px" styleClass="ml-auto"></p-skeleton></td>
+            <td class="text-center"><p-skeleton width="100px" height="1.2rem" borderRadius="6px" styleClass="mx-auto"></p-skeleton></td>
           </tr>
         </ng-template>
       </p-table>

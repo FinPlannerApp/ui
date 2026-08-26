@@ -1,21 +1,17 @@
 import { Component, inject, computed } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
-import { ButtonModule } from 'primeng/button';
-import { DrawerModule } from 'primeng/drawer';
 import { Auth } from '../../services/auth';
 import { MenuItem } from 'primeng/api';
-import { MenuModule } from 'primeng/menu';
 import { environment } from '../../../../environments/environment';
-import { AvatarModule } from 'primeng/avatar';
-import { PopoverModule } from 'primeng/popover';
 import { ThemeEngine } from '../../services/theme';
 import { BreadcrumbService } from '../breadcrumb.service';
-import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { CommonModule } from '@angular/common';
+import { LoadingService } from '../../services/loading.service';
+import { sharedPrimeModules } from '../../../shared/prime-imports';
 
 @Component({
   selector: 'app-layout',
-  imports: [RouterOutlet, DrawerModule, ButtonModule, MenuModule, AvatarModule, PopoverModule, BreadcrumbModule, CommonModule],
+  imports: [RouterOutlet, CommonModule, ...sharedPrimeModules],
   templateUrl: './layout.html',
 })
 
@@ -23,6 +19,7 @@ export class Layout {
   public authService = inject(Auth);
   public themeEngine = inject(ThemeEngine);
   public breadcrumbService = inject(BreadcrumbService);
+  public loadingService = inject(LoadingService);
   private router = inject(Router);
 
   sidebarVisible = false;

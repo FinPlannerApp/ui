@@ -1,0 +1,36 @@
+<div class="flex flex-col gap-5 w-full">
+  <!-- Header Title & Subtitle -->
+  @if (title) {
+    <div class="flex flex-col border-b border-[var(--glass-border)] pb-3">
+      <h3 class="text-lg font-bold m-0 text-[var(--text-main)]">{{ title }}</h3>
+      @if (subtitle) {
+        <p class="text-xs text-[var(--text-muted)] mt-1 mb-0">{{ subtitle }}</p>
+      }
+    </div>
+  }
+
+  <!-- Transcluded Form Content Body -->
+  <div class="form-modal-body grow">
+    <ng-content></ng-content>
+  </div>
+
+  <!-- Standardized Action Footer -->
+  <div class="flex items-center justify-end gap-3 border-t border-[var(--glass-border)] pt-4 mt-2">
+    <p-button
+      [label]="cancelLabel"
+      [text]="true"
+      severity="secondary"
+      [disabled]="isSubmitting"
+      styleClass="rounded-xl font-bold px-4 py-2"
+      (onClick)="cancel()">
+    </p-button>
+    <p-button
+      [label]="submitLabel"
+      [icon]="isSubmitting ? 'pi pi-spin pi-spinner' : submitIcon"
+      [severity]="submitSeverity"
+      [disabled]="isSubmitting || isInvalid"
+      styleClass="rounded-xl font-bold px-5 py-2"
+      (onClick)="submit()">
+    </p-button>
+  </div>
+</div>

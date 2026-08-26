@@ -25,76 +25,44 @@
 
   <!-- Financial Overview KPI Cards Grid -->
   <div class="grid grid-cols-12 gap-4">
-    <!-- Net Worth Card -->
     <div class="col-span-12 sm:col-span-6 lg:col-span-3 min-w-0">
-      <div class="glass-card p-4 rounded-2xl flex flex-col justify-between h-full relative overflow-hidden border border-emerald-500/30 min-w-0">
-        <div class="flex items-center justify-between mb-2 gap-2">
-          <span class="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] truncate">Net Worth</span>
-          <div class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
-            <i class="pi pi-chart-line text-lg"></i>
-          </div>
-        </div>
-        <div class="mt-1 min-w-0">
-          <div class="text-xl sm:text-2xl font-extrabold tracking-tight truncate" [ngClass]="netWorth() >= 0 ? 'text-emerald-400' : 'text-rose-400'" [title]="netWorth() | currency:'INR':'symbol':'1.2-2'">
-            {{ netWorth() | currency:'INR':'symbol':'1.2-2' }}
-          </div>
-          <p class="text-xs text-[var(--text-muted)] mt-1 mb-0 truncate">Assets minus Liabilities</p>
-        </div>
-      </div>
+      <app-stat-card
+        label="Net Worth"
+        [value]="(netWorth() | currency:'INR':'symbol':'1.2-2')!"
+        subtitle="Assets minus Liabilities"
+        icon="pi pi-chart-line"
+        [variant]="netWorth() >= 0 ? 'success' : 'danger'">
+      </app-stat-card>
     </div>
 
-    <!-- Liquid Assets Card -->
     <div class="col-span-12 sm:col-span-6 lg:col-span-3 min-w-0">
-      <div class="glass-card p-4 rounded-2xl flex flex-col justify-between h-full border border-blue-500/20 min-w-0">
-        <div class="flex items-center justify-between mb-2 gap-2">
-          <span class="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] truncate">Total Assets</span>
-          <div class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0">
-            <i class="pi pi-wallet text-lg"></i>
-          </div>
-        </div>
-        <div class="mt-1 min-w-0">
-          <div class="text-xl sm:text-2xl font-extrabold text-blue-400 tracking-tight truncate" [title]="totalAssetBalance() | currency:'INR':'symbol':'1.2-2'">
-            {{ totalAssetBalance() | currency:'INR':'symbol':'1.2-2' }}
-          </div>
-          <p class="text-xs text-[var(--text-muted)] mt-1 mb-0 truncate">{{ assetAccountsCount() }} asset accounts</p>
-        </div>
-      </div>
+      <app-stat-card
+        label="Total Assets"
+        [value]="(totalAssetBalance() | currency:'INR':'symbol':'1.2-2')!"
+        [subtitle]="assetAccountsCount() + ' asset accounts'"
+        icon="pi pi-wallet"
+        variant="info">
+      </app-stat-card>
     </div>
 
-    <!-- Total Liabilities Card -->
     <div class="col-span-12 sm:col-span-6 lg:col-span-3 min-w-0">
-      <div class="glass-card p-4 rounded-2xl flex flex-col justify-between h-full border border-rose-500/20 min-w-0">
-        <div class="flex items-center justify-between mb-2 gap-2">
-          <span class="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] truncate">Liabilities & Debt</span>
-          <div class="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center shrink-0">
-            <i class="pi pi-credit-card text-lg"></i>
-          </div>
-        </div>
-        <div class="mt-1 min-w-0">
-          <div class="text-xl sm:text-2xl font-extrabold text-rose-400 tracking-tight truncate" [title]="totalLiabilities() | currency:'INR':'symbol':'1.2-2'">
-            {{ totalLiabilities() | currency:'INR':'symbol':'1.2-2' }}
-          </div>
-          <p class="text-xs text-[var(--text-muted)] mt-1 mb-0 truncate">{{ liabilityAccountsCount() }} cards & loans</p>
-        </div>
-      </div>
+      <app-stat-card
+        label="Liabilities & Debt"
+        [value]="(totalLiabilities() | currency:'INR':'symbol':'1.2-2')!"
+        [subtitle]="liabilityAccountsCount() + ' cards & loans'"
+        icon="pi pi-credit-card"
+        variant="danger">
+      </app-stat-card>
     </div>
 
-    <!-- Total Accounts Card -->
     <div class="col-span-12 sm:col-span-6 lg:col-span-3 min-w-0">
-      <div class="glass-card p-4 rounded-2xl flex flex-col justify-between h-full border border-purple-500/20 min-w-0">
-        <div class="flex items-center justify-between mb-2 gap-2">
-          <span class="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] truncate">Total Accounts</span>
-          <div class="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center shrink-0">
-            <i class="pi pi-database text-lg"></i>
-          </div>
-        </div>
-        <div class="mt-1 min-w-0">
-          <div class="text-xl sm:text-2xl font-extrabold text-purple-400 tracking-tight truncate">
-            {{ totalAccountsCount() }}
-          </div>
-          <p class="text-xs text-[var(--text-muted)] mt-1 mb-0 truncate">Managed in portfolio</p>
-        </div>
-      </div>
+      <app-stat-card
+        label="Total Accounts"
+        [value]="totalAccountsCount()"
+        subtitle="Managed in portfolio"
+        icon="pi pi-database"
+        variant="purple">
+      </app-stat-card>
     </div>
   </div>
 
@@ -114,8 +82,8 @@
           class="w-full h-10 p-inputtext-sm rounded-xl" />
       </p-iconfield>
 
-      <div class="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full lg:w-auto justify-between sm:justify-end shrink-0">
-        <!-- Category Dropdown Selector -->
+      <div class="flex items-center gap-3 w-full lg:w-auto">
+        <!-- Category Filter Dropdown (Matching 40px height) -->
         <div class="w-full sm:w-52 shrink-0 min-w-0">
           <p-select
             [options]="categoryFilterOptions()"
@@ -177,31 +145,47 @@
     </div>
   </div>
 
-  <!-- Loading Spinner -->
+  <!-- Skeleton Loaders -->
   @if (isLoading()) {
-    <div class="flex justify-center items-center py-12">
-      <p-progressSpinner styleClass="w-12 h-12"></p-progressSpinner>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+      @for (i of [1, 2, 3, 4]; track i) {
+        <div class="glass-card rounded-2xl p-5 border border-[var(--glass-border)] flex flex-col justify-between h-52">
+          <div class="flex items-center gap-3 mb-4">
+            <p-skeleton shape="circle" size="2.75rem"></p-skeleton>
+            <div class="grow flex flex-col gap-2">
+              <p-skeleton width="70%" height="1.2rem" borderRadius="6px"></p-skeleton>
+              <p-skeleton width="40%" height="0.9rem" borderRadius="6px"></p-skeleton>
+            </div>
+          </div>
+          <p-skeleton width="65%" height="2.2rem" borderRadius="8px" styleClass="my-2"></p-skeleton>
+          <div class="flex justify-between items-center mt-4 pt-3 border-t border-[var(--glass-border)]">
+            <p-skeleton width="30%" height="1rem" borderRadius="4px"></p-skeleton>
+            <p-skeleton width="35%" height="2rem" borderRadius="8px"></p-skeleton>
+          </div>
+        </div>
+      }
     </div>
   } @else {
     <!-- Empty State -->
     @if (filteredAccounts().length === 0) {
-      <div class="glass-card p-8 rounded-3xl text-center max-w-lg mx-auto my-6 border border-[var(--glass-border)]">
-        <div class="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
-          <i class="pi pi-wallet text-3xl"></i>
-        </div>
-        <h3 class="text-xl font-bold mb-2">No Accounts Found</h3>
-        @if (searchTerm() || selectedCategoryFilter() !== 'all') {
-          <p class="text-sm text-[var(--text-muted)] mb-4">
-            No accounts match your current filter or search criteria. Try adjusting your filters.
-          </p>
-          <p-button label="Reset Filters" icon="pi pi-filter-slash" [text]="true" (onClick)="searchTerm.set(''); selectedCategoryFilter.set('all')"></p-button>
-        } @else {
-          <p class="text-sm text-[var(--text-muted)] mb-5">
-            You haven't added any financial accounts yet. Add your bank accounts, credit cards, or cash wallets to get started!
-          </p>
-          <p-button label="Add Your First Account" icon="pi pi-plus" (onClick)="openCreateForm()"></p-button>
-        }
-      </div>
+      @if (searchTerm() || selectedCategoryFilter() !== 'all') {
+        <app-empty-state
+          icon="pi pi-filter-slash"
+          title="No Accounts Match Filter"
+          description="No accounts match your current filter or search criteria. Try adjusting your search query or filters."
+          actionLabel="Reset Filters"
+          [actionText]="true"
+          (onAction)="searchTerm.set(''); selectedCategoryFilter.set('all')">
+        </app-empty-state>
+      } @else {
+        <app-empty-state
+          icon="pi pi-wallet"
+          title="No Accounts Found"
+          description="You haven't added any financial accounts yet. Add your bank accounts, credit cards, or cash wallets to get started!"
+          actionLabel="Add Your First Account"
+          (onAction)="openCreateForm()">
+        </app-empty-state>
+      }
     } @else {
       <!-- GRID VIEW -->
       @if (viewMode() === 'grid') {

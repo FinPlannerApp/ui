@@ -89,7 +89,7 @@ export class Goals implements OnInit {
     }
 
     try {
-      await this.goalService.upsert({
+      const savedGoal = await this.goalService.upsert({
         id: this.editingId() ?? undefined,
         name,
         targetAmount: target,
@@ -97,6 +97,19 @@ export class Goals implements OnInit {
         savingsBucketId: isBucketMode ? this.formBucketId() : null,
         manualCurrentAmount: isBucketMode ? 0 : this.formManualAmount()
       });
+
+      if (savedGoal) {
+        this.goals.update(current => {
+          const idx = current.findIndex(g => g.id === savedGoal.id);
+          if (idx !== -1) {
+            const copy = [...current];
+            copy[idx] = savedGoal;
+            return copy;
+          }
+          return [savedGoal, ...current];
+        });
+      }
+
       this.notificationService.showSuccess('Goal saved.');
       this.showForm.set(false);
       await this.loadGoals();
@@ -113,6 +126,7 @@ export class Goals implements OnInit {
       accept: async () => {
         try {
           await this.goalService.delete(goal.id);
+          this.goals.update(current => current.filter(g => g.id !== goal.id));
           this.notificationService.showSuccess('Goal deleted.');
           await this.loadGoals();
         } catch (err: any) {

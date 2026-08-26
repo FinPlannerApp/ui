@@ -21,10 +21,13 @@ export interface CategoryFilterOption {
   icon: string;
 }
 
+import { EmptyState } from '../../../shared/components/empty-state/empty-state';
+import { StatCard } from '../../../shared/components/stat-card/stat-card';
+
 @Component({
   selector: 'app-accounts-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, AutoMarqueeDirective, ...sharedPrimeModules],
+  imports: [CommonModule, FormsModule, RouterLink, AutoMarqueeDirective, EmptyState, StatCard, ...sharedPrimeModules],
   templateUrl: './accounts-page.html',
   providers: [DialogService, ConfirmationService],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -150,7 +153,7 @@ export class AccountsPage implements OnInit {
 
     await Promise.all([
       this.loadCategories(),
-      this.refreshData()
+      this.accountState.loadAccounts()
     ]);
   }
 
