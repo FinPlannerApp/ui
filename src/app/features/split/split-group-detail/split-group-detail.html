@@ -43,13 +43,30 @@
     <!-- Members strip -->
     <div class="flex items-center gap-2 flex-wrap">
       @for (member of group()?.members; track member.id) {
-        <button (click)="startEditUpi(member)"
-          class="px-3 py-1.5 rounded-full text-xs sm:text-sm bg-white/5 hover:bg-white/10 border-none cursor-pointer text-[var(--text-primary)] flex items-center gap-1.5">
-          {{ member.name }}
-          @if (member.upiId) {
-            <i class="pi pi-check-circle text-emerald-400" style="font-size: 0.65rem;" pTooltip="UPI set"></i>
+        <div class="inline-flex items-center gap-1 bg-white/5 rounded-full px-3 py-1.5 text-xs sm:text-sm">
+          @if (canEditUpi(member)) {
+            <button (click)="startEditUpi(member)" pTooltip="Click to edit UPI ID"
+              class="bg-transparent border-none cursor-pointer text-[var(--text-primary)] font-medium p-0 flex items-center gap-1.5">
+              {{ member.name }}
+              @if (member.upiId) {
+                <i class="pi pi-check-circle text-emerald-400" style="font-size: 0.65rem;" pTooltip="UPI set"></i>
+              }
+            </button>
+          } @else {
+            <span class="text-[var(--text-primary)] font-medium flex items-center gap-1.5">
+              {{ member.name }}
+              @if (member.upiId) {
+                <i class="pi pi-check-circle text-emerald-400" style="font-size: 0.65rem;" pTooltip="UPI set"></i>
+              }
+            </span>
           }
-        </button>
+          @if (member.upiId) {
+            <button (click)="copyUpi(member.upiId)" pTooltip="Copy UPI ID"
+              class="text-[var(--text-muted)] hover:text-emerald-400 bg-transparent border-none cursor-pointer p-0 ml-1 flex items-center">
+              <i class="pi pi-copy" style="font-size: 0.75rem;"></i>
+            </button>
+          }
+        </div>
       }
       @if (!isGroupClosed()) {
         <button (click)="showAddMember.set(true)"
@@ -118,7 +135,11 @@
     @if (activeTab() === 'expenses') {
       <div class="flex flex-col gap-2">
         @for (expense of expenses(); track expense.id) {
-          <div class="glass-card p-4 rounded-2xl flex items-center justify-between gap-3">
+          <div class="glass-card p-4 rounded-2xl flex items-center justify-between gap-3 transition-all duration-500"
+            [class.ring-2]="expense.id === newlyAddedExpenseId()"
+            [class.ring-emerald-400]="expense.id === newlyAddedExpenseId()"
+            [class.bg-emerald-500\/20]="expense.id === newlyAddedExpenseId()"
+            [class.animate-pulse]="expense.id === newlyAddedExpenseId()">
             <div class="flex flex-col min-w-0">
               <span class="font-semibold text-sm sm:text-base text-[var(--text-primary)] truncate">{{ expense.description }}</span>
               <span class="text-xs text-[var(--text-muted)]">
@@ -153,17 +174,23 @@
         <div class="grid grid-cols-12 gap-3">
           @for (b of balances()?.balances; track b.memberId) {
             <div class="col-span-12 sm:col-span-6 lg:col-span-4">
-              <div class="glass-card p-4 rounded-2xl flex items-center justify-between"
+              <div class="glass-card p-4 rounded-2xl flex flex-col gap-2"
                 [class.border]="true"
                 [class.border-emerald-500/20]="b.netBalance > 0"
                 [class.border-red-500/20]="b.netBalance < 0"
                 [class.border-white/5]="b.netBalance === 0">
-                <span class="text-sm sm:text-base font-medium">{{ b.memberName }}</span>
-                <span class="text-sm sm:text-base font-bold"
-                  [class.text-emerald-400]="b.netBalance > 0"
-                  [class.text-red-400]="b.netBalance < 0">
-                  {{ b.netBalance > 0 ? '+' : '' }}{{ b.netBalance | currency:'INR' }}
-                </span>
+                <div class="flex items-center justify-between">
+                  <span class="text-sm sm:text-base font-semibold">{{ b.memberName }}</span>
+                  <span class="text-sm sm:text-base font-bold"
+                    [class.text-emerald-400]="b.netBalance > 0"
+                    [class.text-red-400]="b.netBalance < 0">
+                    {{ b.netBalance > 0 ? '+' : '' }}{{ b.netBalance | currency:'INR' }}
+                  </span>
+                </div>
+                <div class="flex items-center justify-between text-xs text-[var(--text-muted)] pt-1.5 border-t border-white/5">
+                  <span>Paid: <strong class="text-[var(--text-primary)] font-medium">{{ (b.totalPaid ?? 0) | currency:'INR' }}</strong></span>
+                  <span>Share: <strong class="text-[var(--text-primary)] font-medium">{{ (b.totalShare ?? 0) | currency:'INR' }}</strong></span>
+                </div>
               </div>
             </div>
           }
@@ -203,13 +230,13 @@
             <span>{{ s.fromMemberName }} → {{ s.toMemberName }}</span>
             <div class="flex items-center gap-2 flex-wrap">
               <span class="font-medium">{{ s.amount | currency:'INR' }}</span>
-              <p-tag [value]="s.status === 1 ? 'Completed' : (s.status === 2 ? 'Awaiting confirmation' : 'Pending')"
-                [severity]="s.status === 1 ? 'success' : (s.status === 2 ? 'warn' : 'secondary')"></p-tag>
+              <p-tag [value]="s.status === 2 ? 'Completed' : (s.status === 1 ? 'Awaiting confirmation' : 'Pending')"
+                [severity]="s.status === 2 ? 'success' : (s.status === 1 ? 'warn' : 'secondary')"></p-tag>
               @if (s.status === 0) {
                 <p-button label="Mark as sent" size="small" [text]="true"
                   (onClick)="onMarkPaymentSent(s.id)"></p-button>
               }
-              @if (s.status === 2) {
+              @if (s.status === 1) {
                 <p-button label="Confirm received" size="small" severity="success"
                   (onClick)="onConfirmPaymentReceived(s.id)"></p-button>
               }

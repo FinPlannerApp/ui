@@ -14,6 +14,7 @@ export interface RegisterUserDto {
 }
 
 export interface UserDetails {
+  id?: string;
   name: string;
   email: string;
   exp: number;
@@ -145,7 +146,9 @@ export class Auth {
       // Extract roles: JWT role claim can be a string or array
       const roleClaim = decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
       const roles: string[] = Array.isArray(roleClaim) ? roleClaim : (roleClaim ? [roleClaim] : []);
+      const userId = decodedToken['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] || decodedToken.nameid || decodedToken.sub;
       const userDetails: UserDetails = {
+        id: userId,
         name: decodedToken.sub,
         email: decodedToken.email,
         exp: decodedToken.exp,

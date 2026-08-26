@@ -35,6 +35,18 @@ export class SplitService {
     return result.value;
   }
 
+  async getGroupFullDetails(groupId: number): Promise<{ group: SplitGroup; expenses: SplitExpense[]; balances: GroupBalances }> {
+    const result = await firstValueFrom(this.api.get<any>(`Split/groups/${groupId}/full`));
+    if (!result.isSuccess) {
+      throw new Error(result.error?.description || 'Failed to load group details.');
+    }
+    return {
+      group: result.value.group,
+      expenses: result.value.expenses ?? [],
+      balances: result.value.balances
+    };
+  }
+
   async addMember(groupId: number, name: string, upiId: string | null): Promise<SplitMember> {
     const result = await firstValueFrom(this.api.post<SplitMember>('Split/members', { groupId, name, upiId }));
     if (!result.isSuccess) {

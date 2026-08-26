@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import * as QRCode from 'qrcode';
 import { FormsModule } from '@angular/forms';
@@ -14,6 +14,8 @@ import { NotificationService } from '../../../core/services/notification.service
 import { DraftPersistenceService } from '../../../core/services/draft-persistence.service';
 import { OnlineStatusService } from '../../../core/services/online-status.service';
 import { AccountState } from '../../../core/state/account-state.service';
+import { Auth } from '../../../core/services/auth';
+import { SplitSignalRService } from '../../../core/services/split-signalr.service';
 
 import { EmptyState } from '../../../shared/empty-state/empty-state';
 
@@ -24,7 +26,7 @@ import { EmptyState } from '../../../shared/empty-state/empty-state';
   providers: [ConfirmationService],
   templateUrl: './split-group-detail.html'
 })
-export class SplitGroupDetail implements OnInit {
+export class SplitGroupDetail implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private splitService = inject(SplitService);
   private notificationService = inject(NotificationService);
@@ -45,6 +47,29 @@ export class SplitGroupDetail implements OnInit {
   }
   public onlineStatus = inject(OnlineStatusService);
   public accountState = inject(AccountState);
+  private authService = inject(Auth);
+  private signalrService = inject(SplitSignalRService);
+
+  newlyAddedExpenseId = signal<number | null>(null);
+
+  canEditUpi(member: SplitMember): boolean {
+    const g = this.group();
+    if (!g) return false;
+    const currentUserId = this.authService.currentUserDetails()?.id;
+    const isMember = g.members.some(m => m.linkedUserId && m.linkedUserId === currentUserId);
+    if (!isMember) return false;
+
+    if (member.linkedUserId) {
+      return member.linkedUserId === currentUserId;
+    }
+    return true;
+  }
+
+  async copyUpi(upiId: string): Promise<void> {
+    if (!upiId) return;
+    await navigator.clipboard.writeText(upiId);
+    this.notificationService.showSuccess(`UPI ID copied: ${upiId}`);
+  }
 
   readonly SplitType = SplitType;
 
@@ -103,8 +128,7 @@ export class SplitGroupDetail implements OnInit {
   async onMarkPaymentSent(settlementId: number): Promise<void> {
     try {
       await this.splitService.markPaymentSent(settlementId);
-      this.notificationService.showSuccess('Marked as sent — waiting for the other side to confirm.');
-      await this.loadAll();
+      await this.loadSettlementHistory();
     } catch (err: any) {
       this.notificationService.showError(err?.message || 'Failed to mark as sent.');
     }
@@ -113,8 +137,7 @@ export class SplitGroupDetail implements OnInit {
   async onConfirmPaymentReceived(settlementId: number): Promise<void> {
     try {
       await this.splitService.confirmPaymentReceived(settlementId);
-      this.notificationService.showSuccess('Confirmed — balances updated.');
-      await this.loadAll();
+      await this.loadSettlementHistory();
     } catch (err: any) {
       this.notificationService.showError(err?.message || 'Failed to confirm.');
     }
@@ -148,9 +171,7 @@ export class SplitGroupDetail implements OnInit {
   async saveEditUpi(memberId: number): Promise<void> {
     try {
       await this.splitService.updateMemberUpi(memberId, this.editMemberUpi().trim());
-      this.notificationService.showSuccess('UPI updated.');
       this.editingMemberId.set(null);
-      await this.loadAll();
     } catch (err: any) {
       this.notificationService.showError(err?.message || 'Failed to update UPI.');
     }
@@ -211,24 +232,90 @@ export class SplitGroupDetail implements OnInit {
   async ngOnInit(): Promise<void> {
     await this.loadAll();
     this.accountState.loadAccounts();
+
+    this.signalrService.joinGroup(this.groupId, (payload: any) => {
+      if (payload && payload.groupId === this.groupId) {
+        if (payload.activityMessage) {
+          this.notificationService.showSuccess(payload.activityMessage);
+        }
+
+        if (payload.balances) {
+          this.balances.set(payload.balances);
+        }
+
+        switch (payload.eventType) {
+          case 'ExpenseAdded':
+            if (payload.expense) {
+              this.expenses.update(list => [payload.expense, ...list.filter(e => e.id !== payload.expense.id)]);
+              this.newlyAddedExpenseId.set(payload.expense.id);
+              setTimeout(() => this.newlyAddedExpenseId.set(null), 3000);
+            }
+            break;
+
+          case 'ExpenseUpdated':
+            if (payload.expense) {
+              this.expenses.update(list => list.map(e => e.id === payload.expense.id ? payload.expense : e));
+            }
+            break;
+
+          case 'ExpenseDeleted':
+            if (payload.expenseId) {
+              this.expenses.update(list => list.filter(e => e.id !== payload.expenseId));
+            }
+            break;
+
+          case 'MemberAdded':
+            if (payload.member) {
+              this.group.update(g => g ? { ...g, members: [...g.members, payload.member] } : g);
+            }
+            break;
+
+          case 'MemberUpiUpdated':
+            if (payload.memberId) {
+              this.group.update(g => g ? {
+                ...g,
+                members: g.members.map(m => m.id === payload.memberId ? { ...m, upiId: payload.upiId } : m)
+              } : g);
+            }
+            break;
+
+          case 'SettlementRecorded':
+            this.loadSettlementHistory();
+            break;
+
+          case 'GroupStatusChanged':
+            if (payload.status !== undefined) {
+              this.group.update(g => g ? { ...g, status: payload.status } : g);
+              this.loadSettlementHistory();
+            }
+            break;
+
+          case 'GroupUpdated':
+          default:
+            if (payload.group) this.group.set(payload.group);
+            if (payload.expenses) this.expenses.set(payload.expenses);
+            break;
+        }
+      }
+    });
   }
 
-  private async loadAll(): Promise<void> {
-    this.isLoading.set(true);
+  ngOnDestroy(): void {
+    this.signalrService.leaveGroup(this.groupId);
+  }
+
+  private async loadAll(silent: boolean = false): Promise<void> {
+    if (!silent) this.isLoading.set(true);
     try {
-      const [group, expenses, balances] = await Promise.all([
-        this.splitService.getGroup(this.groupId),
-        this.splitService.getExpenses(this.groupId),
-        this.splitService.getBalances(this.groupId)
-      ]);
-      this.group.set(group);
-      this.expenses.set(expenses);
-      this.balances.set(balances);
+      const data = await this.splitService.getGroupFullDetails(this.groupId);
+      this.group.set(data.group);
+      this.expenses.set(data.expenses);
+      this.balances.set(data.balances);
       await this.loadSettlementHistory();
     } catch {
-      this.notificationService.showError('Could not load this group.');
+      if (!silent) this.notificationService.showError('Could not load this group.');
     } finally {
-      this.isLoading.set(false);
+      if (!silent) this.isLoading.set(false);
     }
   }
 
@@ -275,8 +362,6 @@ export class SplitGroupDetail implements OnInit {
       accept: async () => {
         try {
           await this.splitService.lockGroup(this.groupId);
-          this.notificationService.showSuccess('Group locked.');
-          await this.loadAll();
         } catch (err: any) {
           this.notificationService.showError(err?.message || 'Failed to lock group.');
         }
@@ -341,7 +426,6 @@ export class SplitGroupDetail implements OnInit {
       this.newMemberName.set('');
       this.newMemberUpi.set('');
       this.showAddMember.set(false);
-      await this.loadAll();
     } catch (err: any) {
       this.notificationService.showError(err?.message || 'Failed to add member.');
     }
@@ -351,6 +435,10 @@ export class SplitGroupDetail implements OnInit {
   editingExpenseId = signal<number | null>(null);
 
   openAddExpense(): void {
+    if (this.isGroupClosed()) {
+      this.notificationService.showError('This group is locked — new expenses cannot be added.');
+      return;
+    }
     this.editingExpenseId.set(null);
     const draft = this.draftService.load<any>(this.draftKey);
     if (draft && (draft.description || draft.amount)) {
@@ -405,10 +493,7 @@ export class SplitGroupDetail implements OnInit {
             this.notificationService.showError(
               'Deleted here, but this expense was already imported to a real account — that transaction still exists and needs removing separately.'
             );
-          } else {
-            this.notificationService.showSuccess('Expense deleted.');
           }
-          await this.loadAll();
         } catch (err: any) {
           this.notificationService.showError(err?.message || 'Failed to delete.');
         }
@@ -491,15 +576,16 @@ export class SplitGroupDetail implements OnInit {
 
       if (this.editingExpenseId()) {
         await this.splitService.updateExpense(this.editingExpenseId()!, payload);
-        this.notificationService.showSuccess('Expense updated.');
       } else {
-        await this.splitService.addExpense(payload);
-        this.notificationService.showSuccess('Expense added.');
+        const created = await this.splitService.addExpense(payload);
+        if (created?.id) {
+          this.newlyAddedExpenseId.set(created.id);
+          setTimeout(() => this.newlyAddedExpenseId.set(null), 3000);
+        }
       }
       this.editingExpenseId.set(null);
       this.showAddExpense.set(false);
       this.draftService.clear(this.draftKey);
-      await this.loadAll();
     } catch (err: any) {
       this.notificationService.showError(err?.message || 'Failed to save expense.');
     }

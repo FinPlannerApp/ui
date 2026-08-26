@@ -64,6 +64,8 @@ export interface SplitExpense {
 export interface MemberBalance {
   memberId: number;
   memberName: string;
+  totalPaid?: number;
+  totalShare?: number;
   netBalance: number; // positive = owed money, negative = owes money
 }
 
