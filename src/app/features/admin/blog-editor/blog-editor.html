@@ -1,68 +1,244 @@
-<div class="flex flex-col gap-4 p-3 sm:p-5 md:p-8 w-full max-w-7xl mx-auto">
+<div class="flex flex-col gap-4 p-3 sm:p-5 md:p-8 w-full max-w-7xl mx-auto transition-all"
+  [class.fixed]="isFullscreen()" [class.inset-0]="isFullscreen()" [class.z-50]="isFullscreen()"
+  [class.bg-slate-950]="isFullscreen()" [class.p-6]="isFullscreen()" [class.max-w-none]="isFullscreen()">
+  
+  <!-- Header Bar -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
-    <h1 class="text-xl sm:text-2xl md:text-3xl font-extrabold gradient-text m-0">Blog Post CMS Editor</h1>
-    <div class="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
-      <label class="flex items-center gap-2 text-xs sm:text-sm cursor-pointer select-none px-3 py-1.5 rounded-xl bg-white/5 border border-white/10">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-bold text-lg shadow-lg">
+        <i class="pi pi-file-edit"></i>
+      </div>
+      <div>
+        <h1 class="text-xl sm:text-2xl font-extrabold gradient-text m-0">CMS Markdown Studio</h1>
+        <p class="text-xs text-[var(--text-muted)] m-0">Create & publish rich technical posts with Mermaid diagrams & GFM callouts</p>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between sm:justify-end gap-2.5 w-full sm:w-auto flex-wrap">
+      <!-- Mode Switches (Split / Editor / Preview) -->
+      <div class="flex items-center bg-black/40 p-1 rounded-xl border border-white/10">
+        <button type="button" (click)="viewMode.set('split')"
+          class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
+          [class.bg-indigo-600]="viewMode() === 'split'" [class.text-white]="viewMode() === 'split'"
+          [class.text-slate-400]="viewMode() !== 'split'" title="Split Editor & Live Preview">
+          <i class="pi pi-th-large text-[11px]"></i>
+          <span class="hidden sm:inline">Split</span>
+        </button>
+        <button type="button" (click)="viewMode.set('editor')"
+          class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
+          [class.bg-indigo-600]="viewMode() === 'editor'" [class.text-white]="viewMode() === 'editor'"
+          [class.text-slate-400]="viewMode() !== 'editor'" title="Focus Writing Mode">
+          <i class="pi pi-pencil text-[11px]"></i>
+          <span class="hidden sm:inline">Write</span>
+        </button>
+        <button type="button" (click)="viewMode.set('preview')"
+          class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
+          [class.bg-indigo-600]="viewMode() === 'preview'" [class.text-white]="viewMode() === 'preview'"
+          [class.text-slate-400]="viewMode() !== 'preview'" title="Preview Mode">
+          <i class="pi pi-eye text-[11px]"></i>
+          <span class="hidden sm:inline">Preview</span>
+        </button>
+      </div>
+
+      <!-- Fullscreen Button -->
+      <button type="button" (click)="toggleFullscreen()"
+        class="p-2 rounded-xl bg-white/5 border border-white/10 text-slate-300 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
+        [title]="isFullscreen() ? 'Exit Fullscreen' : 'Fullscreen Mode'">
+        <i class="pi" [class.pi-window-maximize]="!isFullscreen()" [class.pi-window-minimize]="isFullscreen()"></i>
+      </button>
+
+      <!-- Publish Checkbox -->
+      <label class="flex items-center gap-2 text-xs cursor-pointer select-none px-3 py-1.5 rounded-xl bg-white/5 border border-white/10">
         <p-checkbox [ngModel]="isPublished()" (ngModelChange)="isPublished.set($event)" [binary]="true"></p-checkbox>
         <span class="font-bold tracking-wide" [class.text-emerald-400]="isPublished()" [class.text-amber-400]="!isPublished()">
           {{ isPublished() ? 'Published' : 'Draft' }}
         </span>
       </label>
+
+      <!-- Save Button -->
       <p-button label="Save Post" icon="pi pi-check" (onClick)="save()" [loading]="isSaving()"
-        styleClass="rounded-xl px-4 py-2 text-xs sm:text-sm font-bold shadow-md"></p-button>
+        styleClass="rounded-xl px-4 py-2 text-xs font-bold shadow-lg bg-emerald-600 hover:bg-emerald-500 border-0"></p-button>
     </div>
   </div>
 
-  <div class="flex flex-col gap-1.5">
-    <label class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Title</label>
-    <input type="text" pInputText placeholder="e.g. Introducing FinPlanner v6.0"
-      [ngModel]="title()" (ngModelChange)="title.set($event)" (blur)="slugify()" class="w-full text-base sm:text-lg font-bold rounded-xl" />
-  </div>
+  <!-- Post Metadata Inputs -->
+  <div class="grid grid-cols-1 md:grid-cols-12 gap-3 bg-slate-900/30 p-3.5 rounded-2xl border border-white/10">
+    <div class="md:col-span-6 flex flex-col gap-1">
+      <label class="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Article Title</label>
+      <input type="text" pInputText placeholder="e.g. Master Credit Card Billing Cycles & Real-Time Debt"
+        [ngModel]="title()" (ngModelChange)="title.set($event)" (blur)="slugify()" class="w-full text-sm font-bold rounded-xl" />
+    </div>
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-    <div class="flex flex-col gap-1.5">
-      <label class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">URL Slug</label>
+    <div class="md:col-span-4 flex flex-col gap-1">
+      <label class="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">URL Slug</label>
       <input type="text" pInputText placeholder="url-slug"
         [ngModel]="slug()" (ngModelChange)="slug.set($event)" class="w-full text-xs font-mono rounded-xl" />
     </div>
 
-    <div class="flex flex-col gap-1.5">
-      <label class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Media Upload</label>
-      <div class="flex items-center gap-2">
-        <input type="file" accept="image/*" (change)="uploadImage($event)" #fileInput hidden />
-        <p-button label="Upload Image (Auto WebP)" icon="pi pi-image" [loading]="isUploadingImage()"
-          (onClick)="fileInput.click()" size="small" severity="secondary" [outlined]="true"
-          styleClass="w-full rounded-xl text-xs sm:text-sm font-semibold"></p-button>
+    <div class="md:col-span-2 flex flex-col gap-1">
+      <label class="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Media Upload</label>
+      <input type="file" accept="image/*" (change)="uploadImage($event)" #fileInput hidden />
+      <button type="button" (click)="fileInput.click()" [disabled]="isUploadingImage()"
+        class="w-full h-10 px-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-semibold text-slate-200 transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+        <i class="pi pi-image text-indigo-400"></i>
+        <span>{{ isUploadingImage() ? 'Uploading...' : 'Upload Image' }}</span>
+      </button>
+    </div>
+
+    <div class="md:col-span-12 flex flex-col gap-1">
+      <label class="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Short Summary Excerpt</label>
+      <input type="text" pInputText placeholder="Brief 1-2 sentence article summary for blog post previews..."
+        [ngModel]="excerpt()" (ngModelChange)="excerpt.set($event)" class="w-full text-xs rounded-xl" />
+    </div>
+  </div>
+
+  <!-- Powerful Futuristic Markdown Formatting Toolbar -->
+  <div class="glass-card p-2 rounded-2xl flex items-center gap-1.5 overflow-x-auto border border-white/10 shadow-xl flex-wrap">
+    
+    <!-- Text Formatting -->
+    <div class="flex items-center gap-1 pr-2 border-r border-white/10 shrink-0">
+      <button type="button" class="editor-btn" (click)="insertSnippet('**', '**', 'Bold text')" title="Bold (Ctrl+B)">
+        <i class="pi pi-bold"></i>
+      </button>
+      <button type="button" class="editor-btn" (click)="insertSnippet('*', '*', 'Italic text')" title="Italic (Ctrl+I)">
+        <i class="pi pi-italic"></i>
+      </button>
+      <button type="button" class="editor-btn" (click)="insertSnippet('~~', '~~', 'Strikethrough')" title="Strikethrough">
+        <i class="pi pi-minus"></i>
+      </button>
+      <button type="button" class="editor-btn" (click)="insertSnippet('<mark>', '</mark>', 'Highlighted text')" title="Highlight text">
+        <i class="pi pi-sun text-amber-400"></i>
+      </button>
+      <button type="button" class="editor-btn" (click)="insertSnippet('`', '`', 'code')" title="Inline Code">
+        <i class="pi pi-code text-sky-400"></i>
+      </button>
+      <button type="button" class="editor-btn" (click)="insertSnippet('<kbd>', '</kbd>', 'Ctrl+K')" title="Keyboard Badge">
+        <span class="font-mono text-[10px] font-bold text-slate-300">kbd</span>
+      </button>
+    </div>
+
+    <!-- Headings -->
+    <div class="flex items-center gap-1 px-2 border-r border-white/10 shrink-0">
+      <button type="button" class="editor-btn font-extrabold" (click)="insertHeading(1)" title="Heading 1">H1</button>
+      <button type="button" class="editor-btn font-extrabold" (click)="insertHeading(2)" title="Heading 2">H2</button>
+      <button type="button" class="editor-btn font-extrabold" (click)="insertHeading(3)" title="Heading 3">H3</button>
+    </div>
+
+    <!-- GitHub Callout Alerts -->
+    <div class="flex items-center gap-1 px-2 border-r border-white/10 shrink-0">
+      <button type="button" class="editor-btn text-sky-400 hover:text-sky-300" (click)="insertAlert('NOTE')" title="Insert GitHub Note Alert">
+        <i class="pi pi-info-circle"></i><span class="ml-1 text-[10px]">Note</span>
+      </button>
+      <button type="button" class="editor-btn text-emerald-400 hover:text-emerald-300" (click)="insertAlert('TIP')" title="Insert GitHub Tip Alert">
+        <i class="pi pi-lightbulb"></i><span class="ml-1 text-[10px]">Tip</span>
+      </button>
+      <button type="button" class="editor-btn text-purple-400 hover:text-purple-300" (click)="insertAlert('IMPORTANT')" title="Insert GitHub Important Alert">
+        <i class="pi pi-exclamation-circle"></i><span class="ml-1 text-[10px]">Important</span>
+      </button>
+      <button type="button" class="editor-btn text-amber-400 hover:text-amber-300" (click)="insertAlert('WARNING')" title="Insert GitHub Warning Alert">
+        <i class="pi pi-exclamation-triangle"></i><span class="ml-1 text-[10px]">Warn</span>
+      </button>
+      <button type="button" class="editor-btn text-rose-400 hover:text-rose-300" (click)="insertAlert('CAUTION')" title="Insert GitHub Caution Alert">
+        <i class="pi pi-shield-exclamation"></i><span class="ml-1 text-[10px]">Caution</span>
+      </button>
+    </div>
+
+    <!-- Lists & Layout -->
+    <div class="flex items-center gap-1 px-2 border-r border-white/10 shrink-0">
+      <button type="button" class="editor-btn" (click)="insertSnippet('- ', '', 'List item')" title="Bullet List">
+        <i class="pi pi-list"></i>
+      </button>
+      <button type="button" class="editor-btn" (click)="insertSnippet('1. ', '', 'First item')" title="Numbered List">
+        <i class="pi pi-list-check"></i>
+      </button>
+      <button type="button" class="editor-btn" (click)="insertSnippet('- [ ] ', '', 'Task todo item')" title="Task Checklist">
+        <i class="pi pi-check-square text-emerald-400"></i>
+      </button>
+      <button type="button" class="editor-btn" (click)="insertSnippet('> ', '', 'Quote text')" title="Blockquote">
+        <i class="pi pi-quote-left"></i>
+      </button>
+    </div>
+
+    <!-- Code, Diagrams & Custom Controls -->
+    <div class="flex items-center gap-1 pl-2 shrink-0">
+      <button type="button" class="editor-btn text-indigo-400 hover:text-indigo-300" (click)="insertMermaid()" title="Insert Mermaid Interactive Diagram">
+        <i class="pi pi-sitemap"></i><span class="ml-1 text-[10px]">Diagram</span>
+      </button>
+      <button type="button" class="editor-btn text-teal-400 hover:text-teal-300" (click)="insertTable()" title="Insert 3x3 Table">
+        <i class="pi pi-table"></i><span class="ml-1 text-[10px]">Table</span>
+      </button>
+      <button type="button" class="editor-btn text-slate-300" (click)="insertCodeBlock()" title="Code Block">
+        <i class="pi pi-desktop"></i>
+      </button>
+      <button type="button" class="editor-btn text-slate-300" (click)="insertDetails()" title="Expandable Accordion">
+        <i class="pi pi-chevron-down"></i>
+      </button>
+      <button type="button" class="editor-btn text-indigo-400" (click)="insertSnippet('[', '](https://example.com)', 'link title')" title="Hyperlink">
+        <i class="pi pi-link"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Workspace Grid: Editor & Preview Panes -->
+  <div class="grid gap-4 flex-1 min-h-0"
+    [class.grid-cols-1]="viewMode() !== 'split'"
+    [class.lg:grid-cols-2]="viewMode() === 'split'">
+    
+    <!-- Markdown Input Editor Pane -->
+    @if (viewMode() === 'split' || viewMode() === 'editor') {
+      <div class="flex flex-col gap-2 h-full min-h-0">
+        <div class="flex items-center justify-between px-1">
+          <label class="text-xs text-[var(--text-muted)] font-extrabold uppercase tracking-wider flex items-center gap-2">
+            <i class="pi pi-code text-indigo-400"></i>
+            <span>Markdown Source</span>
+          </label>
+          <span class="text-[10px] text-slate-400 font-mono">GFM Enabled</span>
+        </div>
+        
+        <!-- Textarea with activePane hover handlers to prevent scroll/cursor jump -->
+        <textarea #editorTextarea [ngModel]="contentMarkdown()" (ngModelChange)="contentMarkdown.set($event)"
+          (mouseenter)="activePane = 'editor'"
+          (mouseleave)="activePane = null"
+          (scroll)="onEditorScroll()"
+          class="w-full h-full min-h-[480px] p-4 rounded-2xl bg-slate-950/80 border border-white/10 text-xs sm:text-sm font-mono leading-relaxed focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/40 transition-colors resize-none shadow-2xl"
+          placeholder="Start writing markdown content here... Use toolbar above to insert formatting, Mermaid diagrams, or GitHub callout alerts!"></textarea>
       </div>
-    </div>
+    }
+
+    <!-- Live Preview Pane -->
+    @if (viewMode() === 'split' || viewMode() === 'preview') {
+      <div class="flex flex-col gap-2 h-full min-h-0">
+        <div class="flex items-center justify-between px-1">
+          <label class="text-xs text-[var(--text-muted)] font-extrabold uppercase tracking-wider flex items-center gap-2">
+            <i class="pi pi-eye text-emerald-400"></i>
+            <span>Sanitized Live Preview</span>
+          </label>
+          <span class="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
+            <i class="pi pi-check-circle text-[10px]"></i> Live Syncing
+          </span>
+        </div>
+        
+        <!-- Preview Pane with activePane hover handlers -->
+        <div #previewPane
+          (mouseenter)="activePane = 'preview'"
+          (mouseleave)="activePane = null"
+          (scroll)="onPreviewScroll()"
+          class="markdown-preview w-full h-full min-h-[480px] p-5 rounded-2xl bg-black/40 border border-white/10 overflow-y-auto text-xs sm:text-sm leading-relaxed shadow-2xl"
+          [innerHTML]="previewHtml()"></div>
+      </div>
+    }
   </div>
 
-  <div class="flex flex-col gap-1.5">
-    <label class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Short Excerpt</label>
-    <input type="text" pInputText placeholder="Short summary for the blog list page"
-      [ngModel]="excerpt()" (ngModelChange)="excerpt.set($event)" class="w-full text-xs sm:text-sm rounded-xl" />
-  </div>
-
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-2">
-    <div class="flex flex-col gap-2">
-      <label class="text-xs text-[var(--text-muted)] font-extrabold uppercase tracking-wider flex items-center justify-between">
-        <span>Markdown Editor</span>
-        <span class="text-[10px] font-normal lowercase text-[var(--text-muted)]">github markdown format</span>
-      </label>
-      <textarea #editorTextarea [ngModel]="contentMarkdown()" (ngModelChange)="contentMarkdown.set($event)"
-        (scroll)="onEditorScroll(editorTextarea, previewPane)"
-        class="w-full h-80 sm:h-96 md:h-[500px] p-3.5 rounded-2xl bg-black/40 border border-white/10 text-xs sm:text-sm font-mono leading-relaxed focus:outline-none focus:border-[var(--primary-color)] transition-colors resize-y"
-        placeholder="Write post content in markdown..."></textarea>
+  <!-- Bottom Article Stats Bar -->
+  <div class="flex items-center justify-between px-4 py-2 rounded-xl bg-black/40 border border-white/10 text-xs text-[var(--text-muted)] flex-wrap gap-2">
+    <div class="flex items-center gap-4">
+      <span class="flex items-center gap-1.5"><i class="pi pi-align-left text-indigo-400"></i> <strong>{{ wordCount() }}</strong> Words</span>
+      <span class="flex items-center gap-1.5"><i class="pi pi-hashtag text-purple-400"></i> <strong>{{ charCount() }}</strong> Characters</span>
+      <span class="flex items-center gap-1.5"><i class="pi pi-clock text-emerald-400"></i> <strong>{{ readingTime() }}</strong> min read</span>
     </div>
-
-    <div class="flex flex-col gap-2">
-      <label class="text-xs text-[var(--text-muted)] font-extrabold uppercase tracking-wider flex items-center justify-between">
-        <span>Live Sanitized Preview</span>
-        <span class="text-[10px] font-normal lowercase text-[var(--text-muted)]">rendered preview</span>
-      </label>
-      <div #previewPane (scroll)="onPreviewScroll(editorTextarea, previewPane)"
-        class="markdown-preview w-full h-80 sm:h-96 md:h-[500px] p-5 rounded-2xl bg-black/20 border border-white/10 overflow-y-auto text-xs sm:text-sm leading-relaxed"
-        [innerHTML]="previewHtml()"></div>
+    <div class="flex items-center gap-2 text-[11px]">
+      <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+      <span>Auto-saving draft locally</span>
     </div>
   </div>
 </div>

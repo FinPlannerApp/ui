@@ -8,7 +8,7 @@ import { sharedPrimeModules } from '../../../shared/prime-imports';
 import { GenericApi } from '../../../core/services/generic-api';
 import { NotificationService } from '../../../core/services/notification.service';
 import { DraftPersistenceService } from '../../../core/services/draft-persistence.service';
-import { BlogLoaderService } from '../../public/blog/blog-loader.service';
+import { BlogLoaderService, parseMarkdownWithAlerts } from '../../public/blog/blog-loader.service';
 
 import { ActivatedRoute } from '@angular/router';
 
@@ -109,9 +109,40 @@ import { ActivatedRoute } from '@angular/router';
       border-radius: 3px;
       font-weight: 600;
     }
+
+    /* Editor Toolbar Glass Glow Button Effects */
+    .editor-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.35rem 0.55rem;
+      border-radius: 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #cbd5e1;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+      white-space: nowrap;
+    }
+    .editor-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    .editor-btn:active {
+      transform: translateY(0);
+    }
   `]
 })
 export class BlogEditor implements OnInit {
+  @ViewChild('editorTextarea') editorTextarea!: ElementRef<HTMLTextAreaElement>;
+  @ViewChild('previewPane') previewPane!: ElementRef<HTMLDivElement>;
+
   private api = inject(GenericApi);
   private notificationService = inject(NotificationService);
   private draftService = inject(DraftPersistenceService);
@@ -127,11 +158,32 @@ export class BlogEditor implements OnInit {
   isSaving = signal(false);
   isUploadingImage = signal(false);
 
+  // Layout View Modes: 'split' | 'editor' | 'preview'
+  viewMode = signal<'split' | 'editor' | 'preview'>('split');
+  isFullscreen = signal(false);
+
+  // Active Pane Scroll Lock to Prevent Typing Jumps
+  activePane: 'editor' | 'preview' | null = null;
   private isSyncingScroll = false;
+  private mermaidDebounceTimer: any = null;
 
   previewHtml = computed(() => {
-    const raw = marked.parse(this.contentMarkdown(), { async: false }) as string;
-    return DOMPurify.sanitize(raw);
+    return parseMarkdownWithAlerts(this.contentMarkdown());
+  });
+
+  // Content Statistics
+  wordCount = computed(() => {
+    const text = this.contentMarkdown().trim();
+    return text ? text.split(/\s+/).length : 0;
+  });
+
+  charCount = computed(() => {
+    return this.contentMarkdown().length;
+  });
+
+  readingTime = computed(() => {
+    const words = this.wordCount();
+    return Math.max(1, Math.ceil(words / 200));
   });
 
   private draftKey = 'blog-editor-draft';
@@ -144,10 +196,13 @@ export class BlogEditor implements OnInit {
       contentMarkdown: this.contentMarkdown()
     }));
 
-    // Trigger Mermaid diagram re-rendering when preview HTML updates
+    // Debounced Mermaid Diagram re-rendering to prevent scroll/cursor jumps while actively typing
     effect(() => {
       this.previewHtml();
-      setTimeout(() => this.blogLoader.renderMermaidDiagrams(), 150);
+      if (this.mermaidDebounceTimer) clearTimeout(this.mermaidDebounceTimer);
+      this.mermaidDebounceTimer = setTimeout(() => {
+        this.blogLoader.renderMermaidDiagrams();
+      }, 500);
     });
   }
 
@@ -188,8 +243,13 @@ export class BlogEditor implements OnInit {
     );
   }
 
-  onEditorScroll(editor: HTMLTextAreaElement, preview: HTMLDivElement): void {
-    if (this.isSyncingScroll) return;
+  // Scroll Sync (Only triggers when the specific pane is hovered/scrolled by user)
+  onEditorScroll(): void {
+    if (this.isSyncingScroll || this.activePane !== 'editor') return;
+    const editor = this.editorTextarea?.nativeElement;
+    const preview = this.previewPane?.nativeElement;
+    if (!editor || !preview) return;
+
     this.isSyncingScroll = true;
     const maxEditor = editor.scrollHeight - editor.clientHeight;
     if (maxEditor > 0) {
@@ -200,8 +260,12 @@ export class BlogEditor implements OnInit {
     setTimeout(() => (this.isSyncingScroll = false), 15);
   }
 
-  onPreviewScroll(editor: HTMLTextAreaElement, preview: HTMLDivElement): void {
-    if (this.isSyncingScroll) return;
+  onPreviewScroll(): void {
+    if (this.isSyncingScroll || this.activePane !== 'preview') return;
+    const editor = this.editorTextarea?.nativeElement;
+    const preview = this.previewPane?.nativeElement;
+    if (!editor || !preview) return;
+
     this.isSyncingScroll = true;
     const maxPreview = preview.scrollHeight - preview.clientHeight;
     if (maxPreview > 0) {
@@ -210,6 +274,70 @@ export class BlogEditor implements OnInit {
       editor.scrollTop = percentage * maxEditor;
     }
     setTimeout(() => (this.isSyncingScroll = false), 15);
+  }
+
+  // Smart Selection & Snippet Inserter (Preserves cursor position & scroll)
+  insertSnippet(prefix: string, suffix: string = '', defaultPlaceholder: string = ''): void {
+    const textarea = this.editorTextarea?.nativeElement;
+    if (!textarea) {
+      this.contentMarkdown.update(md => `${md}${prefix}${defaultPlaceholder}${suffix}`);
+      return;
+    }
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const originalScrollTop = textarea.scrollTop;
+    const currentText = this.contentMarkdown();
+    const selectedText = currentText.substring(start, end);
+
+    const insertion = selectedText.length > 0 ? selectedText : defaultPlaceholder;
+    const replacement = `${prefix}${insertion}${suffix}`;
+
+    const updatedText = currentText.substring(0, start) + replacement + currentText.substring(end);
+    this.contentMarkdown.set(updatedText);
+
+    // Restore focus, cursor, and scroll position on next microtask
+    setTimeout(() => {
+      textarea.focus();
+      textarea.scrollTop = originalScrollTop;
+      const newCursorPos = selectedText.length > 0
+        ? start + replacement.length
+        : start + prefix.length;
+      textarea.setSelectionRange(newCursorPos, newCursorPos + (selectedText.length > 0 ? 0 : defaultPlaceholder.length));
+    }, 0);
+  }
+
+  // Specific Toolbar Shortcut Inserters
+  insertHeading(level: number): void {
+    const hashes = '#'.repeat(level);
+    this.insertSnippet(`${hashes} `, '', `Heading ${level}`);
+  }
+
+  insertAlert(type: 'NOTE' | 'TIP' | 'IMPORTANT' | 'WARNING' | 'CAUTION'): void {
+    this.insertSnippet(`> [!${type}]\n> `, '', `Enter ${type.toLowerCase()} details here...`);
+  }
+
+  insertTable(): void {
+    const tableTemplate = `\n| Column 1 | Column 2 | Column 3 |\n| :--- | :---: | ---: |\n| Data A | Data B | Data C |\n| Value 1 | Value 2 | Value 3 |\n`;
+    this.insertSnippet(tableTemplate);
+  }
+
+  insertMermaid(): void {
+    const mermaidTemplate = `\n\`\`\`mermaid\ngraph LR\n    A["Start Process"] --> B["Execute Step"]\n    B --> C["Result Success"]\n\`\`\`\n`;
+    this.insertSnippet(mermaidTemplate);
+  }
+
+  insertDetails(): void {
+    const detailsTemplate = `\n<details>\n  <summary>Click to expand additional details</summary>\n  <p>Detailed explanation or hidden code goes here...</p>\n</details>\n`;
+    this.insertSnippet(detailsTemplate);
+  }
+
+  insertCodeBlock(): void {
+    this.insertSnippet(`\n\`\`\`typescript\n`, `\n\`\`\`\n`, `// Write code here`);
+  }
+
+  toggleFullscreen(): void {
+    this.isFullscreen.update(v => !v);
   }
 
   async uploadImage(event: Event): Promise<void> {
@@ -226,7 +354,7 @@ export class BlogEditor implements OnInit {
       if (!result.isSuccess) throw new Error('Upload failed.');
 
       const publicUrl = typeof result.value === 'string' ? result.value : (result.value as any)?.publicUrl;
-      this.contentMarkdown.update(md => `${md}\n\n![${file.name}](${publicUrl})\n`);
+      this.insertSnippet(`\n![${file.name}](${publicUrl})\n`);
       this.notificationService.showSuccess('Image uploaded and inserted as WebP.');
     } catch (err: any) {
       this.notificationService.showError(err?.message || 'Image upload failed.');

@@ -7,6 +7,39 @@ import { GenericApi } from '../../../core/services/generic-api';
 import { BlogPost, BlogPostMeta } from './blog-post.model';
 import { DiagramViewerModalService } from '../../../shared/components/diagram-viewer-modal/diagram-viewer-modal.service';
 
+export function parseMarkdownWithAlerts(markdown: string): string {
+  if (!markdown) return '';
+  let rawHtml = marked.parse(markdown, { async: false }) as string;
+
+  const alertMap: Record<string, { label: string; icon: string; class: string }> = {
+    'NOTE': { label: 'Note', icon: 'pi pi-info-circle', class: 'markdown-alert-note' },
+    'TIP': { label: 'Tip', icon: 'pi pi-lightbulb', class: 'markdown-alert-tip' },
+    'IMPORTANT': { label: 'Important', icon: 'pi pi-exclamation-circle', class: 'markdown-alert-important' },
+    'WARNING': { label: 'Warning', icon: 'pi pi-exclamation-triangle', class: 'markdown-alert-warning' },
+    'CAUTION': { label: 'Caution', icon: 'pi pi-shield-exclamation', class: 'markdown-alert-caution' },
+  };
+
+  rawHtml = rawHtml.replace(
+    /<blockquote>\s*<p>\s*\[\!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*(?:<br\s*\/?>|\n)?([\s\S]*?)<\/blockquote>/gi,
+    (match, type, content) => {
+      const upper = type.toUpperCase();
+      const config = alertMap[upper] || alertMap['NOTE'];
+      
+      let inner = content.trim();
+      if (inner.endsWith('</p>')) {
+        inner = inner.slice(0, -4).trim();
+      }
+      
+      return `<div class="markdown-alert ${config.class}">
+        <div class="markdown-alert-title"><i class="${config.icon}"></i> <span>${config.label}</span></div>
+        <p>${inner}</p>
+      </div>`;
+    }
+  );
+
+  return DOMPurify.sanitize(rawHtml, { ADD_TAGS: ['i', 'span', 'details', 'summary', 'mark', 'kbd', 'sub', 'sup'], ADD_ATTR: ['target', 'class'] });
+}
+
 @Injectable({ providedIn: 'root' })
 export class BlogLoaderService {
   private api = inject(GenericApi);
@@ -45,8 +78,7 @@ export class BlogLoaderService {
     try {
       const result = await firstValueFrom(this.api.get<any>(`Blog/published/${slug}`));
       if (result.isSuccess && result.value) {
-        const rawHtml = await marked.parse(result.value.contentMarkdown || '');
-        const contentHtml = DOMPurify.sanitize(rawHtml as string);
+        const contentHtml = parseMarkdownWithAlerts(result.value.contentMarkdown || '');
         return {
           ...result.value,
           contentHtml

@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal, HostListener } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BLOG_POSTS } from '../blog/blog';
-import { BlogLoaderService } from '../blog/blog-loader.service';
+import { BlogLoaderService, parseMarkdownWithAlerts } from '../blog/blog-loader.service';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { Auth } from '../../../core/services/auth';
@@ -56,8 +56,7 @@ export class BlogPost implements OnInit {
       if (fallback) {
         let contentHtml = fallback.content;
         if (fallback.content && !fallback.content.includes('<p>')) {
-          const raw = marked.parse(fallback.content, { async: false }) as string;
-          contentHtml = DOMPurify.sanitize(raw);
+          contentHtml = parseMarkdownWithAlerts(fallback.content);
         }
         const words = (fallback.content || '').split(/\s+/).length;
         const readMin = Math.max(1, Math.ceil(words / 200));

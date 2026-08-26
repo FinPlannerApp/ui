@@ -140,6 +140,123 @@
   font-weight: 600;
 }
 
+/* GitHub Alerts / Callouts ([!NOTE], [!TIP], [!IMPORTANT], [!WARNING], [!CAUTION]) */
+.markdown-preview .markdown-alert,
+.blog-content .markdown-alert {
+  padding: 0.85rem 1.15rem;
+  margin-bottom: 1.25rem;
+  border-left: 4px solid;
+  border-radius: 0.75rem;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(12px);
+  position: relative;
+}
+.markdown-preview .markdown-alert .markdown-alert-title,
+.blog-content .markdown-alert .markdown-alert-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 800;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.4rem;
+}
+
+/* NOTE Alert - Blue */
+.markdown-preview .markdown-alert-note,
+.blog-content .markdown-alert-note {
+  border-left-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-left-width: 4px;
+}
+.markdown-preview .markdown-alert-note .markdown-alert-title,
+.blog-content .markdown-alert-note .markdown-alert-title { color: #38bdf8; }
+
+/* TIP Alert - Emerald/Green */
+.markdown-preview .markdown-alert-tip,
+.blog-content .markdown-alert-tip {
+  border-left-color: #34d399;
+  background: rgba(52, 211, 153, 0.08);
+  border: 1px solid rgba(52, 211, 153, 0.2);
+  border-left-width: 4px;
+}
+.markdown-preview .markdown-alert-tip .markdown-alert-title,
+.blog-content .markdown-alert-tip .markdown-alert-title { color: #34d399; }
+
+/* IMPORTANT Alert - Purple */
+.markdown-preview .markdown-alert-important,
+.blog-content .markdown-alert-important {
+  border-left-color: #c084fc;
+  background: rgba(192, 132, 252, 0.08);
+  border: 1px solid rgba(192, 132, 252, 0.2);
+  border-left-width: 4px;
+}
+.markdown-preview .markdown-alert-important .markdown-alert-title,
+.blog-content .markdown-alert-important .markdown-alert-title { color: #c084fc; }
+
+/* WARNING Alert - Amber/Yellow */
+.markdown-preview .markdown-alert-warning,
+.blog-content .markdown-alert-warning {
+  border-left-color: #fbbf24;
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  border-left-width: 4px;
+}
+.markdown-preview .markdown-alert-warning .markdown-alert-title,
+.blog-content .markdown-alert-warning .markdown-alert-title { color: #fbbf24; }
+
+/* CAUTION Alert - Rose/Red */
+.markdown-preview .markdown-alert-caution,
+.blog-content .markdown-alert-caution {
+  border-left-color: #fb7185;
+  background: rgba(251, 113, 133, 0.08);
+  border: 1px solid rgba(251, 113, 133, 0.2);
+  border-left-width: 4px;
+}
+.markdown-preview .markdown-alert-caution .markdown-alert-title,
+.blog-content .markdown-alert-caution .markdown-alert-title { color: #fb7185; }
+
+/* Task list checkbox styling */
+.markdown-preview input[type="checkbox"],
+.blog-content input[type="checkbox"] {
+  accent-color: #10b981;
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+}
+
+/* Details & Summary accordion */
+.markdown-preview details,
+.blog-content details {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+.markdown-preview summary,
+.blog-content summary {
+  font-weight: 700;
+  cursor: pointer;
+  color: #38bdf8;
+}
+.markdown-preview details[open] summary,
+.blog-content details[open] summary {
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 0.5rem;
+}
+
+/* Subscript & Superscript */
+.markdown-preview sub, .blog-content sub,
+.markdown-preview sup, .blog-content sup {
+  font-size: 0.75em;
+}
+
+
 /* ============================================================
    Reusable @utility Definitions (used as Tailwind inline classes)
    ============================================================ */
