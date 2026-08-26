@@ -73,8 +73,15 @@
             <div class="glass-card p-5 rounded-2xl h-full flex flex-col justify-between hover:shadow-xl transition-all transition-duration-300 relative group">
                 <div>
                     <div class="flex items-center justify-between mb-3">
-                        <span class="inline-block text-xs font-bold px-2.5 py-1 rounded-lg text-white"
-                            [style.background]="post.tagColor">{{ post.tag }}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="inline-block text-xs font-bold px-2.5 py-1 rounded-lg text-white"
+                                [style.background]="post.tagColor">{{ post.tag }}</span>
+                            @if (post.isPublished === false) {
+                                <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/40 text-amber-300">
+                                    DRAFT
+                                </span>
+                            }
+                        </div>
                         
                         @if (auth.isAdmin()) {
                             <a [routerLink]="['/app/admin/blog-editor']" [queryParams]="{ slug: post.id }"

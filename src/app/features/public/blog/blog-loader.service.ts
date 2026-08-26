@@ -46,8 +46,52 @@ export class BlogLoaderService {
   private diagramViewerModal = inject(DiagramViewerModalService);
   private mermaidInitialized = false;
 
-  async loadPaged(pageNumber: number = 1, pageSize: number = 6, search: string = '', tag: string = ''): Promise<{ items: BlogPostMeta[]; totalCount: number }> {
+  async loadAdminPosts(): Promise<any[]> {
     try {
+      const result = await firstValueFrom(this.api.get<any[]>('Blog/admin/all'));
+      if (result.isSuccess && result.value) {
+        return result.value;
+      }
+    } catch {
+      // Fallback
+    }
+    return [];
+  }
+
+  async loadPaged(pageNumber: number = 1, pageSize: number = 6, search: string = '', tag: string = '', isAdmin: boolean = false): Promise<{ items: BlogPostMeta[]; totalCount: number }> {
+    try {
+      if (isAdmin) {
+        const adminPosts = await this.loadAdminPosts();
+        if (adminPosts && adminPosts.length > 0) {
+          let filtered = adminPosts.map(p => ({
+            id: p.id,
+            slug: p.slug,
+            title: p.title,
+            excerpt: p.excerpt,
+            publishedAt: p.publishedAt,
+            isPublished: p.isPublished,
+            tag: p.isPublished ? 'Published' : 'Draft',
+            tagColor: p.isPublished ? '#10b981' : '#f59e0b'
+          }));
+
+          if (search) {
+            const term = search.toLowerCase();
+            filtered = filtered.filter(p => p.title.toLowerCase().includes(term) || (p.excerpt && p.excerpt.toLowerCase().includes(term)));
+          }
+
+          if (tag && tag !== 'All') {
+            const tagTerm = tag.toLowerCase();
+            filtered = filtered.filter(p => (p.tag && p.tag.toLowerCase().includes(tagTerm)) || p.slug.toLowerCase().includes(tagTerm));
+          }
+
+          const start = (pageNumber - 1) * pageSize;
+          return {
+            items: filtered.slice(start, start + pageSize),
+            totalCount: filtered.length
+          };
+        }
+      }
+
       const queryParams = `pageNumber=${pageNumber}&pageSize=${pageSize}&search=${encodeURIComponent(search)}&tag=${encodeURIComponent(tag)}`;
       const result = await firstValueFrom(this.api.get<any>(`Blog/published/paged?${queryParams}`));
       if (result.isSuccess && result.value) {

@@ -6,6 +6,7 @@ export interface BlogPostMeta {
   publishedAt?: string;
   tag?: string;
   tagColor?: string;
+  isPublished?: boolean;
 }
 
 export interface BlogPost extends BlogPostMeta {

@@ -1019,17 +1019,19 @@ export class Blog implements OnInit {
         this.currentPage(),
         this.pageSize(),
         this.searchQuery(),
-        this.selectedTag()
+        this.selectedTag(),
+        this.auth.isAdmin()
       );
 
       if (res.items && res.items.length > 0) {
         const mapped = res.items.map(m => ({
-          id: m.slug,
-          tag: m.tag || (m.slug.includes('release') ? 'Release' : 'Guide'),
-          tagColor: m.tagColor || (m.slug.includes('release') ? '#6366f1' : '#10b981'),
+          id: m.slug || m.id,
+          tag: m.tag || (m.isPublished === false ? 'Draft' : (m.slug && m.slug.includes('release')) ? 'Release' : 'Guide'),
+          tagColor: m.tagColor || (m.isPublished === false ? '#f59e0b' : (m.slug && m.slug.includes('release')) ? '#6366f1' : '#10b981'),
           title: m.title,
           excerpt: m.excerpt,
-          date: m.publishedAt ? new Date(m.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent',
+          isPublished: m.isPublished ?? true,
+          date: m.publishedAt ? new Date(m.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Draft',
           _dateValue: m.publishedAt ? new Date(m.publishedAt) : new Date()
         }));
         this.posts.set(mapped);
