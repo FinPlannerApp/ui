@@ -2,53 +2,104 @@
 <div class="fixed top-0 left-0 h-1 bg-gradient-to-r from-emerald-400 via-sky-400 to-indigo-500 z-50 transition-all duration-150"
     [style.width.%]="scrollProgress()"></div>
 
-<div class="px-4 py-8 md:px-8 max-w-4xl mx-auto">
-    <div class="flex items-center justify-between gap-4 mb-6">
+<div class="px-4 py-8 md:px-8 max-w-7xl mx-auto">
+    <!-- Header Navigation & Action Bar -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <a routerLink="/blog"
             class="no-underline text-[var(--text-muted)] flex items-center gap-2 hover:text-[var(--primary-color)] transition-colors text-sm font-semibold">
             <i class="pi pi-arrow-left"></i>
             <span>Back to Blog Directory</span>
         </a>
 
-        <button (click)="copyArticleLink()"
-            class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-bold cursor-pointer transition-all">
-            <i class="pi pi-share-alt text-emerald-400"></i>
-            <span>Copy Link</span>
-        </button>
+        <div class="flex items-center gap-2 flex-wrap">
+            <button type="button" (click)="copyRawMarkdown()"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-bold cursor-pointer transition-all text-indigo-300">
+                <i class="pi pi-code"></i>
+                <span>Copy Markdown</span>
+            </button>
+
+            <button type="button" (click)="downloadMarkdown()"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-bold cursor-pointer transition-all text-purple-300">
+                <i class="pi pi-download"></i>
+                <span>Export .md</span>
+            </button>
+
+            <button type="button" (click)="copyArticleLink()"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-bold cursor-pointer transition-all text-emerald-400">
+                <i class="pi pi-share-alt"></i>
+                <span>Share Link</span>
+            </button>
+        </div>
     </div>
 
     @if (post(); as p) {
-    <article class="glass-card p-5 md:p-8 rounded-3xl">
-        <div class="flex items-center justify-between mb-4">
-            <span class="inline-block text-xs font-bold px-3 py-1.5 rounded-xl text-white" [style.background]="p.tagColor">{{ p.tag }}</span>
-            
-            @if (auth.isAdmin()) {
-                <a [routerLink]="['/app/admin/blog-editor']" [queryParams]="{ slug: p.slug || p.id }"
-                    class="text-xs font-extrabold px-3.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 no-underline transition-all flex items-center gap-1.5 shadow-md">
-                    <i class="pi pi-pencil text-xs"></i> Edit Article (Admin)
-                </a>
-            }
-        </div>
+    <div class="grid grid-cols-12 gap-6">
+        
+        <!-- Main Article Column -->
+        <article class="col-span-12" [class.lg:col-span-8]="tableOfContents().length > 0">
+            <div class="glass-card p-5 md:p-8 rounded-3xl">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="inline-block text-xs font-bold px-3 py-1.5 rounded-xl text-white" [style.background]="p.tagColor">{{ p.tag }}</span>
+                    
+                    @if (auth.isAdmin()) {
+                        <a [routerLink]="['/app/admin/blog-editor']" [queryParams]="{ slug: p.slug || p.id }"
+                            class="text-xs font-extrabold px-3.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 no-underline transition-all flex items-center gap-1.5 shadow-md">
+                            <i class="pi pi-pencil text-xs"></i> Edit Article (Admin)
+                        </a>
+                    }
+                </div>
 
-        <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-4 mt-0 tracking-tight leading-tight">{{ p.title }}</h1>
+                <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-4 mt-0 tracking-tight leading-tight">{{ p.title }}</h1>
 
-        <div class="flex flex-wrap items-center gap-3 text-xs sm:text-sm text-[var(--text-muted)] mb-6 pb-6 border-b border-[var(--glass-border)]">
-            <div class="flex items-center gap-2">
-                <i class="pi pi-calendar text-emerald-400"></i>
-                <span>{{ p.date }}</span>
+                <div class="flex flex-wrap items-center gap-3 text-xs sm:text-sm text-[var(--text-muted)] mb-6 pb-6 border-b border-[var(--glass-border)]">
+                    <div class="flex items-center gap-2">
+                        <i class="pi pi-calendar text-emerald-400"></i>
+                        <span>{{ p.date }}</span>
+                    </div>
+                    <span>•</span>
+                    <div class="flex items-center gap-2">
+                        <i class="pi pi-clock text-sky-400"></i>
+                        <span>{{ readingTime() }}</span>
+                    </div>
+                </div>
+
+                <div class="blog-content text-base sm:text-lg line-height-3" [innerHTML]="p.content">
+                </div>
+
+                <app-blog-comments [postSlug]="p.slug || p.id"></app-blog-comments>
             </div>
-            <span>•</span>
-            <div class="flex items-center gap-2">
-                <i class="pi pi-clock text-sky-400"></i>
-                <span>{{ readingTime() }}</span>
-            </div>
-        </div>
+        </article>
 
-        <div class="blog-content text-base sm:text-lg line-height-3" [innerHTML]="p.content">
-        </div>
+        <!-- Floating Table of Contents Sidebar (Desktop Only) -->
+        @if (tableOfContents().length > 0) {
+            <aside class="col-span-12 lg:col-span-4 hidden lg:block">
+                <div class="sticky top-6 glass-card p-5 rounded-3xl border border-white/10 max-h-[85vh] overflow-y-auto flex flex-col gap-3 shadow-xl">
+                    <div class="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-indigo-400 border-b border-white/10 pb-3">
+                        <i class="pi pi-list font-bold"></i>
+                        <span>Table of Contents</span>
+                    </div>
 
-        <app-blog-comments [postSlug]="p.slug || p.id"></app-blog-comments>
-    </article>
+                    <nav class="flex flex-col gap-1">
+                        @for (item of tableOfContents(); track item.id) {
+                            <button type="button" (click)="scrollToSection(item.id)"
+                                class="text-left py-1.5 px-3 rounded-xl text-xs font-semibold transition-all cursor-pointer border-0 bg-transparent flex items-center gap-2"
+                                [class.pl-6]="item.level === 3"
+                                [class.bg-indigo-500\/20]="activeTocId() === item.id"
+                                [class.text-indigo-300]="activeTocId() === item.id"
+                                [class.font-bold]="activeTocId() === item.id"
+                                [class.text-slate-400]="activeTocId() !== item.id"
+                                [class.hover:text-white]="activeTocId() !== item.id">
+                                <span class="w-1.5 h-1.5 rounded-full shrink-0"
+                                    [class.bg-indigo-400]="activeTocId() === item.id"
+                                    [class.bg-slate-600]="activeTocId() !== item.id"></span>
+                                <span class="truncate">{{ item.text }}</span>
+                            </button>
+                        }
+                    </nav>
+                </div>
+            </aside>
+        }
+    </div>
     } @else {
     <div class="text-center py-12 glass-card rounded-3xl p-8">
         <i class="pi pi-exclamation-circle text-6xl text-[var(--text-muted)] mb-4 block"></i>

@@ -23,6 +23,7 @@ export interface CategoryFilterOption {
 
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { StatCard } from '../../../shared/components/stat-card/stat-card';
+import { PayCcBill } from '../pay-cc-bill/pay-cc-bill';
 
 @Component({
   selector: 'app-accounts-page',
@@ -279,6 +280,30 @@ export class AccountsPage implements OnInit {
 
   viewTransactions(acc: Account): void {
     this.router.navigate(['/app/accounts', acc.id, 'transactions']);
+  }
+
+  openPayCcBillModal(acc: Account): void {
+    const outstanding = acc.creditCardDetails?.minimumDueAmount || Math.abs(acc.balance);
+    this.ref = this.dialogService.open(PayCcBill, {
+      header: `Pay Credit Card Statement — ${acc.name}`,
+      width: '90%',
+      style: { maxWidth: '650px' },
+      contentStyle: { overflow: 'auto', 'max-height': '90vh' },
+      baseZIndex: 10000,
+      data: {
+        accountId: acc.id,
+        accountName: acc.name,
+        outstandingBalance: outstanding
+      }
+    });
+
+    if (this.ref) {
+      this.ref.onClose.subscribe((result: boolean) => {
+        if (result) {
+          this.refreshData();
+        }
+      });
+    }
   }
 
   openAdjustBalance(acc: Account): void {

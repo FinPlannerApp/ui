@@ -219,21 +219,30 @@
                 </div>
 
                 <!-- Credit Card Details Sub-panel (if applicable) -->
-                @if (acc.creditCardDetails) {
-                  <div class="text-xs bg-purple-500/5 p-3 rounded-xl border border-purple-500/10 mb-4 flex flex-col gap-2">
-                    <div class="flex justify-between items-center text-[var(--text-muted)]">
-                      <span>Credit Limit:</span>
-                      <span class="font-semibold text-white">{{ acc.creditCardDetails.creditLimit | currency:'INR':'symbol':'1.0-0' }}</span>
-                    </div>
-                    <div class="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
-                      <div class="bg-purple-500 h-full rounded-full transition-all" [style.width.%]="getCreditUtilizationPercent(acc)"></div>
-                    </div>
-                    @if (acc.creditCardDetails.minimumDueAmount) {
-                      <div class="flex justify-between items-center text-xs text-rose-300 pt-1 border-t border-purple-500/10">
-                        <span>Min Due:</span>
-                        <span class="font-semibold">{{ acc.creditCardDetails.minimumDueAmount | currency:'INR':'symbol':'1.0-0' }}</span>
+                @if (acc.creditCardDetails || isLiabilityAccount(acc)) {
+                  <div class="text-xs bg-purple-500/10 p-3 rounded-2xl border border-purple-500/20 mb-4 flex flex-col gap-2 shadow-lg">
+                    @if (acc.creditCardDetails) {
+                      <div class="flex justify-between items-center text-[var(--text-muted)]">
+                        <span class="font-medium">Credit Limit:</span>
+                        <span class="font-bold text-white">{{ acc.creditCardDetails.creditLimit | currency:'INR':'symbol':'1.0-0' }}</span>
                       </div>
+                      <div class="w-full bg-black/30 rounded-full h-2 overflow-hidden border border-white/5 p-0.5">
+                        <div class="bg-gradient-to-r from-purple-500 to-indigo-400 h-full rounded-full transition-all duration-500" [style.width.%]="getCreditUtilizationPercent(acc)"></div>
+                      </div>
+                      @if (acc.creditCardDetails.minimumDueAmount) {
+                        <div class="flex justify-between items-center text-xs text-rose-300 pt-1 border-t border-purple-500/10">
+                          <span>Min Due:</span>
+                          <span class="font-semibold">{{ acc.creditCardDetails.minimumDueAmount | currency:'INR':'symbol':'1.0-0' }}</span>
+                        </div>
+                      }
                     }
+                    
+                    <!-- 1-Tap Quick Pay Action Button -->
+                    <button type="button" (click)="openPayCcBillModal(acc)"
+                      class="mt-1 w-full py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs shadow-md hover:shadow-emerald-500/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer border-0">
+                      <i class="pi pi-check-circle text-xs"></i>
+                      <span>1-Tap Pay Statement Bill</span>
+                    </button>
                   </div>
                 }
 
