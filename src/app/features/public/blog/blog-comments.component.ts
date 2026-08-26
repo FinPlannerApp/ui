@@ -184,7 +184,7 @@ export class BlogCommentsComponent implements OnInit {
   private notification = inject(NotificationService);
 
   articleLiked = signal(false);
-  articleLikes = signal(14);
+  articleLikes = signal(0);
   userEmoji = signal<string | null>(null);
 
   newCommentText = signal('');
@@ -199,16 +199,44 @@ export class BlogCommentsComponent implements OnInit {
   ];
 
   emojiCounts = signal<Record<string, number>>({
-    '👍': 8,
-    '❤️': 12,
-    '🎉': 5,
-    '💡': 9
+    '👍': 0,
+    '❤️': 0,
+    '🎉': 0,
+    '💡': 0
   });
 
   comments = signal<CommentItem[]>([]);
 
   async ngOnInit(): Promise<void> {
+    this.loadReactionsFromStorage();
     await this.loadCommentsFromApi();
+  }
+
+  loadReactionsFromStorage(): void {
+    if (!this.postSlug) return;
+    try {
+      const likedState = localStorage.getItem(`blog_liked_${this.postSlug}`);
+      if (likedState) {
+        const parsed = JSON.parse(likedState);
+        this.articleLiked.set(parsed.userLiked || false);
+        this.articleLikes.set(parsed.likes || 0);
+      } else {
+        this.articleLiked.set(false);
+        this.articleLikes.set(0);
+      }
+
+      const emojiState = localStorage.getItem(`blog_emojis_${this.postSlug}`);
+      if (emojiState) {
+        const parsed = JSON.parse(emojiState);
+        this.userEmoji.set(parsed.userEmoji || null);
+        this.emojiCounts.set(parsed.counts || { '👍': 0, '❤️': 0, '🎉': 0, '💡': 0 });
+      } else {
+        this.userEmoji.set(null);
+        this.emojiCounts.set({ '👍': 0, '❤️': 0, '🎉': 0, '💡': 0 });
+      }
+    } catch {
+      // Fallback
+    }
   }
 
   async loadCommentsFromApi(): Promise<void> {
@@ -243,12 +271,18 @@ export class BlogCommentsComponent implements OnInit {
       return;
     }
 
-    if (this.articleLiked()) {
-      this.articleLiked.set(false);
-      this.articleLikes.update(v => Math.max(0, v - 1));
-    } else {
-      this.articleLiked.set(true);
-      this.articleLikes.update(v => v + 1);
+    const newLiked = !this.articleLiked();
+    this.articleLiked.set(newLiked);
+    this.articleLikes.update(v => Math.max(0, newLiked ? v + 1 : v - 1));
+
+    if (this.postSlug) {
+      localStorage.setItem(`blog_liked_${this.postSlug}`, JSON.stringify({
+        userLiked: this.articleLiked(),
+        likes: this.articleLikes()
+      }));
+    }
+
+    if (newLiked) {
       this.notification.showSuccess('Liked this article!');
     }
   }
@@ -260,27 +294,34 @@ export class BlogCommentsComponent implements OnInit {
     }
 
     const current = this.userEmoji();
+    let newEmoji: string | null = symbol;
 
     if (current === symbol) {
+      newEmoji = null;
       this.userEmoji.set(null);
       this.emojiCounts.update(map => ({
         ...map,
         [symbol]: Math.max(0, (map[symbol] || 0) - 1)
       }));
-      return;
+    } else {
+      this.emojiCounts.update(map => {
+        const updated = { ...map };
+        if (current && updated[current]) {
+          updated[current] = Math.max(0, updated[current] - 1);
+        }
+        updated[symbol] = (updated[symbol] || 0) + 1;
+        return updated;
+      });
+      this.userEmoji.set(symbol);
+      this.notification.showSuccess(`Reacted with ${symbol}`);
     }
 
-    this.emojiCounts.update(map => {
-      const updated = { ...map };
-      if (current && updated[current]) {
-        updated[current] = Math.max(0, updated[current] - 1);
-      }
-      updated[symbol] = (updated[symbol] || 0) + 1;
-      return updated;
-    });
-
-    this.userEmoji.set(symbol);
-    this.notification.showSuccess(`Reacted with ${symbol}`);
+    if (this.postSlug) {
+      localStorage.setItem(`blog_emojis_${this.postSlug}`, JSON.stringify({
+        userEmoji: newEmoji,
+        counts: this.emojiCounts()
+      }));
+    }
   }
 
   private getUserDisplayName(): string {
