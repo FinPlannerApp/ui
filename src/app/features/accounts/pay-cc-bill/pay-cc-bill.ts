@@ -19,6 +19,8 @@ export interface PaymentRow {
   interestCategoryId: number | null;
   suggestions: AccountSuggestion[];
   showSuggestions: boolean;
+  isLoadingSuggestions?: boolean;
+  showOptional?: boolean;
 }
 
 export interface AccountSuggestion {
@@ -75,12 +77,27 @@ export class PayCcBill implements OnInit {
     this.rows().reduce((sum, r) => sum + (r.amount ?? 0), 0)
   );
 
-  exceedsOutstanding = computed(() => this.totalEntered() > this.outstandingBalance);
+  exceedsOutstanding = computed(() => this.totalEntered() > (this.outstandingBalance + 0.01));
+
+  remainingBalance = computed(() =>
+    Math.max(0, this.outstandingBalance - this.totalEntered())
+  );
+
+  coveragePercent = computed(() => {
+    if (!this.outstandingBalance || this.outstandingBalance <= 0) return 0;
+    const pct = Math.round((this.totalEntered() / this.outstandingBalance) * 100);
+    return Math.min(pct, 100);
+  });
 
   async ngOnInit(): Promise<void> {
     await this.accountState.loadAccounts();
     const result = await firstValueFrom(this.api.get<{ id: number; name: string }[]>('TransactionCategories'));
     if (result.isSuccess) this.categories.set(result.value ?? []);
+
+    // Default first row amount to full outstanding balance for convenience
+    if (this.outstandingBalance > 0) {
+      this.updateRow(0, { amount: this.outstandingBalance });
+    }
   }
 
   private newRow(): PaymentRow {
@@ -93,12 +110,19 @@ export class PayCcBill implements OnInit {
       cashbackAccountId: null,
       interestCategoryId: null,
       suggestions: [],
-      showSuggestions: false
+      showSuggestions: false,
+      isLoadingSuggestions: false,
+      showOptional: false
     };
   }
 
   addRow(): void {
-    this.rows.update(rows => [...rows, this.newRow()]);
+    const remaining = this.remainingBalance();
+    const nextRow = this.newRow();
+    if (remaining > 0) {
+      nextRow.amount = remaining;
+    }
+    this.rows.update(rows => [...rows, nextRow]);
   }
 
   removeRow(index: number): void {
@@ -112,25 +136,43 @@ export class PayCcBill implements OnInit {
 
   async loadSuggestionsFor(index: number): Promise<void> {
     const row = this.rows()[index];
-    if (!row.amount || row.amount <= 0) {
-      this.notificationService.showError('Enter an amount first to see suggestions.');
+    const targetAmount = row.amount && row.amount > 0 ? row.amount : (this.outstandingBalance - (this.totalEntered() - (row.amount ?? 0)));
+    const amountToFetch = targetAmount > 0 ? targetAmount : (this.outstandingBalance || 1000);
+
+    // Toggle off if already showing
+    if (row.showSuggestions) {
+      this.updateRow(index, { showSuggestions: false });
       return;
     }
 
+    this.updateRow(index, { isLoadingSuggestions: true });
+
     try {
       const res = await firstValueFrom(
-        this.api.get<AccountSuggestion[]>(`Accounts/${this.accountId}/payment-suggestions?amount=${row.amount}`)
+        this.api.get<AccountSuggestion[]>(`Accounts/${this.accountId}/payment-suggestions?amount=${amountToFetch}`)
       );
       if (res.isSuccess) {
-        this.updateRow(index, { suggestions: res.value ?? [], showSuggestions: true });
+        this.updateRow(index, {
+          suggestions: res.value ?? [],
+          showSuggestions: true,
+          isLoadingSuggestions: false
+        });
+      } else {
+        this.updateRow(index, { isLoadingSuggestions: false });
       }
     } catch {
-      // Supplementary
+      this.updateRow(index, { isLoadingSuggestions: false });
     }
   }
 
   selectSuggestion(index: number, accountId: number): void {
     this.updateRow(index, { payingAccountId: accountId, showSuggestions: false });
+  }
+
+  fillFullAmount(index: number): void {
+    const currentEnteredOther = this.rows().reduce((sum, r, i) => i === index ? sum : sum + (r.amount ?? 0), 0);
+    const fillAmount = Math.max(0, this.outstandingBalance - currentEnteredOther);
+    this.updateRow(index, { amount: fillAmount });
   }
 
   async pay(): Promise<void> {

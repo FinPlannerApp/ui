@@ -66,6 +66,8 @@ export class TransactionList implements OnInit, OnDestroy {
 
   bucketBreakdown = signal<AccountBucketBreakdown | null>(null);
   cashbackInsights = signal<any | null>(null);
+  ccBreakdown = signal<any | null>(null);
+  selectedCashbackAppDetail = signal<any | null>(null);
   showBucketForm = signal(false);
   newBucketName = signal('');
   newBucketAmount = signal<number | null>(null);
@@ -173,6 +175,7 @@ export class TransactionList implements OnInit, OnDestroy {
   globalSearch = signal<string>('');
   categoryOptions = signal<{ label: string; value: string }[]>([]);
 
+  protected readonly Math = Math;
   private lastQueryKey: string | null = null;
 
   constructor() {
@@ -208,6 +211,13 @@ export class TransactionList implements OnInit, OnDestroy {
 
     this.ready.set(true);
     this.cdr.markForCheck();
+
+    // Explicitly trigger data load after accountId is set.
+    // The p-table's lazy-load event often fires BEFORE this async ngOnInit
+    // finishes, so accountId is still null at that point and loadData()
+    // early-returns. Without this, navigating back and re-entering this
+    // route leaves the component blank.
+    await this.loadData(null, true);
   }
 
   ngOnDestroy(): void {
@@ -229,14 +239,32 @@ export class TransactionList implements OnInit, OnDestroy {
   async loadCashbackInsights(): Promise<void> {
     const acc = this.currentAccount();
     if (!acc || acc.accountType !== AccountType.CreditCard) return;
+    const month = this.selectedDate().getMonth() + 1;
+    const year = this.selectedDate().getFullYear();
     try {
-      const result = await firstValueFrom(this.api.get<any>('Accounts/cashback-insights'));
+      const result = await firstValueFrom(
+        this.api.get<any>(`Accounts/cashback-insights?accountId=${acc.id}&month=${month}&year=${year}`)
+      );
       if (result.isSuccess) {
         this.cashbackInsights.set(result.value);
         this.cdr.markForCheck();
       }
     } catch (err) {
       // Non-critical supplementary data
+    }
+  }
+
+  async loadCreditCardBreakdown(): Promise<void> {
+    const id = this.accountId();
+    if (id === null || this.currentAccount()?.accountType !== AccountType.CreditCard) return;
+    try {
+      const res = await firstValueFrom(this.api.get<any>(`Accounts/${id}/credit-card-breakdown`));
+      if (res.isSuccess) {
+        this.ccBreakdown.set(res.value);
+        this.cdr.markForCheck();
+      }
+    } catch {
+      // Non-critical widget
     }
   }
 
@@ -333,6 +361,7 @@ export class TransactionList implements OnInit, OnDestroy {
       this.summary.set(summaryData);
       await this.loadBuckets();
       await this.loadCashbackInsights();
+      await this.loadCreditCardBreakdown();
 
       const accountName = this.currentAccount()?.name || 'Account';
       this.breadcrumbService.setItems([
@@ -498,14 +527,24 @@ export class TransactionList implements OnInit, OnDestroy {
     const acc = this.currentAccount();
     if (!acc) return;
 
+    const breakdown = this.ccBreakdown();
+    const remaining = breakdown?.remainingBillAmount ?? 0;
+    const billToPay = (!breakdown?.latestBillIsPaid && remaining > 0) ? remaining : 0;
+
     this.ref = this.dialogService.open(PayCcBill, {
       header: 'Pay Credit Card Bill',
-      width: '28rem',
+      width: '92vw',
+      styleClass: 'max-w-2xl text-left',
+      contentStyle: { 'max-height': '85vh', 'overflow-y': 'auto' },
+      breakpoints: {
+        '960px': '90vw',
+        '640px': '95vw'
+      },
       modal: true,
       data: {
         accountId: acc.id,
         accountName: acc.name,
-        outstandingBalance: Math.abs(acc.balance)
+        outstandingBalance: billToPay
       }
     });
 

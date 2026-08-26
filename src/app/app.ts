@@ -12,9 +12,11 @@ import { PwaInstallService } from './core/services/pwa-install.service';
 import { PwaUpdateService } from './core/services/pwa-update.service';
 import { MessageService } from 'primeng/api';
 
+import { DiagramViewerModalComponent } from './shared/components/diagram-viewer-modal/diagram-viewer-modal.component';
+
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, ToastModule, DialogModule, ButtonModule, ProgressBarModule, ConfirmDialogModule],
+  imports: [RouterOutlet, ToastModule, DialogModule, ButtonModule, ProgressBarModule, ConfirmDialogModule, DiagramViewerModalComponent],
   templateUrl: './app.html',
 })
 export class App {

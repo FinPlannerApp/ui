@@ -1,158 +1,379 @@
-<div class="flex flex-col gap-4 p-1 max-w-2xl mx-auto">
-  <div class="glass-card p-3.5 rounded-2xl flex flex-col gap-1 border border-white/10">
-    <p class="text-xs sm:text-sm text-[var(--text-muted)] m-0 leading-relaxed">
-      Pay towards <strong class="text-[var(--text-primary)]">{{ accountName }}</strong> — outstanding balance:
-      <strong class="text-emerald-400 font-extrabold">{{ outstandingBalance | currency:'INR' }}</strong>.
-    </p>
+<div class="flex flex-col gap-3 p-0.5 max-w-full">
+
+  <!-- Header Banner: Outstanding Balance & Payment Coverage Overview -->
+  <div class="p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-purple-900/30 via-indigo-900/20 to-emerald-900/20 border border-purple-500/30 shadow-md flex flex-col gap-2">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div class="w-9 h-9 rounded-xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center shrink-0">
+          <i class="pi pi-credit-card text-purple-300 text-base"></i>
+        </div>
+        <div class="min-w-0">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-purple-300/80 block">Credit Card Bill</span>
+          <h2 class="text-sm sm:text-base font-extrabold text-white m-0 truncate" [title]="accountName">
+            {{ accountName }}
+          </h2>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3 flex-wrap sm:justify-end shrink-0">
+        <div class="flex flex-col items-start sm:items-end">
+          <span class="text-[10px] text-[var(--text-muted)] font-medium">Outstanding Bill</span>
+          <span class="text-base sm:text-lg font-black text-rose-400">
+            {{ outstandingBalance | currency:'INR':'symbol':'1.2-2' }}
+          </span>
+        </div>
+        <div class="h-7 w-[1px] bg-white/10 hidden sm:block"></div>
+        <div class="flex flex-col items-start sm:items-end">
+          <span class="text-[10px] text-[var(--text-muted)] font-medium">Total Batch Entered</span>
+          <span class="text-base sm:text-lg font-black" [class.text-emerald-400]="!exceedsOutstanding()" [class.text-rose-400]="exceedsOutstanding()">
+            {{ totalEntered() | currency:'INR':'symbol':'1.2-2' }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment Coverage Meter -->
+    <div class="flex flex-col gap-1">
+      <div class="flex items-center justify-between text-xs font-semibold">
+        <span class="text-purple-200/80 flex items-center gap-1 text-[11px]">
+          <i class="pi pi-chart-line text-[10px]"></i>
+          Coverage: <strong class="text-white font-bold">{{ coveragePercent() }}%</strong>
+        </span>
+        @if (remainingBalance() === 0 && !exceedsOutstanding()) {
+          <span class="text-emerald-400 font-extrabold text-[11px] flex items-center gap-1">
+            <i class="pi pi-check-circle"></i> Fully Covered
+          </span>
+        } @else if (exceedsOutstanding()) {
+          <span class="text-rose-400 font-bold text-[11px] flex items-center gap-1">
+            <i class="pi pi-exclamation-triangle"></i> Exceeds Total Bill
+          </span>
+        } @else {
+          <span class="text-amber-300 font-semibold text-[11px]">
+            Remaining: {{ remainingBalance() | currency:'INR':'symbol':'1.2-2' }}
+          </span>
+        }
+      </div>
+      <div class="w-full h-1.5 rounded-full bg-black/40 overflow-hidden border border-white/10 p-0.5">
+        <div class="h-full rounded-full transition-all duration-300"
+             [class.bg-emerald-400]="coveragePercent() === 100 && !exceedsOutstanding()"
+             [class.bg-gradient-to-r]="coveragePercent() < 100"
+             [class.from-purple-500]="coveragePercent() < 100"
+             [class.to-emerald-400]="coveragePercent() < 100"
+             [class.bg-rose-500]="exceedsOutstanding()"
+             [style.width.%]="coveragePercent()">
+        </div>
+      </div>
+    </div>
   </div>
 
   @if (!result()) {
-    @for (row of rows(); track $index) {
-      <div class="p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 flex flex-col gap-3 transition-all hover:border-white/20">
-        <div class="flex items-center justify-between">
-          <span class="text-xs text-[var(--text-muted)] font-extrabold uppercase tracking-wider">Payment {{ $index + 1 }}</span>
-          @if (rows().length > 1) {
-            <button (click)="removeRow($index)"
-              class="text-xs text-red-400 hover:text-red-300 bg-transparent border-none cursor-pointer p-0 font-semibold transition-colors">
-              <i class="pi pi-trash text-[10px] mr-1"></i>Remove
-            </button>
-          }
-        </div>
+    <!-- Payment Batch Rows -->
+    <div class="flex flex-col gap-3">
+      @for (row of rows(); track $index) {
+        <div class="p-3 sm:p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition-all flex flex-col gap-2.5 shadow-md relative">
+          
+          <!-- Payment Row Header -->
+          <div class="flex items-center justify-between border-b border-white/10 pb-2">
+            <div class="flex items-center gap-2">
+              <span class="w-5 h-5 rounded-md bg-purple-500/20 text-purple-300 font-bold text-[11px] flex items-center justify-center border border-purple-500/30">
+                {{ $index + 1 }}
+              </span>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                Funding Source {{ $index + 1 }}
+              </span>
+            </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div class="flex flex-col gap-1.5">
-            <label class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">Amount</label>
-            <p-inputNumber [ngModel]="row.amount" (ngModelChange)="updateRow($index, { amount: $event })"
-              mode="currency" currency="INR" locale="en-IN" styleClass="w-full" class="w-full" placeholder="e.g. 5000"></p-inputNumber>
+            <div class="flex items-center gap-2">
+              @if (remainingBalance() > 0 && row.amount !== remainingBalance() + (row.amount || 0)) {
+                <button type="button" (click)="fillFullAmount($index)"
+                        class="text-[11px] text-purple-300 hover:text-white bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 rounded-lg px-2 py-0.5 transition-all cursor-pointer font-semibold flex items-center gap-1">
+                  <i class="pi pi-bolt text-[9px]"></i> Fill Remaining
+                </button>
+              }
+              @if (rows().length > 1) {
+                <button type="button" (click)="removeRow($index)"
+                        class="text-[11px] text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-lg px-2 py-0.5 transition-all cursor-pointer font-semibold flex items-center gap-1">
+                  <i class="pi pi-trash text-[9px]"></i> Remove
+                </button>
+              }
+            </div>
           </div>
 
-          <div class="flex flex-col gap-1.5">
-            <label class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">Paying Account</label>
-            <p-select [options]="eligibleAccounts()" [ngModel]="row.payingAccountId"
-              (ngModelChange)="updateRow($index, { payingAccountId: $event })"
-              optionLabel="name" optionValue="id" appendTo="body" styleClass="w-full" class="w-full"
-              placeholder="Select account"></p-select>
-            <button (click)="loadSuggestionsFor($index)"
-              class="text-xs text-[var(--primary-color)] hover:underline bg-transparent border-none cursor-pointer p-0 mt-0.5 text-left font-medium">
-              ✨ Suggest best funding account
-            </button>
+          <!-- Main Input Grid: Amount + Paying Account -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
+            <!-- Amount Input -->
+            <div class="flex flex-col gap-1">
+              <label class="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider flex items-center justify-between">
+                <span>Payment Amount</span>
+                @if (row.amount && row.amount > 0) {
+                  <span class="text-emerald-400 text-[10px] font-semibold">{{ row.amount | currency:'INR' }}</span>
+                }
+              </label>
+              <p-inputNumber
+                [ngModel]="row.amount"
+                (ngModelChange)="updateRow($index, { amount: $event })"
+                mode="currency"
+                currency="INR"
+                locale="en-IN"
+                styleClass="w-full"
+                class="w-full"
+                inputStyleClass="w-full h-10 text-sm font-bold rounded-xl"
+                placeholder="e.g. 5,000">
+              </p-inputNumber>
+            </div>
 
-            @if (row.showSuggestions && row.suggestions.length > 0) {
-              <div class="flex flex-col gap-1.5 mt-2 p-2 rounded-xl bg-black/40 border border-white/10">
+            <!-- Paying Account Dropdown + AI Suggestion Trigger -->
+            <div class="flex flex-col gap-1">
+              <div class="flex items-center justify-between">
+                <label class="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+                  Paying Account
+                </label>
+                <button type="button" (click)="loadSuggestionsFor($index)"
+                        [disabled]="row.isLoadingSuggestions"
+                        class="text-[10px] text-cyan-300 hover:text-cyan-200 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 rounded-md px-1.5 py-0.5 transition-all cursor-pointer font-bold flex items-center gap-1">
+                  @if (row.isLoadingSuggestions) {
+                    <i class="pi pi-spin pi-spinner text-[9px]"></i>
+                  } @else {
+                    <i class="pi pi-sparkles text-[9px] text-amber-300"></i>
+                  }
+                  {{ row.showSuggestions ? 'Hide' : 'Suggest Best' }}
+                </button>
+              </div>
+
+              <p-select
+                [options]="eligibleAccounts()"
+                [ngModel]="row.payingAccountId"
+                (ngModelChange)="updateRow($index, { payingAccountId: $event })"
+                optionLabel="name"
+                optionValue="id"
+                appendTo="body"
+                styleClass="w-full"
+                class="w-full h-10"
+                placeholder="Select account">
+                <ng-template pTemplate="selectedItem" let-selected>
+                  @if (selected) {
+                    <div class="flex items-center justify-between w-full pr-2">
+                      <span class="font-bold text-white text-xs truncate">{{ selected.name }}</span>
+                      <span class="text-[11px] font-bold text-emerald-400 ml-1.5 shrink-0">{{ selected.balance | currency:'INR' }}</span>
+                    </div>
+                  }
+                </ng-template>
+                <ng-template pTemplate="item" let-item>
+                  <div class="flex items-center justify-between w-full py-0.5">
+                    <div class="flex flex-col min-w-0">
+                      <span class="font-bold text-xs text-white truncate">{{ item.name }}</span>
+                      <span class="text-[10px] text-[var(--text-muted)]">{{ item.accountCategoryName || 'Bank Account' }}</span>
+                    </div>
+                    <span class="text-[11px] font-extrabold text-emerald-400 shrink-0 ml-2">{{ item.balance | currency:'INR' }}</span>
+                  </div>
+                </ng-template>
+              </p-select>
+            </div>
+          </div>
+
+          <!-- Funding Account Suggestions Drawer (Full-Width Responsive Panel) -->
+          @if (row.showSuggestions && row.suggestions.length > 0) {
+            <div class="p-2.5 rounded-xl bg-black/40 border border-cyan-500/30 flex flex-col gap-2 animate-fadeIn">
+              <div class="flex items-center justify-between text-[11px]">
+                <span class="font-bold text-cyan-300 flex items-center gap-1">
+                  <i class="pi pi-sparkles text-amber-300 text-[10px]"></i>
+                  Suggestions for {{ (row.amount || remainingBalance() || outstandingBalance) | currency:'INR' }}
+                </span>
+                <button type="button" (click)="updateRow($index, { showSuggestions: false })"
+                        class="text-[10px] text-[var(--text-muted)] hover:text-white bg-transparent border-none cursor-pointer">
+                  <i class="pi pi-times"></i> Close
+                </button>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                 @for (s of row.suggestions; track s.accountId) {
-                  <button (click)="selectSuggestion($index, s.accountId)"
-                    class="flex items-center justify-between p-2 rounded-lg text-xs border border-transparent cursor-pointer transition-all w-full text-left"
-                    [class.bg-emerald-500/10]="s.hasSufficientBalance"
-                    [class.hover:border-emerald-500/30]="s.hasSufficientBalance"
-                    [class.bg-red-500/10]="!s.hasSufficientBalance">
-                    <span class="font-medium text-[var(--text-primary)]">{{ s.accountName }}</span>
-                    @if (s.hasSufficientBalance) {
-                      <span class="text-emerald-400 font-bold">{{ s.balance | currency:'INR' }}</span>
-                    } @else {
-                      <span class="text-red-400 font-medium">Short by {{ s.shortfall | currency:'INR' }}</span>
-                    }
+                  <button type="button" (click)="selectSuggestion($index, s.accountId)"
+                          class="flex items-center justify-between p-2 rounded-lg border text-left cursor-pointer transition-all w-full group"
+                          [class.bg-emerald-500/10]="s.hasSufficientBalance"
+                          [class.border-emerald-500/30]="s.hasSufficientBalance"
+                          [class.hover:bg-emerald-500/20]="s.hasSufficientBalance"
+                          [class.bg-rose-500/10]="!s.hasSufficientBalance"
+                          [class.border-rose-500/20]="!s.hasSufficientBalance">
+                    <div class="flex flex-col min-w-0 pr-1.5">
+                      <span class="font-bold text-xs text-white truncate group-hover:text-cyan-200">{{ s.accountName }}</span>
+                      <span class="text-[10px] text-[var(--text-muted)]">Available: {{ s.balance | currency:'INR' }}</span>
+                    </div>
+
+                    <div class="shrink-0">
+                      @if (s.hasSufficientBalance) {
+                        <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[9px] font-extrabold flex items-center gap-0.5">
+                          <i class="pi pi-check text-[8px]"></i> Ready
+                        </span>
+                      } @else {
+                        <span class="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[9px] font-bold">
+                          Short by {{ s.shortfall | currency:'INR' }}
+                        </span>
+                      }
+                    </div>
                   </button>
                 }
               </div>
-            }
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div class="flex flex-col gap-1.5">
-            <label class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">Payment App (optional)</label>
-            <input type="text" pInputText [ngModel]="row.paymentAppName"
-              (ngModelChange)="updateRow($index, { paymentAppName: $event })"
-              class="w-full text-xs sm:text-sm rounded-xl" placeholder="e.g. GPay, Cred, PhonePe" />
-          </div>
-
-          <div class="flex flex-col gap-1.5">
-            <label class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">Cashback (optional)</label>
-            <p-inputNumber [ngModel]="row.cashbackAmount" (ngModelChange)="updateRow($index, { cashbackAmount: $event })"
-              mode="currency" currency="INR" locale="en-IN" styleClass="w-full" class="w-full" placeholder="e.g. 50"></p-inputNumber>
-          </div>
-        </div>
-
-        <div class="flex flex-col gap-1.5">
-          <label class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">Category (if this includes interest)</label>
-          <p-select [options]="categories()" [ngModel]="row.interestCategoryId"
-            (ngModelChange)="updateRow($index, { interestCategoryId: $event })"
-            optionLabel="name" optionValue="id" appendTo="body" styleClass="w-full" class="w-full"
-            placeholder="No category" [showClear]="true"></p-select>
-        </div>
-
-        @if (row.cashbackAmount) {
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
-            <div class="flex flex-col gap-1.5">
-              <label class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">Cashback Type</label>
-              <p-select [options]="[{label:'Direct (lands in account)',value:0},{label:'Indirect (app wallet)',value:1}]"
-                [ngModel]="row.cashbackType" (ngModelChange)="updateRow($index, { cashbackType: $event })"
-                optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full" class="w-full"
-                placeholder="Select type"></p-select>
             </div>
+          }
 
-            @if (row.cashbackType === 0) {
-              <div class="flex flex-col gap-1.5">
-                <label class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">Cashback Credit Account</label>
-                <p-select [options]="eligibleAccounts()" [ngModel]="row.cashbackAccountId"
-                  (ngModelChange)="updateRow($index, { cashbackAccountId: $event })"
-                  optionLabel="name" optionValue="id" appendTo="body" styleClass="w-full" class="w-full"
-                  placeholder="Select account"></p-select>
+          <!-- Optional Fields Accordion / Collapsible Drawer -->
+          <div class="pt-1 border-t border-white/5 flex flex-col gap-2">
+            <button type="button"
+                    (click)="updateRow($index, { showOptional: !row.showOptional })"
+                    class="text-[11px] text-[var(--text-muted)] hover:text-white font-semibold cursor-pointer bg-transparent border-none p-0 flex items-center gap-1 self-start">
+              <i class="pi text-[9px]" [class.pi-chevron-right]="!row.showOptional && !row.paymentAppName && !row.cashbackAmount && !row.interestCategoryId" [class.pi-chevron-down]="row.showOptional || row.paymentAppName || row.cashbackAmount || row.interestCategoryId"></i>
+              {{ (row.showOptional || row.paymentAppName || row.cashbackAmount || row.interestCategoryId) ? 'Hide Additional Details' : '+ Additional Options (App, Cashback, Interest)' }}
+            </button>
+
+            @if (row.showOptional || row.paymentAppName || row.cashbackAmount || row.interestCategoryId) {
+              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 pt-1 animate-fadeIn items-end">
+                <!-- Payment App -->
+                <div class="flex flex-col gap-1">
+                  <label class="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider h-4 flex items-center">Payment App</label>
+                  <input type="text" pInputText [ngModel]="row.paymentAppName"
+                         (ngModelChange)="updateRow($index, { paymentAppName: $event })"
+                         class="w-full h-8 text-xs rounded-xl" placeholder="e.g. GPay, PhonePe" />
+                </div>
+
+                <!-- Cashback Amount -->
+                <div class="flex flex-col gap-1">
+                  <label class="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider h-4 flex items-center">Cashback</label>
+                  <p-inputNumber [ngModel]="row.cashbackAmount" (ngModelChange)="updateRow($index, { cashbackAmount: $event })"
+                                 mode="currency" currency="INR" locale="en-IN" styleClass="w-full" class="w-full"
+                                 inputStyleClass="w-full h-8 text-xs rounded-xl" placeholder="e.g. 50">
+                  </p-inputNumber>
+                </div>
+
+                <!-- Category if Interest Included -->
+                <div class="flex flex-col gap-1 sm:col-span-2 md:col-span-1">
+                  <label class="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider h-4 flex items-center">Interest Category</label>
+                  <p-select [options]="categories()" [ngModel]="row.interestCategoryId"
+                            (ngModelChange)="updateRow($index, { interestCategoryId: $event })"
+                            optionLabel="name" optionValue="id" appendTo="body" styleClass="w-full" class="w-full h-8 text-xs"
+                            placeholder="None" [showClear]="true">
+                  </p-select>
+                </div>
               </div>
+
+              <!-- Cashback Breakdown Card (When Cashback > 0) -->
+              @if (row.cashbackAmount && row.cashbackAmount > 0) {
+                <div class="p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20 grid grid-cols-1 sm:grid-cols-2 gap-2.5 items-center mt-1">
+                  <div class="flex flex-col gap-1">
+                    <label class="text-[10px] font-bold text-purple-300">Cashback Type</label>
+                    <p-select [options]="[{label:'Direct (deposited in account)',value:0},{label:'Indirect (app wallet)',value:1}]"
+                              [ngModel]="row.cashbackType" (ngModelChange)="updateRow($index, { cashbackType: $event })"
+                              optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full" class="w-full h-8 text-xs"
+                              placeholder="Select type">
+                    </p-select>
+                  </div>
+
+                  @if (row.cashbackType === 0) {
+                    <div class="flex flex-col gap-1">
+                      <label class="text-[10px] font-bold text-purple-300">Deposit Cashback To</label>
+                      <p-select [options]="eligibleAccounts()" [ngModel]="row.cashbackAccountId"
+                                (ngModelChange)="updateRow($index, { cashbackAccountId: $event })"
+                                optionLabel="name" optionValue="id" appendTo="body" styleClass="w-full" class="w-full h-8 text-xs"
+                                placeholder="Select destination account">
+                      </p-select>
+                    </div>
+                  }
+                </div>
+              }
             }
           </div>
-        }
-      </div>
-    }
 
-    <button (click)="addRow()"
-      class="text-xs sm:text-sm text-[var(--primary-color)] hover:underline bg-transparent border-none cursor-pointer p-0 text-left font-bold flex items-center gap-1">
-      <i class="pi pi-plus text-xs"></i> Add Another Funding Source
-    </button>
-
-    <div class="flex items-center justify-between text-sm sm:text-base pt-3 border-t border-white/10 font-bold">
-      <span class="text-[var(--text-muted)]">Total Payment Batch</span>
-      <span [class.text-red-400]="exceedsOutstanding()" [class.text-emerald-400]="!exceedsOutstanding()">
-        {{ totalEntered() | currency:'INR' }}
-      </span>
-    </div>
-    @if (exceedsOutstanding()) {
-      <p class="text-xs text-red-400 m-0">
-        This batch exceeds the ₹{{ outstandingBalance | currency:'INR' }} total bill owed.
-      </p>
-    }
-
-    <div class="flex items-center justify-end gap-2 mt-2">
-      <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="ref.close(false)"
-        styleClass="rounded-xl px-4 py-2 text-xs sm:text-sm"></p-button>
-      <p-button label="Submit Batch Payment" icon="pi pi-check" (onClick)="pay()" [loading]="isSubmitting()"
-        styleClass="rounded-xl px-5 py-2 text-xs sm:text-sm font-bold shadow-md"></p-button>
-    </div>
-  } @else {
-    <div class="p-4 sm:p-5 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 flex flex-col gap-3">
-      <div class="flex items-center gap-2 text-emerald-400 font-extrabold text-base sm:text-lg">
-        <i class="pi pi-check-circle text-xl"></i>
-        <span>Payment Batch Processed</span>
-      </div>
-      <p class="text-xs sm:text-sm m-0 text-emerald-200 leading-relaxed">
-        Paid <strong class="text-white">{{ result()!.totalPaid | currency:'INR' }}</strong> total.
-        <strong>{{ result()!.totalInterestPaid | currency:'INR' }}</strong> went toward interest/fees, with the remainder reducing principal.
-      </p>
-      @if (result()!.totalCashbackReceived > 0) {
-        <p class="text-xs sm:text-sm m-0 text-emerald-200">
-          🎉 Total Cashback Earned: <strong class="text-amber-300">{{ result()!.totalCashbackReceived | currency:'INR' }}</strong>
-        </p>
+        </div>
       }
-      <p class="text-xs text-[var(--text-muted)] m-0">
-        Remaining Balance: {{ result()!.remainingBalance | currency:'INR' }}
-        @if (result()!.billMarkedPaid) {
-          — <span class="text-emerald-400 font-bold">Credit Card Bill Marked Settled</span>.
-        }
-      </p>
     </div>
 
-    <div class="flex justify-end mt-3">
-      <p-button label="Done" (onClick)="close()" styleClass="rounded-xl px-5 py-2 text-xs sm:text-sm font-bold"></p-button>
+    <!-- Add Funding Source Action -->
+    <div class="flex items-center justify-between">
+      <p-button
+        label="Add Another Funding Source"
+        icon="pi pi-plus"
+        [outlined]="true"
+        severity="help"
+        size="small"
+        styleClass="rounded-xl font-bold px-3 py-1 text-xs"
+        (onClick)="addRow()">
+      </p-button>
+    </div>
+
+    <!-- Footer Bar: Batch Summary & Actions -->
+    <div class="p-3 rounded-2xl bg-black/40 border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-2.5 shadow-xl">
+      <div class="flex flex-col items-center sm:items-start text-center sm:text-left">
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-[var(--text-muted)] font-bold uppercase tracking-wider">Total Batch Payment:</span>
+          <span class="text-base sm:text-lg font-black" [class.text-emerald-400]="!exceedsOutstanding()" [class.text-rose-400]="exceedsOutstanding()">
+            {{ totalEntered() | currency:'INR':'symbol':'1.2-2' }}
+          </span>
+        </div>
+        @if (exceedsOutstanding()) {
+          <span class="text-[11px] text-rose-400 font-semibold">
+            Batch exceeds total bill of {{ outstandingBalance | currency:'INR' }}
+          </span>
+        } @else if (remainingBalance() > 0) {
+          <span class="text-[11px] text-amber-300 font-medium">
+            {{ remainingBalance() | currency:'INR' }} remaining to fully clear bill
+          </span>
+        } @else {
+          <span class="text-[11px] text-emerald-400 font-semibold">
+            ✨ Bill will be 100% settled!
+          </span>
+        }
+      </div>
+
+      <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+        <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="ref.close(false)"
+                  styleClass="rounded-xl px-3.5 py-1.5 text-xs sm:text-sm font-semibold"></p-button>
+        <p-button label="Submit Batch Payment" icon="pi pi-check" (onClick)="pay()" [loading]="isSubmitting()"
+                  [disabled]="exceedsOutstanding() || totalEntered() <= 0"
+                  styleClass="rounded-xl px-4 py-2 text-xs sm:text-sm font-bold shadow-lg"></p-button>
+      </div>
+    </div>
+
+  } @else {
+    <!-- Success Celebration View -->
+    <div class="p-4 sm:p-5 rounded-2xl border border-emerald-500/40 bg-gradient-to-b from-emerald-950/40 via-emerald-900/20 to-black/40 flex flex-col gap-3 text-center items-center shadow-2xl animate-fadeIn">
+      <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/50 flex items-center justify-center text-emerald-400 text-2xl shadow-lg shadow-emerald-500/20">
+        <i class="pi pi-check-circle"></i>
+      </div>
+
+      <div class="flex flex-col gap-1 max-w-md">
+        <h3 class="text-lg font-black text-white m-0">Payment Processed Successfully!</h3>
+        <p class="text-xs sm:text-sm text-emerald-200/90 m-0 leading-relaxed">
+          Paid <strong class="text-white font-extrabold">{{ result()!.totalPaid | currency:'INR' }}</strong> total towards <strong class="text-white">{{ accountName }}</strong>.
+        </p>
+      </div>
+
+      <!-- Result Breakdown Stats -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 w-full max-w-lg text-left">
+        <div class="p-2.5 rounded-xl bg-white/5 border border-white/10 flex flex-col gap-0.5">
+          <span class="text-[9px] uppercase font-bold text-[var(--text-muted)]">Interest & Fees</span>
+          <span class="text-xs sm:text-sm font-black text-amber-400">{{ result()!.totalInterestPaid | currency:'INR' }}</span>
+        </div>
+
+        <div class="p-2.5 rounded-xl bg-white/5 border border-white/10 flex flex-col gap-0.5">
+          <span class="text-[9px] uppercase font-bold text-[var(--text-muted)]">Principal Paid</span>
+          <span class="text-xs sm:text-sm font-black text-emerald-400">{{ (result()!.totalPaid - result()!.totalInterestPaid) | currency:'INR' }}</span>
+        </div>
+
+        <div class="p-2.5 rounded-xl bg-white/5 border border-white/10 flex flex-col gap-0.5 col-span-2 sm:col-span-1">
+          <span class="text-[9px] uppercase font-bold text-[var(--text-muted)]">Cashback Earned</span>
+          <span class="text-xs sm:text-sm font-black text-purple-300">{{ result()!.totalCashbackReceived | currency:'INR' }}</span>
+        </div>
+      </div>
+
+      @if (result()!.billMarkedPaid) {
+        <div class="px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-extrabold flex items-center gap-1.5">
+          <i class="pi pi-check"></i> Credit Card Bill Marked Completely Settled!
+        </div>
+      }
+
+      <div class="flex justify-center w-full mt-1">
+        <p-button label="Done" (onClick)="close()" styleClass="rounded-xl px-7 py-2 text-xs sm:text-sm font-extrabold shadow-lg"></p-button>
+      </div>
     </div>
   }
+
 </div>

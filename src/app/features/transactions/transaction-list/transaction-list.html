@@ -58,11 +58,11 @@
 
       <div class="col-span-12 sm:col-span-6 lg:col-span-3">
         <app-stat-card
-          label="Closing Balance"
-          [value]="((summary()?.currentBalance || 0) | currency:'INR':'symbol':'1.2-2')!"
-          subtitle="Real-time available balance"
+          [label]="currentAccount()?.isLiability ? 'Card Balance' : 'Closing Balance'"
+          [value]="(Math.abs(summary()?.currentBalance || 0) | currency:'INR':'symbol':'1.2-2')!"
+          [subtitle]="currentAccount()?.isLiability ? 'Outstanding card balance' : 'Real-time available balance'"
           icon="pi pi-wallet"
-          variant="info">
+          [variant]="currentAccount()?.isLiability && (summary()?.currentBalance || 0) !== 0 ? 'danger' : 'info'">
         </app-stat-card>
       </div>
 
@@ -91,60 +91,119 @@
   <!-- Account Type Specific Sub-Card (Credit Card / Loan / Bank Interest) -->
   @if (currentAccount(); as account) {
     @if (account.creditCardDetails; as details) {
-      <div class="glass-card p-4 rounded-2xl border border-purple-500/20 bg-purple-500/5">
-        <div class="flex items-center justify-between mb-3">
+      <div class="glass-card p-4 sm:p-5 rounded-2xl border border-purple-500/30 bg-gradient-to-r from-purple-950/20 via-purple-900/10 to-black/20 shadow-lg">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
           <div class="flex items-center gap-2">
-            <i class="pi pi-credit-card text-purple-400 text-lg"></i>
-            <span class="font-bold text-sm text-purple-300">Credit Card Overview</span>
+            <div class="w-8 h-8 rounded-xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center">
+              <i class="pi pi-credit-card text-purple-300 text-base"></i>
+            </div>
+            <span class="font-extrabold text-sm sm:text-base text-purple-200">Credit Card Overview</span>
           </div>
           <div class="flex items-center gap-2 flex-wrap">
-            <p-button label="Record Statement Bill" icon="pi pi-receipt" severity="help" [outlined]="true" size="small" (onClick)="openRecordCcBill()" styleClass="rounded-xl font-bold px-3 py-1 text-xs"></p-button>
-            <p-button label="Pay Bill" icon="pi pi-wallet" severity="success" [outlined]="true" size="small" (onClick)="openPayCcBill()" styleClass="rounded-xl font-bold px-3 py-1 text-xs"></p-button>
+            <p-button label="Record Statement Bill" icon="pi pi-receipt" severity="help" [outlined]="true" size="small" (onClick)="openRecordCcBill()" styleClass="rounded-xl font-bold px-3 py-1.5 text-xs"></p-button>
+            <p-button label="Pay Bill" icon="pi pi-wallet" severity="success" [outlined]="true" size="small" (onClick)="openPayCcBill()" styleClass="rounded-xl font-bold px-3 py-1.5 text-xs"></p-button>
           </div>
         </div>
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 text-xs">
+          <!-- Latest Bill Amount -->
+          <div>
+            <span class="text-[var(--text-muted)] font-semibold block mb-0.5">Recorded Bill Amount</span>
+            @if (ccBreakdown()?.latestBillAmount !== null && ccBreakdown()?.latestBillAmount !== undefined) {
+              <div class="flex flex-col items-start gap-1">
+                <span class="font-black text-white text-sm sm:text-base">{{ ccBreakdown()!.latestBillAmount | currency:'INR':'symbol':'1.0-0' }}</span>
+                @if (ccBreakdown()?.latestBillIsPaid) {
+                  <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-extrabold flex items-center gap-1 border border-emerald-500/30">
+                    <i class="pi pi-check-circle"></i> Obligation Cleared
+                  </span>
+                } @else if ((ccBreakdown()?.totalPaidForCycle ?? 0) > 0) {
+                  <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-bold border border-amber-500/30">
+                    {{ ccBreakdown()!.totalPaidForCycle | currency:'INR':'symbol':'1.0-0' }} Paid ({{ ccBreakdown()!.remainingBillAmount | currency:'INR':'symbol':'1.0-0' }} Pending)
+                  </span>
+                } @else {
+                  <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-bold border border-amber-500/30">
+                    Unpaid ({{ ccBreakdown()!.latestBillAmount | currency:'INR':'symbol':'1.0-0' }} Pending)
+                  </span>
+                }
+              </div>
+            } @else if (ccBreakdown()?.statementOutstanding) {
+              <span class="font-black text-white text-sm sm:text-base">{{ ccBreakdown()!.statementOutstanding | currency:'INR':'symbol':'1.0-0' }}</span>
+            } @else {
+              <span class="font-bold text-white text-sm">—</span>
+            }
+          </div>
+
+          <!-- Minimum Due -->
+          <div>
+            <span class="text-[var(--text-muted)] font-semibold block mb-0.5">Minimum Due</span>
+            <div class="flex flex-col items-start gap-1">
+              <span class="font-black text-sm sm:text-base" [class.text-emerald-400]="ccBreakdown()?.isMinimumDuePaid" [class.text-rose-400]="!ccBreakdown()?.isMinimumDuePaid">
+                {{ (ccBreakdown()?.minimumDueAmount ?? details.minimumDueAmount) ? ((ccBreakdown()?.minimumDueAmount ?? details.minimumDueAmount) | currency:'INR':'symbol':'1.0-0') : '—' }}
+              </span>
+              @if ((ccBreakdown()?.minimumDueAmount ?? details.minimumDueAmount) && (ccBreakdown()?.minimumDueAmount ?? details.minimumDueAmount) > 0) {
+                @if (ccBreakdown()?.isMinimumDuePaid || ccBreakdown()?.latestBillIsPaid) {
+                  <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-extrabold flex items-center gap-1 border border-emerald-500/30">
+                    <i class="pi pi-check text-[9px]"></i> Min Due Paid
+                  </span>
+                } @else {
+                  <span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 text-[10px] font-bold border border-rose-500/30">
+                    Unpaid
+                  </span>
+                }
+              }
+            </div>
+          </div>
+
+          <!-- Credit Limit -->
           @if (details.creditLimit) {
             <div>
-              <span class="text-[var(--text-muted)] block">Credit Limit</span>
-              <span class="font-bold text-white text-sm">{{ details.creditLimit | currency:'INR':'symbol':'1.0-0' }}</span>
+              <span class="text-[var(--text-muted)] font-semibold block mb-0.5">Credit Limit</span>
+              <span class="font-bold text-white text-sm sm:text-base">{{ details.creditLimit | currency:'INR':'symbol':'1.0-0' }}</span>
             </div>
           }
-          @if (details.minimumDueAmount) {
-            <div>
-              <span class="text-[var(--text-muted)] block">Minimum Due</span>
-              <span class="font-bold text-rose-400 text-sm">{{ details.minimumDueAmount | currency:'INR':'symbol':'1.0-0' }}</span>
-            </div>
-          }
-          @if (details.dueDate) {
-            <div>
-              <span class="text-[var(--text-muted)] block">Due Date</span>
-              <span class="font-bold text-amber-300 text-sm">{{ details.dueDate | date:'mediumDate' }}</span>
-            </div>
-          }
+
+          <!-- Due Date -->
+          <div>
+            <span class="text-[var(--text-muted)] font-semibold block mb-0.5">Due Date</span>
+            <span class="font-bold text-amber-300 text-sm sm:text-base">
+              {{ (ccBreakdown()?.dueDate ?? details.dueDate) ? ((ccBreakdown()?.dueDate ?? details.dueDate) | date:'mediumDate') : '—' }}
+            </span>
+          </div>
+
+          <!-- Interest Rate -->
           @if (details.interestRate) {
             <div>
-              <span class="text-[var(--text-muted)] block">Interest Rate</span>
-              <span class="font-bold text-white text-sm">{{ details.interestRate }}% APR</span>
+              <span class="text-[var(--text-muted)] font-semibold block mb-0.5">Interest Rate</span>
+              <span class="font-bold text-white text-sm sm:text-base">{{ details.interestRate }}% APR</span>
             </div>
           }
         </div>
 
+        <!-- Cashback Insights by App (Interactive Clickable Chips) -->
         @if (cashbackInsights(); as insights) {
           @if (insights.byApp.length > 0 || insights.unclaimedWalletCashback > 0) {
-            <div class="mt-3 pt-3 border-t border-purple-500/20 flex flex-col gap-2">
-              <div class="flex items-center justify-between text-xs font-bold text-purple-300">
-                <span>Cashback Insights by App</span>
+            <div class="mt-4 pt-3 border-t border-purple-500/20 flex flex-col gap-2">
+              <div class="flex items-center justify-between text-xs font-bold text-purple-300 flex-wrap gap-2">
+                <span class="flex items-center gap-1.5">
+                  <i class="pi pi-sparkles text-amber-300"></i> Cashback Insights by App
+                  <span class="text-[11px] font-normal text-[var(--text-muted)]">(Click app for details)</span>
+                </span>
                 @if (insights.unclaimedWalletCashback > 0) {
-                  <span class="text-amber-400 font-bold">Unclaimed Wallet Cashback: {{ insights.unclaimedWalletCashback | currency:'INR' }}</span>
+                  <span class="text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/20">
+                    Unclaimed Wallet Cashback: {{ insights.unclaimedWalletCashback | currency:'INR' }}
+                  </span>
                 }
               </div>
-              <div class="flex items-center gap-3 flex-wrap">
+
+              <div class="flex items-center gap-2.5 flex-wrap">
                 @for (app of insights.byApp; track app.paymentAppName) {
-                  <div class="px-2.5 py-1 rounded-xl bg-white/5 border border-white/10 flex items-center gap-2 text-xs">
-                    <span class="font-semibold text-white">{{ app.paymentAppName }}</span>
-                    <span class="font-extrabold text-emerald-400">{{ app.effectiveRatePercent }}%</span>
-                    <span class="text-[10px] text-[var(--text-muted)]">({{ app.paymentCount }} pay)</span>
-                  </div>
+                  <button type="button" (click)="selectedCashbackAppDetail.set(app)"
+                          class="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-purple-500/20 border border-white/10 hover:border-purple-500/40 flex items-center gap-2 text-xs transition-all cursor-pointer group shadow-sm">
+                    <span class="font-bold text-white group-hover:text-purple-200">{{ app.paymentAppName }}</span>
+                    <span class="font-extrabold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-md border border-emerald-500/20">{{ app.effectiveRatePercent }}%</span>
+                    <span class="text-[10px] text-[var(--text-muted)] font-medium">({{ app.paymentCount }} pay)</span>
+                    <i class="pi pi-info-circle text-[10px] text-purple-300/70 group-hover:text-purple-200 ml-0.5"></i>
+                  </button>
                 }
               </div>
             </div>
@@ -413,8 +472,8 @@
               }
             </td>
             <td class="text-right font-extrabold text-base whitespace-nowrap"
-                [ngClass]="tx.type === 1 ? 'text-emerald-400' : 'text-rose-400'">
-              {{ tx.type === 1 ? '+' : '-' }}{{ tx.amount | currency:'INR':'symbol':'1.2-2' }}
+                [ngClass]="tx.type === 0 ? 'text-emerald-400' : 'text-rose-400'">
+              {{ tx.type === 0 ? '+' : '-' }}{{ tx.amount | currency:'INR':'symbol':'1.2-2' }}
             </td>
             <td class="text-center whitespace-nowrap">
               <div class="flex items-center justify-center gap-1">
@@ -437,5 +496,51 @@
         </ng-template>
       </p-table>
     </div>
+  }
+
+  <!-- Cashback App Detail Modal -->
+  @if (selectedCashbackAppDetail(); as app) {
+    <p-dialog
+      [header]="app.paymentAppName + ' — Cashback Details'"
+      [visible]="true"
+      (visibleChange)="selectedCashbackAppDetail.set(null)"
+      [modal]="true"
+      [style]="{ width: '90vw', maxWidth: '480px' }"
+      [draggable]="false"
+      [resizable]="false"
+      appendTo="body">
+      <div class="flex flex-col gap-4 p-1">
+        <div class="p-4 rounded-2xl bg-gradient-to-r from-purple-900/30 to-emerald-900/20 border border-purple-500/30 flex items-center justify-between">
+          <div class="flex flex-col">
+            <span class="text-xs font-bold uppercase text-purple-300">Payment App</span>
+            <span class="text-xl font-extrabold text-white">{{ app.paymentAppName }}</span>
+          </div>
+          <div class="px-3 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-black text-lg">
+            {{ app.effectiveRatePercent }}%
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div class="p-3 rounded-xl bg-white/5 border border-white/10 flex flex-col gap-1">
+            <span class="text-[var(--text-muted)] font-semibold">Total Cashback Earned</span>
+            <span class="text-base font-black text-amber-400">{{ (app.totalCashback ?? app.totalCashbackEarned) | currency:'INR' }}</span>
+          </div>
+
+          <div class="p-3 rounded-xl bg-white/5 border border-white/10 flex flex-col gap-1">
+            <span class="text-[var(--text-muted)] font-semibold">Total Payments</span>
+            <span class="text-base font-black text-white">{{ app.paymentCount }} payments</span>
+          </div>
+
+          <div class="p-3 rounded-xl bg-white/5 border border-white/10 flex flex-col gap-1 col-span-2">
+            <span class="text-[var(--text-muted)] font-semibold">Total Spent via {{ app.paymentAppName }}</span>
+            <span class="text-base font-black text-emerald-400">{{ (app.totalPaid ?? app.totalPaidAmount) | currency:'INR' }}</span>
+          </div>
+        </div>
+
+        <div class="flex justify-end pt-2">
+          <p-button label="Close" (onClick)="selectedCashbackAppDetail.set(null)" styleClass="rounded-xl px-5 py-2 font-bold text-xs"></p-button>
+        </div>
+      </div>
+    </p-dialog>
   }
 </div>
