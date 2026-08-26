@@ -219,7 +219,8 @@ export class AccountsPage implements OnInit {
   openCreateForm(): void {
     this.ref = this.dialogService.open(AccountForm, {
       header: 'Create New Account',
-      width: '500px',
+      width: '560px',
+      style: { maxWidth: '94vw' },
       modal: true,
       closable: true,
       dismissableMask: false
@@ -237,7 +238,8 @@ export class AccountsPage implements OnInit {
   openEditForm(acc: Account): void {
     this.ref = this.dialogService.open(AccountForm, {
       header: `Edit "${acc.name}"`,
-      width: '500px',
+      width: '560px',
+      style: { maxWidth: '94vw' },
       modal: true,
       closable: true,
       dismissableMask: false,

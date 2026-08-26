@@ -13,6 +13,7 @@ export class FormField {
     @Input() label: string = '';
     @Input() inputId: string = '';
     @Input() control?: AbstractControl | null; // Optional: Pass control explicitly
+    @Input() labelClass: string = '';
 
     // If control is not passed, try to find it from projected content? 
     // Easier to just pass it or rely on a helper. 

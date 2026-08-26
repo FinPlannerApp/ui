@@ -26,73 +26,73 @@
   <!-- Financial Overview KPI Cards Grid -->
   <div class="grid grid-cols-12 gap-4">
     <!-- Net Worth Card -->
-    <div class="col-span-12 sm:col-span-6 lg:col-span-3">
-      <div class="glass-card p-4 rounded-2xl flex flex-col justify-between h-full relative overflow-hidden border border-emerald-500/30">
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Net Worth</span>
-          <div class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+    <div class="col-span-12 sm:col-span-6 lg:col-span-3 min-w-0">
+      <div class="glass-card p-4 rounded-2xl flex flex-col justify-between h-full relative overflow-hidden border border-emerald-500/30 min-w-0">
+        <div class="flex items-center justify-between mb-2 gap-2">
+          <span class="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] truncate">Net Worth</span>
+          <div class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
             <i class="pi pi-chart-line text-lg"></i>
           </div>
         </div>
-        <div class="mt-1">
-          <span class="text-2xl font-extrabold tracking-tight" [ngClass]="netWorth() >= 0 ? 'text-emerald-400' : 'text-rose-400'">
+        <div class="mt-1 min-w-0">
+          <div class="text-xl sm:text-2xl font-extrabold tracking-tight truncate" [ngClass]="netWorth() >= 0 ? 'text-emerald-400' : 'text-rose-400'" [title]="netWorth() | currency:'INR':'symbol':'1.2-2'">
             {{ netWorth() | currency:'INR':'symbol':'1.2-2' }}
-          </span>
-          <p class="text-xs text-[var(--text-muted)] mt-1 mb-0">Assets minus Liabilities</p>
+          </div>
+          <p class="text-xs text-[var(--text-muted)] mt-1 mb-0 truncate">Assets minus Liabilities</p>
         </div>
       </div>
     </div>
 
     <!-- Liquid Assets Card -->
-    <div class="col-span-12 sm:col-span-6 lg:col-span-3">
-      <div class="glass-card p-4 rounded-2xl flex flex-col justify-between h-full border border-blue-500/20">
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Total Assets</span>
-          <div class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center">
+    <div class="col-span-12 sm:col-span-6 lg:col-span-3 min-w-0">
+      <div class="glass-card p-4 rounded-2xl flex flex-col justify-between h-full border border-blue-500/20 min-w-0">
+        <div class="flex items-center justify-between mb-2 gap-2">
+          <span class="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] truncate">Total Assets</span>
+          <div class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0">
             <i class="pi pi-wallet text-lg"></i>
           </div>
         </div>
-        <div class="mt-1">
-          <span class="text-2xl font-extrabold text-blue-400 tracking-tight">
+        <div class="mt-1 min-w-0">
+          <div class="text-xl sm:text-2xl font-extrabold text-blue-400 tracking-tight truncate" [title]="totalAssetBalance() | currency:'INR':'symbol':'1.2-2'">
             {{ totalAssetBalance() | currency:'INR':'symbol':'1.2-2' }}
-          </span>
-          <p class="text-xs text-[var(--text-muted)] mt-1 mb-0">{{ assetAccountsCount() }} asset accounts</p>
+          </div>
+          <p class="text-xs text-[var(--text-muted)] mt-1 mb-0 truncate">{{ assetAccountsCount() }} asset accounts</p>
         </div>
       </div>
     </div>
 
     <!-- Total Liabilities Card -->
-    <div class="col-span-12 sm:col-span-6 lg:col-span-3">
-      <div class="glass-card p-4 rounded-2xl flex flex-col justify-between h-full border border-rose-500/20">
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Liabilities & Debt</span>
-          <div class="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center">
+    <div class="col-span-12 sm:col-span-6 lg:col-span-3 min-w-0">
+      <div class="glass-card p-4 rounded-2xl flex flex-col justify-between h-full border border-rose-500/20 min-w-0">
+        <div class="flex items-center justify-between mb-2 gap-2">
+          <span class="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] truncate">Liabilities & Debt</span>
+          <div class="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center shrink-0">
             <i class="pi pi-credit-card text-lg"></i>
           </div>
         </div>
-        <div class="mt-1">
-          <span class="text-2xl font-extrabold text-rose-400 tracking-tight">
+        <div class="mt-1 min-w-0">
+          <div class="text-xl sm:text-2xl font-extrabold text-rose-400 tracking-tight truncate" [title]="totalLiabilities() | currency:'INR':'symbol':'1.2-2'">
             {{ totalLiabilities() | currency:'INR':'symbol':'1.2-2' }}
-          </span>
-          <p class="text-xs text-[var(--text-muted)] mt-1 mb-0">{{ liabilityAccountsCount() }} cards & loans</p>
+          </div>
+          <p class="text-xs text-[var(--text-muted)] mt-1 mb-0 truncate">{{ liabilityAccountsCount() }} cards & loans</p>
         </div>
       </div>
     </div>
 
     <!-- Total Accounts Card -->
-    <div class="col-span-12 sm:col-span-6 lg:col-span-3">
-      <div class="glass-card p-4 rounded-2xl flex flex-col justify-between h-full border border-purple-500/20">
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Total Accounts</span>
-          <div class="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center">
+    <div class="col-span-12 sm:col-span-6 lg:col-span-3 min-w-0">
+      <div class="glass-card p-4 rounded-2xl flex flex-col justify-between h-full border border-purple-500/20 min-w-0">
+        <div class="flex items-center justify-between mb-2 gap-2">
+          <span class="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] truncate">Total Accounts</span>
+          <div class="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center shrink-0">
             <i class="pi pi-database text-lg"></i>
           </div>
         </div>
-        <div class="mt-1">
-          <span class="text-2xl font-extrabold text-purple-400 tracking-tight">
+        <div class="mt-1 min-w-0">
+          <div class="text-xl sm:text-2xl font-extrabold text-purple-400 tracking-tight truncate">
             {{ totalAccountsCount() }}
-          </span>
-          <p class="text-xs text-[var(--text-muted)] mt-1 mb-0">Managed in portfolio</p>
+          </div>
+          <p class="text-xs text-[var(--text-muted)] mt-1 mb-0 truncate">Managed in portfolio</p>
         </div>
       </div>
     </div>
@@ -100,10 +100,10 @@
 
   <!-- Single Clean Controls Toolbar -->
   <div class="glass-card p-4 rounded-2xl">
-    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full">
+    <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 w-full">
       
       <!-- Search Input (Matching 40px height) -->
-      <p-iconfield class="grow h-10">
+      <p-iconfield class="grow h-10 w-full lg:w-auto min-w-0">
         <p-inputicon class="pi pi-search"></p-inputicon>
         <input
           type="text"
@@ -114,40 +114,44 @@
           class="w-full h-10 p-inputtext-sm rounded-xl" />
       </p-iconfield>
 
-      <div class="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full sm:w-auto">
+      <div class="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full lg:w-auto justify-between sm:justify-end shrink-0">
         <!-- Category Dropdown Selector -->
-        <p-select
-          [options]="categoryFilterOptions()"
-          [ngModel]="selectedCategoryFilter()"
-          (ngModelChange)="selectedCategoryFilter.set($event)"
-          optionLabel="label"
-          optionValue="value"
-          class="w-full sm:w-56 sm:max-w-[14rem] h-10 p-inputtext-sm rounded-xl shrink-0"
-          appendTo="body">
-          <ng-template pTemplate="selectedItem" let-opt>
-            <div class="flex items-center gap-2">
-              <i [class]="opt.icon"></i>
-              <span>{{ opt.label }}</span>
-            </div>
-          </ng-template>
-          <ng-template pTemplate="item" let-opt>
-            <div class="flex items-center gap-2 py-1">
-              <i [class]="opt.icon"></i>
-              <span>{{ opt.label }}</span>
-            </div>
-          </ng-template>
-        </p-select>
+        <div class="w-full sm:w-52 shrink-0 min-w-0">
+          <p-select
+            [options]="categoryFilterOptions()"
+            [ngModel]="selectedCategoryFilter()"
+            (ngModelChange)="selectedCategoryFilter.set($event)"
+            optionLabel="label"
+            optionValue="value"
+            class="w-full h-10 p-inputtext-sm rounded-xl"
+            appendTo="body">
+            <ng-template pTemplate="selectedItem" let-opt>
+              <div class="flex items-center gap-2 truncate min-w-0">
+                <i [class]="opt.icon" class="shrink-0"></i>
+                <span class="truncate">{{ opt.label }}</span>
+              </div>
+            </ng-template>
+            <ng-template pTemplate="item" let-opt>
+              <div class="flex items-center gap-2 py-1 truncate">
+                <i [class]="opt.icon" class="shrink-0"></i>
+                <span class="truncate">{{ opt.label }}</span>
+              </div>
+            </ng-template>
+          </p-select>
+        </div>
 
         <!-- Sort Dropdown (Matching 40px height) -->
-        <p-select
-          [options]="sortOptions"
-          [ngModel]="sortBy()"
-          (ngModelChange)="sortBy.set($event)"
-          optionLabel="label"
-          optionValue="value"
-          class="w-full sm:w-48 sm:max-w-[12rem] h-10 p-inputtext-sm rounded-xl shrink-0"
-          appendTo="body">
-        </p-select>
+        <div class="w-full sm:w-48 shrink-0 min-w-0">
+          <p-select
+            [options]="sortOptions"
+            [ngModel]="sortBy()"
+            (ngModelChange)="sortBy.set($event)"
+            optionLabel="label"
+            optionValue="value"
+            class="w-full h-10 p-inputtext-sm rounded-xl"
+            appendTo="body">
+          </p-select>
+        </div>
 
         <!-- Grid/Table View Switcher (Matching 40px height) -->
         <div class="flex items-center bg-[var(--glass-bg-solid)] p-1 rounded-xl border border-[var(--glass-border)] h-10 shrink-0">
@@ -203,7 +207,7 @@
       @if (viewMode() === 'grid') {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           @for (acc of filteredAccounts(); track acc.id) {
-            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 hover:-translate-y-1 hover:shadow-xl border"
+            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 hover:-translate-y-1 hover:shadow-xl border min-w-0"
                  [ngClass]="getAccountBadgeColor(acc).border">
               
               <!-- Account Header (Icon + Marquee Title) -->
@@ -221,10 +225,11 @@
                 </div>
 
                 <!-- Account Balance Container -->
-                <div class="my-4 p-3 rounded-xl bg-black/20 backdrop-blur-sm border border-white/5 flex flex-col">
+                <div class="my-4 p-3 rounded-xl bg-black/20 backdrop-blur-sm border border-white/5 flex flex-col min-w-0">
                   <span class="text-xs text-[var(--text-muted)] font-medium">Current Balance</span>
-                  <span class="text-2xl font-extrabold tracking-tight mt-0.5"
-                        [ngClass]="isLiabilityAccount(acc) || acc.balance < 0 ? 'text-rose-400' : 'text-emerald-400'">
+                  <span class="text-2xl font-extrabold tracking-tight mt-0.5 truncate"
+                        [ngClass]="isLiabilityAccount(acc) || acc.balance < 0 ? 'text-rose-400' : 'text-emerald-400'"
+                        [title]="acc.balance | currency:'INR':'symbol':'1.2-2'">
                     {{ acc.balance | currency:'INR':'symbol':'1.2-2' }}
                   </span>
                 </div>
@@ -276,16 +281,16 @@
                   </div>
                 }
 
-                <div class="flex items-center justify-between gap-2 pt-2 border-t border-[var(--glass-border)]">
+                <div class="flex items-center justify-between gap-2 pt-2 border-t border-[var(--glass-border)] shrink-0">
                   <button
                     type="button"
                     (click)="viewTransactions(acc)"
-                    class="flex items-center gap-1.5 text-xs font-semibold text-[var(--primary-color)] hover:underline cursor-pointer bg-transparent border-none p-0">
+                    class="flex items-center gap-1.5 text-xs font-semibold text-[var(--primary-color)] hover:underline cursor-pointer bg-transparent border-none p-0 shrink-0">
                     <span>Transactions</span>
                     <i class="pi pi-arrow-right text-xs"></i>
                   </button>
 
-                  <div class="flex items-center gap-1">
+                  <div class="flex items-center gap-1 shrink-0">
                     <p-button icon="pi pi-sliders-h" [text]="true" [rounded]="true" severity="warn" size="small" pTooltip="Adjust Balance" (onClick)="openAdjustBalance(acc)"></p-button>
                     <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" size="small" pTooltip="Edit Account" (onClick)="openEditForm(acc)"></p-button>
                     <p-button icon="pi pi-trash" [text]="true" [rounded]="true" severity="danger" size="small" pTooltip="Delete Account" (onClick)="confirmDelete(acc)"></p-button>

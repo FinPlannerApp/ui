@@ -1,8 +1,12 @@
-<div class="field flex flex-col gap-1">
+<div class="field flex flex-col gap-1.5 h-full">
     @if (label) {
-    <label [for]="inputId" class="font-medium text-sm text-secondary">{{ label }}</label>
+    <label [for]="inputId" class="font-medium text-sm text-secondary flex items-end min-h-[2rem] pb-0.5 leading-tight" [class]="labelClass">
+        {{ label }}
+    </label>
     }
-    <ng-content></ng-content>
+    <div class="grow flex flex-col justify-start min-w-0">
+        <ng-content></ng-content>
+    </div>
     @if (control?.invalid && (control?.touched || control?.dirty)) {
     <small class="p-error block" style="line-height: inherit;">
         {{ errorMessage }}
