@@ -61,7 +61,11 @@ export class Login {
         this.isSubmitting = false;
         if (response.isSuccess) {
           this.showConcurrentLoginModal = false;
-          this.router.navigate(['/app/dashboard']);
+          this.router.navigate(['/app/dashboard']).then(success => {
+            if (!success) {
+              window.location.href = '/app/dashboard';
+            }
+          });
         } else {
           // Check for Concurrent Login (Backend returns 200 OK with failure)
           if (response.error?.code === 'Auth.ConcurrentLogin') {
