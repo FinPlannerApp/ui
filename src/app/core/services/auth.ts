@@ -29,7 +29,7 @@ export interface LoginUserDto {
 
 export interface LoginResponseDto {
   accessToken: string;
-  refreshToken: string;
+  refreshToken?: string;
   userName: string;
 }
 
@@ -72,7 +72,7 @@ export class Auth {
 
   public currentUser = computed(() => this._currentUserDetails()?.name ?? null);
   public currentUserEmail = computed(() => this._currentUserDetails()?.email ?? null);
-  public isLoggedIn = computed(() => !!this._accessToken() || (this.isBrowser && !!localStorage.getItem('refreshToken')));
+  public isLoggedIn = computed(() => !!this._accessToken());
   public isAdmin = computed(() => this._currentUserDetails()?.roles?.includes('Admin') ?? false);
 
   // Session Expiry Timer
@@ -108,25 +108,14 @@ export class Auth {
 
   // --- PRIVATE HELPERS ---
 
-  private getRefreshToken(): string | null {
-    if (this.isBrowser) {
-      return localStorage.getItem('refreshToken');
-    }
-    return null;
-  }
-
-  private storeTokens(accessToken: string, refreshToken: string): void {
+  private storeTokens(accessToken: string): void {
     if (this.isLoggingOut) return; // Prevent race condition
 
-    // GUARD: valid tokens
-    if (!accessToken || !refreshToken) {
+    if (!accessToken) {
       return;
     }
 
     this._accessToken.set(accessToken);
-    if (this.isBrowser) {
-      localStorage.setItem('refreshToken', refreshToken);
-    }
     this.decodeAndSetUser(accessToken);
     this.startSilentRefresh();
   }
@@ -134,9 +123,6 @@ export class Auth {
   private clearTokens(): void {
     this._accessToken.set(null);
     this._currentUserDetails.set(null);
-    if (this.isBrowser) {
-      localStorage.removeItem('refreshToken');
-    }
     this.stopSilentRefresh();
   }
 
@@ -195,18 +181,13 @@ export class Auth {
   // --- PUBLIC API ---
 
   /**
-   * Restores the user session from local storage on application startup.
+   * Restores the user session from HttpOnly cookie on application startup.
    * @returns An Observable that emits true if session is restored, false otherwise.
    */
   public restoreSession(): Observable<boolean> {
     if (!this.isBrowser) return of(false);
 
-    // Check if we have a refresh token in local storage
-    const refreshToken = this.getRefreshToken();
-    if (!refreshToken) return of(false);
-
-    return this.refreshToken().pipe(
-      map(success => success),
+    return this.refreshToken(false).pipe(
       catchError(() => of(false))
     );
   }
@@ -245,10 +226,14 @@ export class Auth {
    */
   login(credentials: LoginUserDto): Observable<ApiResult<LoginResponseDto>> {
     this.isLoggingOut = false;
-    return this.http.post<ApiResult<LoginResponseDto>>(this.buildUrl('Auth', 'login'), credentials).pipe(
+    return this.http.post<ApiResult<LoginResponseDto>>(
+      this.buildUrl('Auth', 'login'),
+      credentials,
+      { withCredentials: true }
+    ).pipe(
       tap(response => {
         if (response.isSuccess && response.value) {
-          this.storeTokens(response.value.accessToken, response.value.refreshToken);
+          this.storeTokens(response.value.accessToken);
         }
       })
     );
@@ -271,47 +256,39 @@ export class Auth {
   }
 
   /**
-   * Refreshes the access token using the stored refresh token.
-   * @returns An Observable that emits true if refresh was successful, false otherwise.
+   * Refreshes the access token using the HttpOnly cookie.
+   * @param triggerLogout Whether to trigger logout on failure (defaults to true for in-flight 401s, false for silent startup restore)
    */
-  refreshToken(): Observable<boolean> {
-    const refreshToken = this.getRefreshToken();
-    if (!refreshToken) {
-      this.logout('Session Expired');
-      return of(false);
-    }
-
-    return this.http.post<ApiResult<LoginResponseDto>>(this.buildUrl('Auth', 'refresh'), { refreshToken }).pipe(
+  refreshToken(triggerLogout: boolean = true): Observable<boolean> {
+    return this.http.post<ApiResult<LoginResponseDto>>(
+      {},
+      { withCredentials: true }
+    ).pipe(
       map(response => {
         if (response.isSuccess && response.value) {
-          this.storeTokens(response.value.accessToken, response.value.refreshToken);
+          this.storeTokens(response.value.accessToken);
           return true;
         }
-        this.logout('Refresh Failed');
-        return false;
-      }),
-      catchError(() => {
-        this.logout('Refresh Error');
+        if (triggerLogout) {
+          this.logout('Session Expired');
+        }
+        if (triggerLogout) {
+          this.logout('Session Expired');
+        }
         return of(false);
-      })
-    );
-  }
 
   /**
-   * Logs out the current user, clears tokens, and redirects to login.
+   * Logs out the current user, clears tokens and cookies, and redirects to login.
    * @param reason Optional reason for logout to display on login page.
    */
   logout(reason?: string): void {
     if (this.isLoggingOut) return; // Debounce
     this.isLoggingOut = true;
 
-    const refreshToken = this.getRefreshToken();
-    if (refreshToken) {
-      // Call backend to revoke token - Fire and forget
-      this.http.post(this.buildUrl('Auth', 'logout'), { refreshToken }).pipe(
-        catchError(() => of(null))
-      ).subscribe();
-    }
+    // Call backend to clear cookie and revoke session
+    this.http.post(this.buildUrl('Auth', 'logout'), {}, { withCredentials: true }).pipe(
+      catchError(() => of(null))
+    ).subscribe();
 
     this.clearTokens();
     this.router.navigate(['/login'], {
