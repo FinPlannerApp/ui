@@ -109,7 +109,7 @@ export class Auth {
   // --- PRIVATE HELPERS ---
 
   private storeTokens(accessToken: string): void {
-    if (this.isLoggingOut) return; // Prevent race condition
+    this.isLoggingOut = false;
 
     if (!accessToken) {
       return;
