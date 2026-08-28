@@ -258,9 +258,11 @@ export class Auth {
   /**
    * Refreshes the access token using the HttpOnly cookie.
    * @param triggerLogout Whether to trigger logout on failure (defaults to true for in-flight 401s, false for silent startup restore)
+   * @returns An Observable that emits true if refresh was successful, false otherwise.
    */
   refreshToken(triggerLogout: boolean = true): Observable<boolean> {
     return this.http.post<ApiResult<LoginResponseDto>>(
+      this.buildUrl('Auth', 'refresh'),
       {},
       { withCredentials: true }
     ).pipe(
@@ -272,10 +274,16 @@ export class Auth {
         if (triggerLogout) {
           this.logout('Session Expired');
         }
+        return false;
+      }),
+      catchError(() => {
         if (triggerLogout) {
           this.logout('Session Expired');
         }
         return of(false);
+      })
+    );
+  }
 
   /**
    * Logs out the current user, clears tokens and cookies, and redirects to login.
