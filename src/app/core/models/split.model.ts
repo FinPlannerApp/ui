@@ -1,6 +1,6 @@
 export enum SplitType { Equal = 0, Exact = 1, Percentage = 2, Shares = 3 }
 export enum SettlementMethod { Upi = 0, Cash = 1, BankTransfer = 2, Other = 3 }
-export enum SettlementStatus { Pending = 0, Completed = 1 }
+export enum SettlementStatus { Pending = 0, AwaitingConfirmation = 1, Completed = 2 }
 
 export interface SplitMember {
   id: number;
@@ -12,6 +12,7 @@ export interface SplitMember {
 export interface SplitGroup {
   id: number;
   name: string;
+  createdByUserId: string;
   currency: string;
   status: number;
   shareToken: string;
@@ -75,6 +76,19 @@ export interface SimplifiedDebt {
   toMemberId: number;
   toMemberName: string;
   amount: number;
+}
+
+export interface Settlement {
+  id: number;
+  fromMemberId: number;
+  fromMemberName: string;
+  toMemberId: number;
+  toMemberName: string;
+  amount: number;
+  method: SettlementMethod;
+  status: SettlementStatus;
+  paymentReference: string;
+  completedAt: string | null;
 }
 
 export interface GroupBalances {

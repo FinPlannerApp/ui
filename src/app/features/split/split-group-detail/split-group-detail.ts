@@ -90,6 +90,63 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
     return status === 0 || status === 1; // Active or Locked — settlements stay available through both
   });
 
+  isGroupAdmin = computed(() => {
+    const g = this.group();
+    if (!g) return false;
+    const currentUserId = this.authService.currentUserDetails()?.id;
+    return g.createdByUserId === currentUserId;
+  });
+
+  currentUserMember = computed(() => {
+    const g = this.group();
+    if (!g) return null;
+    const currentUserId = this.authService.currentUserDetails()?.id;
+    return g.members.find(m => m.linkedUserId && m.linkedUserId === currentUserId) ?? null;
+  });
+
+  visibleDebts = computed(() => {
+    const plan = this.balances()?.simplifiedPlan ?? [];
+    if (this.isGroupAdmin()) return plan;
+    const myMemberId = this.currentUserMember()?.id;
+    if (!myMemberId) return [];
+    return plan.filter(d => d.fromMemberId === myMemberId || d.toMemberId === myMemberId);
+  });
+
+  visibleSettlements = computed(() => {
+    const list = this.settlementHistory();
+    if (this.isGroupAdmin()) return list;
+    const myMemberId = this.currentUserMember()?.id;
+    return list.filter(s => {
+      // Pending settlements (status 0) are only visible to the payer (A) and Admin
+      if (s.status === 0) {
+        return myMemberId !== undefined && s.fromMemberId === myMemberId;
+      }
+      // Awaiting confirmation (status 1) and Completed (status 2) are visible to all members
+      return true;
+    });
+  });
+
+  canMemberSettleDebt(debt: SimplifiedDebt): boolean {
+    if (!this.canSettle()) return false;
+    if (this.isGroupAdmin()) return true;
+    const myMemberId = this.currentUserMember()?.id;
+    return myMemberId === debt.fromMemberId;
+  }
+
+  canMarkPaymentSent(s: any): boolean {
+    if (s.status !== 0) return false;
+    if (this.isGroupAdmin()) return true;
+    const myMember = this.currentUserMember();
+    return myMember !== null && (myMember.id === s.fromMemberId || myMember.name === s.fromMemberName);
+  }
+
+  canConfirmPaymentReceived(s: any): boolean {
+    if (s.status !== 1) return false;
+    if (this.isGroupAdmin()) return true;
+    const myMember = this.currentUserMember();
+    return myMember !== null && (myMember.id === s.toMemberId || myMember.name === s.toMemberName);
+  }
+
   // Partial Settlement
   settlingDebt = signal<SimplifiedDebt | null>(null);
   settleAmount = signal<number | null>(null);
@@ -128,7 +185,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
   async onMarkPaymentSent(settlementId: number): Promise<void> {
     try {
       await this.splitService.markPaymentSent(settlementId);
-      await this.loadSettlementHistory();
+      await this.loadAll(true);
     } catch (err: any) {
       this.notificationService.showError(err?.message || 'Failed to mark as sent.');
     }
@@ -137,14 +194,14 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
   async onConfirmPaymentReceived(settlementId: number): Promise<void> {
     try {
       await this.splitService.confirmPaymentReceived(settlementId);
-      await this.loadSettlementHistory();
+      await this.loadAll(true);
     } catch (err: any) {
       this.notificationService.showError(err?.message || 'Failed to confirm.');
     }
   }
 
   qrCodeDataUrl = signal<string | null>(null);
-  qrPaymentDetails = signal<{ upiDeepLink: string; payeeName: string; amount: number } | null>(null);
+  qrPaymentDetails = signal<{ settlementId?: number; upiDeepLink: string; payeeName: string; amount: number } | null>(null);
 
   closeQrDialog(): void {
     this.qrCodeDataUrl.set(null);
@@ -280,20 +337,21 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
             break;
 
           case 'SettlementRecorded':
-            this.loadSettlementHistory();
+            this.loadAll(true);
             break;
 
           case 'GroupStatusChanged':
             if (payload.status !== undefined) {
               this.group.update(g => g ? { ...g, status: payload.status } : g);
-              this.loadSettlementHistory();
             }
+            this.loadAll(true);
             break;
 
           case 'GroupUpdated':
           default:
             if (payload.group) this.group.set(payload.group);
             if (payload.expenses) this.expenses.set(payload.expenses);
+            this.loadAll(true);
             break;
         }
       }
@@ -407,7 +465,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
       `${g?.name} — Settlement Summary`,
       '',
       ...settlements.map(s =>
-        `${s.fromMemberName} → ${s.toMemberName}: ₹${s.amount.toFixed(2)} (${s.status === 1 ? 'Completed' : 'Pending'})`
+        `${s.fromMemberName} → ${s.toMemberName}: ₹${s.amount.toFixed(2)} (${s.status === 2 ? 'Completed' : (s.status === 1 ? 'Awaiting confirmation' : 'Pending')})`
       ),
       '',
       `Total spend: ₹${g?.totalSpend?.toFixed(2) ?? '0.00'}`
@@ -608,6 +666,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
         const dataUrl = await QRCode.toDataURL(paymentRequest.upiDeepLink, { width: 240, margin: 1 });
         this.qrCodeDataUrl.set(dataUrl);
         this.qrPaymentDetails.set({
+          settlementId: settlement.id,
           upiDeepLink: paymentRequest.upiDeepLink,
           payeeName: debt.toMemberName,
           amount
@@ -616,7 +675,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
         this.notificationService.showError(`${debt.toMemberName} hasn't added a UPI ID — mark this paid manually once settled.`);
       }
 
-      await this.loadAll();
+      await this.loadAll(true);
     } catch (err: any) {
       this.notificationService.showError(err?.message || 'Failed to create settlement.');
     }

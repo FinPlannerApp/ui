@@ -196,16 +196,23 @@
           }
         </div>
 
-        @if ((balances()?.simplifiedPlan?.length ?? 0) > 0) {
+        @if (visibleDebts().length > 0) {
           <div class="flex flex-col gap-2">
-            <h3 class="text-sm sm:text-base font-bold text-[var(--text-muted)] m-0">Settle up</h3>
-            @for (debt of balances()?.simplifiedPlan; track debt.fromMemberId + '-' + debt.toMemberId) {
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm sm:text-base font-bold text-[var(--text-muted)] m-0">
+                {{ isGroupAdmin() ? 'Settle up (All debts)' : 'Your pending settlements' }}
+              </h3>
+              @if (!isGroupAdmin() && (balances()?.simplifiedPlan?.length ?? 0) > visibleDebts().length) {
+                <span class="text-xs text-[var(--text-muted)]">Showing your obligations only</span>
+              }
+            </div>
+            @for (debt of visibleDebts(); track debt.fromMemberId + '-' + debt.toMemberId) {
               <div class="glass-card p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <span class="text-sm sm:text-base">
                   <strong>{{ debt.fromMemberName }}</strong> owes <strong>{{ debt.toMemberName }}</strong>
                   <span class="font-bold ml-1">{{ debt.amount | currency:'INR' }}</span>
                 </span>
-                @if (canSettle()) {
+                @if (canMemberSettleDebt(debt)) {
                   <p-button label="Pay via UPI" icon="pi pi-qrcode" (onClick)="openSettleDialog(debt)"
                     styleClass="rounded-xl text-xs sm:text-sm w-full sm:w-auto"></p-button>
                 }
@@ -215,38 +222,41 @@
         } @else {
           <div class="glass-card p-6 rounded-2xl text-center">
             <i class="pi pi-check-circle text-2xl text-emerald-400 mb-2"></i>
-            <p class="text-sm text-[var(--text-muted)] m-0">Everyone's settled up.</p>
+            <p class="text-sm text-[var(--text-muted)] m-0">
+              {{ isGroupAdmin() ? "Everyone's settled up." : "You're all settled up." }}
+            </p>
           </div>
         }
-      </div>
-    }
 
-    <!-- Settlement History section (shown when group is closed) -->
-    @if (isGroupClosed()) {
-      <div class="flex flex-col gap-2 mt-4">
-        <h3 class="text-sm font-bold text-[var(--text-muted)] m-0">Settlement History</h3>
-        @for (s of settlementHistory(); track s.id) {
-          <div class="glass-card p-3 rounded-xl flex items-center justify-between text-sm flex-wrap gap-2">
-            <span>{{ s.fromMemberName }} → {{ s.toMemberName }}</span>
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="font-medium">{{ s.amount | currency:'INR' }}</span>
-              <p-tag [value]="s.status === 2 ? 'Completed' : (s.status === 1 ? 'Awaiting confirmation' : 'Pending')"
-                [severity]="s.status === 2 ? 'success' : (s.status === 1 ? 'warn' : 'secondary')"></p-tag>
-              @if (s.status === 0) {
-                <p-button label="Mark as sent" size="small" [text]="true"
-                  (onClick)="onMarkPaymentSent(s.id)"></p-button>
-              }
-              @if (s.status === 1) {
-                <p-button label="Confirm received" size="small" severity="success"
-                  (onClick)="onConfirmPaymentReceived(s.id)"></p-button>
-              }
+        <!-- Settlement History section (Always available on Balances tab) -->
+        <div class="flex flex-col gap-2 mt-4">
+          <h3 class="text-sm font-bold text-[var(--text-muted)] m-0">Settlement History</h3>
+          @for (s of visibleSettlements(); track s.id) {
+              <div class="flex items-center gap-2">
+                <i class="pi" [class.pi-clock]="s.status === 0" [class.pi-send]="s.status === 1" [class.pi-check-circle]="s.status === 2"
+                  [class.text-amber-400]="s.status === 0" [class.text-blue-400]="s.status === 1" [class.text-emerald-400]="s.status === 2"></i>
+                <span><strong>{{ s.fromMemberName }}</strong> → <strong>{{ s.toMemberName }}</strong></span>
+              </div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="font-medium">{{ s.amount | currency:'INR' }}</span>
+                <p-tag [value]="s.status === 2 ? 'Completed' : (s.status === 1 ? 'Awaiting confirmation' : 'Pending')"
+                  [severity]="s.status === 2 ? 'success' : (s.status === 1 ? 'warn' : 'secondary')"></p-tag>
+                @if (canMarkPaymentSent(s)) {
+                  <p-button label="Mark as sent" size="small" [text]="true"
+                    (onClick)="onMarkPaymentSent(s.id)"></p-button>
+                }
+                @if (canConfirmPaymentReceived(s)) {
+                  <p-button label="Confirm received" size="small" severity="success"
+                    (onClick)="onConfirmPaymentReceived(s.id)"></p-button>
+                }
+              </div>
             </div>
-          </div>
-        } @empty {
-          <div class="glass-card p-4 rounded-xl text-center">
-            <p class="text-xs text-[var(--text-muted)] m-0">No settlements recorded.</p>
-          </div>
-        }
+          } @empty {
+            <div class="glass-card p-4 rounded-xl text-center">
+              <p class="text-xs text-[var(--text-muted)] m-0">No settlements recorded yet.</p>
+            </div>
+          }
+        </div>
       </div>
     }
   }
@@ -401,6 +411,13 @@
         class="text-xs text-[var(--primary-color)] no-underline">
         On this phone? Tap to open your UPI app directly
       </a>
+      @if (qrPaymentDetails()?.settlementId) {
+        <div class="flex flex-col gap-2 w-full mt-2">
+          <p-button label="I've Sent the Payment" icon="pi pi-check" severity="success"
+            (onClick)="onMarkPaymentSent(qrPaymentDetails()!.settlementId!); closeQrDialog()"
+            styleClass="w-full text-xs sm:text-sm rounded-xl"></p-button>
+        </div>
+      }
     </div>
   }
 </p-dialog>
