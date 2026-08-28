@@ -72,10 +72,14 @@
       "urls": [
         "**/api/Transactions",
         "**/api/Transactions/**",
+        "**/api/transactions/**",
         "**/api/RecurringTransactions",
         "**/api/RecurringTransactions/**",
+        "**/api/recurringtransactions/**",
         "**/api/auth/**",
-        "**/api/antiforgery/**"
+        "**/api/Auth/**",
+        "**/api/antiforgery/**",
+        "**/api/Antiforgery/**"
       ],
       "cacheConfig": {
         "maxSize": 0,
