@@ -13,6 +13,7 @@ export interface PaymentRow {
   payingAccountId: number | null;
   amount: number | null;
   paymentAppName: string;
+  appliedWalletAmount: number | null;
   cashbackAmount: number | null;
   cashbackType: number | null; // 0 = Direct, 1 = Indirect
   cashbackAccountId: number | null;
@@ -66,6 +67,9 @@ export class PayCcBill implements OnInit {
   isSubmitting = signal(false);
   result = signal<CreditCardPaymentBatchResult | null>(null);
   categories = signal<{ id: number; name: string }[]>([]);
+  knownPaymentApps = signal<string[]>([]);
+  filteredPaymentApps = signal<string[]>([]);
+  walletBalances = signal<Record<string, number>>({});
 
   rows = signal<PaymentRow[]>([this.newRow()]);
 
@@ -94,6 +98,20 @@ export class PayCcBill implements OnInit {
     const result = await firstValueFrom(this.api.get<{ id: number; name: string }[]>('TransactionCategories'));
     if (result.isSuccess) this.categories.set(result.value ?? []);
 
+    const appsRes = await firstValueFrom(this.api.get<string[]>('Accounts/payment-app-names'));
+    if (appsRes.isSuccess) this.knownPaymentApps.set(appsRes.value ?? []);
+
+    const walletsRes = await firstValueFrom(
+      this.api.get<{ paymentAppName: string; currentBalance: number }[]>('Accounts/payment-app-wallets')
+    );
+    if (walletsRes.isSuccess) {
+      const map: Record<string, number> = {};
+      for (const w of walletsRes.value ?? []) {
+        map[w.paymentAppName] = w.currentBalance;
+      }
+      this.walletBalances.set(map);
+    }
+
     // Default first row amount to full outstanding balance for convenience
     if (this.outstandingBalance > 0) {
       this.updateRow(0, { amount: this.outstandingBalance });
@@ -105,6 +123,7 @@ export class PayCcBill implements OnInit {
       payingAccountId: null,
       amount: null,
       paymentAppName: '',
+      appliedWalletAmount: null,
       cashbackAmount: null,
       cashbackType: null,
       cashbackAccountId: null,
@@ -175,6 +194,18 @@ export class PayCcBill implements OnInit {
     this.updateRow(index, { amount: fillAmount });
   }
 
+  filterPaymentApps(event: any) {
+    const query = event.query.toLowerCase();
+    this.filteredPaymentApps.set(
+      this.knownPaymentApps().filter(a => a.toLowerCase().includes(query))
+    );
+  }
+
+  availableWalletBalance(appName: string | null): number {
+    if (!appName) return 0;
+    return this.walletBalances()[appName] ?? 0;
+  }
+
   async pay(): Promise<void> {
     const rows = this.rows();
 
@@ -203,6 +234,7 @@ export class PayCcBill implements OnInit {
         payments: rows.map(r => ({
           payingAccountId: r.payingAccountId,
           amount: r.amount,
+          appliedWalletAmount: r.appliedWalletAmount ?? 0,
           date: new Date().toISOString(),
           paymentAppName: r.paymentAppName || null,
           cashbackAmount: r.cashbackAmount,

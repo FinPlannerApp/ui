@@ -227,12 +227,28 @@
 
             @if (row.showOptional || row.paymentAppName || row.cashbackAmount || row.interestCategoryId) {
               <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 pt-1 animate-fadeIn items-end">
-                <!-- Payment App -->
+                <!-- Payment App — type to search known apps, or type a
+                new name to use it; no separate "add" step needed since
+                this is free text on the payment itself. -->
                 <div class="flex flex-col gap-1">
                   <label class="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider h-4 flex items-center">Payment App</label>
-                  <input type="text" pInputText [ngModel]="row.paymentAppName"
-                         (ngModelChange)="updateRow($index, { paymentAppName: $event })"
-                         class="w-full h-8 text-xs rounded-xl" placeholder="e.g. GPay, PhonePe" />
+                  <p-autoComplete
+                    [suggestions]="filteredPaymentApps()"
+                    [ngModel]="row.paymentAppName"
+                    (ngModelChange)="updateRow($index, { paymentAppName: $event })"
+                    (completeMethod)="filterPaymentApps($event)"
+                    [dropdown]="false"
+                    placeholder="e.g. GPay, CRED"
+                    appendTo="body"
+                    class="w-full h-full block"
+                    inputStyleClass="w-full h-8 text-xs rounded-xl">
+                  </p-autoComplete>
+
+                  @if (availableWalletBalance(row.paymentAppName) > 0) {
+                    <span class="text-[10px] text-emerald-400 font-medium mt-0.5">
+                      ₹{{ availableWalletBalance(row.paymentAppName) | number:'1.2-2' }} balance available
+                    </span>
+                  }
                 </div>
 
                 <!-- Cashback Amount -->
@@ -243,6 +259,27 @@
                                  inputStyleClass="w-full h-8 text-xs rounded-xl" placeholder="e.g. 50">
                   </p-inputNumber>
                 </div>
+
+                @if (availableWalletBalance(row.paymentAppName) > 0) {
+                  <div class="flex flex-col gap-1">
+                    <label class="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider h-4 flex items-center">
+                      Apply Wallet Balance
+                    </label>
+                    <div class="flex gap-1.5 items-center">
+                      <p-inputNumber [ngModel]="row.appliedWalletAmount"
+                                     (ngModelChange)="updateRow($index, { appliedWalletAmount: $event })"
+                                     mode="currency" currency="INR" locale="en-IN" styleClass="w-full" class="w-full"
+                                     [max]="availableWalletBalance(row.paymentAppName)"
+                                     inputStyleClass="w-full h-8 text-xs rounded-xl" placeholder="₹0">
+                      </p-inputNumber>
+                      <button type="button"
+                              (click)="updateRow($index, { appliedWalletAmount: availableWalletBalance(row.paymentAppName) })"
+                              class="h-8 px-2 rounded-lg bg-emerald-500/15 text-emerald-400 text-[10px] font-bold border border-emerald-500/30 cursor-pointer whitespace-nowrap">
+                        Max
+                      </button>
+                    </div>
+                  </div>
+                }
 
                 <!-- Category if Interest Included -->
                 <div class="flex flex-col gap-1 sm:col-span-2 md:col-span-1">
@@ -260,7 +297,11 @@
                 <div class="p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20 grid grid-cols-1 sm:grid-cols-2 gap-2.5 items-center mt-1">
                   <div class="flex flex-col gap-1">
                     <label class="text-[10px] font-bold text-purple-300">Cashback Type</label>
-                    <p-select [options]="[{label:'Direct (deposited in account)',value:0},{label:'Indirect (app wallet)',value:1}]"
+                    <p-select [options]="[
+                                {label:'Direct (deposited in account)',value:0},
+                                {label:'Indirect (app wallet)',value:1},
+                                {label:'Statement credit (reduces this bill)',value:2}
+                              ]"
                               [ngModel]="row.cashbackType" (ngModelChange)="updateRow($index, { cashbackType: $event })"
                               optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full" class="w-full h-8 text-xs"
                               placeholder="Select type">
