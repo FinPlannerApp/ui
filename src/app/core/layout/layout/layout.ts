@@ -35,21 +35,36 @@ export class Layout {
     this.appVersion = environment.appVersion;
     this.navItems = [
       {
-        label: 'Main',
+        label: 'Overview',
         items: [
           { label: 'Home', icon: 'pi pi-globe', routerLink: '/', command: () => { this.sidebarVisible = false; } },
           { label: 'Dashboard', icon: 'pi pi-home', routerLink: '/app/dashboard', command: () => { this.sidebarVisible = false; } },
+        ],
+      },
+      {
+        label: 'Money',
+        items: [
           { label: 'Accounts', icon: 'pi pi-wallet', routerLink: '/app/accounts', command: () => { this.sidebarVisible = false; } },
-          { label: 'Budgets', icon: 'pi pi-chart-line', routerLink: '/app/budgets', command: () => { this.sidebarVisible = false; } },
+          { label: 'Transactions', icon: 'pi pi-list', routerLink: '/app/transactions', command: () => { this.sidebarVisible = false; } },
           { label: 'Recurring', icon: 'pi pi-sync', routerLink: '/app/recurring-transactions', command: () => { this.sidebarVisible = false; } },
           { label: 'Subscriptions', icon: 'pi pi-refresh', routerLink: '/app/subscriptions', command: () => { this.sidebarVisible = false; } },
-          { label: 'Transactions', icon: 'pi pi-list', routerLink: '/app/transactions', command: () => { this.sidebarVisible = false; } },
-          { label: 'Reports', icon: 'pi pi-file-export', routerLink: '/app/reports', command: () => { this.sidebarVisible = false; } },
-          { label: '30-Day Challenge', icon: 'pi pi-flag', routerLink: '/app/challenge', command: () => { this.sidebarVisible = false; } },
-          { label: 'Decision Journal', icon: 'pi pi-book', routerLink: '/app/decision-journal', command: () => { this.sidebarVisible = false; } },
           { label: 'Merchants', icon: 'pi pi-shop', routerLink: '/app/merchants', command: () => { this.sidebarVisible = false; } },
-          { label: 'Goals', icon: 'pi pi-flag-fill', routerLink: '/app/goals', command: () => { this.sidebarVisible = false; } },
           { label: 'Split', icon: 'pi pi-users', routerLink: '/app/split', command: () => { this.sidebarVisible = false; } },
+        ],
+      },
+      {
+        label: 'Planning',
+        items: [
+          { label: 'Budgets', icon: 'pi pi-chart-line', routerLink: '/app/budgets', command: () => { this.sidebarVisible = false; } },
+          { label: 'Goals', icon: 'pi pi-flag-fill', routerLink: '/app/goals', command: () => { this.sidebarVisible = false; } },
+        ],
+      },
+      {
+        label: 'Insights',
+        items: [
+          { label: 'Reports', icon: 'pi pi-file-export', routerLink: '/app/reports', command: () => { this.sidebarVisible = false; } },
+          { label: 'Decision Journal', icon: 'pi pi-book', routerLink: '/app/decision-journal', command: () => { this.sidebarVisible = false; } },
+          { label: '30-Day Challenge', icon: 'pi pi-flag', routerLink: '/app/challenge', command: () => { this.sidebarVisible = false; } },
         ],
       },
       {
