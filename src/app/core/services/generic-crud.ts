@@ -38,7 +38,7 @@ export class GenericCrud<T extends { id: number }> {
     }
   }
 
-  public async upsert(endpoint: string, itemData: Partial<T>): Promise<void> {
+  public async upsert(endpoint: string, itemData: Partial<T>): Promise<T | undefined> {
     const response = await firstValueFrom(this.apiService.upsert<T>(endpoint, itemData));
     if (response.isSuccess && response.value) {
       const savedItem = response.value;
@@ -55,6 +55,7 @@ export class GenericCrud<T extends { id: number }> {
         this._items.next([...currentItems, savedItem]);
         this._totalRecords.next(this._totalRecords.value + 1);
       }
+      return savedItem;
     } else {
       throw new Error(response.error?.description || 'Operation failed');
     }
