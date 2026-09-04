@@ -20,7 +20,7 @@
 
   <app-form-field label="Category" inputId="accountCategory" [control]="accountForm.get('accountCategoryId')">
     <div class="flex gap-2 items-start">
-      <p-select id="accountCategory" [options]="accountCategories()" formControlName="accountCategoryId"
+      <p-select #categorySelect id="accountCategory" [options]="accountCategories()" formControlName="accountCategoryId"
         optionLabel="name" optionValue="id" [showClear]="true" placeholder="Select or type to search" class="w-full flex-1"
         appendTo="body" [filter]="true" (onFilter)="filterCategories($event)">
       </p-select>

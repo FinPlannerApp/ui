@@ -121,11 +121,41 @@ export class CategoryForm implements OnInit {
       }
 
       try {
-        await this.crudService.upsert(endpoint, payload);
+        let savedCategory: any;
+        if (this.isTransactionCategory()) {
+          savedCategory = await firstValueFrom(this.categoryService.upsertTransactionCategory(payload));
+        } else {
+          savedCategory = await firstValueFrom(this.categoryService.upsertAccountCategory(payload));
+        }
         this.notificationService.showSuccess('Category saved');
-        this.ref.close(true);
+        this.ref.close(savedCategory || true);
       } catch (err: any) {
-        this.notificationService.showError(err.message || 'Failed to save category');
+        const errorMsg = err?.message || err?.error?.description || 'Failed to save category';
+        const isDuplicate = errorMsg.toLowerCase().includes('already exists') || errorMsg.toLowerCase().includes('duplicate');
+
+        if (isDuplicate) {
+          try {
+            if (this.isTransactionCategory()) {
+              const cats = await firstValueFrom(this.categoryService.getTransactionCategories(true));
+              const existing = cats.find(c => c.name.toLowerCase() === payload.name.trim().toLowerCase());
+              if (existing) {
+                this.notificationService.showInfo(`Category '${existing.name}' already exists and was selected.`);
+                this.ref.close(existing);
+                return;
+              }
+            } else {
+              const cats = await firstValueFrom(this.categoryService.getAccountCategories(true));
+              const existing = cats.find(c => c.name.toLowerCase() === payload.name.trim().toLowerCase());
+              if (existing) {
+                this.notificationService.showInfo(`Category '${existing.name}' already exists and was selected.`);
+                this.ref.close(existing);
+                return;
+              }
+            }
+          } catch (e) { }
+        }
+
+        this.notificationService.showError(errorMsg);
         this.isSubmitting.set(false);
       }
     } else {

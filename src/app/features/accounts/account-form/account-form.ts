@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, inject, signal, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, computed, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DialogService, DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { Select } from 'primeng/select';
 import { AccountCategory, Category } from '../../categories/category';
 import { firstValueFrom } from 'rxjs';
 import { sharedPrimeModules } from '../../../shared/prime-imports';
@@ -21,6 +22,7 @@ import { toDateOnlyString, fromDateOnlyString } from '../../../core/utils/date-u
 })
 export class AccountForm {
   readonly AccountType = AccountType;
+  @ViewChild('categorySelect') categorySelect?: Select;
 
   private fb = inject(FormBuilder);
   public ref = inject(DynamicDialogRef);
@@ -110,7 +112,7 @@ export class AccountForm {
   }
 
   async ngOnInit(): Promise<void> {
-    await this.loadCategories();
+    await this.loadCategories(true);
 
     const data = this.config.data;
     if (data && data.itemToEdit) {
@@ -163,8 +165,8 @@ export class AccountForm {
     this.updateBalanceValidator();
   }
 
-  private async loadCategories(): Promise<void> {
-    const categories = await firstValueFrom(this.categoryService.getAccountCategories());
+  private async loadCategories(force: boolean = false): Promise<void> {
+    const categories = await firstValueFrom(this.categoryService.getAccountCategories(force));
     if (categories) {
       this.accountCategories.set(categories);
     }
@@ -196,6 +198,12 @@ export class AccountForm {
   }
 
   openCategoryModal(): void {
+    if (this.categorySelect) {
+      try {
+        (this.categorySelect as any).hide?.();
+      } catch (e) { }
+    }
+
     const nameToInject = this.currentFilter().trim();
     const ref = this.dialogService.open(CategoryForm, {
       header: 'Add New Account Category',
@@ -208,12 +216,25 @@ export class AccountForm {
 
     ref?.onClose.subscribe(async (result: any) => {
       if (result) {
-        await this.loadCategories();
-        const created = this.accountCategories().find(c => c.name.toLowerCase() === nameToInject.toLowerCase());
+        await this.loadCategories(true);
+        const created = typeof result === 'object' && result?.id
+          ? this.accountCategories().find(c => c.id === result.id) || result
+          : this.accountCategories().find(c => c.name.toLowerCase() === nameToInject.toLowerCase());
+
         if (created) {
           this.accountForm.get('accountCategoryId')?.setValue(created.id);
+          this.selectedCategoryId.set(created.id);
         }
         this.currentFilter.set('');
+        if (this.categorySelect) {
+          try {
+            if (typeof (this.categorySelect as any).resetFilter === 'function') {
+              (this.categorySelect as any).resetFilter();
+            } else {
+              (this.categorySelect as any).filterValue = '';
+            }
+          } catch (e) { }
+        }
       }
     });
   }
