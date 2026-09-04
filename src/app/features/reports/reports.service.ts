@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { toDateOnlyString } from '../../core/utils/date-utils';
 
 /**
  * Deliberately separate from GenericApi — that service's methods all expect
@@ -37,18 +38,18 @@ export class ReportsService {
   }
 
   async downloadCategoryAnalysis(startDate: Date, endDate: Date): Promise<void> {
-    const url = `${this.apiBaseUrl}/reports/category-analysis?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`;
+    const url = `${this.apiBaseUrl}/reports/category-analysis?startDate=${toDateOnlyString(startDate)}&endDate=${toDateOnlyString(endDate)}`;
     await this.downloadAndSave(url, `category-analysis-${this.formatDate(startDate)}-to-${this.formatDate(endDate)}.csv`);
   }
 
   async downloadBudgetVsActual(asOfDate: Date | null): Promise<void> {
-    const dateParam = asOfDate ? `?asOfDate=${asOfDate.toISOString()}` : '';
+    const dateParam = asOfDate ? `?asOfDate=${toDateOnlyString(asOfDate)}` : '';
     const url = `${this.apiBaseUrl}/reports/budget-vs-actual${dateParam}`;
     await this.downloadAndSave(url, `budget-vs-actual-${this.formatDate(asOfDate ?? new Date())}.csv`);
   }
 
   async downloadAccountStatement(accountId: number, startDate: Date, endDate: Date): Promise<void> {
-    const url = `${this.apiBaseUrl}/reports/account-statement/${accountId}?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`;
+    const url = `${this.apiBaseUrl}/reports/account-statement/${accountId}?startDate=${toDateOnlyString(startDate)}&endDate=${toDateOnlyString(endDate)}`;
     await this.downloadAndSave(url, `account-statement-${accountId}-${this.formatDate(startDate)}-to-${this.formatDate(endDate)}.csv`);
   }
 
@@ -58,6 +59,6 @@ export class ReportsService {
   }
 
   private formatDate(date: Date): string {
-    return date.toISOString().slice(0, 10);
+    return toDateOnlyString(date) ?? '';
   }
 }

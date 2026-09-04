@@ -12,6 +12,7 @@ import { TransactionType } from '../../../core/models/transaction-type';
 import { CategoryForm } from '../../categories/category-form/category-form';
 import { AccountForm } from '../../accounts/account-form/account-form';
 import { Account } from '../../accounts/account';
+import { toDateOnlyString } from '../../../core/utils/date-utils';
 import { Observable } from 'rxjs';
 import { GenericApi, PaginatedResult } from '../../../core/services/generic-api';
 import { sharedPrimeModules } from '../../../shared/prime-imports';
@@ -376,8 +377,23 @@ export class BulkTransactionAdd {
         // auto-selecting the exact new account is tough without the new ID. Let's just refresh.
     }
 
-    onCategoryCreated(saved: boolean) {
+    onCategoryCreated(result: any) {
         this.loadInitialData();
+
+        // result is the real saved category — auto-select it back into
+        // whichever row's "+" button triggered the modal, same as the
+        // transaction form now does. Falls back to just refreshing the
+        // list if an older dialog version still returns a bare boolean.
+        if (result && typeof result === 'object' && result.id) {
+            const idx = this.activeRowIndex();
+            if (idx !== null && idx !== undefined) {
+                const row = this.activeRows[idx];
+                if (row) {
+                    row.transactionCategoryId = result;
+                    this.onRowChange(row);
+                }
+            }
+        }
     }
 
     confirmSave(event: Event) {
@@ -420,7 +436,7 @@ export class BulkTransactionAdd {
                     transaction: {
                         description: r.description,
                         amount: r.amount,
-                        date: r.date.toISOString(),
+                        date: toDateOnlyString(r.date)!,
                         type: isTransfer ? TransactionType.Expense : r.type,
                         transactionCategoryId: r.transactionCategoryId?.id
                     }

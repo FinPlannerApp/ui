@@ -12,6 +12,7 @@ import {
 } from '../../../core/models/split.model';
 import { NotificationService } from '../../../core/services/notification.service';
 import { DraftPersistenceService } from '../../../core/services/draft-persistence.service';
+import { toDateOnlyString, fromDateOnlyString } from '../../../core/utils/date-utils';
 import { OnlineStatusService } from '../../../core/services/online-status.service';
 import { AccountState } from '../../../core/state/account-state.service';
 import { Auth } from '../../../core/services/auth';
@@ -147,6 +148,10 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
     return myMember !== null && (myMember.id === s.toMemberId || myMember.name === s.toMemberName);
   }
 
+  canRejectPayment(s: any): boolean {
+    return this.canConfirmPaymentReceived(s);
+  }
+
   // Partial Settlement
   settlingDebt = signal<SimplifiedDebt | null>(null);
   settleAmount = signal<number | null>(null);
@@ -197,6 +202,15 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
       await this.loadAll(true);
     } catch (err: any) {
       this.notificationService.showError(err?.message || 'Failed to confirm.');
+    }
+  }
+
+  async onRejectPayment(settlementId: number): Promise<void> {
+    try {
+      await this.splitService.rejectPayment(settlementId);
+      await this.loadAll(true);
+    } catch (err: any) {
+      this.notificationService.showError(err?.message || 'Failed to reject.');
     }
   }
 
@@ -528,7 +542,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
     this.editingExpenseId.set(expense.id);
     this.expDescription.set(expense.description);
     this.expAmount.set(expense.amount);
-    this.expDate.set(new Date(expense.date));
+    this.expDate.set(fromDateOnlyString(expense.date) ?? new Date(expense.date));
     this.expSplitType.set(expense.splitType);
     this.expParticipantIds.set(new Set(expense.participants.map(p => p.memberId)));
     if (expense.payers.length > 1) {
@@ -625,7 +639,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
         groupId: this.groupId,
         description,
         amount,
-        date: this.expDate().toISOString(),
+        date: toDateOnlyString(this.expDate())!,
         category: null,
         splitType: type,
         payers,

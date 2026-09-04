@@ -10,6 +10,7 @@ import { Subscription } from '../../../core/models/subscription.model';
 import { RecurrenceFrequency } from '../../../core/models/recurring-transaction.model';
 import { NotificationService } from '../../../core/services/notification.service';
 import { GenericApi } from '../../../core/services/generic-api';
+import { toDateOnlyString } from '../../../core/utils/date-utils';
 
 @Component({
   selector: 'app-subscriptions',
@@ -113,7 +114,7 @@ export class Subscriptions implements OnInit {
         accountId,
         categoryId: null,
         frequency: this.formFrequency(),
-        startDate: this.formStartDate().toISOString(),
+        startDate: toDateOnlyString(this.formStartDate())!,
         tag: this.formTag().trim() || null,
         cancellationUrl: this.formCancellationUrl().trim() || null
       });

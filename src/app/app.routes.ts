@@ -207,6 +207,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/merchants/merchants/merchants').then(m => m.Merchants)
       },
       {
+        path: 'cashback-wallets',
+        loadComponent: () => import('./features/cashback-wallets/cashback-wallets').then(m => m.CashbackWallets)
+      },
+      {
         path: 'merchants/spending',
         loadComponent: () => import('./features/merchants/merchant-spending/merchant-spending').then(m => m.MerchantSpendingPage)
       },

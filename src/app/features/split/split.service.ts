@@ -120,6 +120,11 @@ export class SplitService {
     if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to confirm receipt.');
   }
 
+  async rejectPayment(settlementId: number): Promise<void> {
+    const result = await firstValueFrom(this.api.post<any>(`Split/settlements/${settlementId}/reject`, {}));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to reject.');
+  }
+
   async getPaymentRequest(settlementId: number): Promise<PaymentRequest> {
     const result = await firstValueFrom(this.api.get<PaymentRequest>(`Split/settlements/${settlementId}/payment-request`));
     if (!result.isSuccess) {

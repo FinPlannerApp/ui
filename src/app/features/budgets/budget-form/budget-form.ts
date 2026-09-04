@@ -10,6 +10,7 @@ import { FormField } from '../../../shared/components/form-field/form-field';
 import { BudgetPeriod } from '../../../core/models/budget.model';
 import { CommonModule } from '@angular/common';
 import { sharedPrimeModules } from '../../../shared/prime-imports';
+import { toDateOnlyString, fromDateOnlyString } from '../../../core/utils/date-utils';
 
 @Component({
     selector: 'app-budget-form',
@@ -64,8 +65,8 @@ export class BudgetForm implements OnInit {
         if (this.config.data?.itemToEdit) {
             const item = { ...this.config.data.itemToEdit };
             // Convert ISO strings to Date objects for PrimeNG DatePicker
-            if (item.startDate) item.startDate = new Date(item.startDate);
-            if (item.endDate) item.endDate = new Date(item.endDate);
+            if (item.startDate) item.startDate = fromDateOnlyString(item.startDate) ?? new Date(item.startDate);
+            if (item.endDate) item.endDate = fromDateOnlyString(item.endDate) ?? new Date(item.endDate);
             this.budgetForm.patchValue(item);
         }
     }
@@ -73,7 +74,11 @@ export class BudgetForm implements OnInit {
     async onSubmit(): Promise<void> {
         if (this.budgetForm.valid && !this.isSubmitting()) {
             this.isSubmitting.set(true);
-            const payload = this.budgetForm.getRawValue();
+            const payload = {
+              ...this.budgetForm.getRawValue(),
+              startDate: toDateOnlyString(this.budgetForm.get('startDate')?.value),
+              endDate: toDateOnlyString(this.budgetForm.get('endDate')?.value)
+            };
             const endpoint = 'Budgets';
 
             try {

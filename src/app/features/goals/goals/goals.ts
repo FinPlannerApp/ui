@@ -7,6 +7,7 @@ import { sharedPrimeModules } from '../../../shared/prime-imports';
 import { GoalService } from '../goal.service';
 import { Goal, BucketOption } from '../../../core/models/goal.model';
 import { NotificationService } from '../../../core/services/notification.service';
+import { toDateOnlyString, fromDateOnlyString } from '../../../core/utils/date-utils';
 
 @Component({
   selector: 'app-goals',
@@ -70,7 +71,7 @@ export class Goals implements OnInit {
     this.editingId.set(goal.id);
     this.formName.set(goal.name);
     this.formTargetAmount.set(goal.targetAmount);
-    this.formTargetDate.set(goal.targetDate ? new Date(goal.targetDate) : null);
+    this.formTargetDate.set(fromDateOnlyString(goal.targetDate));
     this.formTrackingMode.set(goal.savingsBucketId ? 'bucket' : 'manual');
     this.formBucketId.set(goal.savingsBucketId);
     this.formManualAmount.set(goal.savingsBucketId ? 0 : goal.currentAmount);
@@ -93,7 +94,7 @@ export class Goals implements OnInit {
         id: this.editingId() ?? undefined,
         name,
         targetAmount: target,
-        targetDate: this.formTargetDate() ? this.formTargetDate()!.toISOString() : null,
+        targetDate: toDateOnlyString(this.formTargetDate()),
         savingsBucketId: isBucketMode ? this.formBucketId() : null,
         manualCurrentAmount: isBucketMode ? 0 : this.formManualAmount()
       });

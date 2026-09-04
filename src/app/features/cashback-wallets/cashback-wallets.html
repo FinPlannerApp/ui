@@ -1,0 +1,72 @@
+<div class="p-4 sm:p-6 max-w-3xl mx-auto flex flex-col gap-4">
+  <div>
+    <h1 class="text-xl font-extrabold text-[var(--text-main)] m-0">Cashback Wallets</h1>
+    <p class="text-sm text-[var(--text-muted)] mt-1">
+      Indirect cashback earned through payment apps, and what's available to apply toward a future bill.
+    </p>
+  </div>
+
+  @if (isLoading()) {
+    <div class="glass-card p-6 rounded-2xl text-center text-sm text-[var(--text-muted)]">
+      Loading…
+    </div>
+  } @else if (wallets().length === 0) {
+    <div class="glass-card p-6 rounded-2xl text-center text-sm text-[var(--text-muted)]">
+      No indirect cashback recorded yet — this fills in once a credit card payment earns cashback through a payment app.
+    </div>
+  } @else {
+    <div class="glass-card p-4 rounded-2xl border border-white/10 flex items-center justify-between">
+      <span class="text-sm text-[var(--text-muted)] font-medium">Total across all apps</span>
+      <span class="text-xl font-extrabold text-emerald-400">
+        {{ totalAcrossApps() | currency:'INR':'symbol':'1.2-2' }}
+      </span>
+    </div>
+
+    <div class="flex flex-col gap-3">
+      @for (wallet of wallets(); track wallet.paymentAppName) {
+        <div class="glass-card rounded-2xl border border-white/10 overflow-hidden">
+          <button type="button" (click)="toggleExpanded(wallet.paymentAppName)"
+                  class="w-full p-4 flex items-center justify-between cursor-pointer bg-transparent border-none text-left">
+            <div class="flex flex-col gap-0.5">
+              <span class="font-bold text-[var(--text-main)]">{{ wallet.paymentAppName }}</span>
+              <span class="text-[11px] text-[var(--text-muted)]">
+                {{ wallet.recentEntries.length }} recent {{ wallet.recentEntries.length === 1 ? 'entry' : 'entries' }}
+              </span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-lg font-extrabold text-emerald-400">
+                {{ wallet.currentBalance | currency:'INR':'symbol':'1.2-2' }}
+              </span>
+              <i class="pi text-xs text-[var(--text-muted)]"
+                 [class.pi-chevron-down]="expandedApp() === wallet.paymentAppName"
+                 [class.pi-chevron-right]="expandedApp() !== wallet.paymentAppName"></i>
+            </div>
+          </button>
+
+          @if (expandedApp() === wallet.paymentAppName) {
+            <div class="px-4 pb-4 flex flex-col gap-1.5 border-t border-white/5 pt-3">
+              @for (entry of wallet.recentEntries; track entry.creditCardPaymentId + entry.date) {
+                <div class="flex items-center justify-between text-xs py-1.5 border-b border-white/5 last:border-0">
+                  <div class="flex flex-col gap-0.5">
+                    <span [class.text-emerald-400]="entry.type === 'Earned'"
+                          [class.text-amber-400]="entry.type === 'Applied'"
+                          class="font-semibold">
+                      {{ entry.type === 'Earned' ? 'Earned' : 'Applied as discount' }}
+                    </span>
+                    <span class="text-[10px] text-[var(--text-muted)]">
+                      {{ entry.date | date:'MMM d, y' }}
+                    </span>
+                  </div>
+                  <span class="font-bold" [class.text-emerald-400]="entry.type === 'Earned'"
+                        [class.text-amber-400]="entry.type === 'Applied'">
+                    {{ entry.type === 'Earned' ? '+' : '−' }}{{ entry.amount | currency:'INR':'symbol':'1.2-2' }}
+                  </span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

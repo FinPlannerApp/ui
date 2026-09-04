@@ -6,6 +6,7 @@ import { firstValueFrom } from 'rxjs';
 import { sharedPrimeModules } from '../../../shared/prime-imports';
 import { GenericApi } from '../../../core/services/generic-api';
 import { NotificationService } from '../../../core/services/notification.service';
+import { toDateOnlyString } from '../../../core/utils/date-utils';
 
 export interface CreditCardBillResult {
   recordedBillAmount: number;
@@ -49,7 +50,7 @@ export class RecordCcBill {
         accountId: this.accountId,
         billAmount: amount,
         minimumDue: this.minimumDue(),
-        dueDate: this.dueDate() ? this.dueDate()!.toISOString() : null
+        dueDate: toDateOnlyString(this.dueDate())
       }));
 
       if (res.isSuccess) {

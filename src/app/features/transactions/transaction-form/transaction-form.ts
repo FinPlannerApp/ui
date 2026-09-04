@@ -1,9 +1,10 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal, computed } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Transaction, TransactionService } from '../transaction';
 import { TransactionType } from '../../../core/models/transaction-type';
 import { Category, TransactionCategory } from '../../categories/category';
+import { toDateOnlyString, fromDateOnlyString } from '../../../core/utils/date-utils';
 import { firstValueFrom } from 'rxjs';
 import { Account } from '../../accounts/account';
 import { MessageService } from 'primeng/api';
@@ -16,7 +17,7 @@ import { Merchant } from '../../../core/models/merchant.model';
 
 @Component({
   selector: 'app-transaction-form',
-  imports: [CommonModule, ReactiveFormsModule, ...sharedPrimeModules],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, ...sharedPrimeModules],
   templateUrl: './transaction-form.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -80,7 +81,7 @@ export class TransactionForm implements OnInit {
     // Patch form if we are in edit mode
     if (this.isEditMode()) {
       this.transactionForm.patchValue(transactionData);
-      this.transactionForm.patchValue({ date: new Date(transactionData.date) });
+      this.transactionForm.patchValue({ date: fromDateOnlyString(transactionData.date) ?? new Date(transactionData.date) });
     }
   }
 
@@ -200,7 +201,7 @@ export class TransactionForm implements OnInit {
         // --- Call the new TRANSFER service method ---
         const transferData = {
           amount: formValue.amount,
-          date: formValue.date.toISOString(),
+          date: toDateOnlyString(formValue.date)!,
           destinationAccountId: formValue.destinationAccountId,
           description: formValue.description,
           transactionCategoryId: formValue.transactionCategoryId
@@ -212,7 +213,7 @@ export class TransactionForm implements OnInit {
           id: formValue.id,
           description: formValue.description,
           amount: formValue.amount,
-          date: formValue.date.toISOString(),
+          date: toDateOnlyString(formValue.date)!,
           type: formValue.type,
           transactionCategoryId: formValue.transactionCategoryId,
           merchantId: formValue.merchantId,

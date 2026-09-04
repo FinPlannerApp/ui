@@ -7,6 +7,7 @@ import { GenericApi } from '../../core/services/generic-api';
 import { NotificationService } from '../../core/services/notification.service';
 import { sharedPrimeModules } from '../../shared/prime-imports';
 import { DecisionJournalEntry } from './decision-journal.model';
+import { toDateOnlyString } from '../../core/utils/date-utils';
 
 @Component({
   selector: 'app-decision-journal',
@@ -69,7 +70,7 @@ export class DecisionJournal implements OnInit {
     try {
       await firstValueFrom(this.api.post<any>('DecisionJournal/upsert', {
         ...raw,
-        decisionDate: raw.decisionDate.toISOString()
+        decisionDate: toDateOnlyString(raw.decisionDate)
       }));
       this.notificationService.showSuccess('Entry saved.');
       this.entryForm.reset({ id: null, title: '', reasoning: '', amount: null, decisionDate: new Date() });

@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { GenericApi } from '../../core/services/generic-api';
 import { Merchant, MerchantSpending, UpsertMerchantRequest } from '../../core/models/merchant.model';
+import { toDateOnlyString } from '../../core/utils/date-utils';
 
 @Injectable({ providedIn: 'root' })
 export class MerchantService {
@@ -35,7 +36,7 @@ export class MerchantService {
 
   async getSpending(startDate: Date, endDate: Date): Promise<MerchantSpending[]> {
     const result = await firstValueFrom(this.api.get<MerchantSpending[]>(
-      `Merchants/spending?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`
+      `Merchants/spending?startDate=${toDateOnlyString(startDate)}&endDate=${toDateOnlyString(endDate)}`
     ));
     return result.value ?? [];
   }

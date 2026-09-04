@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { DashboardSummary, SpendingByCategory } from '../../features/dashboard/dashboard';
 import { DashboardInsightsDto } from '../models/dashboard-insights';
 import { FinancialHealth } from '../models/financial-health.model';
+import { toDateOnlyString } from '../utils/date-utils';
 
 @Injectable({
     providedIn: 'root'
@@ -50,7 +51,7 @@ export class DashboardState {
                 const start = new Date(Date.UTC(current.getFullYear(), current.getMonth(), 1));
                 const end = new Date(Date.UTC(current.getFullYear(), current.getMonth() + 1, 0, 23, 59, 59, 999));
 
-                const params = `?startDate=${start.toISOString()}&endDate=${end.toISOString()}`;
+                const params = `?startDate=${toDateOnlyString(start)}&endDate=${toDateOnlyString(end)}`;
 
                 const summaryReq = this.api.get<DashboardSummary>(`${this.endpoint}/summary${params}`);
                 const spendingReq = this.api.get<SpendingByCategory[]>(`${this.endpoint}/spending-by-category${params}`);

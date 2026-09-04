@@ -250,6 +250,11 @@
                   <p-button label="Confirm received" size="small" severity="success"
                     (onClick)="onConfirmPaymentReceived(s.id)"></p-button>
                 }
+                @if (canRejectPayment(s)) {
+                  <p-button label="Not received" size="small" severity="danger" [text]="true"
+                    (onClick)="onRejectPayment(s.id)"
+                    pTooltip="If this payment never actually arrived, this puts it back as pending so it can be retried."></p-button>
+                }
               </div>
             </div>
           } @empty {

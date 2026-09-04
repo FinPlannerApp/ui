@@ -11,11 +11,35 @@ import { CommonModule } from '@angular/common';
 import { GenericCrud } from '../../../core/services/generic-crud';
 import { sharedPrimeModules } from '../../../shared/prime-imports';
 
+import { toDateOnlyString, fromDateOnlyString } from '../../../core/utils/date-utils';
+
 @Component({
     selector: 'app-recurring-transaction-form',
     imports: [CommonModule, ReactiveFormsModule, FormField, ...sharedPrimeModules],
     templateUrl: './recurring-transaction-form.html',
-      changeDetection: ChangeDetectionStrategy.OnPush
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    styles: [`
+      .day-toggle {
+        width: 2.25rem;
+        height: 2.25rem;
+        border-radius: 0.5rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--text-muted, #9ca3af);
+        font-size: 0.75rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+      .day-toggle:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+      .day-toggle-selected {
+        background: rgba(16, 185, 129, 0.2);
+        border-color: rgba(16, 185, 129, 0.5);
+        color: rgb(52, 211, 153);
+      }
+    `]
 })
 export class RecurringTransactionForm implements OnInit {
     // Exposes the enum to the template so it can check
@@ -109,8 +133,8 @@ export class RecurringTransactionForm implements OnInit {
 
         if (this.config.data?.itemToEdit) {
             const item = { ...this.config.data.itemToEdit };
-            if (item.startDate) item.startDate = new Date(item.startDate);
-            if (item.endDate) item.endDate = new Date(item.endDate);
+            if (item.startDate) item.startDate = fromDateOnlyString(item.startDate) ?? new Date(item.startDate);
+            if (item.endDate) item.endDate = fromDateOnlyString(item.endDate) ?? new Date(item.endDate);
             if (item.linkedLoanAccountId) item.isLoanEmi = true;
             this.recurringForm.patchValue(item);
 
@@ -176,6 +200,8 @@ export class RecurringTransactionForm implements OnInit {
             this.isSubmitting.set(true);
             const payload = {
                 ...formVal,
+                startDate: toDateOnlyString(formVal.startDate),
+                endDate: toDateOnlyString(formVal.endDate),
                 // Only meaningful for Custom — explicitly null otherwise
                 customDays: isCustom ? this.computeCustomDaysBitmask() : null,
                 linkedLoanAccountId: (isExpense && isLoanEmi) ? formVal.linkedLoanAccountId : null

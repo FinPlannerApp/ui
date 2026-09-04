@@ -10,6 +10,7 @@ import { FormField } from '../../../shared/components/form-field/form-field';
 import { AccountState } from '../../../core/state/account-state.service';
 import { AccountType, InterestFrequency } from '../../../core/models/account-type.model';
 import { CategoryForm } from '../../categories/category-form/category-form';
+import { toDateOnlyString, fromDateOnlyString } from '../../../core/utils/date-utils';
 
 @Component({
   selector: 'app-account-form',
@@ -133,8 +134,8 @@ export class AccountForm {
         this.accountForm.patchValue({
           creditLimit: item.creditCardDetails.creditLimit,
           minimumDueAmount: item.creditCardDetails.minimumDueAmount,
-          dueDate: item.creditCardDetails.dueDate ? new Date(item.creditCardDetails.dueDate) : null,
-          statementClosingDate: item.creditCardDetails.statementClosingDate ? new Date(item.creditCardDetails.statementClosingDate) : null,
+          dueDate: fromDateOnlyString(item.creditCardDetails.dueDate),
+          statementClosingDate: fromDateOnlyString(item.creditCardDetails.statementClosingDate),
           annualFee: item.creditCardDetails.annualFee,
           cardInterestRate: item.creditCardDetails.interestRate
         });
@@ -145,8 +146,8 @@ export class AccountForm {
           loanInterestRate: item.loanDetails.interestRate,
           emiAmount: item.loanDetails.emiAmount,
           tenureMonths: item.loanDetails.tenureMonths,
-          nextEmiDueDate: item.loanDetails.nextEmiDueDate ? new Date(item.loanDetails.nextEmiDueDate) : null,
-          loanStartDate: item.loanDetails.startDate ? new Date(item.loanDetails.startDate) : null,
+          nextEmiDueDate: fromDateOnlyString(item.loanDetails.nextEmiDueDate),
+          loanStartDate: fromDateOnlyString(item.loanDetails.startDate),
           designatedPayingAccountId: item.loanDetails.designatedPayingAccountId ?? null
         });
       }
@@ -220,14 +221,13 @@ export class AccountForm {
   private buildDetailsPayload(): any {
     const type = this.selectedAccountType();
     const raw = this.accountForm.getRawValue();
-    const toIso = (d: Date | null): string | null => d ? d.toISOString() : null;
 
     return {
       creditCardDetails: type === AccountType.CreditCard ? {
         creditLimit: raw.creditLimit,
         minimumDueAmount: raw.minimumDueAmount,
-        dueDate: toIso(raw.dueDate),
-        statementClosingDate: toIso(raw.statementClosingDate),
+        dueDate: toDateOnlyString(raw.dueDate),
+        statementClosingDate: toDateOnlyString(raw.statementClosingDate),
         annualFee: raw.annualFee,
         interestRate: raw.cardInterestRate
       } : null,
@@ -236,8 +236,8 @@ export class AccountForm {
         interestRate: raw.loanInterestRate,
         emiAmount: raw.emiAmount,
         tenureMonths: raw.tenureMonths,
-        nextEmiDueDate: toIso(raw.nextEmiDueDate),
-        startDate: toIso(raw.loanStartDate),
+        nextEmiDueDate: toDateOnlyString(raw.nextEmiDueDate),
+        startDate: toDateOnlyString(raw.loanStartDate),
         designatedPayingAccountId: raw.designatedPayingAccountId
       } : null,
       bankAccountDetails: type === AccountType.Bank ? {

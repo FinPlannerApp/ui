@@ -47,17 +47,6 @@
     {
       "name": "api-read",
       "urls": [
-        "**/api/Accounts",
-        "**/api/Accounts/**",
-        "**/api/TransactionCategories",
-        "**/api/TransactionCategories/**",
-        "**/api/AccountCategories",
-        "**/api/AccountCategories/**",
-        "**/api/Budgets",
-        "**/api/Budgets/**",
-        "**/api/Dashboard/**",
-        "**/api/Split/groups",
-        "**/api/Split/groups/**",
         "**/api/Split/public/**"
       ],
       "cacheConfig": {
