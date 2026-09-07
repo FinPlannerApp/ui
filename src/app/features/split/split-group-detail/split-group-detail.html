@@ -84,7 +84,8 @@
       <div class="glass-card p-4 rounded-2xl flex flex-col sm:flex-row gap-3 items-center">
         <span class="text-sm text-[var(--text-muted)] whitespace-nowrap">UPI ID</span>
         <input type="text" pInputText class="w-full sm:flex-1" placeholder="e.g. name@upi"
-          [ngModel]="editMemberUpi()" (ngModelChange)="editMemberUpi.set($event)" />
+          [ngModel]="editMemberUpi()" (ngModelChange)="editMemberUpi.set($event)"
+          (keyup.enter)="saveEditUpi(editingMemberId()!)" (keyup.escape)="cancelEditUpi()" />
         <div class="flex gap-2 w-full sm:w-auto">
           <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="cancelEditUpi()"
             styleClass="flex-1 sm:flex-none"></p-button>
@@ -96,16 +97,21 @@
     @if (generatedInviteLink()) {
       <div class="glass-card p-4 rounded-2xl flex flex-col sm:flex-row items-center gap-3">
         <input type="text" pInputText [value]="generatedInviteLink()" readonly class="w-full flex-1 text-xs" />
-        <p-button label="Copy" icon="pi pi-copy" (onClick)="copyInviteLink()" styleClass="w-full sm:w-auto"></p-button>
+        <div class="flex gap-2 w-full sm:w-auto">
+          <p-button label="Copy" icon="pi pi-copy" (onClick)="copyInviteLink()" styleClass="flex-1 sm:flex-none"></p-button>
+          <p-button label="Done" severity="secondary" [text]="true" (onClick)="generatedInviteLink.set(null)" styleClass="flex-1 sm:flex-none"></p-button>
+        </div>
       </div>
     }
 
     @if (showAddMember()) {
       <div class="glass-card p-4 rounded-2xl flex flex-col sm:flex-row gap-3">
         <input type="text" pInputText class="w-full sm:flex-1" placeholder="Name"
-          [ngModel]="newMemberName()" (ngModelChange)="newMemberName.set($event)" />
+          [ngModel]="newMemberName()" (ngModelChange)="newMemberName.set($event)"
+          (keyup.enter)="addMember()" (keyup.escape)="showAddMember.set(false)" />
         <input type="text" pInputText class="w-full sm:flex-1" placeholder="UPI ID (optional)"
-          [ngModel]="newMemberUpi()" (ngModelChange)="newMemberUpi.set($event)" />
+          [ngModel]="newMemberUpi()" (ngModelChange)="newMemberUpi.set($event)"
+          (keyup.enter)="addMember()" (keyup.escape)="showAddMember.set(false)" />
         <div class="flex gap-2">
           <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="showAddMember.set(false)"></p-button>
           <p-button label="Add" (onClick)="addMember()"></p-button>

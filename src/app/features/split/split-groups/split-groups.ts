@@ -6,6 +6,7 @@ import { sharedPrimeModules } from '../../../shared/prime-imports';
 import { SplitService } from '../split.service';
 import { SplitGroup } from '../../../core/models/split.model';
 import { NotificationService } from '../../../core/services/notification.service';
+import { Auth } from '../../../core/services/auth';
 
 import { EmptyState } from '../../../shared/empty-state/empty-state';
 
@@ -18,6 +19,7 @@ import { EmptyState } from '../../../shared/empty-state/empty-state';
 export class SplitGroups implements OnInit {
   private splitService = inject(SplitService);
   private notificationService = inject(NotificationService);
+  private auth = inject(Auth);
   private router = inject(Router);
 
   groups = signal<SplitGroup[]>([]);
@@ -44,6 +46,8 @@ export class SplitGroups implements OnInit {
 
   openCreateForm(): void {
     this.formGroupName.set('');
+    const userName = this.auth.currentUserDetails()?.name || this.auth.currentUser() || '';
+    this.formCreatorName.set(userName);
     this.showCreateForm.set(true);
   }
 

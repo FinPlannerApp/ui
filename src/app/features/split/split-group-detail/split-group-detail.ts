@@ -240,9 +240,15 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
   }
 
   async saveEditUpi(memberId: number): Promise<void> {
+    const upiId = this.editMemberUpi().trim();
     try {
-      await this.splitService.updateMemberUpi(memberId, this.editMemberUpi().trim());
+      await this.splitService.updateMemberUpi(memberId, upiId);
+      this.group.update(g => g ? {
+        ...g,
+        members: g.members.map(m => m.id === memberId ? { ...m, upiId } : m)
+      } : g);
       this.editingMemberId.set(null);
+      this.notificationService.showSuccess('UPI ID updated successfully.');
     } catch (err: any) {
       this.notificationService.showError(err?.message || 'Failed to update UPI.');
     }
@@ -422,6 +428,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
     if (!link) return;
     await navigator.clipboard.writeText(link);
     this.notificationService.showSuccess('Invite link copied.');
+    this.generatedInviteLink.set(null);
   }
 
   // ── Close, Import & Summary ─────────────────────────────────────────────────
@@ -498,6 +505,8 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
       this.newMemberName.set('');
       this.newMemberUpi.set('');
       this.showAddMember.set(false);
+      this.notificationService.showSuccess('Member added successfully.');
+      await this.loadAll(true);
     } catch (err: any) {
       this.notificationService.showError(err?.message || 'Failed to add member.');
     }

@@ -41,14 +41,15 @@
           </p>
           <p-button label="Log In to Accept" icon="pi pi-sign-in" (onClick)="goToLogin()"
             styleClass="w-full rounded-2xl font-bold py-3 text-xs sm:text-sm shadow-md"></p-button>
-          <a routerLink="/register" class="text-xs text-[var(--text-muted)] hover:text-[var(--primary-color)] transition-colors no-underline">Don't have an account? Register free</a>
+          <button (click)="goToRegister()" class="text-xs text-[var(--text-muted)] hover:text-[var(--primary-color)] transition-colors bg-transparent border-none cursor-pointer p-0">Don't have an account? Register free</button>
         </div>
       } @else {
         <div class="flex flex-col gap-4 text-left pt-2 border-t border-white/10">
           <div class="flex flex-col gap-1.5">
             <label class="text-xs sm:text-sm font-semibold text-[var(--text-muted)]">Your display name for this trip</label>
             <input type="text" pInputText class="w-full text-sm rounded-xl py-2.5" placeholder="e.g. Alex M."
-              [ngModel]="displayName()" (ngModelChange)="displayName.set($event)" />
+              [ngModel]="displayName()" (ngModelChange)="displayName.set($event)"
+              (keyup.enter)="join()" />
           </div>
           <p-button label="Join Trip Now" icon="pi pi-check" (onClick)="join()" [loading]="isJoining()"
             styleClass="w-full rounded-2xl font-bold py-3 text-xs sm:text-sm shadow-md"></p-button>

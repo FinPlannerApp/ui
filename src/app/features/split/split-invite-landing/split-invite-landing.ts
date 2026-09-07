@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { sharedPrimeModules } from '../../../shared/prime-imports';
 import { SplitService } from '../split.service';
 import { InvitePreview } from '../../../core/models/split.model';
@@ -11,7 +11,7 @@ import { NotificationService } from '../../../core/services/notification.service
 @Component({
   selector: 'app-split-invite-landing',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ...sharedPrimeModules],
+  imports: [CommonModule, FormsModule, ...sharedPrimeModules],
   templateUrl: './split-invite-landing.html'
 })
 export class SplitInviteLanding implements OnInit {
@@ -39,7 +39,21 @@ export class SplitInviteLanding implements OnInit {
     }
 
     try {
-      this.preview.set(await this.splitService.previewInvite(this.token));
+      const previewData = await this.splitService.previewInvite(this.token);
+      this.preview.set(previewData);
+
+      const userName = this.auth.currentUserDetails()?.name || this.auth.currentUser() || '';
+      if (userName && !this.displayName()) {
+        this.displayName.set(userName);
+      }
+
+      const pendingToken = sessionStorage.getItem('pending_split_invite_token');
+      if (pendingToken === this.token && this.isLoggedIn() && userName) {
+        sessionStorage.removeItem('pending_split_invite_token');
+        sessionStorage.removeItem('pending_return_url');
+        await this.join();
+        return;
+      }
     } catch {
       this.loadFailed.set(true);
     } finally {
@@ -48,7 +62,19 @@ export class SplitInviteLanding implements OnInit {
   }
 
   goToLogin(): void {
-    this.router.navigate(['/login']);
+    if (this.token) {
+      sessionStorage.setItem('pending_split_invite_token', this.token);
+      sessionStorage.setItem('pending_return_url', `/split/join/${this.token}`);
+    }
+    this.router.navigate(['/login'], { queryParams: { returnUrl: `/split/join/${this.token}` } });
+  }
+
+  goToRegister(): void {
+    if (this.token) {
+      sessionStorage.setItem('pending_split_invite_token', this.token);
+      sessionStorage.setItem('pending_return_url', `/split/join/${this.token}`);
+    }
+    this.router.navigate(['/register'], { queryParams: { returnUrl: `/split/join/${this.token}` } });
   }
 
   async join(): Promise<void> {

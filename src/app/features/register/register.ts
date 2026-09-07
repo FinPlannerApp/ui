@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Auth } from '../../core/services/auth';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NotificationService } from '../../core/services/notification.service';
@@ -24,6 +24,7 @@ export class Register implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private authService = inject(Auth);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private notificationService = inject(NotificationService);
   private cdr = inject(ChangeDetectorRef);
 
@@ -287,7 +288,12 @@ export class Register implements OnInit, OnDestroy {
         if (response.isSuccess) {
           this.clearDraft();
           this.notificationService.showSuccess('Account created successfully! Please login.');
-          this.router.navigate(['/login']);
+          const returnUrl = this.route.snapshot.queryParams['returnUrl'] || sessionStorage.getItem('pending_return_url');
+          if (returnUrl) {
+            this.router.navigate(['/login'], { queryParams: { returnUrl } });
+          } else {
+            this.router.navigate(['/login']);
+          }
         } else {
           const msg = response.error?.description || 'Verification failed.';
           this.notificationService.showError(msg);

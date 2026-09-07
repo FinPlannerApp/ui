@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Auth, LoginUserDto } from '../../core/services/auth';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -26,6 +26,7 @@ export class Login {
   private fb = inject(FormBuilder);
   private authService = inject(Auth);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private notificationService = inject(NotificationService);
   public validationService = inject(ValidationService);
   public themeEngine = inject(ThemeEngine);
@@ -61,11 +62,21 @@ export class Login {
         this.isSubmitting = false;
         if (response.isSuccess) {
           this.showConcurrentLoginModal = false;
-          this.router.navigate(['/app/dashboard']).then(success => {
-            if (!success) {
-              window.location.href = '/app/dashboard';
-            }
-          });
+          const returnUrl = this.route.snapshot.queryParams['returnUrl'] || sessionStorage.getItem('pending_return_url');
+          if (returnUrl) {
+            sessionStorage.removeItem('pending_return_url');
+            this.router.navigateByUrl(returnUrl).then(success => {
+              if (!success) {
+                window.location.href = returnUrl;
+              }
+            });
+          } else {
+            this.router.navigate(['/app/dashboard']).then(success => {
+              if (!success) {
+                window.location.href = '/app/dashboard';
+              }
+            });
+          }
         } else {
           // Check for Concurrent Login (Backend returns 200 OK with failure)
           if (response.error?.code === 'Auth.ConcurrentLogin') {
