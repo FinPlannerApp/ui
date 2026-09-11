@@ -19,11 +19,12 @@ import { Auth } from '../../../core/services/auth';
 import { SplitSignalRService } from '../../../core/services/split-signalr.service';
 
 import { EmptyState } from '../../../shared/empty-state/empty-state';
+import { SplitSettingsDialog } from '../split-settings-dialog/split-settings-dialog';
 
 @Component({
   selector: 'app-split-group-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ...sharedPrimeModules, EmptyState],
+  imports: [CommonModule, FormsModule, RouterLink, ...sharedPrimeModules, EmptyState, SplitSettingsDialog],
   providers: [ConfirmationService],
   templateUrl: './split-group-detail.html'
 })
@@ -60,6 +61,8 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
     const isMember = g.members.some(m => m.linkedUserId && m.linkedUserId === currentUserId);
     if (!isMember) return false;
 
+    if (this.isGroupAdmin()) return true;
+
     if (member.linkedUserId) {
       return member.linkedUserId === currentUserId;
     }
@@ -85,7 +88,10 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
   showImportDialog = signal(false);
   importAccountId = signal<number | null>(null);
   settlementHistory = signal<any[]>([]);
-  isGroupClosed = computed(() => this.group()?.status !== 0); // 0 = Active — still governs expenses (add/edit/delete)
+  isGroupClosed = computed(() => {
+    const s = this.group()?.status;
+    return s === 2 || s === 3;
+  });
   canSettle = computed(() => {
     const status = this.group()?.status;
     return status === 0 || status === 1; // Active or Locked — settlements stay available through both
@@ -103,6 +109,26 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
     if (!g) return null;
     const currentUserId = this.authService.currentUserDetails()?.id;
     return g.members.find(m => m.linkedUserId && m.linkedUserId === currentUserId) ?? null;
+  });
+
+  expenseSearchQuery = signal('');
+
+  myNetBalance = computed(() => {
+    const myMemberId = this.currentUserMember()?.id;
+    if (!myMemberId) return 0;
+    const b = this.balances()?.balances?.find(x => x.memberId === myMemberId);
+    return b?.netBalance ?? 0;
+  });
+
+  filteredExpenses = computed(() => {
+    const query = this.expenseSearchQuery().toLowerCase().trim();
+    const list = this.expenses();
+    if (!query) return list;
+    return list.filter(e => {
+      const descMatch = e.description.toLowerCase().includes(query);
+      const payerMatch = e.payers.some(p => p.memberName.toLowerCase().includes(query));
+      return descMatch || payerMatch;
+    });
   });
 
   visibleDebts = computed(() => {
@@ -254,6 +280,217 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
     }
   }
 
+  // ── Settings Modal & Management ──────────────────────────────────────────────
+  showSettingsModal = signal(false);
+  settingsTab = signal<'members' | 'config' | 'share' | 'danger'>('members');
+
+  renamingMemberId = signal<number | null>(null);
+  renameMemberName = signal('');
+
+  editingTripName = signal(false);
+  tripNameInput = signal('');
+
+  isGroupLocked = computed(() => this.group()?.status === 1);
+
+  openSettingsModal(tab: 'members' | 'config' | 'share' | 'danger' = 'members'): void {
+    this.tripNameInput.set(this.group()?.name ?? '');
+    this.settingsTab.set(tab);
+    this.showSettingsModal.set(true);
+  }
+
+  canRenameMember(member: SplitMember): boolean {
+    const g = this.group();
+    if (!g) return false;
+    const currentUserId = this.authService.currentUserDetails()?.id;
+    if (this.isGroupAdmin()) return true;
+    if (member.linkedUserId) {
+      return member.linkedUserId === currentUserId;
+    }
+    return true;
+  }
+
+  openRenameMember(member: SplitMember): void {
+    this.renamingMemberId.set(member.id);
+    this.renameMemberName.set(member.name);
+  }
+
+  cancelRenameMember(): void {
+    this.renamingMemberId.set(null);
+    this.renameMemberName.set('');
+  }
+
+  async saveMemberRename(memberId: number): Promise<void> {
+    const name = this.renameMemberName().trim();
+    if (!name) {
+      this.notificationService.showError('Name cannot be empty.');
+      return;
+    }
+    try {
+      await this.splitService.renameMember(memberId, name);
+      this.group.update(g => g ? {
+        ...g,
+        members: g.members.map(m => m.id === memberId ? { ...m, name } : m)
+      } : g);
+      this.renamingMemberId.set(null);
+      this.notificationService.showSuccess('Member renamed successfully.');
+    } catch (err: any) {
+      this.notificationService.showError(err?.message || 'Failed to rename member.');
+    }
+  }
+
+  openEditTripName(): void {
+    this.tripNameInput.set(this.group()?.name ?? '');
+    this.editingTripName.set(true);
+  }
+
+  cancelEditTripName(): void {
+    this.editingTripName.set(false);
+  }
+
+  async saveTripName(): Promise<void> {
+    const name = this.tripNameInput().trim();
+    if (!name) {
+      this.notificationService.showError('Trip name cannot be empty.');
+      return;
+    }
+    try {
+      const updated = await this.splitService.updateGroup(this.groupId, name);
+      this.group.update(g => g ? { ...g, name: updated.name } : g);
+      this.editingTripName.set(false);
+      this.notificationService.showSuccess('Trip name updated successfully.');
+    } catch (err: any) {
+      this.notificationService.showError(err?.message || 'Failed to update trip name.');
+    }
+  }
+
+  async toggleLockGroup(): Promise<void> {
+    const isLocked = this.isGroupLocked();
+    const actionName = isLocked ? 'Unlock' : 'Lock';
+    const message = isLocked
+      ? 'Unlocking this group allows member additions, editing expenses, and re-enables the public share link.'
+      : 'Locking this group stops new expenses and disables the public share link. Members can still settle outstanding balances.';
+
+    this.confirmationService.confirm({
+      header: `${actionName} Group`,
+      message,
+      icon: isLocked ? 'pi pi-lock-open' : 'pi pi-lock',
+      accept: async () => {
+        try {
+          if (isLocked) {
+            await this.splitService.unlockGroup(this.groupId);
+          } else {
+            await this.splitService.lockGroup(this.groupId);
+          }
+          await this.loadAll(true);
+        } catch (err: any) {
+          this.notificationService.showError(err?.message || `Failed to ${actionName.toLowerCase()} group.`);
+        }
+      }
+    });
+  }
+
+  async closeGroupAction(): Promise<void> {
+    const debts = this.balances()?.simplifiedPlan ?? [];
+    const totalUnsettled = debts.reduce((sum, d) => sum + d.amount, 0);
+
+    let message = 'Closing this trip group will archive it and mark it complete.';
+    if (totalUnsettled > 0) {
+      message += ` ⚠️ Note: There are still ${debts.length} unsettled debt(s) totaling ₹${totalUnsettled.toFixed(2)}.`;
+    }
+
+    this.confirmationService.confirm({
+      header: 'Close / Archive Group',
+      message,
+      icon: 'pi pi-archive',
+      accept: async () => {
+        try {
+          await this.splitService.closeGroup(this.groupId);
+          await this.loadAll(true);
+          this.notificationService.showSuccess('Trip group has been closed.');
+        } catch (err: any) {
+          this.notificationService.showError(err?.message || 'Failed to close group.');
+        }
+      }
+    });
+  }
+
+  categoriesList = [
+    { label: 'Food & Dining 🍔', value: 'Food' },
+    { label: 'Travel & Transport ✈️', value: 'Transport' },
+    { label: 'Stay & Lodging 🏨', value: 'Stay' },
+    { label: 'Entertainment 🍿', value: 'Entertainment' },
+    { label: 'Shopping 🛍️', value: 'Shopping' },
+    { label: 'Utilities & Bills 💡', value: 'Utilities' },
+    { label: 'General & Other 💸', value: 'General' }
+  ];
+
+  expCategory = signal<string>('General');
+
+  getCategoryIcon(category: string | null | undefined): string {
+    switch ((category || '').toLowerCase()) {
+      case 'food': return 'pi pi-shopping-bag text-amber-400';
+      case 'transport': return 'pi pi-car text-blue-400';
+      case 'stay': return 'pi pi-home text-purple-400';
+      case 'entertainment': return 'pi pi-ticket text-pink-400';
+      case 'shopping': return 'pi pi-gift text-emerald-400';
+      case 'utilities': return 'pi pi-bolt text-yellow-400';
+      default: return 'pi pi-receipt text-indigo-400';
+    }
+  }
+
+  getCategoryBadgeColor(category: string | null | undefined): string {
+    switch ((category || '').toLowerCase()) {
+      case 'food': return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+      case 'transport': return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+      case 'stay': return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+      case 'entertainment': return 'bg-pink-500/10 text-pink-400 border-pink-500/20';
+      case 'shopping': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+      case 'utilities': return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20';
+      default: return 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
+    }
+  }
+
+  canNudgeDebt(debt: SimplifiedDebt): boolean {
+    if (this.isGroupAdmin()) return true;
+    const myMemberId = this.currentUserMember()?.id;
+    return myMemberId !== undefined && debt.toMemberId === myMemberId;
+  }
+
+  nudgeDebtWhatsApp(debt: SimplifiedDebt): void {
+    const g = this.group();
+    if (!g) return;
+    const toMember = g.members.find(m => m.id === debt.toMemberId);
+    const upiText = toMember?.upiId ? `\n💳 Payee UPI ID: *${toMember.upiId}*` : '';
+    const tripUrl = `${window.location.origin}/app/split/${g.id}`;
+    const message = `Hey ${debt.fromMemberName}! 👋\n\nGentle reminder for our trip *'${g.name}'*:\nYou owe *₹${debt.amount.toFixed(2)}* to *${debt.toMemberName}*.${upiText}\n\n📲 Tap link to scan QR Code or mark as paid:\n${tripUrl}`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank');
+  }
+
+  categoryBreakdown = computed(() => {
+    const list = this.expenses();
+    const totals: { [cat: string]: number } = {};
+    let overall = 0;
+    for (const e of list) {
+      const cat = e.category || 'General';
+      totals[cat] = (totals[cat] || 0) + e.amount;
+      overall += e.amount;
+    }
+    if (overall === 0) return [];
+    return Object.keys(totals).map(cat => ({
+      category: cat,
+      amount: totals[cat],
+      percentage: Math.round((totals[cat] / overall) * 100)
+    })).sort((a, b) => b.amount - a.amount);
+  });
+
+  shareViaWhatsApp(): void {
+    const g = this.group();
+    if (!g) return;
+    const link = this.shareLink() || this.generatedInviteLink() || window.location.href;
+    const text = encodeURIComponent(`Hey! Join/view our trip group '${g.name}' on FinPlanner:\n${link}`);
+    window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+  }
+
   // ── Add expense ──────────────────────────────────────────────────────────────
   showAddExpense = signal(false);
   expDescription = signal('');
@@ -382,7 +619,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
     this.signalrService.leaveGroup(this.groupId);
   }
 
-  private async loadAll(silent: boolean = false): Promise<void> {
+  async loadAll(silent: boolean = false): Promise<void> {
     if (!silent) this.isLoading.set(true);
     try {
       const data = await this.splitService.getGroupFullDetails(this.groupId);
@@ -495,23 +732,6 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
     this.notificationService.showSuccess('Summary copied — paste it anywhere to share.');
   }
 
-  // ── Add member ──────────────────────────────────────────────────────────────
-
-  async addMember(): Promise<void> {
-    const name = this.newMemberName().trim();
-    if (!name) return;
-    try {
-      await this.splitService.addMember(this.groupId, name, this.newMemberUpi().trim() || null);
-      this.newMemberName.set('');
-      this.newMemberUpi.set('');
-      this.showAddMember.set(false);
-      this.notificationService.showSuccess('Member added successfully.');
-      await this.loadAll(true);
-    } catch (err: any) {
-      this.notificationService.showError(err?.message || 'Failed to add member.');
-    }
-  }
-
   // ── Add/Edit/Delete expense ──────────────────────────────────────────────────
   editingExpenseId = signal<number | null>(null);
 
@@ -525,6 +745,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
     if (draft && (draft.description || draft.amount)) {
       this.expDescription.set(draft.description ?? '');
       this.expAmount.set(draft.amount ?? null);
+      this.expCategory.set(draft.category ?? 'General');
       this.expSplitType.set(draft.splitType ?? SplitType.Equal);
       this.expParticipantIds.set(new Set(draft.participantIds ?? []));
       this.expPayerId.set(this.group()?.members[0]?.id ?? null);
@@ -534,6 +755,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
     } else {
       this.expDescription.set('');
       this.expAmount.set(null);
+      this.expCategory.set('General');
       this.expDate.set(new Date());
       this.expSplitType.set(SplitType.Equal);
       this.expPayerId.set(this.group()?.members[0]?.id ?? null);
@@ -551,6 +773,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
     this.editingExpenseId.set(expense.id);
     this.expDescription.set(expense.description);
     this.expAmount.set(expense.amount);
+    this.expCategory.set(expense.category ?? 'General');
     this.expDate.set(fromDateOnlyString(expense.date) ?? new Date(expense.date));
     this.expSplitType.set(expense.splitType);
     this.expParticipantIds.set(new Set(expense.participants.map(p => p.memberId)));
@@ -649,7 +872,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
         description,
         amount,
         date: toDateOnlyString(this.expDate())!,
-        category: null,
+        category: this.expCategory(),
         splitType: type,
         payers,
         participants

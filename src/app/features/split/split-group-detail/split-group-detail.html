@@ -2,250 +2,402 @@
 <p-confirmDialog></p-confirmDialog>
 
 @if (!onlineStatus.isOnline()) {
-  <div class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm bg-amber-500/10 text-amber-400 border-b border-amber-500/20">
+  <div class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm bg-amber-500/10 text-amber-500 border-b border-amber-500/20">
     <i class="pi pi-wifi"></i>
     <span>You're offline — showing the last synced data. New expenses and settlements need a connection.</span>
   </div>
 }
 
 <div class="flex flex-col gap-6 w-full px-4 md:px-8 py-4">
-  <!-- Header -->
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-    <div class="flex items-start sm:items-center gap-3 min-w-0">
+  <!-- Header Bar -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+    <div class="flex items-center gap-3 min-w-0">
       <a routerLink="/app/split"
-         class="no-underline text-[var(--text-muted)] hover:text-[var(--primary-color)] transition-colors p-2.5 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center shrink-0 mt-1 sm:mt-0">
+         class="no-underline text-[var(--text-muted)] hover:text-[var(--primary-color)] transition-colors p-2.5 rounded-xl bg-[var(--glass-bg)] border border-[var(--glass-border)] flex items-center justify-center shrink-0 shadow-sm">
         <i class="pi pi-arrow-left"></i>
       </a>
-      <h1 class="text-xl sm:text-2xl md:text-3xl font-extrabold m-0 gradient-text truncate">{{ group()?.name }}</h1>
+      <div class="flex flex-col min-w-0 justify-center">
+        <div class="flex items-center gap-2 flex-wrap min-w-0">
+          <h1 class="text-lg sm:text-2xl md:text-3xl font-extrabold m-0 gradient-text truncate">{{ group()?.name }}</h1>
+          @if (group()?.status === 0) {
+            <p-tag value="Active" severity="success" styleClass="text-[0.65rem] sm:text-xs font-bold"></p-tag>
+          } @else if (group()?.status === 1) {
+            <p-tag value="Locked" severity="warn" icon="pi pi-lock" styleClass="text-[0.65rem] sm:text-xs font-bold"></p-tag>
+          } @else {
+            <p-tag value="Closed" severity="secondary" icon="pi pi-archive" styleClass="text-[0.65rem] sm:text-xs font-bold"></p-tag>
+          }
+        </div>
+
+        <div class="flex items-center gap-2 mt-1">
+          <!-- Clickable Member Count Badge -->
+          <button (click)="membersOverlay.toggle($event)"
+            class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[0.7rem] sm:text-xs font-bold bg-[var(--glass-bg)] border border-[var(--glass-border)] text-[var(--text-primary)] hover:border-[var(--primary-color,#3b82f6)] transition-all cursor-pointer shadow-sm">
+            <i class="pi pi-users text-xs text-[var(--primary-color,#3b82f6)]"></i>
+            <span>{{ group()?.members?.length ?? 0 }} members</span>
+          </button>
+        </div>
+
+        <p-popover #membersOverlay styleClass="glass-card">
+          <div class="flex flex-col gap-2 p-2.5 min-w-[14rem]">
+            <div class="flex items-center justify-between border-b border-[var(--glass-border)] pb-1.5">
+              <span class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Members ({{ group()?.members?.length }})</span>
+              <button (click)="membersOverlay.hide(); openSettingsModal('members')" class="text-[0.7rem] text-[var(--primary-color,#3b82f6)] font-bold bg-transparent border-none cursor-pointer p-0 hover:underline">Manage</button>
+            </div>
+            <div class="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">
+              @for (m of group()?.members; track m.id) {
+                <div class="flex items-center justify-between gap-3 text-xs py-1">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <div class="w-6 h-6 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 text-white font-bold text-[0.65rem] flex items-center justify-center shrink-0">
+                      {{ m.name.substring(0, 2).toUpperCase() }}
+                    </div>
+                    <span class="font-bold truncate text-[var(--text-primary)]">{{ m.name }}</span>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    @if (m.linkedUserId === group()?.createdByUserId) {
+                      <p-tag value="Admin" severity="warn" styleClass="text-[0.6rem] px-1.5 py-0 font-bold"></p-tag>
+                    }
+                    @if (m.upiId) {
+                      <i class="pi pi-check-circle text-emerald-500 text-[0.65rem]" pTooltip="UPI ID Set"></i>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </p-popover>
+      </div>
     </div>
-    <div class="flex gap-2 items-center flex-wrap">
-      <p-button icon="pi pi-share-alt" [text]="true" (onClick)="copyShareLink()" pTooltip="Copy share link"
-        styleClass="rounded-xl"></p-button>
+
+    <!-- Mobile Responsive Action Buttons Row -->
+    <div class="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto">
+      <p-button icon="pi pi-cog" label="Settings" (onClick)="openSettingsModal('members')" pTooltip="Group Settings & Members"
+        styleClass="w-full rounded-2xl font-bold text-xs sm:text-sm shadow-sm"></p-button>
       @if (!isGroupClosed()) {
-        <p-button label="Lock Group" icon="pi pi-lock" severity="secondary" (onClick)="lockGroup()"
-          styleClass="rounded-xl text-xs sm:text-sm"></p-button>
         <p-button label="Add Expense" icon="pi pi-plus" (onClick)="openAddExpense()"
-          styleClass="rounded-xl font-bold px-3 py-2 text-xs sm:text-sm flex-1 sm:flex-none"></p-button>
+          styleClass="w-full rounded-2xl font-bold text-xs sm:text-sm shadow-sm"></p-button>
       } @else {
-        <p-button label="Import to My Ledger" icon="pi pi-wallet" (onClick)="openImportDialog()"
-          styleClass="rounded-xl text-xs sm:text-sm font-bold"></p-button>
-        <p-button label="Share Summary" icon="pi pi-share-alt" [text]="true" (onClick)="shareSettlementSummary()"
-          styleClass="rounded-xl text-xs sm:text-sm"></p-button>
+        <p-button label="Import to Ledger" icon="pi pi-wallet" (onClick)="openImportDialog()"
+          styleClass="w-full rounded-2xl font-bold text-xs sm:text-sm shadow-sm"></p-button>
       }
     </div>
   </div>
 
   @if (isLoading()) {
-    <div class="flex justify-center p-8">
-      <p-progressSpinner></p-progressSpinner>
+    <div class="flex justify-center p-12">
+      <p-progressSpinner styleClass="w-12 h-12"></p-progressSpinner>
     </div>
   } @else {
-    <!-- Members strip -->
-    <div class="flex items-center gap-2 flex-wrap">
-      @for (member of group()?.members; track member.id) {
-        <div class="inline-flex items-center gap-1 bg-white/5 rounded-full px-3 py-1.5 text-xs sm:text-sm">
-          @if (canEditUpi(member)) {
-            <button (click)="startEditUpi(member)" pTooltip="Click to edit UPI ID"
-              class="bg-transparent border-none cursor-pointer text-[var(--text-primary)] font-medium p-0 flex items-center gap-1.5">
-              {{ member.name }}
-              @if (member.upiId) {
-                <i class="pi pi-check-circle text-emerald-400" style="font-size: 0.65rem;" pTooltip="UPI set"></i>
-              }
-            </button>
-          } @else {
-            <span class="text-[var(--text-primary)] font-medium flex items-center gap-1.5">
-              {{ member.name }}
-              @if (member.upiId) {
-                <i class="pi pi-check-circle text-emerald-400" style="font-size: 0.65rem;" pTooltip="UPI set"></i>
-              }
-            </span>
-          }
-          @if (member.upiId) {
-            <button (click)="copyUpi(member.upiId)" pTooltip="Copy UPI ID"
-              class="text-[var(--text-muted)] hover:text-emerald-400 bg-transparent border-none cursor-pointer p-0 ml-1 flex items-center">
-              <i class="pi pi-copy" style="font-size: 0.75rem;"></i>
+    <!-- Hero Financial Overview Banner Card -->
+    <div class="grid grid-cols-12 gap-3.5 sm:gap-4">
+      <!-- Total Group Spend Card -->
+      <div class="col-span-12 sm:col-span-6">
+        <div class="p-5 rounded-3xl bg-[var(--glass-bg)] border border-[var(--glass-border)] shadow-sm flex items-center justify-between gap-4 relative overflow-hidden group">
+          <div class="flex items-center gap-3.5 min-w-0">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-600 text-white flex items-center justify-center shrink-0 shadow-md">
+              <i class="pi pi-receipt text-xl"></i>
+            </div>
+            <div class="flex flex-col min-w-0">
+              <span class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Total Trip Expense</span>
+              <span class="text-2xl sm:text-3xl font-black text-[var(--text-primary)] tracking-tight">{{ group()?.totalSpend | currency:'INR' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- My Net Balance Card -->
+      <div class="col-span-12 sm:col-span-6">
+        <div class="p-5 rounded-3xl bg-[var(--glass-bg)] border border-[var(--glass-border)] shadow-sm flex items-center justify-between gap-4 relative overflow-hidden group"
+          [class.border-emerald-500/40]="myNetBalance() > 0"
+          [class.border-rose-500/40]="myNetBalance() < 0"
+          [class.border-[var(--glass-border)]]="myNetBalance() === 0">
+          <div class="flex items-center gap-3.5 min-w-0">
+            <div class="w-12 h-12 rounded-2xl text-white flex items-center justify-center shrink-0 shadow-md bg-gradient-to-tr"
+              [class.from-emerald-500]="myNetBalance() >= 0"
+              [class.to-teal-600]="myNetBalance() >= 0"
+              [class.from-rose-500]="myNetBalance() < 0"
+              [class.to-pink-600]="myNetBalance() < 0">
+              <i class="pi text-xl" [class.pi-arrow-down-left]="myNetBalance() > 0" [class.pi-arrow-up-right]="myNetBalance() < 0" [class.pi-check-circle]="myNetBalance() === 0"></i>
+            </div>
+            <div class="flex flex-col min-w-0">
+              <span class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Your Financial Position</span>
+              <div class="flex items-center gap-2">
+                @if (myNetBalance() > 0) {
+                  <span class="text-xl sm:text-2xl font-black text-emerald-500 tracking-tight">+{{ myNetBalance() | currency:'INR' }}</span>
+                  <span class="text-[0.7rem] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">Gets Back</span>
+                } @else if (myNetBalance() < 0) {
+                  <span class="text-xl sm:text-2xl font-black text-rose-500 tracking-tight">{{ myNetBalance() | currency:'INR' }}</span>
+                  <span class="text-[0.7rem] font-bold text-rose-500 bg-rose-500/10 px-2 py-0.5 rounded-full">Owes</span>
+                } @else {
+                  <span class="text-xl sm:text-2xl font-black text-[var(--text-primary)] tracking-tight">₹0.00</span>
+                  <span class="text-[0.7rem] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full">Settled</span>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Navigation Bar & Search -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 p-2 rounded-2xl bg-[var(--glass-bg)] border border-[var(--glass-border)] shadow-sm">
+      <div class="grid grid-cols-2 sm:flex items-center gap-1 p-1 rounded-xl bg-black/10 dark:bg-white/5 w-full sm:w-auto shrink-0 justify-center sm:justify-start">
+        <button (click)="activeTab.set('expenses')"
+          class="w-full sm:w-auto px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm border-none cursor-pointer transition-all font-bold flex items-center justify-center gap-1.5"
+          [class.bg-[var(--primary-color,#3b82f6)]]="activeTab() === 'expenses'"
+          [class.text-white]="activeTab() === 'expenses'"
+          [class.shadow-md]="activeTab() === 'expenses'"
+          [class.bg-transparent]="activeTab() !== 'expenses'"
+          [class.text-[var(--text-muted)]]="activeTab() !== 'expenses'">
+          <i class="pi pi-receipt text-xs shrink-0"></i>
+          <span class="truncate">Expenses ({{ expenses().length }})</span>
+        </button>
+        <button (click)="activeTab.set('balances')"
+          class="w-full sm:w-auto px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm border-none cursor-pointer transition-all font-bold flex items-center justify-center gap-1.5"
+          [class.bg-[var(--primary-color,#3b82f6)]]="activeTab() === 'balances'"
+          [class.text-white]="activeTab() === 'balances'"
+          [class.shadow-md]="activeTab() === 'balances'"
+          [class.bg-transparent]="activeTab() !== 'balances'"
+          [class.text-[var(--text-muted)]]="activeTab() !== 'balances'">
+          <i class="pi pi-calculator text-xs shrink-0"></i>
+          <span class="truncate">Balances & Analytics</span>
+        </button>
+      </div>
+
+      <!-- Expense Search Field (Proper padding & no overlapping icon) -->
+      @if (activeTab() === 'expenses') {
+        <div class="relative w-full sm:w-80">
+          <i class="pi pi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)] pointer-events-none z-10"></i>
+          <input type="text" pInputText placeholder="Search expenses or payers..."
+            [ngModel]="expenseSearchQuery()" (ngModelChange)="expenseSearchQuery.set($event)"
+            style="padding-left: 2.5rem !important;"
+            class="w-full pr-8 py-2 text-xs sm:text-sm rounded-xl border border-[var(--glass-border)] bg-[var(--glass-bg)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--primary-color,#3b82f6)] transition-all shadow-inner" />
+          @if (expenseSearchQuery()) {
+            <button (click)="expenseSearchQuery.set('')" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-transparent border-none cursor-pointer p-0">
+              <i class="pi pi-times"></i>
             </button>
           }
         </div>
       }
-      @if (!isGroupClosed()) {
-        <button (click)="showAddMember.set(true)"
-          class="px-3 py-1.5 rounded-full text-xs sm:text-sm bg-white/5 hover:bg-white/10 border-none cursor-pointer text-[var(--text-muted)]">
-          <i class="pi pi-plus mr-1"></i>Add person
-        </button>
-        <button (click)="createInvite()"
-          class="px-3 py-1.5 rounded-full text-xs sm:text-sm bg-white/5 hover:bg-white/10 border-none cursor-pointer text-[var(--text-muted)]">
-          <i class="pi pi-link mr-1"></i>Invite via link
-        </button>
-      }
     </div>
 
-    @if (editingMemberId() !== null) {
-      <div class="glass-card p-4 rounded-2xl flex flex-col sm:flex-row gap-3 items-center">
-        <span class="text-sm text-[var(--text-muted)] whitespace-nowrap">UPI ID</span>
-        <input type="text" pInputText class="w-full sm:flex-1" placeholder="e.g. name@upi"
-          [ngModel]="editMemberUpi()" (ngModelChange)="editMemberUpi.set($event)"
-          (keyup.enter)="saveEditUpi(editingMemberId()!)" (keyup.escape)="cancelEditUpi()" />
-        <div class="flex gap-2 w-full sm:w-auto">
-          <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="cancelEditUpi()"
-            styleClass="flex-1 sm:flex-none"></p-button>
-          <p-button label="Save" (onClick)="saveEditUpi(editingMemberId()!)" styleClass="flex-1 sm:flex-none"></p-button>
-        </div>
-      </div>
-    }
-
-    @if (generatedInviteLink()) {
-      <div class="glass-card p-4 rounded-2xl flex flex-col sm:flex-row items-center gap-3">
-        <input type="text" pInputText [value]="generatedInviteLink()" readonly class="w-full flex-1 text-xs" />
-        <div class="flex gap-2 w-full sm:w-auto">
-          <p-button label="Copy" icon="pi pi-copy" (onClick)="copyInviteLink()" styleClass="flex-1 sm:flex-none"></p-button>
-          <p-button label="Done" severity="secondary" [text]="true" (onClick)="generatedInviteLink.set(null)" styleClass="flex-1 sm:flex-none"></p-button>
-        </div>
-      </div>
-    }
-
-    @if (showAddMember()) {
-      <div class="glass-card p-4 rounded-2xl flex flex-col sm:flex-row gap-3">
-        <input type="text" pInputText class="w-full sm:flex-1" placeholder="Name"
-          [ngModel]="newMemberName()" (ngModelChange)="newMemberName.set($event)"
-          (keyup.enter)="addMember()" (keyup.escape)="showAddMember.set(false)" />
-        <input type="text" pInputText class="w-full sm:flex-1" placeholder="UPI ID (optional)"
-          [ngModel]="newMemberUpi()" (ngModelChange)="newMemberUpi.set($event)"
-          (keyup.enter)="addMember()" (keyup.escape)="showAddMember.set(false)" />
-        <div class="flex gap-2">
-          <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="showAddMember.set(false)"></p-button>
-          <p-button label="Add" (onClick)="addMember()"></p-button>
-        </div>
-      </div>
-    }
-
-    <!-- Tabs -->
-    <div class="flex gap-1 p-1 rounded-xl bg-white/5 w-fit">
-      <button (click)="activeTab.set('expenses')"
-        class="px-4 py-2 rounded-lg text-xs sm:text-sm border-none cursor-pointer transition-colors"
-        [class.bg-white/10]="activeTab() === 'expenses'"
-        [class.text-[var(--text-primary)]]="activeTab() === 'expenses'"
-        [class.text-[var(--text-muted)]]="activeTab() !== 'expenses'">
-        Expenses
-      </button>
-      <button (click)="activeTab.set('balances')"
-        class="px-4 py-2 rounded-lg text-xs sm:text-sm border-none cursor-pointer transition-colors"
-        [class.bg-white/10]="activeTab() === 'balances'"
-        [class.text-[var(--text-primary)]]="activeTab() === 'balances'"
-        [class.text-[var(--text-muted)]]="activeTab() !== 'balances'">
-        Balances
-      </button>
-    </div>
-
-    <!-- Expenses tab -->
+    <!-- Expenses Tab Content -->
     @if (activeTab() === 'expenses') {
-      <div class="flex flex-col gap-2">
-        @for (expense of expenses(); track expense.id) {
-          <div class="glass-card p-4 rounded-2xl flex items-center justify-between gap-3 transition-all duration-500"
+      <div class="flex flex-col gap-3">
+        @for (expense of filteredExpenses(); track expense.id) {
+          <div class="p-4 rounded-2xl bg-[var(--glass-bg)] border border-[var(--glass-border)] hover:border-indigo-500/30 hover:shadow-md flex items-center justify-between gap-3 transition-all duration-300 group"
             [class.ring-2]="expense.id === newlyAddedExpenseId()"
             [class.ring-emerald-400]="expense.id === newlyAddedExpenseId()"
-            [class.bg-emerald-500\/20]="expense.id === newlyAddedExpenseId()"
-            [class.animate-pulse]="expense.id === newlyAddedExpenseId()">
-            <div class="flex flex-col min-w-0">
-              <span class="font-semibold text-sm sm:text-base text-[var(--text-primary)] truncate">{{ expense.description }}</span>
-              <span class="text-xs text-[var(--text-muted)]">
-                Paid by {{ expense.payers.length === 1 ? expense.payers[0]?.memberName : (expense.payers.length + ' people') }} · {{ expense.date | date:'mediumDate' }}
-              </span>
+            [class.bg-emerald-500\/10]="expense.id === newlyAddedExpenseId()">
+            
+            <div class="flex items-center gap-3.5 min-w-0">
+              <!-- Expense Category Icon Avatar -->
+              <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-500/20 to-purple-600/20 border border-indigo-500/30 font-bold flex items-center justify-center shrink-0 shadow-sm">
+                <i [class]="getCategoryIcon(expense.category)" class="text-base"></i>
+              </div>
+
+              <div class="flex flex-col min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="font-bold text-sm sm:text-base text-[var(--text-primary)] truncate group-hover:text-[var(--primary-color,#3b82f6)] transition-colors">
+                    {{ expense.description }}
+                  </span>
+                  @if (expense.category) {
+                    <span class="text-[0.65rem] px-2 py-0.5 rounded-full font-bold border" [class]="getCategoryBadgeColor(expense.category)">
+                      {{ expense.category }}
+                    </span>
+                  }
+                </div>
+                <div class="flex items-center gap-2 text-xs text-[var(--text-muted)] mt-0.5 flex-wrap">
+                  <span class="font-medium text-[var(--text-primary)]">
+                    Paid by {{ expense.payers.length === 1 ? expense.payers[0]?.memberName : (expense.payers.length + ' people') }}
+                  </span>
+                  <span>•</span>
+                  <span>{{ expense.date | date:'mediumDate' }}</span>
+                  <span>•</span>
+                  <span class="text-[0.7rem] text-[var(--text-muted)]">
+                    {{ expense.splitType === 0 ? 'Equal Split' : 'Custom Split' }}
+                  </span>
+                </div>
+              </div>
             </div>
-            <div class="flex items-center gap-2 shrink-0">
-              <span class="text-base sm:text-lg font-bold">{{ expense.amount | currency:'INR' }}</span>
+
+            <!-- Amount & Actions -->
+            <div class="flex items-center gap-3 shrink-0">
+              <span class="text-base sm:text-xl font-black text-[var(--text-primary)] tracking-tight">
+                {{ expense.amount | currency:'INR' }}
+              </span>
               @if (!isGroupClosed()) {
-                <button (click)="openEditExpense(expense)" pTooltip="Edit Expense"
-                  class="text-xs text-[var(--text-muted)] hover:text-[var(--primary-color)] bg-transparent border-none cursor-pointer p-1">
-                  <i class="pi pi-pencil"></i>
-                </button>
-                <button (click)="deleteExpense(expense)" pTooltip="Delete Expense"
-                  class="text-xs text-red-400 hover:text-red-300 bg-transparent border-none cursor-pointer p-1">
-                  <i class="pi pi-trash"></i>
-                </button>
+                <div class="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+                  <button (click)="openEditExpense(expense)" pTooltip="Edit Expense"
+                    class="text-xs text-[var(--text-muted)] hover:text-[var(--primary-color,#3b82f6)] bg-transparent border-none cursor-pointer p-2 rounded-xl hover:bg-white/5 transition-all">
+                    <i class="pi pi-pencil"></i>
+                  </button>
+                  <button (click)="deleteExpense(expense)" pTooltip="Delete Expense"
+                    class="text-xs text-red-500 hover:text-red-400 bg-transparent border-none cursor-pointer p-2 rounded-xl hover:bg-red-500/10 transition-all">
+                    <i class="pi pi-trash"></i>
+                  </button>
+                </div>
               }
             </div>
           </div>
         } @empty {
-          <app-empty-state icon="pi pi-receipt" title="No expenses logged yet"
-            message="Add the first expense for this trip." actionLabel="Add Expense"
+          <app-empty-state icon="pi pi-receipt" title="No expenses found"
+            message="No expenses match your search or none logged yet." actionLabel="Add Expense"
             (action)="openAddExpense()"></app-empty-state>
         }
       </div>
     }
 
-    <!-- Balances tab -->
+    <!-- Balances Tab Content -->
     @if (activeTab() === 'balances') {
-      <div class="flex flex-col gap-4">
-        <div class="grid grid-cols-12 gap-3">
-          @for (b of balances()?.balances; track b.memberId) {
-            <div class="col-span-12 sm:col-span-6 lg:col-span-4">
-              <div class="glass-card p-4 rounded-2xl flex flex-col gap-2"
-                [class.border]="true"
-                [class.border-emerald-500/20]="b.netBalance > 0"
-                [class.border-red-500/20]="b.netBalance < 0"
-                [class.border-white/5]="b.netBalance === 0">
-                <div class="flex items-center justify-between">
-                  <span class="text-sm sm:text-base font-semibold">{{ b.memberName }}</span>
-                  <span class="text-sm sm:text-base font-bold"
-                    [class.text-emerald-400]="b.netBalance > 0"
-                    [class.text-red-400]="b.netBalance < 0">
-                    {{ b.netBalance > 0 ? '+' : '' }}{{ b.netBalance | currency:'INR' }}
-                  </span>
-                </div>
-                <div class="flex items-center justify-between text-xs text-[var(--text-muted)] pt-1.5 border-t border-white/5">
-                  <span>Paid: <strong class="text-[var(--text-primary)] font-medium">{{ (b.totalPaid ?? 0) | currency:'INR' }}</strong></span>
-                  <span>Share: <strong class="text-[var(--text-primary)] font-medium">{{ (b.totalShare ?? 0) | currency:'INR' }}</strong></span>
+      <div class="flex flex-col gap-6">
+        <!-- Individual Member Net Balances -->
+        <div class="flex flex-col gap-2">
+          <h3 class="text-xs font-extrabold text-[var(--text-muted)] uppercase tracking-wider m-0">Member Net Position Summary</h3>
+          <div class="grid grid-cols-12 gap-3.5">
+            @for (b of balances()?.balances; track b.memberId) {
+              <div class="col-span-12 sm:col-span-6 lg:col-span-4">
+                <div class="p-4 rounded-2xl bg-[var(--glass-bg)] border flex flex-col gap-2.5 transition-all shadow-sm"
+                  [class.border-emerald-500/40]="b.netBalance > 0"
+                  [class.border-rose-500/40]="b.netBalance < 0"
+                  [class.border-[var(--glass-border)]]="b.netBalance === 0">
+                  
+                  <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                      <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                        {{ b.memberName.substring(0, 2).toUpperCase() }}
+                      </div>
+                      <span class="text-sm font-bold truncate text-[var(--text-primary)]">{{ b.memberName }}</span>
+                    </div>
+
+                    <span class="text-base font-black tracking-tight"
+                      [class.text-emerald-500]="b.netBalance > 0"
+                      [class.text-rose-500]="b.netBalance < 0"
+                      [class.text-[var(--text-muted)]]="b.netBalance === 0">
+                      {{ b.netBalance > 0 ? '+' : '' }}{{ b.netBalance | currency:'INR' }}
+                    </span>
+                  </div>
+
+                  <div class="flex items-center justify-between text-xs text-[var(--text-muted)] pt-2 border-t border-[var(--glass-border)]">
+                    <span>Total Paid: <strong class="text-[var(--text-primary)] font-bold">{{ (b.totalPaid ?? 0) | currency:'INR' }}</strong></span>
+                    <span>Fair Share: <strong class="text-[var(--text-primary)] font-bold">{{ (b.totalShare ?? 0) | currency:'INR' }}</strong></span>
+                  </div>
                 </div>
               </div>
+            }
+          </div>
+        </div>
+
+        <!-- Spend Breakdown by Category Analytics -->
+        @if (categoryBreakdown().length > 0) {
+          <div class="p-5 rounded-3xl bg-[var(--glass-bg)] border border-[var(--glass-border)] flex flex-col gap-4 shadow-sm">
+            <div class="flex items-center justify-between border-b border-[var(--glass-border)] pb-3">
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 text-white flex items-center justify-center text-xs font-bold shadow-sm">
+                  <i class="pi pi-chart-pie"></i>
+                </div>
+                <h3 class="text-xs font-extrabold text-[var(--text-muted)] uppercase tracking-wider m-0">Spend Breakdown by Category</h3>
+              </div>
+              <span class="px-2.5 py-1 rounded-full text-[0.7rem] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                {{ categoryBreakdown().length }} {{ categoryBreakdown().length === 1 ? 'Category' : 'Categories' }}
+              </span>
+            </div>
+
+            <div class="grid grid-cols-12 gap-3.5">
+              @for (item of categoryBreakdown(); track item.category) {
+                <div class="col-span-12" [class.lg:col-span-6]="categoryBreakdown().length > 1">
+                  <div class="p-3.5 rounded-2xl bg-black/10 dark:bg-white/5 border border-[var(--glass-border)] flex flex-col gap-2.5 hover:border-indigo-500/30 transition-all">
+                    <div class="flex items-center justify-between gap-2">
+                      <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center text-xs font-bold shrink-0">
+                          <i [class]="getCategoryIcon(item.category)"></i>
+                        </div>
+                        <div class="flex items-center gap-2 min-w-0">
+                          <span class="font-extrabold text-sm text-[var(--text-primary)] truncate">{{ item.category }}</span>
+                          <span class="text-[0.65rem] font-bold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                            {{ item.percentage }}%
+                          </span>
+                        </div>
+                      </div>
+                      <span class="font-black text-sm sm:text-base text-[var(--text-primary)] tracking-tight shrink-0">{{ item.amount | currency:'INR' }}</span>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="w-full bg-black/10 dark:bg-white/10 rounded-full h-2 overflow-hidden">
+                      <div class="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full transition-all duration-500" [style.width.%]="item.percentage"></div>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Pending Settlements & Direct Payment -->
+        <div class="flex flex-col gap-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-extrabold text-[var(--text-muted)] uppercase tracking-wider m-0">
+              {{ isGroupAdmin() ? 'Simplified Debts (All Members)' : 'Your Direct Obligations' }}
+            </h3>
+            @if (!isGroupAdmin() && (balances()?.simplifiedPlan?.length ?? 0) > visibleDebts().length) {
+              <span class="text-xs text-[var(--text-muted)] italic">Showing your settlements only</span>
+            }
+          </div>
+
+          @if (visibleDebts().length > 0) {
+            <div class="flex flex-col gap-2.5">
+              @for (debt of visibleDebts(); track debt.fromMemberId + '-' + debt.toMemberId) {
+                <div class="p-4 rounded-2xl bg-[var(--glass-bg)] border border-[var(--glass-border)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm hover:border-indigo-500/30 transition-all">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-500 border border-amber-500/20 flex items-center justify-center shrink-0">
+                      <i class="pi pi-arrow-right-arrow-left text-sm"></i>
+                    </div>
+                    <div class="flex flex-col">
+                      <span class="text-sm text-[var(--text-primary)] font-medium">
+                        <strong class="font-bold text-[var(--text-primary)]">{{ debt.fromMemberName }}</strong> owes <strong class="font-bold text-[var(--text-primary)]">{{ debt.toMemberName }}</strong>
+                      </span>
+                      <span class="text-xs font-black text-[var(--primary-color,#3b82f6)] mt-0.5">{{ debt.amount | currency:'INR' }}</span>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                    @if (canNudgeDebt(debt)) {
+                      <button (click)="nudgeDebtWhatsApp(debt)" pTooltip="Send WhatsApp Payment Reminder"
+                        class="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-all border border-emerald-500/20 cursor-pointer flex items-center gap-1.5 text-xs font-bold shrink-0">
+                        <i class="pi pi-whatsapp text-sm"></i>
+                        <span>Nudge</span>
+                      </button>
+                    }
+                    @if (canMemberSettleDebt(debt)) {
+                      <p-button label="Pay via UPI" icon="pi pi-qrcode" (onClick)="openSettleDialog(debt)"
+                        styleClass="rounded-2xl font-bold px-4 py-2 text-xs sm:text-sm shadow-sm flex-1 sm:flex-none"></p-button>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="p-6 rounded-3xl bg-[var(--glass-bg)] border border-[var(--glass-border)] text-center flex flex-col items-center gap-2">
+              <div class="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-xl">
+                <i class="pi pi-check-circle"></i>
+              </div>
+              <span class="text-sm font-bold text-[var(--text-primary)]">All Settled Up 🎉</span>
+              <p class="text-xs text-[var(--text-muted)] m-0">No outstanding debts remain in this group.</p>
             </div>
           }
         </div>
 
-        @if (visibleDebts().length > 0) {
-          <div class="flex flex-col gap-2">
-            <div class="flex items-center justify-between">
-              <h3 class="text-sm sm:text-base font-bold text-[var(--text-muted)] m-0">
-                {{ isGroupAdmin() ? 'Settle up (All debts)' : 'Your pending settlements' }}
-              </h3>
-              @if (!isGroupAdmin() && (balances()?.simplifiedPlan?.length ?? 0) > visibleDebts().length) {
-                <span class="text-xs text-[var(--text-muted)]">Showing your obligations only</span>
-              }
-            </div>
-            @for (debt of visibleDebts(); track debt.fromMemberId + '-' + debt.toMemberId) {
-              <div class="glass-card p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <span class="text-sm sm:text-base">
-                  <strong>{{ debt.fromMemberName }}</strong> owes <strong>{{ debt.toMemberName }}</strong>
-                  <span class="font-bold ml-1">{{ debt.amount | currency:'INR' }}</span>
-                </span>
-                @if (canMemberSettleDebt(debt)) {
-                  <p-button label="Pay via UPI" icon="pi pi-qrcode" (onClick)="openSettleDialog(debt)"
-                    styleClass="rounded-xl text-xs sm:text-sm w-full sm:w-auto"></p-button>
-                }
-              </div>
-            }
-          </div>
-        } @else {
-          <div class="glass-card p-6 rounded-2xl text-center">
-            <i class="pi pi-check-circle text-2xl text-emerald-400 mb-2"></i>
-            <p class="text-sm text-[var(--text-muted)] m-0">
-              {{ isGroupAdmin() ? "Everyone's settled up." : "You're all settled up." }}
-            </p>
-          </div>
-        }
-
-        <!-- Settlement History section (Always available on Balances tab) -->
+        <!-- Settlement History Section -->
         <div class="flex flex-col gap-2 mt-4">
           <h3 class="text-sm font-bold text-[var(--text-muted)] m-0">Settlement History</h3>
           @for (s of visibleSettlements(); track s.id) {
             <div class="glass-card p-3 rounded-xl flex items-center justify-between text-sm flex-wrap gap-2">
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2 text-[var(--text-primary)]">
                 <i class="pi" [class.pi-clock]="s.status === 0" [class.pi-send]="s.status === 1" [class.pi-check-circle]="s.status === 2"
-                  [class.text-amber-400]="s.status === 0" [class.text-blue-400]="s.status === 1" [class.text-emerald-400]="s.status === 2"></i>
+                  [class.text-amber-500]="s.status === 0" [class.text-blue-500]="s.status === 1" [class.text-emerald-500]="s.status === 2"></i>
                 <span><strong>{{ s.fromMemberName }}</strong> → <strong>{{ s.toMemberName }}</strong></span>
               </div>
               <div class="flex items-center gap-2 flex-wrap">
-                <span class="font-medium">{{ s.amount | currency:'INR' }}</span>
+                <span class="font-medium text-[var(--text-primary)]">{{ s.amount | currency:'INR' }}</span>
                 <p-tag [value]="s.status === 2 ? 'Completed' : (s.status === 1 ? 'Awaiting confirmation' : 'Pending')"
                   [severity]="s.status === 2 ? 'success' : (s.status === 1 ? 'warn' : 'secondary')"></p-tag>
                 @if (canMarkPaymentSent(s)) {
@@ -258,8 +410,7 @@
                 }
                 @if (canRejectPayment(s)) {
                   <p-button label="Not received" size="small" severity="danger" [text]="true"
-                    (onClick)="onRejectPayment(s.id)"
-                    pTooltip="If this payment never actually arrived, this puts it back as pending so it can be retried."></p-button>
+                    (onClick)="onRejectPayment(s.id)"></p-button>
                 }
               </div>
             </div>
@@ -274,24 +425,31 @@
   }
 </div>
 
-<!-- Add Expense dialog -->
+<!-- Add Expense Dialog -->
 <p-dialog [(visible)]="showAddExpense" header="Add Expense" [modal]="true"
   [style]="{ width: '95vw', maxWidth: '32rem' }" [breakpoints]="{ '640px': '100vw' }" styleClass="glass-card">
   <div class="flex flex-col gap-4">
-    <div class="flex flex-col gap-1.5">
-      <label class="text-xs sm:text-sm text-[var(--text-muted)]">What was it for?</label>
-      <input type="text" pInputText class="w-full" placeholder="e.g. Dinner at the beach shack"
-        [ngModel]="expDescription()" (ngModelChange)="expDescription.set($event)" />
+    <div class="grid grid-cols-12 gap-3">
+      <div class="col-span-12 sm:col-span-7 flex flex-col gap-1.5">
+        <label class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">What was it for?</label>
+        <input type="text" pInputText class="w-full" placeholder="e.g. Dinner, Taxi, Hotel"
+          [ngModel]="expDescription()" (ngModelChange)="expDescription.set($event)" />
+      </div>
+      <div class="col-span-12 sm:col-span-5 flex flex-col gap-1.5">
+        <label class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">Category</label>
+        <p-select [options]="categoriesList" [ngModel]="expCategory()" (ngModelChange)="expCategory.set($event)"
+          optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full" class="w-full"></p-select>
+      </div>
     </div>
 
     <div class="grid grid-cols-2 gap-3">
       <div class="flex flex-col gap-1.5">
-        <label class="text-xs sm:text-sm text-[var(--text-muted)]">Amount</label>
+        <label class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">Amount</label>
         <p-inputNumber [ngModel]="expAmount()" (ngModelChange)="expAmount.set($event)"
           mode="currency" currency="INR" locale="en-IN" class="w-full"></p-inputNumber>
       </div>
       <div class="flex flex-col gap-1.5">
-        <label class="text-xs sm:text-sm text-[var(--text-muted)]">Date</label>
+        <label class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">Date</label>
         <p-datepicker [ngModel]="expDate()" (ngModelChange)="expDate.set($event)"
           [showIcon]="true" appendTo="body" class="w-full"></p-datepicker>
       </div>
@@ -299,7 +457,7 @@
 
     <div class="flex flex-col gap-1.5">
       <div class="flex items-center justify-between">
-        <label class="text-xs sm:text-sm text-[var(--text-muted)]">Paid by</label>
+        <label class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">Paid by</label>
         <button (click)="togglePaymentSplit()"
           class="text-xs text-[var(--primary-color)] bg-transparent border-none cursor-pointer p-0">
           {{ splitPayment() ? 'Single payer instead' : 'Split payment across multiple people' }}
@@ -327,7 +485,7 @@
               </div>
               @if (expPayers().length > 1) {
                 <button (click)="removePayerRow($index)"
-                  class="text-red-400 bg-transparent border-none cursor-pointer text-sm shrink-0 p-1">✕</button>
+                  class="text-red-500 bg-transparent border-none cursor-pointer text-sm shrink-0 p-1">✕</button>
               }
             </div>
           }
@@ -337,7 +495,7 @@
           </button>
           <div class="flex items-center justify-between text-xs pt-1">
             <span class="text-[var(--text-muted)]">Payers total</span>
-            <span [class.text-red-400]="expAmount() !== null && payersTotal() !== expAmount()">
+            <span [class.text-red-500]="expAmount() !== null && payersTotal() !== expAmount()">
               {{ payersTotal() | currency:'INR' }}
               @if (expAmount() !== null) {
                 / {{ expAmount() | currency:'INR' }}
@@ -349,18 +507,18 @@
     </div>
 
     <div class="flex flex-col gap-1.5">
-      <label class="text-xs sm:text-sm text-[var(--text-muted)]">Split</label>
+      <label class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">Split</label>
       <p-select [options]="splitTypeOptions" [ngModel]="expSplitType()" (ngModelChange)="expSplitType.set($event)"
         optionLabel="label" optionValue="value" appendTo="body" class="w-full"></p-select>
     </div>
 
     <div class="flex flex-col gap-2">
-      <label class="text-xs sm:text-sm text-[var(--text-muted)]">Split between</label>
+      <label class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">Split between</label>
       @for (member of group()?.members; track member.id) {
-        <div class="flex items-center gap-3 p-2 rounded-xl bg-white/5">
+        <div class="flex items-center gap-3 p-2.5 rounded-xl bg-[var(--glass-bg)] border border-[var(--glass-border)]">
           <input type="checkbox" [checked]="expParticipantIds().has(member.id)"
-            (change)="toggleParticipant(member.id)" class="w-4 h-4" />
-          <span class="text-sm flex-1">{{ member.name }}</span>
+            (change)="toggleParticipant(member.id)" class="w-4 h-4 accent-emerald-500" />
+          <span class="text-sm flex-1 text-[var(--text-primary)] font-medium">{{ member.name }}</span>
 
           @if (expParticipantIds().has(member.id)) {
             @if (expSplitType() === SplitType.Exact) {
@@ -387,7 +545,7 @@
   </ng-template>
 </p-dialog>
 
-<!-- Import to Ledger dialog -->
+<!-- Import to Ledger Dialog -->
 <p-dialog [(visible)]="showImportDialog" header="Import to Your Ledger" [modal]="true"
   [style]="{ width: '90vw', maxWidth: '26rem' }" styleClass="glass-card">
   <div class="flex flex-col gap-4">
@@ -396,7 +554,7 @@
       this group, dated to when each expense actually happened.
     </p>
     <div class="flex flex-col gap-1.5">
-      <label class="text-xs sm:text-sm text-[var(--text-muted)]">Import into which account?</label>
+      <label class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">Import into which account?</label>
       <p-select [options]="accountState.accounts()" [ngModel]="importAccountId()" (ngModelChange)="importAccountId.set($event)"
         optionLabel="name" optionValue="id" placeholder="Select account" appendTo="body" class="w-full"></p-select>
     </div>
@@ -407,12 +565,13 @@
   </ng-template>
 </p-dialog>
 
+<!-- QR Payment Dialog -->
 <p-dialog [visible]="qrCodeDataUrl() !== null" (visibleChange)="closeQrDialog()"
   header="Scan to Pay" [modal]="true" [style]="{ width: '20rem' }">
   @if (qrPaymentDetails()) {
     <div class="flex flex-col items-center gap-3 text-center">
-      <img [src]="qrCodeDataUrl()" alt="UPI payment QR code" class="rounded-xl" />
-      <p class="text-sm m-0">
+      <img [src]="qrCodeDataUrl()" alt="UPI payment QR code" class="rounded-xl border border-[var(--glass-border)]" />
+      <p class="text-sm text-[var(--text-primary)] m-0">
         Pay <strong>{{ qrPaymentDetails()!.amount | currency:'INR' }}</strong>
         to <strong>{{ qrPaymentDetails()!.payeeName }}</strong>
       </p>
@@ -420,7 +579,7 @@
         Scan with any UPI app — GPay, PhonePe, Paytm, or your bank's app.
       </p>
       <a [href]="qrPaymentDetails()!.upiDeepLink"
-        class="text-xs text-[var(--primary-color)] no-underline">
+        class="text-xs text-[var(--primary-color)] no-underline font-medium hover:underline">
         On this phone? Tap to open your UPI app directly
       </a>
       @if (qrPaymentDetails()?.settlementId) {
@@ -434,11 +593,12 @@
   }
 </p-dialog>
 
+<!-- Partial Settle Debt Dialog -->
 <p-dialog [visible]="settlingDebt() !== null" (visibleChange)="closeSettleDialog()"
   header="Settle Up" [modal]="true" [style]="{ width: '20rem' }">
   @if (settlingDebt()) {
     <div class="flex flex-col gap-3">
-      <p class="text-sm m-0">
+      <p class="text-sm text-[var(--text-primary)] m-0">
         {{ settlingDebt()!.fromMemberName }} owes {{ settlingDebt()!.toMemberName }}
         <strong>{{ settlingDebt()!.amount | currency:'INR' }}</strong>
       </p>
@@ -454,3 +614,13 @@
     </div>
   }
 </p-dialog>
+
+<!-- Group Settings Component -->
+<app-split-settings-dialog
+  [(visible)]="showSettingsModal"
+  [group]="group()"
+  [balances]="balances()"
+  [initialTab]="settingsTab()"
+  (reloadGroup)="loadAll(true)"
+  (openImport)="openImportDialog()">
+</app-split-settings-dialog>

@@ -730,11 +730,25 @@ body {
   }
 }
 
-/* --- Dialog --- */
+/* --- Dialog Overhaul (Mobile, Tablet & Desktop) --- */
+.p-dialog-mask {
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  z-index: 10000 !important;
+  padding: 1rem !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+}
+
 .p-dialog {
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: var(--glass-shadow);
+  border-radius: 20px !important;
+  overflow: hidden !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  margin-top: 4.25rem !important;
+  max-height: calc(100vh - 5.5rem) !important;
 
   & .p-dialog-header,
   & .p-dialog-content,
@@ -743,11 +757,44 @@ body {
     color: var(--text-main) !important;
     border-color: var(--glass-border) !important;
   }
+
+  & .p-dialog-header {
+    flex-shrink: 0 !important;
+    padding: 1.25rem 1.5rem 0.85rem 1.5rem !important;
+    border-bottom: 1px solid var(--glass-border) !important;
+  }
+
+  & .p-dialog-content {
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+    max-height: calc(100vh - 12rem) !important;
+    padding: 1.25rem 1.5rem !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  & .p-dialog-footer {
+    flex-shrink: 0 !important;
+    padding: 0.85rem 1.5rem !important;
+    border-top: 1px solid var(--glass-border) !important;
+  }
 }
 
-.p-dialog-mask {
-  backdrop-filter: blur(5px);
-  background-color: rgba(0, 0, 0, 0.4) !important;
+@media (max-width: 1024px) {
+  .p-dialog {
+    width: calc(100vw - 1.5rem) !important;
+    max-width: 38rem !important;
+    margin-top: 4.25rem !important;
+    max-height: calc(100vh - 5rem) !important;
+  }
+
+  .p-dialog .p-dialog-content {
+    max-height: calc(100vh - 11.5rem) !important;
+    padding: 1rem !important;
+  }
+
+  .p-dialog .p-dialog-footer {
+    padding: 0.75rem 1rem !important;
+  }
 }
 
 /* --- Close Buttons (dialog, drawer, sidebar) --- */

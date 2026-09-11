@@ -1,76 +1,256 @@
 <p-toast></p-toast>
 
-<div class="flex flex-col gap-6 w-full px-4 md:px-8 py-4">
+<div class="flex flex-col gap-6 w-full max-w-7xl mx-auto px-4 md:px-8 py-6">
+  <!-- Top Header & Action Row -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-    <div class="flex items-center gap-3 min-w-0">
+    <div class="flex items-center gap-3.5 min-w-0">
       <a routerLink="/app/dashboard"
-         class="no-underline text-[var(--text-muted)] hover:text-[var(--primary-color)] transition-colors p-2.5 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center shrink-0">
-        <i class="pi pi-arrow-left"></i>
+         class="no-underline text-[var(--text-muted)] hover:text-[var(--primary-color,#3b82f6)] transition-all p-2.5 rounded-2xl bg-[var(--glass-bg)] border border-[var(--glass-border)] hover:border-[var(--primary-color,#3b82f6)] flex items-center justify-center shrink-0 shadow-sm hover:scale-105">
+        <i class="pi pi-arrow-left text-sm"></i>
       </a>
-      <h1 class="text-xl sm:text-2xl md:text-3xl font-extrabold m-0 gradient-text truncate">Split</h1>
+      <div class="flex flex-col">
+        <div class="flex items-center gap-2">
+          <h1 class="text-2xl sm:text-3xl font-black m-0 tracking-tight gradient-text">Split Expenses</h1>
+          <span class="px-2.5 py-0.5 rounded-full text-[0.7rem] font-extrabold uppercase tracking-wider bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+            Trips & Shared
+          </span>
+        </div>
+        <p class="text-xs text-[var(--text-muted)] m-0 mt-0.5 font-medium">Split group costs, track shared balances & settle up seamlessly</p>
+      </div>
     </div>
     <p-button label="New Trip / Group" icon="pi pi-plus" (onClick)="openCreateForm()"
-      styleClass="rounded-xl font-bold px-4 py-2 text-xs sm:text-sm w-full sm:w-auto"></p-button>
+      styleClass="rounded-2xl font-bold px-5 py-2.5 text-xs sm:text-sm w-full sm:w-auto shadow-md hover:shadow-lg transition-all"></p-button>
   </div>
 
-  @if (showCreateForm()) {
-    <div class="glass-card p-4 sm:p-6 rounded-2xl flex flex-col gap-4">
-      <div class="flex flex-col gap-1.5">
-        <label class="text-xs sm:text-sm text-[var(--text-muted)]">Trip or Group Name</label>
-        <input type="text" pInputText class="w-full" placeholder="e.g. Goa Trip"
-          [ngModel]="formGroupName()" (ngModelChange)="formGroupName.set($event)"
-          (keyup.enter)="createGroup()" (keyup.escape)="showCreateForm.set(false)" />
+  <!-- Summary Statistics Bar -->
+  @if (!isLoading() && groups().length > 0) {
+    <div class="grid grid-cols-12 gap-3.5 sm:gap-4 items-stretch">
+      <div class="col-span-12 sm:col-span-4">
+        <div class="p-4 sm:p-5 rounded-2xl bg-[var(--glass-bg)] border border-[var(--glass-border)] shadow-sm flex items-center gap-4 relative overflow-hidden group hover:border-indigo-500/40 transition-all h-full">
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-600 text-white flex items-center justify-center shrink-0 shadow-md group-hover:scale-110 transition-transform">
+            <i class="pi pi-wallet text-xl"></i>
+          </div>
+          <div class="flex flex-col min-w-0">
+            <span class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Total Group Spend</span>
+            <span class="text-xl sm:text-2xl font-black text-[var(--text-primary)] tracking-tight truncate">{{ totalSpendSum() | currency:'INR' }}</span>
+          </div>
+        </div>
       </div>
-      <div class="flex flex-col gap-1.5">
-        <label class="text-xs sm:text-sm text-[var(--text-muted)]">Your name in this group</label>
-        <input type="text" pInputText class="w-full" placeholder="How you'll appear to others"
-          [ngModel]="formCreatorName()" (ngModelChange)="formCreatorName.set($event)"
-          (keyup.enter)="createGroup()" (keyup.escape)="showCreateForm.set(false)" />
+
+      <div class="col-span-12 sm:col-span-4">
+        <div class="p-4 sm:p-5 rounded-2xl bg-[var(--glass-bg)] border border-[var(--glass-border)] shadow-sm flex items-center gap-4 relative overflow-hidden group hover:border-emerald-500/40 transition-all h-full">
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-600 text-white flex items-center justify-center shrink-0 shadow-md group-hover:scale-110 transition-transform">
+            <i class="pi pi-compass text-xl"></i>
+          </div>
+          <div class="flex flex-col min-w-0">
+            <span class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Active Trips</span>
+            <div class="flex items-center gap-2">
+              <span class="text-xl sm:text-2xl font-black text-[var(--text-primary)] tracking-tight">{{ activeGroupsCount() }}</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[0.65rem] font-bold bg-emerald-500/10 text-emerald-500">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping mr-1"></span> Live
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="flex flex-col sm:flex-row justify-end gap-2">
-        <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="showCreateForm.set(false)"
-          styleClass="w-full sm:w-auto"></p-button>
-        <p-button label="Create" (onClick)="createGroup()" styleClass="w-full sm:w-auto"></p-button>
+
+      <div class="col-span-12 sm:col-span-4">
+        <div class="p-4 sm:p-5 rounded-2xl bg-[var(--glass-bg)] border border-[var(--glass-border)] shadow-sm flex items-center gap-4 relative overflow-hidden group hover:border-cyan-500/40 transition-all h-full">
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-500 to-cyan-600 text-white flex items-center justify-center shrink-0 shadow-md group-hover:scale-110 transition-transform">
+            <i class="pi pi-users text-xl"></i>
+          </div>
+          <div class="flex flex-col min-w-0">
+            <span class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Participants Involved</span>
+            <div class="flex items-baseline gap-1.5">
+              <span class="text-xl sm:text-2xl font-black text-[var(--text-primary)] tracking-tight">{{ totalMembersCount() }}</span>
+              <span class="text-xs sm:text-sm font-bold text-[var(--text-muted)]">members</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   }
 
+  <!-- Search & Filter Controls -->
+  <div class="flex flex-col sm:flex-row items-center justify-between gap-3 p-2 rounded-2xl bg-[var(--glass-bg)] border border-[var(--glass-border)] shadow-sm">
+    <div class="relative w-full sm:w-72 md:w-80">
+      <i class="pi pi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)] pointer-events-none z-10"></i>
+      <input type="text" pInputText placeholder="Search trip or member name..."
+        [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)"
+        style="padding-left: 2.5rem !important;"
+        class="w-full pr-8 py-2 text-xs sm:text-sm rounded-xl border-none bg-transparent focus:ring-0 text-[var(--text-primary)]" />
+      @if (searchQuery()) {
+        <button (click)="searchQuery.set('')" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-transparent border-none cursor-pointer p-0">
+          <i class="pi pi-times"></i>
+        </button>
+      }
+    </div>
+
+    <!-- Filter Segment Buttons -->
+    <div class="flex items-center gap-1 p-1 rounded-xl bg-black/10 dark:bg-white/5 w-full sm:w-auto shrink-0 justify-center">
+      <button (click)="statusFilter.set('all')"
+        class="px-3.5 py-1.5 rounded-lg text-xs font-bold border-none cursor-pointer transition-all"
+        [class.bg-[var(--primary-color,#3b82f6)]]="statusFilter() === 'all'"
+        [class.text-white]="statusFilter() === 'all'"
+        [class.shadow-sm]="statusFilter() === 'all'"
+        [class.bg-transparent]="statusFilter() !== 'all'"
+        [class.text-[var(--text-muted)]]="statusFilter() !== 'all'">
+        All ({{ groups().length }})
+      </button>
+      <button (click)="statusFilter.set('active')"
+        class="px-3.5 py-1.5 rounded-lg text-xs font-bold border-none cursor-pointer transition-all"
+        [class.bg-[var(--primary-color,#3b82f6)]]="statusFilter() === 'active'"
+        [class.text-white]="statusFilter() === 'active'"
+        [class.shadow-sm]="statusFilter() === 'active'"
+        [class.bg-transparent]="statusFilter() !== 'active'"
+        [class.text-[var(--text-muted)]]="statusFilter() !== 'active'">
+        Active ({{ activeGroupsCount() }})
+      </button>
+      <button (click)="statusFilter.set('closed')"
+        class="px-3.5 py-1.5 rounded-lg text-xs font-bold border-none cursor-pointer transition-all"
+        [class.bg-[var(--primary-color,#3b82f6)]]="statusFilter() === 'closed'"
+        [class.text-white]="statusFilter() === 'closed'"
+        [class.shadow-sm]="statusFilter() === 'closed'"
+        [class.bg-transparent]="statusFilter() !== 'closed'"
+        [class.text-[var(--text-muted)]]="statusFilter() !== 'closed'">
+        Closed ({{ groups().length - activeGroupsCount() }})
+      </button>
+    </div>
+  </div>
+
+  <!-- Create Form Modal/Card -->
+  @if (showCreateForm()) {
+    <div class="p-6 rounded-3xl bg-[var(--glass-bg)] border border-[var(--glass-border)] shadow-xl flex flex-col gap-4 animate-in fade-in duration-200">
+      <div class="flex items-center justify-between border-b border-[var(--glass-border)] pb-3">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 text-white flex items-center justify-center text-xs font-bold">
+            <i class="pi pi-plus"></i>
+          </div>
+          <h2 class="text-lg font-bold m-0 text-[var(--text-primary)]">Create New Trip or Shared Group</h2>
+        </div>
+        <button (click)="showCreateForm.set(false)" class="text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-transparent border-none cursor-pointer p-1">
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-12 gap-4">
+        <div class="col-span-12 sm:col-span-6 flex flex-col gap-1.5">
+          <label class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Trip / Group Name</label>
+          <input type="text" pInputText class="w-full text-xs sm:text-sm" placeholder="e.g. Manali Trek 2026, Housemate Bills"
+            [ngModel]="formGroupName()" (ngModelChange)="formGroupName.set($event)"
+            (keyup.enter)="createGroup()" (keyup.escape)="showCreateForm.set(false)" />
+        </div>
+        <div class="col-span-12 sm:col-span-6 flex flex-col gap-1.5">
+          <label class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Your Display Name in Group</label>
+          <input type="text" pInputText class="w-full text-xs sm:text-sm" placeholder="How others will see you"
+            [ngModel]="formCreatorName()" (ngModelChange)="formCreatorName.set($event)"
+            (keyup.enter)="createGroup()" (keyup.escape)="showCreateForm.set(false)" />
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 mt-2 pt-3 border-t border-[var(--glass-border)]">
+        <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="showCreateForm.set(false)"></p-button>
+        <p-button label="Create Trip Group" icon="pi pi-check" (onClick)="createGroup()"></p-button>
+      </div>
+    </div>
+  }
+
+  <!-- Loading Spinner -->
   @if (isLoading()) {
-    <div class="flex justify-center p-8">
-      <p-progressSpinner></p-progressSpinner>
+    <div class="flex justify-center p-12">
+      <p-progressSpinner styleClass="w-12 h-12"></p-progressSpinner>
     </div>
   } @else {
-    <div class="grid grid-cols-12 gap-4">
-      @for (group of groups(); track group.id) {
+    <!-- Trips Cards Grid -->
+    <div class="grid grid-cols-12 gap-4 sm:gap-5">
+      @for (group of filteredGroups(); track group.id; let i = $index) {
         <div class="col-span-12 sm:col-span-6 lg:col-span-4">
-          <a [routerLink]="['/app/split', group.id]" class="no-underline">
-            <div class="glass-card-hover p-4 sm:p-5 rounded-2xl flex flex-col gap-3 h-full cursor-pointer">
-              <div class="flex items-start justify-between gap-2">
-                <h3 class="text-base sm:text-lg font-bold m-0 truncate text-[var(--text-primary)]">{{ group.name }}</h3>
-                <button (click)="copyShareLink(group, $event)"
-                  class="shrink-0 p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border-none cursor-pointer"
-                  pTooltip="Copy share link">
-                  <i class="pi pi-share-alt text-xs text-[var(--text-muted)]"></i>
-                </button>
+          <a [routerLink]="['/app/split', group.id]" class="no-underline block group">
+            <div class="p-5 rounded-3xl bg-[var(--glass-bg)] border border-[var(--glass-border)] shadow-sm hover:shadow-xl hover:border-indigo-500/40 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full relative overflow-hidden">
+              
+              <!-- Subtle Card Background Gradient Header -->
+              <div class="absolute top-0 left-0 right-0 h-24 bg-gradient-to-br opacity-70 pointer-events-none rounded-t-3xl"
+                [class]="getGroupGradient(i)"></div>
+
+              <!-- Top Content Area -->
+              <div class="relative z-10 flex flex-col gap-3">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="flex items-center gap-2.5 min-w-0">
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-600 text-white font-black text-sm flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
+                      {{ group.name.substring(0, 2).toUpperCase() }}
+                    </div>
+                    <div class="flex flex-col min-w-0">
+                      <h3 class="text-base sm:text-lg font-extrabold m-0 truncate text-[var(--text-primary)] group-hover:text-[var(--primary-color,#3b82f6)] transition-colors">
+                        {{ group.name }}
+                      </h3>
+                      <span class="text-[0.7rem] text-[var(--text-muted)] font-medium">Group ID #{{ group.id }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Status Tag Badge -->
+                  @if (group.status === 0) {
+                    <span class="px-2.5 py-1 rounded-full text-[0.65rem] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shrink-0">
+                      Active
+                    </span>
+                  } @else if (group.status === 1) {
+                    <span class="px-2.5 py-1 rounded-full text-[0.65rem] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20 shrink-0 flex items-center gap-1">
+                      <i class="pi pi-lock text-[0.6rem]"></i> Locked
+                    </span>
+                  } @else {
+                    <span class="px-2.5 py-1 rounded-full text-[0.65rem] font-bold bg-slate-500/10 text-slate-400 border border-slate-500/20 shrink-0 flex items-center gap-1">
+                      <i class="pi pi-archive text-[0.6rem]"></i> Closed
+                    </span>
+                  }
+                </div>
+
+                <!-- Member Avatars Stack Row -->
+                <div class="flex items-center justify-between pt-1">
+                  <div class="flex items-center -space-x-2 overflow-hidden">
+                    @for (m of group.members.slice(0, 4); track m.id) {
+                      <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-slate-700 to-slate-900 ring-2 ring-[var(--glass-bg)] text-white text-[0.65rem] font-bold flex items-center justify-center shrink-0"
+                        [pTooltip]="m.name">
+                        {{ m.name.substring(0, 2).toUpperCase() }}
+                      </div>
+                    }
+                    @if (group.members.length > 4) {
+                      <div class="w-7 h-7 rounded-full bg-indigo-600 ring-2 ring-[var(--glass-bg)] text-white text-[0.6rem] font-extrabold flex items-center justify-center shrink-0">
+                        +{{ group.members.length - 4 }}
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Share Link Button -->
+                  <button (click)="copyShareLink(group, $event)"
+                    class="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-[var(--text-muted)] hover:text-[var(--primary-color,#3b82f6)] transition-all border-none cursor-pointer flex items-center justify-center shrink-0"
+                    pTooltip="Copy share link">
+                    <i class="pi pi-share-alt text-xs"></i>
+                  </button>
+                </div>
               </div>
-              <div class="flex items-center gap-2 text-xs sm:text-sm text-[var(--text-muted)]">
-                <i class="pi pi-users"></i>
-                <span>{{ group.members.length }} {{ group.members.length === 1 ? 'person' : 'people' }}</span>
+
+              <!-- Card Footer: Total Spend & Open Action -->
+              <div class="relative z-10 mt-4 pt-3 border-t border-[var(--glass-border)] flex items-center justify-between gap-2">
+                <div class="flex flex-col">
+                  <span class="text-[0.65rem] font-bold text-[var(--text-muted)] uppercase tracking-wider">Total Group Spend</span>
+                  <span class="text-base sm:text-lg font-black gradient-text">{{ group.totalSpend | currency:'INR' }}</span>
+                </div>
+                <div class="text-xs font-bold text-[var(--primary-color,#3b82f6)] flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                  <span>View Trip</span>
+                  <i class="pi pi-arrow-right text-[0.7rem]"></i>
+                </div>
               </div>
-              <div class="mt-auto pt-2 border-t border-white/5">
-                <span class="text-xs text-[var(--text-muted)]">Total spend</span>
-                <div class="text-lg sm:text-xl font-bold gradient-text">{{ group.totalSpend | currency:'INR' }}</div>
-              </div>
+
             </div>
           </a>
         </div>
       } @empty {
         <div class="col-span-12">
-          <app-empty-state icon="pi pi-map" title="No trips yet"
-            message="Create one to start splitting expenses." actionLabel="New Trip / Group"
+          <app-empty-state icon="pi pi-compass" title="No matching trips found"
+            message="Create a new trip group or try adjusting your search filter." actionLabel="Create New Trip"
             (action)="openCreateForm()"></app-empty-state>
         </div>
       }
     </div>
   }
 </div>
+

@@ -26,14 +26,22 @@ export class PwaUpdateService {
   }
 
   private initPwaUpdateCheck(): void {
-    // Listen for version ready events
+    // Check for update ONCE when the user turns on/launches the application
+    this.swUpdate.checkForUpdate().catch(() => {});
+
+    // Trigger update ONLY when Angular Service Worker confirms a real UI version change
     this.swUpdate.versionUpdates.pipe(
       filter((event): event is VersionReadyEvent => event.type === 'VERSION_READY')
-    ).subscribe(() => {
-      this.showUpdateNotification();
+    ).subscribe(async () => {
+      await this.swUpdate.activateUpdate();
+      if (document.hidden) {
+        document.location.reload();
+      } else {
+        this.showUpdateNotification();
+      }
     });
 
-    // Also handle unrecoverable states
+    // Handle unrecoverable states
     this.swUpdate.unrecoverable.subscribe(() => {
       this.messageService.add({
         severity: 'error',
@@ -45,25 +53,12 @@ export class PwaUpdateService {
         data: { action: 'reload' }
       });
     });
-
-    // Periodic check every 6 hours for long-lived PWA sessions
-    const CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
-    setInterval(() => {
-      this.swUpdate.checkForUpdate().catch(() => {
-        // Silent catch for offline or network issues
-      });
-    }, CHECK_INTERVAL_MS);
   }
 
   private initNonPwaUpdateCheck(): void {
-    // Extract script src attributes currently loaded in the page
     this.recordInitialScriptHashes();
-
-    // Periodically fetch index.html every 30 minutes in non-PWA mode
-    const NON_PWA_CHECK_INTERVAL_MS = 30 * 60 * 1000;
-    setInterval(() => {
-      this.checkNonPwaUpdate();
-    }, NON_PWA_CHECK_INTERVAL_MS);
+    // Check ONCE on application startup
+    this.checkNonPwaUpdate();
   }
 
   private recordInitialScriptHashes(): void {

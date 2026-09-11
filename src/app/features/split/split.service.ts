@@ -164,6 +164,28 @@ export class SplitService {
     if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to lock group.');
   }
 
+  async unlockGroup(groupId: number): Promise<void> {
+    const result = await firstValueFrom(this.api.post<any>(`Split/groups/${groupId}/unlock`, {}));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to unlock group.');
+  }
+
+  async closeGroup(groupId: number): Promise<void> {
+    const result = await firstValueFrom(this.api.post<any>(`Split/groups/${groupId}/close`, {}));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to close group.');
+  }
+
+  async updateGroup(groupId: number, name: string): Promise<SplitGroup> {
+    const result = await firstValueFrom(this.api.put<SplitGroup>(`Split/groups/${groupId}`, { groupId, name }));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to update group details.');
+    return result.value;
+  }
+
+  async renameMember(memberId: number, name: string): Promise<SplitMember> {
+    const result = await firstValueFrom(this.api.post<SplitMember>('Split/members/rename', { memberId, name }));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to rename member.');
+    return result.value;
+  }
+
   async importToLedger(req: ImportToLedgerRequest): Promise<ImportToLedgerResult> {
     const result = await firstValueFrom(this.api.post<ImportToLedgerResult>('Split/import-to-ledger', req));
     if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to import.');

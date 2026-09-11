@@ -1,0 +1,311 @@
+<p-confirmDialog></p-confirmDialog>
+
+<!-- Group Settings Modal -->
+<p-dialog [(visible)]="visible" header="Group Settings" [modal]="true"
+  [style]="{ width: '95vw', maxWidth: '38rem' }" [breakpoints]="{ '640px': '95vw' }" styleClass="glass-card">
+  <div class="flex flex-col gap-4">
+    <!-- Responsive Segmented Tab Navigation Bar -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-1 sm:gap-1.5 p-1 rounded-2xl bg-[var(--glass-bg)] border border-[var(--glass-border)]">
+      <button (click)="settingsTab.set('members')" pTooltip="Group Members & UPI IDs"
+        class="px-1.5 sm:px-2.5 py-2 rounded-xl text-[0.65rem] sm:text-[0.72rem] md:text-xs font-bold border-none cursor-pointer transition-all flex items-center justify-center gap-1 min-w-0"
+        [class.bg-[var(--primary-color,#3b82f6)]]="settingsTab() === 'members'"
+        [class.text-white]="settingsTab() === 'members'"
+        [class.shadow-md]="settingsTab() === 'members'"
+        [class.bg-transparent]="settingsTab() !== 'members'"
+        [class.text-[var(--text-muted)]]="settingsTab() !== 'members'">
+        <i class="pi pi-users text-xs shrink-0"></i>
+        <span class="truncate">Members</span>
+      </button>
+      <button (click)="settingsTab.set('config')" pTooltip="Trip Name & Lock Status"
+        class="px-1.5 sm:px-2.5 py-2 rounded-xl text-[0.65rem] sm:text-[0.72rem] md:text-xs font-bold border-none cursor-pointer transition-all flex items-center justify-center gap-1 min-w-0"
+        [class.bg-[var(--primary-color,#3b82f6)]]="settingsTab() === 'config'"
+        [class.text-white]="settingsTab() === 'config'"
+        [class.shadow-md]="settingsTab() === 'config'"
+        [class.bg-transparent]="settingsTab() !== 'config'"
+        [class.text-[var(--text-muted)]]="settingsTab() !== 'config'">
+        <i class="pi pi-sliders-h text-xs shrink-0"></i>
+        <span class="truncate">Preferences</span>
+      </button>
+      <button (click)="settingsTab.set('share')" pTooltip="Public & Member Links"
+        class="px-1.5 sm:px-2.5 py-2 rounded-xl text-[0.65rem] sm:text-[0.72rem] md:text-xs font-bold border-none cursor-pointer transition-all flex items-center justify-center gap-1 min-w-0"
+        [class.bg-[var(--primary-color,#3b82f6)]]="settingsTab() === 'share'"
+        [class.text-white]="settingsTab() === 'share'"
+        [class.shadow-md]="settingsTab() === 'share'"
+        [class.bg-transparent]="settingsTab() !== 'share'"
+        [class.text-[var(--text-muted)]]="settingsTab() !== 'share'">
+        <i class="pi pi-share-alt text-xs shrink-0"></i>
+        <span class="truncate">Share & Invite</span>
+      </button>
+      <button (click)="settingsTab.set('danger')" pTooltip="Close & Admin Actions"
+        class="px-1.5 sm:px-2.5 py-2 rounded-xl text-[0.65rem] sm:text-[0.72rem] md:text-xs font-bold border-none cursor-pointer transition-all flex items-center justify-center gap-1 min-w-0"
+        [class.bg-[var(--primary-color,#3b82f6)]]="settingsTab() === 'danger'"
+        [class.text-white]="settingsTab() === 'danger'"
+        [class.shadow-md]="settingsTab() === 'danger'"
+        [class.bg-transparent]="settingsTab() !== 'danger'"
+        [class.text-[var(--text-muted)]]="settingsTab() !== 'danger'">
+        <i class="pi pi-shield text-xs shrink-0"></i>
+        <span class="truncate">Status & Admin</span>
+      </button>
+    </div>
+
+    <!-- Members & UPI Tab -->
+    @if (settingsTab() === 'members') {
+      <div class="flex flex-col gap-3">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Group Members ({{ group()?.members?.length }})</span>
+          @if (!isGroupClosed()) {
+            <button (click)="showAddMember.set(true)"
+              class="text-xs text-[var(--primary-color,#3b82f6)] bg-transparent border-none cursor-pointer font-bold flex items-center gap-1 hover:underline">
+              <i class="pi pi-plus"></i> Add Member
+            </button>
+          }
+        </div>
+
+        @if (showAddMember()) {
+          <div class="p-3.5 rounded-2xl flex flex-col gap-2.5 bg-[var(--glass-bg)] border border-[var(--glass-border)] shadow-sm">
+            <span class="text-xs font-bold text-[var(--text-primary)]">New Member Details</span>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <input type="text" pInputText class="w-full text-xs" placeholder="Member Name"
+                [ngModel]="newMemberName()" (ngModelChange)="newMemberName.set($event)" />
+              <input type="text" pInputText class="w-full text-xs" placeholder="UPI ID (e.g. name@upi)"
+                [ngModel]="newMemberUpi()" (ngModelChange)="newMemberUpi.set($event)" />
+            </div>
+            <div class="flex justify-end gap-2 mt-1">
+              <p-button label="Cancel" severity="secondary" [text]="true" size="small" (onClick)="showAddMember.set(false)"></p-button>
+              <p-button label="Add Person" size="small" (onClick)="addMember()"></p-button>
+            </div>
+          </div>
+        }
+
+        <div class="flex flex-col gap-2.5 max-h-64 sm:max-h-80 overflow-y-auto pr-1 pb-4">
+          @for (m of group()?.members; track m.id) {
+            <div class="p-3 sm:p-3.5 rounded-2xl flex items-center justify-between gap-3 bg-[var(--glass-bg)] border border-[var(--glass-border)] shadow-sm">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 text-white font-bold text-xs sm:text-sm flex items-center justify-center shrink-0 shadow-sm">
+                  {{ m.name.substring(0, 2).toUpperCase() }}
+                </div>
+                <div class="flex flex-col min-w-0">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    @if (renamingMemberId() === m.id) {
+                      <input type="text" pInputText class="text-xs py-1 px-2 w-36"
+                        [ngModel]="renameMemberName()" (ngModelChange)="renameMemberName.set($event)"
+                        (keyup.enter)="saveMemberRename(m.id)" (keyup.escape)="cancelRenameMember()" />
+                    } @else {
+                      <span class="font-bold text-sm truncate text-[var(--text-primary)]">{{ m.name }}</span>
+                    }
+                    @if (m.linkedUserId === group()?.createdByUserId) {
+                      <p-tag value="Admin" severity="warn" styleClass="text-[0.65rem] px-1.5 py-0.5 font-bold"></p-tag>
+                    }
+                    @if (m.linkedUserId && m.linkedUserId === currentUserMember()?.linkedUserId) {
+                      <p-tag value="You" severity="info" styleClass="text-[0.65rem] px-1.5 py-0.5 font-bold"></p-tag>
+                    }
+                  </div>
+                  <div class="flex items-center gap-1 text-xs text-[var(--text-muted)] mt-0.5">
+                    @if (editingMemberId() === m.id) {
+                      <input type="text" pInputText class="text-xs py-1 px-2 w-44" placeholder="e.g. name@upi"
+                        [ngModel]="editMemberUpi()" (ngModelChange)="editMemberUpi.set($event)"
+                        (keyup.enter)="saveEditUpi(m.id)" (keyup.escape)="cancelEditUpi()" />
+                    } @else {
+                      @if (m.upiId) {
+                        <span class="text-emerald-500 font-mono text-[0.75rem] font-semibold flex items-center gap-1 truncate">
+                          <i class="pi pi-check-circle text-[0.65rem]"></i> {{ m.upiId }}
+                        </span>
+                      } @else {
+                        <span class="italic text-[0.75rem] text-[var(--text-muted)]">No UPI ID set</span>
+                      }
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <!-- Action buttons -->
+              <div class="flex items-center gap-1 shrink-0">
+                @if (renamingMemberId() === m.id) {
+                  <button (click)="saveMemberRename(m.id)" class="text-emerald-500 bg-transparent border-none cursor-pointer p-1.5 text-xs font-bold">Save</button>
+                  <button (click)="cancelRenameMember()" class="text-[var(--text-muted)] bg-transparent border-none cursor-pointer p-1.5 text-xs">Cancel</button>
+                } @else if (editingMemberId() === m.id) {
+                  <button (click)="saveEditUpi(m.id)" class="text-emerald-500 bg-transparent border-none cursor-pointer p-1.5 text-xs font-bold">Save</button>
+                  <button (click)="cancelEditUpi()" class="text-[var(--text-muted)] bg-transparent border-none cursor-pointer p-1.5 text-xs">Cancel</button>
+                } @else {
+                  @if (canRenameMember(m)) {
+                    <button (click)="openRenameMember(m)" pTooltip="Rename Member"
+                      class="text-xs text-[var(--text-muted)] hover:text-[var(--primary-color)] bg-transparent border-none cursor-pointer p-1.5 rounded-lg hover:bg-[var(--glass-bg)]">
+                      <i class="pi pi-pencil"></i>
+                    </button>
+                  }
+                  @if (canEditUpi(m)) {
+                    <button (click)="startEditUpi(m)" pTooltip="Edit UPI ID"
+                      class="text-xs text-[var(--text-muted)] hover:text-emerald-500 bg-transparent border-none cursor-pointer p-1.5 rounded-lg hover:bg-[var(--glass-bg)]">
+                      <i class="pi pi-wallet"></i>
+                    </button>
+                  }
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Trip Preferences Tab -->
+    @if (settingsTab() === 'config') {
+      <div class="flex flex-col gap-4 pb-2">
+        <!-- Trip Name Section -->
+        <div class="p-4 rounded-2xl flex flex-col gap-2 bg-[var(--glass-bg)] border border-[var(--glass-border)] shadow-sm">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Trip / Group Name</span>
+            @if (isGroupAdmin() && !editingTripName()) {
+              <button (click)="openEditTripName()" class="text-xs text-[var(--primary-color,#3b82f6)] bg-transparent border-none cursor-pointer font-bold flex items-center gap-1">
+                <i class="pi pi-pencil text-xs"></i> Edit
+              </button>
+            }
+          </div>
+          @if (editingTripName()) {
+            <div class="flex flex-col sm:flex-row gap-2 mt-1">
+              <input type="text" pInputText class="w-full text-sm"
+                [ngModel]="tripNameInput()" (ngModelChange)="tripNameInput.set($event)"
+                (keyup.enter)="saveTripName()" (keyup.escape)="cancelEditTripName()" />
+              <div class="flex gap-2 shrink-0">
+                <p-button label="Cancel" severity="secondary" [text]="true" size="small" (onClick)="cancelEditTripName()"></p-button>
+                <p-button label="Save Name" size="small" (onClick)="saveTripName()"></p-button>
+              </div>
+            </div>
+          } @else {
+            <div class="flex items-center justify-between">
+              <span class="text-base sm:text-lg font-extrabold text-[var(--text-primary)]">{{ group()?.name }}</span>
+            </div>
+            @if (!isGroupAdmin()) {
+              <span class="text-xs text-[var(--text-muted)] italic">Only the trip admin can edit the group name.</span>
+            }
+          }
+        </div>
+
+        <!-- Lock Control Card -->
+        <div class="p-4 rounded-2xl flex flex-col gap-2 bg-[var(--glass-bg)] border border-[var(--glass-border)] shadow-sm">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="pi" [class.pi-lock]="isGroupLocked()" [class.pi-lock-open]="!isGroupLocked()"
+                [class.text-amber-500]="isGroupLocked()" [class.text-emerald-500]="!isGroupLocked()"></i>
+              <span class="text-sm font-bold text-[var(--text-primary)]">Group Lock Status</span>
+            </div>
+            @if (isGroupAdmin()) {
+              <p-button [label]="isGroupLocked() ? 'Unlock Group' : 'Lock Group'"
+                [severity]="isGroupLocked() ? 'success' : 'warn'" [text]="true" size="small"
+                (onClick)="toggleLockGroup()"></p-button>
+            }
+          </div>
+          <p class="text-xs text-[var(--text-muted)] m-0 leading-relaxed">
+            @if (isGroupLocked()) {
+              🔒 <strong>Group is Locked:</strong> New users cannot join via invite link. Existing members can still log expenses and settle up balances.
+            } @else {
+              🔓 <strong>Group is Active:</strong> New members can join via invite link, log expenses, and settle balances.
+            }
+          </p>
+        </div>
+      </div>
+    }
+
+    <!-- Share & Invites Tab -->
+    @if (settingsTab() === 'share') {
+      <div class="flex flex-col gap-4 pb-2">
+        <!-- Public Link Section -->
+        <div class="p-4 rounded-2xl flex flex-col gap-2 bg-[var(--glass-bg)] border border-[var(--glass-border)] shadow-sm">
+          <span class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Public Share Link (Read-Only)</span>
+          <div class="flex flex-col sm:flex-row items-center gap-2">
+            <input type="text" pInputText [value]="shareLink()" readonly class="w-full text-xs font-mono" />
+            <p-button label="Copy Link" icon="pi pi-copy" size="small" (onClick)="copyShareLink()" styleClass="w-full sm:w-auto shrink-0"></p-button>
+          </div>
+          <span class="text-[0.75rem] text-[var(--text-muted)]">Short-lived public URL generated by admin for guests to view transactions.</span>
+        </div>
+
+        <!-- Dynamic Invite Section -->
+        <div class="p-4 rounded-2xl flex flex-col gap-2 bg-[var(--glass-bg)] border border-[var(--glass-border)] shadow-sm">
+          <span class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Group Join Link (For New Members)</span>
+          @if (isGroupLocked()) {
+            <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs flex items-center gap-2 font-medium">
+              <i class="pi pi-lock"></i>
+              <span>Group is locked — new users cannot join right now.</span>
+            </div>
+          } @else if (generatedInviteLink()) {
+            <div class="flex flex-col sm:flex-row items-center gap-2">
+              <input type="text" pInputText [value]="generatedInviteLink()" readonly class="w-full text-xs font-mono" />
+              <p-button label="Copy Invite" icon="pi pi-copy" size="small" (onClick)="copyInviteLink()" styleClass="w-full sm:w-auto shrink-0"></p-button>
+            </div>
+          } @else {
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <span class="text-xs text-[var(--text-muted)]">Generate a unique invite link for participants to join.</span>
+              <p-button label="Create Invite" icon="pi pi-link" size="small" (onClick)="createInvite()"></p-button>
+            </div>
+          }
+        </div>
+
+        <!-- WhatsApp Quick Share -->
+        <div class="p-4 rounded-2xl flex items-center justify-between gap-3 bg-[var(--glass-bg)] border border-[var(--glass-border)] shadow-sm">
+          <div class="flex items-center gap-2.5">
+            <i class="pi pi-whatsapp text-emerald-500 text-xl"></i>
+            <div class="flex flex-col">
+              <span class="text-xs font-bold text-[var(--text-primary)]">Share via WhatsApp</span>
+              <span class="text-[0.75rem] text-[var(--text-muted)]">Send trip invite directly to your WhatsApp group</span>
+            </div>
+          </div>
+          <p-button label="Share" severity="success" icon="pi pi-send" size="small" (onClick)="shareViaWhatsApp()"></p-button>
+        </div>
+      </div>
+    }
+
+    <!-- Status & Danger Zone Tab -->
+    @if (settingsTab() === 'danger') {
+      <div class="flex flex-col gap-4 pb-2">
+        <!-- Status Summary Card -->
+        <div class="p-4 rounded-2xl flex flex-col gap-2 bg-[var(--glass-bg)] border border-[var(--glass-border)] shadow-sm">
+          <span class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Settlement & Close Readiness</span>
+          <div class="flex items-center justify-between text-xs pt-1">
+            <span class="text-[var(--text-muted)]">Total Trip Spend:</span>
+            <strong class="text-sm font-bold text-[var(--primary-color,#3b82f6)]">{{ (group()?.totalSpend ?? 0) | currency:'INR' }}</strong>
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-[var(--text-muted)]">Unsettled Debts Remaining:</span>
+            <span [class.text-emerald-500]="visibleDebts().length === 0" [class.text-amber-500]="visibleDebts().length > 0" class="font-bold">
+              {{ visibleDebts().length === 0 ? 'All Settled 🎉' : visibleDebts().length + ' pending obligation(s)' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Admin Close Action -->
+        @if (isGroupAdmin()) {
+          <div class="p-4 rounded-2xl flex flex-col gap-3 bg-red-500/5 border border-red-500/20 shadow-sm">
+            <span class="text-xs font-bold text-red-500 uppercase tracking-wider">Admin Actions</span>
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <div class="flex flex-col">
+                <span class="text-xs font-bold text-[var(--text-primary)]">Close & Archive Trip Group</span>
+                <span class="text-[0.75rem] text-[var(--text-muted)]">Marks trip complete, stops new expenses, and enables ledger import.</span>
+              </div>
+              <p-button label="Close Group" icon="pi pi-archive" severity="danger" size="small"
+                [disabled]="isGroupClosed()" (onClick)="closeGroupAction()"></p-button>
+            </div>
+          </div>
+        }
+
+        @if (isGroupClosed()) {
+          <div class="p-4 rounded-2xl flex flex-col gap-3 bg-emerald-500/5 border border-emerald-500/20 shadow-sm">
+            <span class="text-xs font-bold text-emerald-500 uppercase tracking-wider">Personal Ledger Sync</span>
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <div class="flex flex-col">
+                <span class="text-xs font-bold text-[var(--text-primary)]">Import My Share to Ledger</span>
+                <span class="text-[0.75rem] text-[var(--text-muted)]">Creates real ledger transactions for your personal share of expenses.</span>
+              </div>
+              <p-button label="Import to Ledger" icon="pi pi-wallet" severity="success" size="small"
+                (onClick)="openImport.emit(); visible.set(false)"></p-button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-end w-full pt-1">
+      <p-button label="Done" severity="secondary" (onClick)="visible.set(false)" styleClass="w-full sm:w-auto font-bold rounded-xl"></p-button>
+    </div>
+  </ng-template>
+</p-dialog>

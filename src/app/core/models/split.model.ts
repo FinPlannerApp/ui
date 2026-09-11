@@ -25,6 +25,16 @@ export interface CreateGroupRequest {
   creatorName: string;
 }
 
+export interface UpdateGroupRequest {
+  groupId: number;
+  name: string;
+}
+
+export interface RenameMemberRequest {
+  memberId: number;
+  name: string;
+}
+
 export interface ExpensePayerLine {
   memberId: number;
   amountPaid: number;
