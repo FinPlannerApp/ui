@@ -7,6 +7,7 @@
     "build": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "test:e2e": "playwright test",
     "serve:ssr:angular-app": "node dist/angular-app/server/server.mjs",
     "e2e": "cypress open",
     "e2e:run": "cypress run"
@@ -50,12 +51,14 @@
     "quill": "^2.0.3",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "zone.js": "^0.15.1"
   },
   "devDependencies": {
     "@angular/build": "^20.3.23",
     "@angular/cli": "^20.3.23",
     "@angular/compiler-cli": "^20.3.23",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/jasmine": "~5.1.0",
     "@types/node": "^20.17.19",

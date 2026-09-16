@@ -1,23 +1,18 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { DashboardService } from './dashboard';
 
-import { Dashboard } from './dashboard';
+describe('DashboardService', () => {
+  let service: DashboardService;
 
-describe('Dashboard', () => {
-  let component: Dashboard;
-  let fixture: ComponentFixture<Dashboard>;
-
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [Dashboard]
-    })
-    .compileComponents();
-
-    fixture = TestBed.createComponent(Dashboard);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient()]
+    });
+    service = TestBed.inject(DashboardService);
   });
 
   it('should create', () => {
-    expect(component).toBeTruthy();
+    expect(service).toBeTruthy();
   });
 });

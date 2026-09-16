@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { GenericCrud } from './generic-crud';
 
 describe('GenericCrud', () => {
-  let service: GenericCrud;
+  let service: GenericCrud<any>;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});

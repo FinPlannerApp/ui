@@ -1,5 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { provideHttpClient } from '@angular/common/http';
+import { provideRouter } from '@angular/router';
+import { MessageService, ConfirmationService } from 'primeng/api';
 import { Dashboard } from './dashboard';
 
 describe('Dashboard', () => {
@@ -8,9 +10,14 @@ describe('Dashboard', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Dashboard]
-    })
-    .compileComponents();
+      imports: [Dashboard],
+      providers: [
+        provideHttpClient(),
+        provideRouter([]),
+        MessageService,
+        ConfirmationService
+      ]
+    }).compileComponents();
 
     fixture = TestBed.createComponent(Dashboard);
     component = fixture.componentInstance;
