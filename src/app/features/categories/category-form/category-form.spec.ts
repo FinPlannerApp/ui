@@ -1,8 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
-import { provideRouter } from '@angular/router';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { CategoryForm } from './category-form';
+import { COMMON_TEST_PROVIDERS } from '../../../core/utils/test-providers';
 
 describe('CategoryForm', () => {
   let component: CategoryForm;
@@ -11,12 +9,7 @@ describe('CategoryForm', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [CategoryForm],
-      providers: [
-        provideHttpClient(),
-        provideRouter([]),
-        { provide: DynamicDialogRef, useValue: { close: () => {} } },
-        { provide: DynamicDialogConfig, useValue: {} }
-      ]
+      providers: [...COMMON_TEST_PROVIDERS]
     }).compileComponents();
 
     fixture = TestBed.createComponent(CategoryForm);
@@ -28,3 +21,4 @@ describe('CategoryForm', () => {
     expect(component).toBeTruthy();
   });
 });
+

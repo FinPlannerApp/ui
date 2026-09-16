@@ -1,8 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
-import { provideRouter } from '@angular/router';
-import { MessageService, ConfirmationService } from 'primeng/api';
 import { TransactionList } from './transaction-list';
+import { COMMON_TEST_PROVIDERS } from '../../../core/utils/test-providers';
 
 describe('TransactionList', () => {
   let component: TransactionList;
@@ -11,12 +9,7 @@ describe('TransactionList', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TransactionList],
-      providers: [
-        provideHttpClient(),
-        provideRouter([]),
-        MessageService,
-        ConfirmationService
-      ]
+      providers: [...COMMON_TEST_PROVIDERS]
     }).compileComponents();
 
     fixture = TestBed.createComponent(TransactionList);
@@ -28,3 +21,4 @@ describe('TransactionList', () => {
     expect(component).toBeTruthy();
   });
 });
+

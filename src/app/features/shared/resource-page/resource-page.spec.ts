@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ResourcePage } from './resource-page';
+import { COMMON_TEST_PROVIDERS } from '../../../core/utils/test-providers';
 
 describe('ResourcePage', () => {
   let component: ResourcePage<any>;
@@ -8,7 +9,8 @@ describe('ResourcePage', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ResourcePage]
+      imports: [ResourcePage],
+      providers: [...COMMON_TEST_PROVIDERS]
     })
     .compileComponents();
 
@@ -21,3 +23,4 @@ describe('ResourcePage', () => {
     expect(component).toBeTruthy();
   });
 });
+

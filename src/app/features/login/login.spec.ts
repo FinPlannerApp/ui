@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
-import { provideRouter } from '@angular/router';
 import { Login } from './login';
+import { COMMON_TEST_PROVIDERS } from '../../core/utils/test-providers';
 
 describe('Login', () => {
   let component: Login;
@@ -10,10 +9,7 @@ describe('Login', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [Login],
-      providers: [
-        provideHttpClient(),
-        provideRouter([])
-      ]
+      providers: [...COMMON_TEST_PROVIDERS]
     }).compileComponents();
 
     fixture = TestBed.createComponent(Login);
@@ -25,3 +21,4 @@ describe('Login', () => {
     expect(component).toBeTruthy();
   });
 });
+

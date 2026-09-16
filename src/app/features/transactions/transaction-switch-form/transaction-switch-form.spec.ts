@@ -1,8 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
-import { provideRouter } from '@angular/router';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TransactionSwitchForm } from './transaction-switch-form';
+import { COMMON_TEST_PROVIDERS } from '../../../core/utils/test-providers';
 
 describe('TransactionSwitchForm', () => {
   let component: TransactionSwitchForm;
@@ -11,12 +9,7 @@ describe('TransactionSwitchForm', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TransactionSwitchForm],
-      providers: [
-        provideHttpClient(),
-        provideRouter([]),
-        { provide: DynamicDialogRef, useValue: { close: () => {} } },
-        { provide: DynamicDialogConfig, useValue: {} }
-      ]
+      providers: [...COMMON_TEST_PROVIDERS]
     }).compileComponents();
 
     fixture = TestBed.createComponent(TransactionSwitchForm);
@@ -28,3 +21,4 @@ describe('TransactionSwitchForm', () => {
     expect(component).toBeTruthy();
   });
 });
+

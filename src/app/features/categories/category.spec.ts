@@ -1,17 +1,13 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
-import { provideRouter } from '@angular/router';
 import { Category } from './category';
+import { COMMON_TEST_PROVIDERS } from '../../core/utils/test-providers';
 
 describe('Category', () => {
   let service: Category;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        provideHttpClient(),
-        provideRouter([])
-      ]
+      providers: [...COMMON_TEST_PROVIDERS]
     });
     service = TestBed.inject(Category);
   });
@@ -20,3 +16,4 @@ describe('Category', () => {
     expect(service).toBeTruthy();
   });
 });
+

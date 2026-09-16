@@ -1,8 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
-import { provideRouter } from '@angular/router';
-import { MessageService, ConfirmationService } from 'primeng/api';
 import { Dashboard } from './dashboard';
+import { COMMON_TEST_PROVIDERS } from '../../../core/utils/test-providers';
 
 describe('Dashboard', () => {
   let component: Dashboard;
@@ -11,12 +9,7 @@ describe('Dashboard', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [Dashboard],
-      providers: [
-        provideHttpClient(),
-        provideRouter([]),
-        MessageService,
-        ConfirmationService
-      ]
+      providers: [...COMMON_TEST_PROVIDERS]
     }).compileComponents();
 
     fixture = TestBed.createComponent(Dashboard);
@@ -28,3 +21,4 @@ describe('Dashboard', () => {
     expect(component).toBeTruthy();
   });
 });
+
