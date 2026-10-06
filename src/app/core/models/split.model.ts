@@ -58,9 +58,19 @@ export interface CreateExpenseRequest {
   participants: ExpenseParticipantLine[];
 }
 
-export interface PayerLine { memberId: number; memberName: string; amountPaid: number; }
-export interface ParticipantLine { memberId: number; memberName: string; shareAmount: number; }
+export interface PayerLine {
+  memberId: number;
+  memberName: string;
+  amountPaid: number;
+}
 
+export interface ParticipantLine {
+  memberId: number;
+  memberName: string;
+  shareAmount: number;
+  /** Raw input behind the share: exact amount / percentage / share count (null for Equal). */
+  splitValue?: number | null;
+}
 export interface SplitExpense {
   id: number;
   description: string;
@@ -77,7 +87,12 @@ export interface MemberBalance {
   memberName: string;
   totalPaid?: number;
   totalShare?: number;
-  netBalance: number; // positive = owed money, negative = owes money
+  settledPaid?: number;
+  settledReceived?: number;
+  /** Signed amount of payments marked "sent" but not yet confirmed (+ sender, - receiver). */
+  inTransit?: number;
+  /** totalPaid - totalShare + settledPaid - settledReceived. Positive = owed money. */
+  netBalance: number;
 }
 
 export interface SimplifiedDebt {
@@ -101,9 +116,41 @@ export interface Settlement {
   completedAt: string | null;
 }
 
+export interface CategorySpend {
+  category: string;
+  amount: number;
+  count: number;
+}
+
 export interface GroupBalances {
   balances: MemberBalance[];
   simplifiedPlan: SimplifiedDebt[];
+  categoryBreakdown?: CategorySpend[];
+  expenseCount?: number;
+}
+
+export interface ExpensePage {
+  items: SplitExpense[];
+  nextCursor: string | null;
+  totalCount: number;
+}
+
+export interface GroupFullDetails {
+  group: SplitGroup;
+  expenses: SplitExpense[];
+  nextCursor: string | null;
+  totalExpenseCount: number;
+  balances: GroupBalances;
+}
+
+export interface GroupExport {
+  groupName: string;
+  currency: string;
+  exportedAtUtc: string;
+  members: SplitMember[];
+  expenses: SplitExpense[];
+  settlements: Settlement[];
+  balances: GroupBalances;
 }
 
 export interface CreateSettlementRequest {
@@ -126,6 +173,8 @@ export interface PublicGroupView {
   currency: string;
   members: SplitMember[];
   expenses: SplitExpense[];
+  nextCursor?: string | null;
+  totalExpenseCount?: number;
   balances: GroupBalances;
 }
 

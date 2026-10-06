@@ -36,7 +36,8 @@
           </div>
           <div class="flex items-center justify-between text-xs text-[var(--text-muted)] pt-1.5 border-t border-white/5">
             <span>Paid: <strong class="text-[var(--text-primary)] font-medium">{{ (b.totalPaid ?? 0) | currency:'INR' }}</strong></span>
-            <span>Share: <strong class="text-[var(--text-primary)] font-medium">{{ (b.totalShare ?? 0) | currency:'INR' }}</strong></span>
+            <span>Share: <strong class="text-[var(--text-primary)] font-medium">− {{ (b.totalShare ?? 0) | currency:'INR' }}</strong></span>
+            <span>Settled: <strong class="text-[var(--text-primary)] font-medium">{{ settledNet(b) | currency:'INR' }}</strong></span>
           </div>
         </div>
       }
@@ -57,22 +58,50 @@
       </div>
     }
 
-    <!-- Expenses -->
-    <div class="flex flex-col gap-2">
-      <h3 class="text-sm font-bold text-[var(--text-muted)] m-0">Expenses</h3>
-      @for (expense of view()!.expenses; track expense.id) {
-        <div class="glass-card p-4 rounded-2xl flex items-center justify-between gap-3">
-          <div class="flex flex-col min-w-0">
-            <span class="font-semibold text-sm text-[var(--text-primary)] truncate">{{ expense.description }}</span>
-            <span class="text-xs text-[var(--text-muted)]">
-              Paid by {{ expense.payers[0]?.memberName }} · {{ expense.date | date:'mediumDate' }}
+    <!-- Expenses, grouped by day, loading more as you scroll -->
+    <div class="flex flex-col gap-4">
+      <h3 class="text-sm font-bold text-[var(--text-muted)] m-0">Expenses ({{ view()!.balances.expenseCount ?? expenses().length }})</h3>
+      @for (day of expenseGroups(); track day.dayKey) {
+        <section class="flex flex-col gap-2">
+          <div class="flex items-center justify-between px-1">
+            <span class="text-xs font-extrabold uppercase tracking-wider text-[var(--text-muted)]">
+              @if (day.label) { <span class="text-[var(--primary-color,#3b82f6)]">{{ day.label }}</span> · }
+              {{ day.date | date:'EEE, d MMM y' }}
             </span>
+            <span class="text-xs font-bold text-[var(--text-muted)]">{{ day.total | currency:'INR' }}</span>
           </div>
-          <span class="text-sm sm:text-base font-bold shrink-0">{{ expense.amount | currency:'INR' }}</span>
-        </div>
+          @for (expense of day.items; track expense.id) {
+            <div class="glass-card p-4 rounded-2xl flex flex-col gap-2">
+              <div class="flex items-center justify-between gap-3">
+                <div class="flex flex-col min-w-0">
+                  <span class="font-semibold text-sm text-[var(--text-primary)] truncate">{{ expense.description }}</span>
+                  <span class="text-xs text-[var(--text-muted)]">
+                    Paid by {{ expense.payers.length === 1 ? expense.payers[0]?.memberName : (expense.payers.length + ' people') }}
+                  </span>
+                </div>
+                <span class="text-sm sm:text-base font-bold shrink-0">{{ expense.amount | currency:'INR' }}</span>
+              </div>
+              <div class="flex flex-wrap gap-x-3 gap-y-1 text-[0.7rem] text-[var(--text-muted)] pt-1.5 border-t border-white/5">
+                @for (p of expense.participants; track p.memberId) {
+                  <span>{{ p.memberName }} <strong class="text-[var(--text-primary)] font-medium">{{ p.shareAmount | currency:'INR' }}</strong></span>
+                }
+              </div>
+            </div>
+          }
+        </section>
       } @empty {
         <div class="glass-card p-6 rounded-2xl text-center">
           <p class="text-sm text-[var(--text-muted)] m-0">No expenses logged yet.</p>
+        </div>
+      }
+
+      @if (nextCursor()) {
+        <div appInfiniteScroll [disabled]="isLoadingMore() || moreFailed()" (reachedEnd)="loadMore()" class="flex justify-center py-4">
+          @if (moreFailed()) {
+            <p-button label="Couldn't load more — tap to retry" icon="pi pi-refresh" [text]="true" size="small" (onClick)="retry()"></p-button>
+          } @else {
+            <p-progressSpinner styleClass="w-7 h-7" strokeWidth="5"></p-progressSpinner>
+          }
         </div>
       }
     </div>

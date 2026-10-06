@@ -3,8 +3,8 @@ import { firstValueFrom } from 'rxjs';
 import { GenericApi } from '../../core/services/generic-api';
 import {
   CreateExpenseRequest, CreateGroupRequest, CreateInviteRequest, CreateSettlementRequest,
-  GroupBalances, ImportToLedgerRequest, ImportToLedgerResult, InviteCreated, InvitePreview,
-  PaymentRequest, PublicGroupView, SplitExpense, SplitGroup, SplitMember
+  ExpensePage, GroupBalances, GroupExport, GroupFullDetails, ImportToLedgerRequest, ImportToLedgerResult,
+  InviteCreated, InvitePreview, PaymentRequest, PublicGroupView, Settlement, SplitExpense, SplitGroup, SplitMember
 } from '../../core/models/split.model';
 
 @Injectable({ providedIn: 'root' })
@@ -35,15 +35,19 @@ export class SplitService {
     return result.value;
   }
 
-  async getGroupFullDetails(groupId: number): Promise<{ group: SplitGroup; expenses: SplitExpense[]; balances: GroupBalances }> {
-    const result = await firstValueFrom(this.api.get<any>(`Split/groups/${groupId}/full`));
+  /** Group, balances and the FIRST page of expenses. Use getExpensesPage for the rest. */
+  async getGroupFullDetails(groupId: number): Promise<GroupFullDetails> {
+    const result = await firstValueFrom(this.api.get<GroupFullDetails>(`Split/groups/${groupId}/full`));
     if (!result.isSuccess) {
       throw new Error(result.error?.description || 'Failed to load group details.');
     }
+    const v = result.value;
     return {
-      group: result.value.group,
-      expenses: result.value.expenses ?? [],
-      balances: result.value.balances
+      group: v.group,
+      expenses: v.expenses ?? [],
+      nextCursor: v.nextCursor ?? null,
+      totalExpenseCount: v.totalExpenseCount ?? (v.expenses?.length ?? 0),
+      balances: v.balances
     };
   }
 
@@ -70,12 +74,50 @@ export class SplitService {
     return result.value;
   }
 
-  async getExpenses(groupId: number): Promise<SplitExpense[]> {
-    const result = await firstValueFrom(this.api.get<SplitExpense[]>(`Split/groups/${groupId}/expenses`));
+  /** Newest day first. Pass the previous page's nextCursor to continue. */
+  async getExpensesPage(
+    groupId: number,
+    opts: { cursor?: string | null; limit?: number; search?: string } = {}
+  ): Promise<ExpensePage> {
+    const params = new URLSearchParams();
+    if (opts.cursor) params.set('cursor', opts.cursor);
+    if (opts.limit) params.set('limit', String(opts.limit));
+    if (opts.search?.trim()) params.set('search', opts.search.trim());
+    const qs = params.toString();
+    const result = await firstValueFrom(
+      this.api.get<ExpensePage>(`Split/groups/${groupId}/expenses${qs ? '?' + qs : ''}`));
     if (!result.isSuccess) {
       throw new Error(result.error?.description || 'Failed to load expenses.');
     }
-    return result.value ?? [];
+    return {
+      items: result.value?.items ?? [],
+      nextCursor: result.value?.nextCursor ?? null,
+      totalCount: result.value?.totalCount ?? 0
+    };
+  }
+
+  async getPublicExpensesPage(shareToken: string, cursor: string | null, limit = 20): Promise<ExpensePage> {
+    const qs = new URLSearchParams({ limit: String(limit) });
+    if (cursor) qs.set('cursor', cursor);
+    const result = await firstValueFrom(
+      this.api.get<ExpensePage>(`Split/public/${shareToken}/expenses?${qs.toString()}`));
+    if (!result.isSuccess) {
+      throw new Error(result.error?.description || 'Failed to load more expenses.');
+    }
+    return {
+      items: result.value?.items ?? [],
+      nextCursor: result.value?.nextCursor ?? null,
+      totalCount: result.value?.totalCount ?? 0
+    };
+  }
+
+  /** Every expense, settlement and balance — the data behind the Excel report. */
+  async getGroupExport(groupId: number): Promise<GroupExport> {
+    const result = await firstValueFrom(this.api.get<GroupExport>(`Split/groups/${groupId}/export`));
+    if (!result.isSuccess) {
+      throw new Error(result.error?.description || 'Failed to load data for export.');
+    }
+    return result.value;
   }
 
   async getBalances(groupId: number): Promise<GroupBalances> {
@@ -192,8 +234,8 @@ export class SplitService {
     return result.value;
   }
 
-  async getSettlementHistory(groupId: number): Promise<any[]> {
-    const result = await firstValueFrom(this.api.get<any[]>(`Split/groups/${groupId}/settlements`));
+  async getSettlementHistory(groupId: number): Promise<Settlement[]> {
+    const result = await firstValueFrom(this.api.get<Settlement[]>(`Split/groups/${groupId}/settlements`));
     if (!result.isSuccess) throw new Error(result.error?.description || 'Could not load settlement history.');
     return result.value ?? [];
   }

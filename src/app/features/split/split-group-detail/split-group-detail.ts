@@ -7,7 +7,7 @@ import { ConfirmationService } from 'primeng/api';
 import { sharedPrimeModules } from '../../../shared/prime-imports';
 import { SplitService } from '../split.service';
 import {
-  ExpenseParticipantLine, GroupBalances, SettlementMethod, SimplifiedDebt,
+  ExpenseParticipantLine, GroupBalances, Settlement, SettlementMethod, SimplifiedDebt,
   SplitExpense, SplitGroup, SplitMember, SplitType
 } from '../../../core/models/split.model';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -19,12 +19,16 @@ import { Auth } from '../../../core/services/auth';
 import { SplitSignalRService } from '../../../core/services/split-signalr.service';
 
 import { EmptyState } from '../../../shared/empty-state/empty-state';
+import { InfiniteScrollDirective } from '../../../shared/directives/infinite-scroll.directive';
 import { SplitSettingsDialog } from '../split-settings-dialog/split-settings-dialog';
+import { computeShares, equalPercentages } from '../split-share-math';
+import { compareExpenses, groupExpensesByDay } from '../split-expense-utils';
+import { exportSplitGroupToExcel } from '../split-excel-export';
 
 @Component({
   selector: 'app-split-group-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ...sharedPrimeModules, EmptyState, SplitSettingsDialog],
+  imports: [CommonModule, FormsModule, RouterLink, ...sharedPrimeModules, EmptyState, SplitSettingsDialog, InfiniteScrollDirective],
   providers: [ConfirmationService],
   templateUrl: './split-group-detail.html'
 })
@@ -81,13 +85,30 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
   group = signal<SplitGroup | null>(null);
   expenses = signal<SplitExpense[]>([]);
   balances = signal<GroupBalances | null>(null);
+
+  // ── Paged expense list (infinite scroll) ────────────────────────────────────
+  nextCursor = signal<string | null>(null);
+  isLoadingMore = signal(false);
+  expensesLoadFailed = signal(false);
+  /** Total expenses matching the current search (null until a page has loaded). */
+  matchingTotal = signal<number | null>(null);
+  expandedExpenseIds = signal<Set<number>>(new Set());
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
+
+  /** Loaded expenses, grouped under day headers (Today, Yesterday, 12 Sep 2026 …). */
+  expenseGroups = computed(() => groupExpensesByDay(this.expenses()));
+  /** Count shown on the tab: the live group total, or the search-match total while searching. */
+  expenseCount = computed(() =>
+    this.expenseSearchQuery().trim()
+      ? (this.matchingTotal() ?? this.expenses().length)
+      : (this.balances()?.expenseCount ?? this.matchingTotal() ?? this.expenses().length));
   isLoading = signal(true);
   activeTab = signal<'expenses' | 'balances'>('expenses');
 
   // ── Close, Import, Settlement History ───────────────────────────────────────
   showImportDialog = signal(false);
   importAccountId = signal<number | null>(null);
-  settlementHistory = signal<any[]>([]);
+  settlementHistory = signal<Settlement[]>([]);
   isGroupClosed = computed(() => {
     const s = this.group()?.status;
     return s === 2 || s === 3;
@@ -120,16 +141,12 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
     return b?.netBalance ?? 0;
   });
 
-  filteredExpenses = computed(() => {
+  private matchesSearch(e: SplitExpense): boolean {
     const query = this.expenseSearchQuery().toLowerCase().trim();
-    const list = this.expenses();
-    if (!query) return list;
-    return list.filter(e => {
-      const descMatch = e.description.toLowerCase().includes(query);
-      const payerMatch = e.payers.some(p => p.memberName.toLowerCase().includes(query));
-      return descMatch || payerMatch;
-    });
-  });
+    if (!query) return true;
+    return e.description.toLowerCase().includes(query)
+      || e.payers.some(p => p.memberName.toLowerCase().includes(query));
+  }
 
   visibleDebts = computed(() => {
     const plan = this.balances()?.simplifiedPlan ?? [];
@@ -466,21 +483,14 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank');
   }
 
+  /** Spend by category across ALL expenses (computed by the API, so it isn't limited to the loaded pages). */
   categoryBreakdown = computed(() => {
-    const list = this.expenses();
-    const totals: { [cat: string]: number } = {};
-    let overall = 0;
-    for (const e of list) {
-      const cat = e.category || 'General';
-      totals[cat] = (totals[cat] || 0) + e.amount;
-      overall += e.amount;
-    }
+    const items = this.balances()?.categoryBreakdown ?? [];
+    const overall = items.reduce((sum, c) => sum + c.amount, 0);
     if (overall === 0) return [];
-    return Object.keys(totals).map(cat => ({
-      category: cat,
-      amount: totals[cat],
-      percentage: Math.round((totals[cat] / overall) * 100)
-    })).sort((a, b) => b.amount - a.amount);
+    return items
+      .map(c => ({ category: c.category, amount: c.amount, percentage: Math.round((c.amount / overall) * 100) }))
+      .sort((a, b) => b.amount - a.amount);
   });
 
   shareViaWhatsApp(): void {
@@ -543,6 +553,63 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
     (this.group()?.members ?? []).map(m => ({ label: m.name, value: m.id }))
   );
 
+  /** True once the user has typed their own exact amounts / percentages (so ticking people no longer auto-redistributes). */
+  splitCustomised = signal(false);
+
+  /** Ticked members in group order — the same order the API receives them, so rounding matches. */
+  selectedMemberIds = computed(() =>
+    (this.group()?.members ?? []).filter(m => this.expParticipantIds().has(m.id)).map(m => m.id)
+  );
+
+  /** Live "who owes how much" for the expense being entered. Updates on every tick, amount or split change. */
+  previewShares = computed<Record<number, number>>(() => {
+    const type = this.expSplitType();
+    const inputs = this.selectedMemberIds().map(id => ({
+      memberId: id,
+      value: type === SplitType.Exact ? this.expExactAmounts()[id]
+        : type === SplitType.Percentage ? this.expPercentages()[id]
+        : type === SplitType.Shares ? (this.expShares()[id] ?? 1)
+        : null
+    }));
+    return computeShares(type, this.expAmount(), inputs);
+  });
+
+  /** How much each member paid towards the expense being entered. */
+  previewPaid = computed<Record<number, number>>(() => {
+    const out: Record<number, number> = {};
+    if (this.splitPayment()) {
+      for (const row of this.expPayers()) {
+        if (row.memberId !== null) out[row.memberId] = (out[row.memberId] ?? 0) + (row.amount ?? 0);
+      }
+    } else {
+      const payer = this.expPayerId();
+      if (payer !== null) out[payer] = this.expAmount() ?? 0;
+    }
+    return out;
+  });
+
+  /** Paid minus share, per member: positive = gets money back, negative = owes. */
+  memberImpact(memberId: number): number {
+    const paid = this.previewPaid()[memberId] ?? 0;
+    const share = this.previewShares()[memberId] ?? 0;
+    return Math.round((paid - share) * 100) / 100;
+  }
+
+  /** Running totals shown under the member list for the non-equal split types. */
+  splitTotals = computed(() => {
+    const ids = this.selectedMemberIds();
+    const exact = ids.reduce((sum, id) => sum + (this.expExactAmounts()[id] ?? 0), 0);
+    const percent = ids.reduce((sum, id) => sum + (this.expPercentages()[id] ?? 0), 0);
+    const shares = ids.reduce((sum, id) => sum + (this.expShares()[id] ?? 1), 0);
+    const amount = this.expAmount() ?? 0;
+    return {
+      exact: Math.round(exact * 100) / 100,
+      exactLeft: Math.round((amount - exact) * 100) / 100,
+      percent: Math.round(percent * 100) / 100,
+      shares
+    };
+  });
+
   async ngOnInit(): Promise<void> {
     await this.loadAll();
     this.accountState.loadAccounts();
@@ -560,21 +627,20 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
         switch (payload.eventType) {
           case 'ExpenseAdded':
             if (payload.expense) {
-              this.expenses.update(list => [payload.expense, ...list.filter(e => e.id !== payload.expense.id)]);
-              this.newlyAddedExpenseId.set(payload.expense.id);
-              setTimeout(() => this.newlyAddedExpenseId.set(null), 3000);
+              this.upsertExpense(payload.expense);
+              this.highlightExpense(payload.expense.id);
             }
             break;
 
           case 'ExpenseUpdated':
             if (payload.expense) {
-              this.expenses.update(list => list.map(e => e.id === payload.expense.id ? payload.expense : e));
+              this.upsertExpense(payload.expense);
             }
             break;
 
           case 'ExpenseDeleted':
             if (payload.expenseId) {
-              this.expenses.update(list => list.filter(e => e.id !== payload.expenseId));
+              this.removeExpense(payload.expenseId);
             }
             break;
 
@@ -607,7 +673,6 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
           case 'GroupUpdated':
           default:
             if (payload.group) this.group.set(payload.group);
-            if (payload.expenses) this.expenses.set(payload.expenses);
             this.loadAll(true);
             break;
         }
@@ -616,6 +681,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.searchTimer) clearTimeout(this.searchTimer);
     this.signalrService.leaveGroup(this.groupId);
   }
 
@@ -624,13 +690,187 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
     try {
       const data = await this.splitService.getGroupFullDetails(this.groupId);
       this.group.set(data.group);
-      this.expenses.set(data.expenses);
       this.balances.set(data.balances);
+      // A silent refresh (triggered by realtime events) must not throw away pages the
+      // user has already scrolled through, so the list is only (re)seeded on a full load.
+      if (!silent || this.expenses().length === 0) {
+        if (!this.expenseSearchQuery().trim()) {
+          this.expenses.set([...data.expenses].sort(compareExpenses));
+          this.nextCursor.set(data.nextCursor);
+          this.matchingTotal.set(data.totalExpenseCount);
+          this.expensesLoadFailed.set(false);
+        }
+      }
       await this.loadSettlementHistory();
     } catch {
       if (!silent) this.notificationService.showError('Could not load this group.');
     } finally {
       if (!silent) this.isLoading.set(false);
+    }
+  }
+
+  // ── Expense list: infinite scroll, search, sorted insertion ─────────────────
+
+  async loadMoreExpenses(): Promise<void> {
+    const cursor = this.nextCursor();
+    if (!cursor || this.isLoadingMore()) return;
+
+    const search = this.expenseSearchQuery();
+    this.isLoadingMore.set(true);
+    try {
+      const page = await this.splitService.getExpensesPage(this.groupId, { cursor, search });
+      if (search !== this.expenseSearchQuery()) return; // the search changed while this was loading
+      this.expenses.update(list => this.mergeExpenses(list, page.items));
+      this.nextCursor.set(page.nextCursor);
+      this.matchingTotal.set(page.totalCount);
+      this.expensesLoadFailed.set(false);
+    } catch {
+      this.expensesLoadFailed.set(true);
+    } finally {
+      this.isLoadingMore.set(false);
+    }
+  }
+
+  retryLoadMore(): void {
+    this.expensesLoadFailed.set(false);
+    void this.loadMoreExpenses();
+  }
+
+  onSearchChange(value: string): void {
+    this.expenseSearchQuery.set(value);
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(() => void this.reloadExpenses(), 300);
+  }
+
+  /** Re-fetches the first page for the current search (server-side, so it covers every expense, not just loaded ones). */
+  async reloadExpenses(): Promise<void> {
+    const search = this.expenseSearchQuery();
+    this.isLoadingMore.set(true);
+    try {
+      const page = await this.splitService.getExpensesPage(this.groupId, { search });
+      if (search !== this.expenseSearchQuery()) return;
+      this.expenses.set([...page.items].sort(compareExpenses));
+      this.nextCursor.set(page.nextCursor);
+      this.matchingTotal.set(page.totalCount);
+      this.expensesLoadFailed.set(false);
+    } catch {
+      this.notificationService.showError('Could not load expenses.');
+    } finally {
+      this.isLoadingMore.set(false);
+    }
+  }
+
+  private mergeExpenses(current: SplitExpense[], incoming: SplitExpense[]): SplitExpense[] {
+    const byId = new Map<number, SplitExpense>();
+    for (const e of [...current, ...incoming]) byId.set(e.id, e);
+    return [...byId.values()].sort(compareExpenses);
+  }
+
+  /**
+   * Inserts or replaces an expense at its correct place in the day-wise
+   * order — a back-dated expense lands under its own day, not at the top.
+   * If it belongs after everything loaded so far and more pages exist, it is
+   * left to arrive with the scroll instead.
+   */
+  private upsertExpense(expense: SplitExpense): void {
+    if (!this.matchesSearch(expense)) {
+      this.removeExpense(expense.id);
+      return;
+    }
+    this.expenses.update(list => {
+      const others = list.filter(e => e.id !== expense.id);
+      const last = others[others.length - 1];
+      if (this.nextCursor() && last && compareExpenses(expense, last) > 0) {
+        return others;
+      }
+      return [...others, expense].sort(compareExpenses);
+    });
+  }
+
+  private removeExpense(expenseId: number): void {
+    this.expenses.update(list => list.filter(e => e.id !== expenseId));
+  }
+
+  private highlightExpense(expenseId: number): void {
+    this.newlyAddedExpenseId.set(expenseId);
+    setTimeout(() => this.newlyAddedExpenseId.set(null), 3000);
+  }
+
+  private scrollToExpense(expenseId: number): void {
+    setTimeout(() => {
+      document.getElementById(`expense-${expenseId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 80);
+  }
+
+  toggleExpenseDetails(expenseId: number): void {
+    this.expandedExpenseIds.update(set => {
+      const next = new Set(set);
+      if (next.has(expenseId)) next.delete(expenseId); else next.add(expenseId);
+      return next;
+    });
+  }
+
+  /** What the signed-in member paid vs their share for one expense (null when they aren't a member). */
+  myPosition(expense: SplitExpense): { paid: number; share: number; net: number } | null {
+    const me = this.currentUserMember()?.id;
+    if (!me) return null;
+    const paid = expense.payers.filter(p => p.memberId === me).reduce((sum, p) => sum + p.amountPaid, 0);
+    const share = expense.participants.find(p => p.memberId === me)?.shareAmount ?? 0;
+    if (paid === 0 && share === 0) return null;
+    return { paid, share, net: Math.round((paid - share) * 100) / 100 };
+  }
+
+  /** One row per person involved in an expense: what they paid, their share, and the difference. */
+  expenseLines(expense: SplitExpense): { memberId: number; name: string; paid: number; share: number; net: number }[] {
+    const lines = new Map<number, { memberId: number; name: string; paid: number; share: number; net: number }>();
+    const line = (memberId: number, name: string) => {
+      let l = lines.get(memberId);
+      if (!l) { l = { memberId, name, paid: 0, share: 0, net: 0 }; lines.set(memberId, l); }
+      return l;
+    };
+    for (const p of expense.payers) line(p.memberId, p.memberName).paid += p.amountPaid;
+    for (const p of expense.participants) line(p.memberId, p.memberName).share += p.shareAmount;
+    for (const l of lines.values()) l.net = Math.round((l.paid - l.share) * 100) / 100;
+    return [...lines.values()].sort((a, b) => b.net - a.net || a.name.localeCompare(b.name));
+  }
+
+  /** Confirmed settlement money in minus out, so Paid − Share + Settled = Net reads naturally. */
+  settledNet(b: { settledPaid?: number; settledReceived?: number }): number {
+    return Math.round(((b.settledPaid ?? 0) - (b.settledReceived ?? 0)) * 100) / 100;
+  }
+
+  splitTypeLabel(type: SplitType): string {
+    switch (type) {
+      case SplitType.Equal: return 'Equal split';
+      case SplitType.Exact: return 'Exact amounts';
+      case SplitType.Percentage: return 'By percentage';
+      case SplitType.Shares: return 'By shares';
+      default: return 'Custom split';
+    }
+  }
+
+  // ── Excel export ─────────────────────────────────────────────────────────────
+  isExporting = signal(false);
+
+  async exportToExcel(): Promise<void> {
+    if (this.isExporting()) return;
+    this.isExporting.set(true);
+    try {
+      const data = await this.splitService.getGroupExport(this.groupId);
+      await exportSplitGroupToExcel(data);
+      this.notificationService.showSuccess('Excel report downloaded.');
+    } catch (err: any) {
+      this.notificationService.showError(err?.message || 'Could not create the Excel report.');
+    } finally {
+      this.isExporting.set(false);
+    }
+  }
+
+  async refreshBalances(): Promise<void> {
+    try {
+      this.balances.set(await this.splitService.getBalances(this.groupId));
+    } catch {
+      // The realtime update normally covers this; a failed refresh isn't worth an error toast.
     }
   }
 
@@ -751,6 +991,11 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
       this.expPayerId.set(this.group()?.members[0]?.id ?? null);
       this.splitPayment.set(false);
       this.expPayers.set([{ memberId: null, amount: null }]);
+      this.expExactAmounts.set({});
+      this.expPercentages.set({});
+      this.expShares.set({});
+      this.splitCustomised.set(false);
+      this.redistributeEqually();
       this.notificationService.showSuccess('Restored your unfinished expense from earlier.');
     } else {
       this.expDescription.set('');
@@ -763,6 +1008,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
       this.expExactAmounts.set({});
       this.expPercentages.set({});
       this.expShares.set({});
+      this.splitCustomised.set(false);
       this.splitPayment.set(false);
       this.expPayers.set([{ memberId: null, amount: null }]);
     }
@@ -777,6 +1023,25 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
     this.expDate.set(fromDateOnlyString(expense.date) ?? new Date(expense.date));
     this.expSplitType.set(expense.splitType);
     this.expParticipantIds.set(new Set(expense.participants.map(p => p.memberId)));
+
+    // Restore what was originally typed for Exact / Percentage / Shares splits.
+    const exact: Record<number, number> = {};
+    const percent: Record<number, number> = {};
+    const shares: Record<number, number> = {};
+    for (const p of expense.participants) {
+      if (expense.splitType === SplitType.Exact) {
+        exact[p.memberId] = p.splitValue ?? p.shareAmount;
+      } else if (expense.splitType === SplitType.Percentage) {
+        percent[p.memberId] = p.splitValue ?? Math.round((p.shareAmount / expense.amount) * 10000) / 100;
+      } else if (expense.splitType === SplitType.Shares) {
+        shares[p.memberId] = p.splitValue ?? 1;
+      }
+    }
+    this.expExactAmounts.set(exact);
+    this.expPercentages.set(percent);
+    this.expShares.set(shares);
+    this.splitCustomised.set(true);
+
     if (expense.payers.length > 1) {
       this.splitPayment.set(true);
       this.expPayers.set(expense.payers.map(p => ({ memberId: p.memberId, amount: p.amountPaid })));
@@ -793,6 +1058,8 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
       accept: async () => {
         try {
           const result = await this.splitService.deleteExpense(expense.id);
+          this.removeExpense(expense.id);
+          void this.refreshBalances();
           if (result.wasAlreadyImported) {
             this.notificationService.showError(
               'Deleted here, but this expense was already imported to a real account — that transaction still exists and needs removing separately.'
@@ -809,13 +1076,62 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
     const current = new Set(this.expParticipantIds());
     if (current.has(memberId)) current.delete(memberId); else current.add(memberId);
     this.expParticipantIds.set(current);
+    // Ticking / un-ticking someone re-divides the amount among whoever is left.
+    // (Equal and Shares recompute automatically; Exact and Percentage need their
+    // values re-spread unless the user has already typed custom ones.)
+    if (!this.splitCustomised()) this.redistributeEqually();
+  }
+
+  selectAllParticipants(): void {
+    this.expParticipantIds.set(new Set((this.group()?.members ?? []).map(m => m.id)));
+    if (!this.splitCustomised()) this.redistributeEqually();
+  }
+
+  clearParticipants(): void {
+    this.expParticipantIds.set(new Set());
+  }
+
+  onSplitTypeChange(type: SplitType): void {
+    this.expSplitType.set(type);
+    this.splitCustomised.set(false);
+    this.redistributeEqually();
+  }
+
+  onAmountChange(amount: number | null): void {
+    this.expAmount.set(amount);
+    if (!this.splitCustomised()) this.redistributeEqually();
+  }
+
+  /** "Split evenly" for the Exact and Percentage modes (Equal / Shares are already even). */
+  redistributeEqually(): void {
+    const ids = this.selectedMemberIds();
+    const type = this.expSplitType();
+    if (type === SplitType.Exact) {
+      this.expExactAmounts.set(computeShares(
+        SplitType.Equal, this.expAmount(), ids.map(id => ({ memberId: id }))));
+    } else if (type === SplitType.Percentage) {
+      this.expPercentages.set(equalPercentages(ids));
+    } else if (type === SplitType.Shares) {
+      this.expShares.update(m => {
+        const next = { ...m };
+        for (const id of ids) if (next[id] == null) next[id] = 1;
+        return next;
+      });
+    }
+  }
+
+  resplitEvenly(): void {
+    this.splitCustomised.set(false);
+    this.redistributeEqually();
   }
 
   updateExactAmount(memberId: number, value: number): void {
+    this.splitCustomised.set(true);
     this.expExactAmounts.update(m => ({ ...m, [memberId]: value }));
   }
 
   updatePercentage(memberId: number, value: number): void {
+    this.splitCustomised.set(true);
     this.expPercentages.update(m => ({ ...m, [memberId]: value }));
   }
 
@@ -826,10 +1142,20 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
   async saveExpense(): Promise<void> {
     const amount = this.expAmount();
     const description = this.expDescription().trim();
-    const participantIds = Array.from(this.expParticipantIds());
+    const participantIds = this.selectedMemberIds();
 
     if (!description || amount === null || amount <= 0 || participantIds.length === 0) {
       this.notificationService.showError('Description, amount, and at least one participant are required.');
+      return;
+    }
+
+    if (this.expSplitType() === SplitType.Exact && Math.abs(this.splitTotals().exactLeft) > 0.01) {
+      this.notificationService.showError(
+        `The amounts add up to ₹${this.splitTotals().exact.toFixed(2)}, but the expense is ₹${amount.toFixed(2)}.`);
+      return;
+    }
+    if (this.expSplitType() === SplitType.Percentage && Math.abs(this.splitTotals().percent - 100) > 0.01) {
+      this.notificationService.showError(`Percentages add up to ${this.splitTotals().percent}% — they need to total 100%.`);
       return;
     }
 
@@ -878,15 +1204,20 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
         participants
       };
 
+      let saved: SplitExpense | null = null;
       if (this.editingExpenseId()) {
-        await this.splitService.updateExpense(this.editingExpenseId()!, payload);
+        saved = await this.splitService.updateExpense(this.editingExpenseId()!, payload);
       } else {
-        const created = await this.splitService.addExpense(payload);
-        if (created?.id) {
-          this.newlyAddedExpenseId.set(created.id);
-          setTimeout(() => this.newlyAddedExpenseId.set(null), 3000);
-        }
+        saved = await this.splitService.addExpense(payload);
+        if (saved?.id) this.highlightExpense(saved.id);
       }
+      // Apply the result right away (idempotent with the realtime event that follows), so the
+      // new or edited expense appears under the right day even if the live connection is down.
+      if (saved?.id) {
+        this.upsertExpense(saved);
+        this.scrollToExpense(saved.id);
+      }
+      void this.refreshBalances();
       this.editingExpenseId.set(null);
       this.showAddExpense.set(false);
       this.draftService.clear(this.draftKey);

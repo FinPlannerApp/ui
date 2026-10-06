@@ -72,6 +72,9 @@
     <div class="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto">
       <p-button icon="pi pi-cog" label="Settings" (onClick)="openSettingsModal('members')" pTooltip="Group Settings & Members"
         styleClass="w-full rounded-2xl font-bold text-xs sm:text-sm shadow-sm"></p-button>
+      <p-button icon="pi pi-file-excel" label="Export" (onClick)="exportToExcel()" [loading]="isExporting()"
+        pTooltip="Download an Excel report with balances, who owes whom and every expense"
+        styleClass="w-full rounded-2xl font-bold text-xs sm:text-sm shadow-sm" severity="secondary"></p-button>
       @if (!isGroupClosed()) {
         <p-button label="Add Expense" icon="pi pi-plus" (onClick)="openAddExpense()"
           styleClass="w-full rounded-2xl font-bold text-xs sm:text-sm shadow-sm"></p-button>
@@ -149,7 +152,7 @@
           [class.bg-transparent]="activeTab() !== 'expenses'"
           [class.text-[var(--text-muted)]]="activeTab() !== 'expenses'">
           <i class="pi pi-receipt text-xs shrink-0"></i>
-          <span class="truncate">Expenses ({{ expenses().length }})</span>
+          <span class="truncate">Expenses ({{ expenseCount() }})</span>
         </button>
         <button (click)="activeTab.set('balances')"
           class="w-full sm:w-auto px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm border-none cursor-pointer transition-all font-bold flex items-center justify-center gap-1.5"
@@ -168,11 +171,11 @@
         <div class="relative w-full sm:w-80">
           <i class="pi pi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)] pointer-events-none z-10"></i>
           <input type="text" pInputText placeholder="Search expenses or payers..."
-            [ngModel]="expenseSearchQuery()" (ngModelChange)="expenseSearchQuery.set($event)"
+            [ngModel]="expenseSearchQuery()" (ngModelChange)="onSearchChange($event)"
             style="padding-left: 2.5rem !important;"
             class="w-full pr-8 py-2 text-xs sm:text-sm rounded-xl border border-[var(--glass-border)] bg-[var(--glass-bg)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--primary-color,#3b82f6)] transition-all shadow-inner" />
           @if (expenseSearchQuery()) {
-            <button (click)="expenseSearchQuery.set('')" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-transparent border-none cursor-pointer p-0">
+            <button (click)="onSearchChange('')" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-transparent border-none cursor-pointer p-0">
               <i class="pi pi-times"></i>
             </button>
           }
@@ -180,69 +183,141 @@
       }
     </div>
 
-    <!-- Expenses Tab Content -->
+    <!-- Expenses Tab Content (grouped by day, loads more as you scroll) -->
     @if (activeTab() === 'expenses') {
-      <div class="flex flex-col gap-3">
-        @for (expense of filteredExpenses(); track expense.id) {
-          <div class="p-4 rounded-2xl bg-[var(--glass-bg)] border border-[var(--glass-border)] hover:border-indigo-500/30 hover:shadow-md flex items-center justify-between gap-3 transition-all duration-300 group"
-            [class.ring-2]="expense.id === newlyAddedExpenseId()"
-            [class.ring-emerald-400]="expense.id === newlyAddedExpenseId()"
-            [class.bg-emerald-500\/10]="expense.id === newlyAddedExpenseId()">
-            
-            <div class="flex items-center gap-3.5 min-w-0">
-              <!-- Expense Category Icon Avatar -->
-              <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-500/20 to-purple-600/20 border border-indigo-500/30 font-bold flex items-center justify-center shrink-0 shadow-sm">
-                <i [class]="getCategoryIcon(expense.category)" class="text-base"></i>
-              </div>
-
-              <div class="flex flex-col min-w-0">
-                <div class="flex items-center gap-2 flex-wrap">
-                  <span class="font-bold text-sm sm:text-base text-[var(--text-primary)] truncate group-hover:text-[var(--primary-color,#3b82f6)] transition-colors">
-                    {{ expense.description }}
-                  </span>
-                  @if (expense.category) {
-                    <span class="text-[0.65rem] px-2 py-0.5 rounded-full font-bold border" [class]="getCategoryBadgeColor(expense.category)">
-                      {{ expense.category }}
-                    </span>
-                  }
-                </div>
-                <div class="flex items-center gap-2 text-xs text-[var(--text-muted)] mt-0.5 flex-wrap">
-                  <span class="font-medium text-[var(--text-primary)]">
-                    Paid by {{ expense.payers.length === 1 ? expense.payers[0]?.memberName : (expense.payers.length + ' people') }}
-                  </span>
-                  <span>•</span>
-                  <span>{{ expense.date | date:'mediumDate' }}</span>
-                  <span>•</span>
-                  <span class="text-[0.7rem] text-[var(--text-muted)]">
-                    {{ expense.splitType === 0 ? 'Equal Split' : 'Custom Split' }}
-                  </span>
-                </div>
-              </div>
+      <div class="flex flex-col gap-5">
+        @for (day of expenseGroups(); track day.dayKey) {
+          <section class="flex flex-col gap-2.5">
+            <div class="flex items-center justify-between px-1">
+              <h4 class="m-0 text-xs font-extrabold uppercase tracking-wider text-[var(--text-muted)] flex items-center gap-1.5">
+                @if (day.label) {
+                  <span class="text-[var(--primary-color,#3b82f6)]">{{ day.label }}</span>
+                  <span>·</span>
+                }
+                <span>{{ day.date | date:'EEE, d MMM y' }}</span>
+              </h4>
+              <span class="text-xs font-bold text-[var(--text-muted)]">{{ day.total | currency:'INR' }}</span>
             </div>
 
-            <!-- Amount & Actions -->
-            <div class="flex items-center gap-3 shrink-0">
-              <span class="text-base sm:text-xl font-black text-[var(--text-primary)] tracking-tight">
-                {{ expense.amount | currency:'INR' }}
-              </span>
-              @if (!isGroupClosed()) {
-                <div class="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
-                  <button (click)="openEditExpense(expense)" pTooltip="Edit Expense"
-                    class="text-xs text-[var(--text-muted)] hover:text-[var(--primary-color,#3b82f6)] bg-transparent border-none cursor-pointer p-2 rounded-xl hover:bg-white/5 transition-all">
-                    <i class="pi pi-pencil"></i>
-                  </button>
-                  <button (click)="deleteExpense(expense)" pTooltip="Delete Expense"
-                    class="text-xs text-red-500 hover:text-red-400 bg-transparent border-none cursor-pointer p-2 rounded-xl hover:bg-red-500/10 transition-all">
-                    <i class="pi pi-trash"></i>
-                  </button>
+            @for (expense of day.items; track expense.id) {
+              <div [id]="'expense-' + expense.id"
+                class="rounded-2xl bg-[var(--glass-bg)] border border-[var(--glass-border)] hover:border-indigo-500/30 hover:shadow-md transition-all duration-300 group"
+                [class.ring-2]="expense.id === newlyAddedExpenseId()"
+                [class.ring-emerald-400]="expense.id === newlyAddedExpenseId()"
+                [class.bg-emerald-500\/10]="expense.id === newlyAddedExpenseId()">
+
+                <div class="p-4 flex items-center justify-between gap-3 cursor-pointer" (click)="toggleExpenseDetails(expense.id)">
+                  <div class="flex items-center gap-3.5 min-w-0">
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-500/20 to-purple-600/20 border border-indigo-500/30 font-bold flex items-center justify-center shrink-0 shadow-sm">
+                      <i [class]="getCategoryIcon(expense.category)" class="text-base"></i>
+                    </div>
+
+                    <div class="flex flex-col min-w-0">
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <span class="font-bold text-sm sm:text-base text-[var(--text-primary)] truncate group-hover:text-[var(--primary-color,#3b82f6)] transition-colors">
+                          {{ expense.description }}
+                        </span>
+                        @if (expense.category) {
+                          <span class="text-[0.65rem] px-2 py-0.5 rounded-full font-bold border" [class]="getCategoryBadgeColor(expense.category)">
+                            {{ expense.category }}
+                          </span>
+                        }
+                      </div>
+                      <div class="flex items-center gap-2 text-xs text-[var(--text-muted)] mt-0.5 flex-wrap">
+                        <span class="font-medium text-[var(--text-primary)]">
+                          Paid by {{ expense.payers.length === 1 ? expense.payers[0]?.memberName : (expense.payers.length + ' people') }}
+                        </span>
+                        <span>•</span>
+                        <span class="text-[0.7rem]">{{ splitTypeLabel(expense.splitType) }} · {{ expense.participants.length }} {{ expense.participants.length === 1 ? 'person' : 'people' }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Amount, your position & actions -->
+                  <div class="flex items-center gap-3 shrink-0">
+                    <div class="flex flex-col items-end">
+                      <span class="text-base sm:text-xl font-black text-[var(--text-primary)] tracking-tight">
+                        {{ expense.amount | currency:'INR' }}
+                      </span>
+                      @if (myPosition(expense); as pos) {
+                        @if (pos.net > 0) {
+                          <span class="text-[0.7rem] font-bold text-emerald-500">you lent {{ pos.net | currency:'INR' }}</span>
+                        } @else if (pos.net < 0) {
+                          <span class="text-[0.7rem] font-bold text-rose-500">you owe {{ -pos.net | currency:'INR' }}</span>
+                        } @else {
+                          <span class="text-[0.7rem] font-medium text-[var(--text-muted)]">you're even</span>
+                        }
+                      }
+                    </div>
+                    @if (!isGroupClosed()) {
+                      <div class="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+                        <button (click)="$event.stopPropagation(); openEditExpense(expense)" pTooltip="Edit Expense"
+                          class="text-xs text-[var(--text-muted)] hover:text-[var(--primary-color,#3b82f6)] bg-transparent border-none cursor-pointer p-2 rounded-xl hover:bg-white/5 transition-all">
+                          <i class="pi pi-pencil"></i>
+                        </button>
+                        <button (click)="$event.stopPropagation(); deleteExpense(expense)" pTooltip="Delete Expense"
+                          class="text-xs text-red-500 hover:text-red-400 bg-transparent border-none cursor-pointer p-2 rounded-xl hover:bg-red-500/10 transition-all">
+                          <i class="pi pi-trash"></i>
+                        </button>
+                      </div>
+                    }
+                    <i class="pi text-xs text-[var(--text-muted)]"
+                      [class.pi-chevron-down]="!expandedExpenseIds().has(expense.id)"
+                      [class.pi-chevron-up]="expandedExpenseIds().has(expense.id)"></i>
+                  </div>
                 </div>
-              }
-            </div>
-          </div>
+
+                <!-- Per-person breakdown -->
+                @if (expandedExpenseIds().has(expense.id)) {
+                  <div class="px-4 pb-4 pt-3 border-t border-[var(--glass-border)] flex flex-col gap-1.5">
+                    <div class="grid grid-cols-12 gap-2 text-[0.65rem] font-extrabold uppercase tracking-wider text-[var(--text-muted)]">
+                      <span class="col-span-4">Person</span>
+                      <span class="col-span-3 text-right">Paid</span>
+                      <span class="col-span-3 text-right">Share</span>
+                      <span class="col-span-2 text-right">Net</span>
+                    </div>
+                    @for (line of expenseLines(expense); track line.memberId) {
+                      <div class="grid grid-cols-12 gap-2 text-xs items-center">
+                        <span class="col-span-4 font-bold truncate text-[var(--text-primary)]">{{ line.name }}</span>
+                        <span class="col-span-3 text-right text-[var(--text-muted)]">{{ line.paid > 0 ? (line.paid | currency:'INR') : '—' }}</span>
+                        <span class="col-span-3 text-right text-[var(--text-primary)] font-medium">{{ line.share > 0 ? (line.share | currency:'INR') : '—' }}</span>
+                        <span class="col-span-2 text-right font-bold"
+                          [class.text-emerald-500]="line.net > 0" [class.text-rose-500]="line.net < 0"
+                          [class.text-[var(--text-muted)]]="line.net === 0">
+                          {{ line.net > 0 ? '+' : '' }}{{ line.net | number:'1.0-2' }}
+                        </span>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </section>
         } @empty {
-          <app-empty-state icon="pi pi-receipt" title="No expenses found"
-            message="No expenses match your search or none logged yet." actionLabel="Add Expense"
-            (action)="openAddExpense()"></app-empty-state>
+          @if (isLoadingMore()) {
+            <div class="flex justify-center p-8"><p-progressSpinner styleClass="w-8 h-8"></p-progressSpinner></div>
+          } @else {
+            <app-empty-state icon="pi pi-receipt" title="No expenses found"
+              message="No expenses match your search or none logged yet." actionLabel="Add Expense"
+              (action)="openAddExpense()"></app-empty-state>
+          }
+        }
+
+        <!-- Infinite-scroll sentinel: loads the next page as it nears the viewport -->
+        @if (nextCursor()) {
+          <div appInfiniteScroll [disabled]="isLoadingMore() || expensesLoadFailed()" (reachedEnd)="loadMoreExpenses()"
+            class="flex justify-center py-4">
+            @if (expensesLoadFailed()) {
+              <p-button label="Couldn't load more — tap to retry" icon="pi pi-refresh" [text]="true" size="small"
+                (onClick)="retryLoadMore()"></p-button>
+            } @else {
+              <p-progressSpinner styleClass="w-7 h-7" strokeWidth="5"></p-progressSpinner>
+            }
+          </div>
+        } @else if (expenses().length > 0) {
+          <p class="text-center text-xs text-[var(--text-muted)] m-0 py-2">
+            That's everything · {{ expenses().length }} {{ expenses().length === 1 ? 'expense' : 'expenses' }}
+          </p>
         }
       </div>
     }
@@ -277,10 +352,29 @@
                     </span>
                   </div>
 
-                  <div class="flex items-center justify-between text-xs text-[var(--text-muted)] pt-2 border-t border-[var(--glass-border)]">
-                    <span>Total Paid: <strong class="text-[var(--text-primary)] font-bold">{{ (b.totalPaid ?? 0) | currency:'INR' }}</strong></span>
-                    <span>Fair Share: <strong class="text-[var(--text-primary)] font-bold">{{ (b.totalShare ?? 0) | currency:'INR' }}</strong></span>
+                  <div class="grid grid-cols-3 gap-2 text-xs text-[var(--text-muted)] pt-2 border-t border-[var(--glass-border)]">
+                    <div class="flex flex-col">
+                      <span>Paid</span>
+                      <strong class="text-[var(--text-primary)] font-bold">{{ (b.totalPaid ?? 0) | currency:'INR' }}</strong>
+                    </div>
+                    <div class="flex flex-col">
+                      <span>Share</span>
+                      <strong class="text-[var(--text-primary)] font-bold">− {{ (b.totalShare ?? 0) | currency:'INR' }}</strong>
+                    </div>
+                    <div class="flex flex-col">
+                      <span>Settled</span>
+                      <strong class="font-bold" [class.text-emerald-500]="settledNet(b) > 0" [class.text-rose-500]="settledNet(b) < 0"
+                        [class.text-[var(--text-primary)]]="settledNet(b) === 0">
+                        {{ settledNet(b) > 0 ? '+' : (settledNet(b) < 0 ? '−' : '') }} {{ (settledNet(b) < 0 ? -settledNet(b) : settledNet(b)) | currency:'INR' }}
+                      </strong>
+                    </div>
                   </div>
+                  <p class="text-[0.65rem] text-[var(--text-muted)] m-0">Paid − Share + Settled = Net balance</p>
+                  @if ((b.inTransit ?? 0) !== 0) {
+                    <span class="self-start text-[0.65rem] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                      {{ (b.inTransit ?? 0) > 0 ? 'Sent' : 'Receiving' }} {{ ((b.inTransit ?? 0) > 0 ? b.inTransit : -(b.inTransit ?? 0)) | currency:'INR' }} · awaiting confirmation
+                    </span>
+                  }
                 </div>
               </div>
             }
@@ -445,7 +539,7 @@
     <div class="grid grid-cols-2 gap-3">
       <div class="flex flex-col gap-1.5">
         <label class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">Amount</label>
-        <p-inputNumber [ngModel]="expAmount()" (ngModelChange)="expAmount.set($event)"
+        <p-inputNumber [ngModel]="expAmount()" (ngModelChange)="onAmountChange($event)"
           mode="currency" currency="INR" locale="en-IN" class="w-full"></p-inputNumber>
       </div>
       <div class="flex flex-col gap-1.5">
@@ -508,17 +602,34 @@
 
     <div class="flex flex-col gap-1.5">
       <label class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">Split</label>
-      <p-select [options]="splitTypeOptions" [ngModel]="expSplitType()" (ngModelChange)="expSplitType.set($event)"
+      <p-select [options]="splitTypeOptions" [ngModel]="expSplitType()" (ngModelChange)="onSplitTypeChange($event)"
         optionLabel="label" optionValue="value" appendTo="body" class="w-full"></p-select>
     </div>
 
     <div class="flex flex-col gap-2">
-      <label class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">Split between</label>
+      <div class="flex items-center justify-between gap-2 flex-wrap">
+        <label class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">Split between</label>
+        <div class="flex items-center gap-3 text-xs">
+          <button (click)="selectAllParticipants()" class="text-[var(--primary-color)] bg-transparent border-none cursor-pointer p-0">Everyone</button>
+          <button (click)="clearParticipants()" class="text-[var(--text-muted)] bg-transparent border-none cursor-pointer p-0">None</button>
+          @if (expSplitType() === SplitType.Exact || expSplitType() === SplitType.Percentage) {
+            <button (click)="resplitEvenly()" class="text-[var(--primary-color)] bg-transparent border-none cursor-pointer p-0">Split evenly</button>
+          }
+        </div>
+      </div>
+
       @for (member of group()?.members; track member.id) {
-        <div class="flex items-center gap-3 p-2.5 rounded-xl bg-[var(--glass-bg)] border border-[var(--glass-border)]">
+        <div class="flex items-center gap-3 p-2.5 rounded-xl bg-[var(--glass-bg)] border border-[var(--glass-border)] transition-opacity"
+          [class.opacity-60]="!expParticipantIds().has(member.id)">
           <input type="checkbox" [checked]="expParticipantIds().has(member.id)"
-            (change)="toggleParticipant(member.id)" class="w-4 h-4 accent-emerald-500" />
-          <span class="text-sm flex-1 text-[var(--text-primary)] font-medium">{{ member.name }}</span>
+            (change)="toggleParticipant(member.id)" class="w-4 h-4 accent-emerald-500 shrink-0" />
+
+          <div class="flex flex-col flex-1 min-w-0">
+            <span class="text-sm text-[var(--text-primary)] font-medium truncate">{{ member.name }}</span>
+            @if (previewPaid()[member.id] > 0) {
+              <span class="text-[0.65rem] text-[var(--text-muted)]">paid {{ previewPaid()[member.id] | currency:'INR' }}</span>
+            }
+          </div>
 
           @if (expParticipantIds().has(member.id)) {
             @if (expSplitType() === SplitType.Exact) {
@@ -527,14 +638,51 @@
             }
             @if (expSplitType() === SplitType.Percentage) {
               <p-inputNumber [ngModel]="expPercentages()[member.id]" (ngModelChange)="updatePercentage(member.id, $event)"
-                suffix="%" styleClass="w-24"></p-inputNumber>
+                suffix="%" [maxFractionDigits]="2" styleClass="w-24"></p-inputNumber>
             }
             @if (expSplitType() === SplitType.Shares) {
               <p-inputNumber [ngModel]="expShares()[member.id]" (ngModelChange)="updateShares(member.id, $event)"
-                styleClass="w-20"></p-inputNumber>
+                placeholder="1" styleClass="w-20"></p-inputNumber>
             }
           }
+
+          <!-- This person's amount for the expense, live -->
+          <div class="flex flex-col items-end text-right shrink-0 min-w-[5rem]">
+            @if (expParticipantIds().has(member.id)) {
+              <span class="text-sm font-black text-[var(--text-primary)]">{{ previewShares()[member.id] | currency:'INR' }}</span>
+            } @else {
+              <span class="text-xs text-[var(--text-muted)]">not included</span>
+            }
+            @if (memberImpact(member.id); as impact) {
+              <span class="text-[0.65rem] font-bold" [class.text-emerald-500]="impact > 0" [class.text-rose-500]="impact < 0">
+                {{ impact > 0 ? 'gets back ' : 'owes ' }}{{ (impact > 0 ? impact : -impact) | currency:'INR' }}
+              </span>
+            }
+          </div>
         </div>
+      }
+
+      <!-- Running summary for the chosen split type -->
+      @if (selectedMemberIds().length === 0) {
+        <p class="text-xs text-rose-500 m-0">Pick at least one person to split with.</p>
+      } @else if (expSplitType() === SplitType.Equal) {
+        <p class="text-xs text-[var(--text-muted)] m-0">
+          Split equally between {{ selectedMemberIds().length }} {{ selectedMemberIds().length === 1 ? 'person' : 'people' }}.
+          Tick or un-tick anyone and the amounts above adjust.
+        </p>
+      } @else if (expSplitType() === SplitType.Exact) {
+        <p class="text-xs m-0" [class.text-rose-500]="splitTotals().exactLeft !== 0" [class.text-emerald-500]="splitTotals().exactLeft === 0">
+          Allocated {{ splitTotals().exact | currency:'INR' }} of {{ (expAmount() ?? 0) | currency:'INR' }}
+          @if (splitTotals().exactLeft !== 0) {
+            · {{ splitTotals().exactLeft > 0 ? 'still to assign' : 'over by' }} {{ (splitTotals().exactLeft > 0 ? splitTotals().exactLeft : -splitTotals().exactLeft) | currency:'INR' }}
+          }
+        </p>
+      } @else if (expSplitType() === SplitType.Percentage) {
+        <p class="text-xs m-0" [class.text-rose-500]="splitTotals().percent !== 100" [class.text-emerald-500]="splitTotals().percent === 100">
+          Percentages add up to {{ splitTotals().percent }}% {{ splitTotals().percent === 100 ? '✓' : '(must be 100%)' }}
+        </p>
+      } @else {
+        <p class="text-xs text-[var(--text-muted)] m-0">{{ splitTotals().shares }} shares in total — leave a box empty to count it as 1 share.</p>
       }
     </div>
   </div>
