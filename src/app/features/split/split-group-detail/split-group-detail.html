@@ -2,10 +2,11 @@
 <p-confirmDialog></p-confirmDialog>
 
 @if (!onlineStatus.isOnline()) {
-  <div class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm bg-amber-500/10 text-amber-500 border-b border-amber-500/20">
-    <i class="pi pi-wifi"></i>
-    <span>You're offline — showing the last synced data. New expenses and settlements need a connection.</span>
-  </div>
+<div
+  class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm bg-amber-500/10 text-amber-500 border-b border-amber-500/20">
+  <i class="pi pi-wifi"></i>
+  <span>You're offline — showing the last synced data. New expenses and settlements need a connection.</span>
+</div>
 }
 
 <div class="flex flex-col gap-6 w-full px-4 md:px-8 py-4">
@@ -13,18 +14,20 @@
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
     <div class="flex items-center gap-3 min-w-0">
       <a routerLink="/app/split"
-         class="no-underline text-[var(--text-muted)] hover:text-[var(--primary-color)] transition-colors p-2.5 rounded-xl bg-[var(--glass-bg)] border border-[var(--glass-border)] flex items-center justify-center shrink-0 shadow-sm">
+        class="no-underline text-[var(--text-muted)] hover:text-[var(--primary-color)] transition-colors p-2.5 rounded-xl bg-[var(--glass-bg)] border border-[var(--glass-border)] flex items-center justify-center shrink-0 shadow-sm">
         <i class="pi pi-arrow-left"></i>
       </a>
       <div class="flex flex-col min-w-0 justify-center">
         <div class="flex items-center gap-2 flex-wrap min-w-0">
           <h1 class="text-lg sm:text-2xl md:text-3xl font-extrabold m-0 gradient-text truncate">{{ group()?.name }}</h1>
           @if (group()?.status === 0) {
-            <p-tag value="Active" severity="success" styleClass="text-[0.65rem] sm:text-xs font-bold"></p-tag>
+          <p-tag value="Active" severity="success" styleClass="text-[0.65rem] sm:text-xs font-bold"></p-tag>
           } @else if (group()?.status === 1) {
-            <p-tag value="Locked" severity="warn" icon="pi pi-lock" styleClass="text-[0.65rem] sm:text-xs font-bold"></p-tag>
+          <p-tag value="Locked" severity="warn" icon="pi pi-lock"
+            styleClass="text-[0.65rem] sm:text-xs font-bold"></p-tag>
           } @else {
-            <p-tag value="Closed" severity="secondary" icon="pi pi-archive" styleClass="text-[0.65rem] sm:text-xs font-bold"></p-tag>
+          <p-tag value="Closed" severity="secondary" icon="pi pi-archive"
+            styleClass="text-[0.65rem] sm:text-xs font-bold"></p-tag>
           }
         </div>
 
@@ -40,27 +43,30 @@
         <p-popover #membersOverlay styleClass="glass-card">
           <div class="flex flex-col gap-2 p-2.5 min-w-[14rem]">
             <div class="flex items-center justify-between border-b border-[var(--glass-border)] pb-1.5">
-              <span class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Members ({{ group()?.members?.length }})</span>
-              <button (click)="membersOverlay.hide(); openSettingsModal('members')" class="text-[0.7rem] text-[var(--primary-color,#3b82f6)] font-bold bg-transparent border-none cursor-pointer p-0 hover:underline">Manage</button>
+              <span class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Members ({{
+                group()?.members?.length }})</span>
+              <button (click)="membersOverlay.hide(); openSettingsModal('members')"
+                class="text-[0.7rem] text-[var(--primary-color,#3b82f6)] font-bold bg-transparent border-none cursor-pointer p-0 hover:underline">Manage</button>
             </div>
             <div class="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">
               @for (m of group()?.members; track m.id) {
-                <div class="flex items-center justify-between gap-3 text-xs py-1">
-                  <div class="flex items-center gap-2 min-w-0">
-                    <div class="w-6 h-6 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 text-white font-bold text-[0.65rem] flex items-center justify-center shrink-0">
-                      {{ m.name.substring(0, 2).toUpperCase() }}
-                    </div>
-                    <span class="font-bold truncate text-[var(--text-primary)]">{{ m.name }}</span>
+              <div class="flex items-center justify-between gap-3 text-xs py-1">
+                <div class="flex items-center gap-2 min-w-0">
+                  <div
+                    class="w-6 h-6 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 text-white font-bold text-[0.65rem] flex items-center justify-center shrink-0">
+                    {{ m.name.substring(0, 2).toUpperCase() }}
                   </div>
-                  <div class="flex items-center gap-1">
-                    @if (m.linkedUserId === group()?.createdByUserId) {
-                      <p-tag value="Admin" severity="warn" styleClass="text-[0.6rem] px-1.5 py-0 font-bold"></p-tag>
-                    }
-                    @if (m.upiId) {
-                      <i class="pi pi-check-circle text-emerald-500 text-[0.65rem]" pTooltip="UPI ID Set"></i>
-                    }
-                  </div>
+                  <span class="font-bold truncate text-[var(--text-primary)]">{{ m.name }}</span>
                 </div>
+                <div class="flex items-center gap-1">
+                  @if (m.linkedUserId === group()?.createdByUserId) {
+                  <p-tag value="Admin" severity="warn" styleClass="text-[0.6rem] px-1.5 py-0 font-bold"></p-tag>
+                  }
+                  @if (m.upiId) {
+                  <i class="pi pi-check-circle text-emerald-500 text-[0.65rem]" pTooltip="UPI ID Set"></i>
+                  }
+                </div>
+              </div>
               }
             </div>
           </div>
@@ -70,452 +76,488 @@
 
     <!-- Mobile Responsive Action Buttons Row -->
     <div class="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto">
-      <p-button icon="pi pi-cog" label="Settings" (onClick)="openSettingsModal('members')" pTooltip="Group Settings & Members"
+      <p-button icon="pi pi-cog" label="Settings" (onClick)="openSettingsModal('members')"
+        pTooltip="Group Settings & Members"
         styleClass="w-full rounded-2xl font-bold text-xs sm:text-sm shadow-sm"></p-button>
       <p-button icon="pi pi-file-excel" label="Export" (onClick)="exportToExcel()" [loading]="isExporting()"
         pTooltip="Download an Excel report with balances, who owes whom and every expense"
         styleClass="w-full rounded-2xl font-bold text-xs sm:text-sm shadow-sm" severity="secondary"></p-button>
       @if (!isGroupClosed()) {
-        <p-button label="Add Expense" icon="pi pi-plus" (onClick)="openAddExpense()"
-          styleClass="w-full rounded-2xl font-bold text-xs sm:text-sm shadow-sm"></p-button>
+      <p-button label="Add Expense" icon="pi pi-plus" (onClick)="openAddExpense()"
+        styleClass="w-full rounded-2xl font-bold text-xs sm:text-sm shadow-sm"></p-button>
       } @else {
-        <p-button label="Import to Ledger" icon="pi pi-wallet" (onClick)="openImportDialog()"
-          styleClass="w-full rounded-2xl font-bold text-xs sm:text-sm shadow-sm"></p-button>
+      <p-button label="Import to Ledger" icon="pi pi-wallet" (onClick)="openImportDialog()"
+        styleClass="w-full rounded-2xl font-bold text-xs sm:text-sm shadow-sm"></p-button>
       }
     </div>
   </div>
 
   @if (isLoading()) {
-    <div class="flex justify-center p-12">
-      <p-progressSpinner styleClass="w-12 h-12"></p-progressSpinner>
-    </div>
+  <div class="flex justify-center p-12">
+    <p-progressSpinner styleClass="w-12 h-12"></p-progressSpinner>
+  </div>
   } @else {
-    <!-- Hero Financial Overview Banner Card -->
-    <div class="grid grid-cols-12 gap-3.5 sm:gap-4">
-      <!-- Total Group Spend Card -->
-      <div class="col-span-12 sm:col-span-6">
-        <div class="p-5 rounded-3xl bg-[var(--glass-bg)] border border-[var(--glass-border)] shadow-sm flex items-center justify-between gap-4 relative overflow-hidden group">
-          <div class="flex items-center gap-3.5 min-w-0">
-            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-600 text-white flex items-center justify-center shrink-0 shadow-md">
-              <i class="pi pi-receipt text-xl"></i>
-            </div>
-            <div class="flex flex-col min-w-0">
-              <span class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Total Trip Expense</span>
-              <span class="text-2xl sm:text-3xl font-black text-[var(--text-primary)] tracking-tight">{{ group()?.totalSpend | currency:'INR' }}</span>
-            </div>
+  <!-- Hero Financial Overview Banner Card -->
+  <div class="grid grid-cols-12 gap-3.5 sm:gap-4">
+    <!-- Total Group Spend Card -->
+    <div class="col-span-12 sm:col-span-6">
+      <div
+        class="p-5 rounded-3xl bg-[var(--glass-bg)] border border-[var(--glass-border)] shadow-sm flex items-center justify-between gap-4 relative overflow-hidden group">
+        <div class="flex items-center gap-3.5 min-w-0">
+          <div
+            class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-600 text-white flex items-center justify-center shrink-0 shadow-md">
+            <i class="pi pi-receipt text-xl"></i>
           </div>
-        </div>
-      </div>
-
-      <!-- My Net Balance Card -->
-      <div class="col-span-12 sm:col-span-6">
-        <div class="p-5 rounded-3xl bg-[var(--glass-bg)] border border-[var(--glass-border)] shadow-sm flex items-center justify-between gap-4 relative overflow-hidden group"
-          [class.border-emerald-500/40]="myNetBalance() > 0"
-          [class.border-rose-500/40]="myNetBalance() < 0"
-          [class.border-[var(--glass-border)]]="myNetBalance() === 0">
-          <div class="flex items-center gap-3.5 min-w-0">
-            <div class="w-12 h-12 rounded-2xl text-white flex items-center justify-center shrink-0 shadow-md bg-gradient-to-tr"
-              [class.from-emerald-500]="myNetBalance() >= 0"
-              [class.to-teal-600]="myNetBalance() >= 0"
-              [class.from-rose-500]="myNetBalance() < 0"
-              [class.to-pink-600]="myNetBalance() < 0">
-              <i class="pi text-xl" [class.pi-arrow-down-left]="myNetBalance() > 0" [class.pi-arrow-up-right]="myNetBalance() < 0" [class.pi-check-circle]="myNetBalance() === 0"></i>
-            </div>
-            <div class="flex flex-col min-w-0">
-              <span class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Your Financial Position</span>
-              <div class="flex items-center gap-2">
-                @if (myNetBalance() > 0) {
-                  <span class="text-xl sm:text-2xl font-black text-emerald-500 tracking-tight">+{{ myNetBalance() | currency:'INR' }}</span>
-                  <span class="text-[0.7rem] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">Gets Back</span>
-                } @else if (myNetBalance() < 0) {
-                  <span class="text-xl sm:text-2xl font-black text-rose-500 tracking-tight">{{ myNetBalance() | currency:'INR' }}</span>
-                  <span class="text-[0.7rem] font-bold text-rose-500 bg-rose-500/10 px-2 py-0.5 rounded-full">Owes</span>
-                } @else {
-                  <span class="text-xl sm:text-2xl font-black text-[var(--text-primary)] tracking-tight">₹0.00</span>
-                  <span class="text-[0.7rem] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full">Settled</span>
-                }
-              </div>
-            </div>
+          <div class="flex flex-col min-w-0">
+            <span class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Total Trip Expense</span>
+            <span class="text-2xl sm:text-3xl font-black text-[var(--text-primary)] tracking-tight">{{
+              group()?.totalSpend | currency:'INR' }}</span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Main Navigation Bar & Search -->
-    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 p-2 rounded-2xl bg-[var(--glass-bg)] border border-[var(--glass-border)] shadow-sm">
-      <div class="grid grid-cols-2 sm:flex items-center gap-1 p-1 rounded-xl bg-black/10 dark:bg-white/5 w-full sm:w-auto shrink-0 justify-center sm:justify-start">
-        <button (click)="activeTab.set('expenses')"
-          class="w-full sm:w-auto px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm border-none cursor-pointer transition-all font-bold flex items-center justify-center gap-1.5"
-          [class.bg-[var(--primary-color,#3b82f6)]]="activeTab() === 'expenses'"
-          [class.text-white]="activeTab() === 'expenses'"
-          [class.shadow-md]="activeTab() === 'expenses'"
-          [class.bg-transparent]="activeTab() !== 'expenses'"
-          [class.text-[var(--text-muted)]]="activeTab() !== 'expenses'">
-          <i class="pi pi-receipt text-xs shrink-0"></i>
-          <span class="truncate">Expenses ({{ expenseCount() }})</span>
-        </button>
-        <button (click)="activeTab.set('balances')"
-          class="w-full sm:w-auto px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm border-none cursor-pointer transition-all font-bold flex items-center justify-center gap-1.5"
-          [class.bg-[var(--primary-color,#3b82f6)]]="activeTab() === 'balances'"
-          [class.text-white]="activeTab() === 'balances'"
-          [class.shadow-md]="activeTab() === 'balances'"
-          [class.bg-transparent]="activeTab() !== 'balances'"
-          [class.text-[var(--text-muted)]]="activeTab() !== 'balances'">
-          <i class="pi pi-calculator text-xs shrink-0"></i>
-          <span class="truncate">Balances & Analytics</span>
-        </button>
-      </div>
-
-      <!-- Expense Search Field (Proper padding & no overlapping icon) -->
-      @if (activeTab() === 'expenses') {
-        <div class="relative w-full sm:w-80">
-          <i class="pi pi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)] pointer-events-none z-10"></i>
-          <input type="text" pInputText placeholder="Search expenses or payers..."
-            [ngModel]="expenseSearchQuery()" (ngModelChange)="onSearchChange($event)"
-            style="padding-left: 2.5rem !important;"
-            class="w-full pr-8 py-2 text-xs sm:text-sm rounded-xl border border-[var(--glass-border)] bg-[var(--glass-bg)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--primary-color,#3b82f6)] transition-all shadow-inner" />
-          @if (expenseSearchQuery()) {
-            <button (click)="onSearchChange('')" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-transparent border-none cursor-pointer p-0">
-              <i class="pi pi-times"></i>
-            </button>
-          }
+    <!-- My Net Balance Card -->
+    <div class="col-span-12 sm:col-span-6">
+      <div
+        class="p-5 rounded-3xl bg-[var(--glass-bg)] border border-[var(--glass-border)] shadow-sm flex items-center justify-between gap-4 relative overflow-hidden group"
+        [class.border-emerald-500/40]="myNetBalance() > 0" [class.border-rose-500/40]="myNetBalance() < 0"
+        [class.border-[var(--glass-border)]]="myNetBalance() === 0">
+        <div class="flex items-center gap-3.5 min-w-0">
+          <div
+            class="w-12 h-12 rounded-2xl text-white flex items-center justify-center shrink-0 shadow-md bg-gradient-to-tr"
+            [class.from-emerald-500]="myNetBalance() >= 0" [class.to-teal-600]="myNetBalance() >= 0"
+            [class.from-rose-500]="myNetBalance() < 0" [class.to-pink-600]="myNetBalance() < 0">
+            <i class="pi text-xl" [class.pi-arrow-down-left]="myNetBalance() > 0"
+              [class.pi-arrow-up-right]="myNetBalance() < 0" [class.pi-check-circle]="myNetBalance() === 0"></i>
+          </div>
+          <div class="flex flex-col min-w-0">
+            <span class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Your Financial
+              Position</span>
+            <div class="flex items-center gap-2">
+              @if (myNetBalance() > 0) {
+              <span class="text-xl sm:text-2xl font-black text-emerald-500 tracking-tight">+{{ myNetBalance() |
+                currency:'INR' }}</span>
+              <span class="text-[0.7rem] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">Gets
+                Back</span>
+              } @else if (myNetBalance() < 0) { <span
+                class="text-xl sm:text-2xl font-black text-rose-500 tracking-tight">{{ myNetBalance() | currency:'INR'
+                }}</span>
+                <span class="text-[0.7rem] font-bold text-rose-500 bg-rose-500/10 px-2 py-0.5 rounded-full">Owes</span>
+                } @else {
+                <span class="text-xl sm:text-2xl font-black text-[var(--text-primary)] tracking-tight">₹0.00</span>
+                <span
+                  class="text-[0.7rem] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full">Settled</span>
+                }
+            </div>
+          </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Navigation Bar & Search -->
+  <div
+    class="flex flex-col sm:flex-row items-center justify-between gap-3 p-2 rounded-2xl bg-[var(--glass-bg)] border border-[var(--glass-border)] shadow-sm">
+    <div
+      class="grid grid-cols-2 sm:flex items-center gap-1 p-1 rounded-xl bg-black/10 dark:bg-white/5 w-full sm:w-auto shrink-0 justify-center sm:justify-start">
+      <button (click)="activeTab.set('expenses')"
+        class="w-full sm:w-auto px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm border-none cursor-pointer transition-all font-bold flex items-center justify-center gap-1.5"
+        [class.bg-[var(--primary-color,#3b82f6)]]="activeTab() === 'expenses'"
+        [class.text-white]="activeTab() === 'expenses'" [class.shadow-md]="activeTab() === 'expenses'"
+        [class.bg-transparent]="activeTab() !== 'expenses'"
+        [class.text-[var(--text-muted)]]="activeTab() !== 'expenses'">
+        <i class="pi pi-receipt text-xs shrink-0"></i>
+        <span class="truncate">Expenses ({{ expenseCount() }})</span>
+      </button>
+      <button (click)="activeTab.set('balances')"
+        class="w-full sm:w-auto px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm border-none cursor-pointer transition-all font-bold flex items-center justify-center gap-1.5"
+        [class.bg-[var(--primary-color,#3b82f6)]]="activeTab() === 'balances'"
+        [class.text-white]="activeTab() === 'balances'" [class.shadow-md]="activeTab() === 'balances'"
+        [class.bg-transparent]="activeTab() !== 'balances'"
+        [class.text-[var(--text-muted)]]="activeTab() !== 'balances'">
+        <i class="pi pi-calculator text-xs shrink-0"></i>
+        <span class="truncate">Balances & Analytics</span>
+      </button>
+    </div>
+
+    <!-- Expense Search Field (Proper padding & no overlapping icon) -->
+    @if (activeTab() === 'expenses') {
+    <div class="relative w-full sm:w-80">
+      <i
+        class="pi pi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)] pointer-events-none z-10"></i>
+      <input type="text" pInputText placeholder="Search expenses or payers..." [ngModel]="expenseSearchQuery()"
+        (ngModelChange)="onSearchChange($event)" style="padding-left: 2.5rem !important;"
+        class="w-full pr-8 py-2 text-xs sm:text-sm rounded-xl border border-[var(--glass-border)] bg-[var(--glass-bg)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--primary-color,#3b82f6)] transition-all shadow-inner" />
+      @if (expenseSearchQuery()) {
+      <button (click)="onSearchChange('')"
+        class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-transparent border-none cursor-pointer p-0">
+        <i class="pi pi-times"></i>
+      </button>
       }
     </div>
+    }
+  </div>
 
-    <!-- Expenses Tab Content (grouped by day, loads more as you scroll) -->
-    @if (activeTab() === 'expenses') {
-      <div class="flex flex-col gap-5">
-        @for (day of expenseGroups(); track day.dayKey) {
-          <section class="flex flex-col gap-2.5">
-            <div class="flex items-center justify-between px-1">
-              <h4 class="m-0 text-xs font-extrabold uppercase tracking-wider text-[var(--text-muted)] flex items-center gap-1.5">
-                @if (day.label) {
-                  <span class="text-[var(--primary-color,#3b82f6)]">{{ day.label }}</span>
-                  <span>·</span>
-                }
-                <span>{{ day.date | date:'EEE, d MMM y' }}</span>
-              </h4>
-              <span class="text-xs font-bold text-[var(--text-muted)]">{{ day.total | currency:'INR' }}</span>
+  <!-- Expenses Tab Content (grouped by day, loads more as you scroll) -->
+  @if (activeTab() === 'expenses') {
+  <div class="flex flex-col gap-5">
+    @for (day of expenseGroups(); track day.dayKey) {
+    <section class="flex flex-col gap-2.5">
+      <div class="flex items-center justify-between px-1">
+        <h4
+          class="m-0 text-xs font-extrabold uppercase tracking-wider text-[var(--text-muted)] flex items-center gap-1.5">
+          @if (day.label) {
+          <span class="text-[var(--primary-color,#3b82f6)]">{{ day.label }}</span>
+          <span>·</span>
+          }
+          <span>{{ day.date | date:'EEE, d MMM y' }}</span>
+        </h4>
+        <span class="text-xs font-bold text-[var(--text-muted)]">{{ day.total | currency:'INR' }}</span>
+      </div>
+
+      @for (expense of day.items; track expense.id) {
+      <div [id]="'expense-' + expense.id"
+        class="rounded-2xl bg-[var(--glass-bg)] border border-[var(--glass-border)] hover:border-indigo-500/30 hover:shadow-md transition-all duration-300 group"
+        [class.ring-2]="expense.id === newlyAddedExpenseId()"
+        [class.ring-emerald-400]="expense.id === newlyAddedExpenseId()"
+        [class.bg-emerald-500\/10]="expense.id === newlyAddedExpenseId()">
+
+        <div class="p-4 flex items-center justify-between gap-3 cursor-pointer"
+          (click)="toggleExpenseDetails(expense.id)">
+          <div class="flex items-center gap-3.5 min-w-0">
+            <div
+              class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-500/20 to-purple-600/20 border border-indigo-500/30 font-bold flex items-center justify-center shrink-0 shadow-sm">
+              <i [class]="getCategoryIcon(expense.category)" class="text-base"></i>
             </div>
 
-            @for (expense of day.items; track expense.id) {
-              <div [id]="'expense-' + expense.id"
-                class="rounded-2xl bg-[var(--glass-bg)] border border-[var(--glass-border)] hover:border-indigo-500/30 hover:shadow-md transition-all duration-300 group"
-                [class.ring-2]="expense.id === newlyAddedExpenseId()"
-                [class.ring-emerald-400]="expense.id === newlyAddedExpenseId()"
-                [class.bg-emerald-500\/10]="expense.id === newlyAddedExpenseId()">
-
-                <div class="p-4 flex items-center justify-between gap-3 cursor-pointer" (click)="toggleExpenseDetails(expense.id)">
-                  <div class="flex items-center gap-3.5 min-w-0">
-                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-500/20 to-purple-600/20 border border-indigo-500/30 font-bold flex items-center justify-center shrink-0 shadow-sm">
-                      <i [class]="getCategoryIcon(expense.category)" class="text-base"></i>
-                    </div>
-
-                    <div class="flex flex-col min-w-0">
-                      <div class="flex items-center gap-2 flex-wrap">
-                        <span class="font-bold text-sm sm:text-base text-[var(--text-primary)] truncate group-hover:text-[var(--primary-color,#3b82f6)] transition-colors">
-                          {{ expense.description }}
-                        </span>
-                        @if (expense.category) {
-                          <span class="text-[0.65rem] px-2 py-0.5 rounded-full font-bold border" [class]="getCategoryBadgeColor(expense.category)">
-                            {{ expense.category }}
-                          </span>
-                        }
-                      </div>
-                      <div class="flex items-center gap-2 text-xs text-[var(--text-muted)] mt-0.5 flex-wrap">
-                        <span class="font-medium text-[var(--text-primary)]">
-                          Paid by {{ expense.payers.length === 1 ? expense.payers[0]?.memberName : (expense.payers.length + ' people') }}
-                        </span>
-                        <span>•</span>
-                        <span class="text-[0.7rem]">{{ splitTypeLabel(expense.splitType) }} · {{ expense.participants.length }} {{ expense.participants.length === 1 ? 'person' : 'people' }}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Amount, your position & actions -->
-                  <div class="flex items-center gap-3 shrink-0">
-                    <div class="flex flex-col items-end">
-                      <span class="text-base sm:text-xl font-black text-[var(--text-primary)] tracking-tight">
-                        {{ expense.amount | currency:'INR' }}
-                      </span>
-                      @if (myPosition(expense); as pos) {
-                        @if (pos.net > 0) {
-                          <span class="text-[0.7rem] font-bold text-emerald-500">you lent {{ pos.net | currency:'INR' }}</span>
-                        } @else if (pos.net < 0) {
-                          <span class="text-[0.7rem] font-bold text-rose-500">you owe {{ -pos.net | currency:'INR' }}</span>
-                        } @else {
-                          <span class="text-[0.7rem] font-medium text-[var(--text-muted)]">you're even</span>
-                        }
-                      }
-                    </div>
-                    @if (!isGroupClosed()) {
-                      <div class="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
-                        <button (click)="$event.stopPropagation(); openEditExpense(expense)" pTooltip="Edit Expense"
-                          class="text-xs text-[var(--text-muted)] hover:text-[var(--primary-color,#3b82f6)] bg-transparent border-none cursor-pointer p-2 rounded-xl hover:bg-white/5 transition-all">
-                          <i class="pi pi-pencil"></i>
-                        </button>
-                        <button (click)="$event.stopPropagation(); deleteExpense(expense)" pTooltip="Delete Expense"
-                          class="text-xs text-red-500 hover:text-red-400 bg-transparent border-none cursor-pointer p-2 rounded-xl hover:bg-red-500/10 transition-all">
-                          <i class="pi pi-trash"></i>
-                        </button>
-                      </div>
-                    }
-                    <i class="pi text-xs text-[var(--text-muted)]"
-                      [class.pi-chevron-down]="!expandedExpenseIds().has(expense.id)"
-                      [class.pi-chevron-up]="expandedExpenseIds().has(expense.id)"></i>
-                  </div>
-                </div>
-
-                <!-- Per-person breakdown -->
-                @if (expandedExpenseIds().has(expense.id)) {
-                  <div class="px-4 pb-4 pt-3 border-t border-[var(--glass-border)] flex flex-col gap-1.5">
-                    <div class="grid grid-cols-12 gap-2 text-[0.65rem] font-extrabold uppercase tracking-wider text-[var(--text-muted)]">
-                      <span class="col-span-4">Person</span>
-                      <span class="col-span-3 text-right">Paid</span>
-                      <span class="col-span-3 text-right">Share</span>
-                      <span class="col-span-2 text-right">Net</span>
-                    </div>
-                    @for (line of expenseLines(expense); track line.memberId) {
-                      <div class="grid grid-cols-12 gap-2 text-xs items-center">
-                        <span class="col-span-4 font-bold truncate text-[var(--text-primary)]">{{ line.name }}</span>
-                        <span class="col-span-3 text-right text-[var(--text-muted)]">{{ line.paid > 0 ? (line.paid | currency:'INR') : '—' }}</span>
-                        <span class="col-span-3 text-right text-[var(--text-primary)] font-medium">{{ line.share > 0 ? (line.share | currency:'INR') : '—' }}</span>
-                        <span class="col-span-2 text-right font-bold"
-                          [class.text-emerald-500]="line.net > 0" [class.text-rose-500]="line.net < 0"
-                          [class.text-[var(--text-muted)]]="line.net === 0">
-                          {{ line.net > 0 ? '+' : '' }}{{ line.net | number:'1.0-2' }}
-                        </span>
-                      </div>
-                    }
-                  </div>
+            <div class="flex flex-col min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span
+                  class="font-bold text-sm sm:text-base text-[var(--text-primary)] truncate group-hover:text-[var(--primary-color,#3b82f6)] transition-colors">
+                  {{ expense.description }}
+                </span>
+                @if (expense.category) {
+                <span class="text-[0.65rem] px-2 py-0.5 rounded-full font-bold border"
+                  [class]="getCategoryBadgeColor(expense.category)">
+                  {{ expense.category }}
+                </span>
                 }
               </div>
-            }
-          </section>
-        } @empty {
-          @if (isLoadingMore()) {
-            <div class="flex justify-center p-8"><p-progressSpinner styleClass="w-8 h-8"></p-progressSpinner></div>
-          } @else {
-            <app-empty-state icon="pi pi-receipt" title="No expenses found"
-              message="No expenses match your search or none logged yet." actionLabel="Add Expense"
-              (action)="openAddExpense()"></app-empty-state>
-          }
-        }
-
-        <!-- Infinite-scroll sentinel: loads the next page as it nears the viewport -->
-        @if (nextCursor()) {
-          <div appInfiniteScroll [disabled]="isLoadingMore() || expensesLoadFailed()" (reachedEnd)="loadMoreExpenses()"
-            class="flex justify-center py-4">
-            @if (expensesLoadFailed()) {
-              <p-button label="Couldn't load more — tap to retry" icon="pi pi-refresh" [text]="true" size="small"
-                (onClick)="retryLoadMore()"></p-button>
-            } @else {
-              <p-progressSpinner styleClass="w-7 h-7" strokeWidth="5"></p-progressSpinner>
-            }
-          </div>
-        } @else if (expenses().length > 0) {
-          <p class="text-center text-xs text-[var(--text-muted)] m-0 py-2">
-            That's everything · {{ expenses().length }} {{ expenses().length === 1 ? 'expense' : 'expenses' }}
-          </p>
-        }
-      </div>
-    }
-
-    <!-- Balances Tab Content -->
-    @if (activeTab() === 'balances') {
-      <div class="flex flex-col gap-6">
-        <!-- Individual Member Net Balances -->
-        <div class="flex flex-col gap-2">
-          <h3 class="text-xs font-extrabold text-[var(--text-muted)] uppercase tracking-wider m-0">Member Net Position Summary</h3>
-          <div class="grid grid-cols-12 gap-3.5">
-            @for (b of balances()?.balances; track b.memberId) {
-              <div class="col-span-12 sm:col-span-6 lg:col-span-4">
-                <div class="p-4 rounded-2xl bg-[var(--glass-bg)] border flex flex-col gap-2.5 transition-all shadow-sm"
-                  [class.border-emerald-500/40]="b.netBalance > 0"
-                  [class.border-rose-500/40]="b.netBalance < 0"
-                  [class.border-[var(--glass-border)]]="b.netBalance === 0">
-                  
-                  <div class="flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-2.5 min-w-0">
-                      <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                        {{ b.memberName.substring(0, 2).toUpperCase() }}
-                      </div>
-                      <span class="text-sm font-bold truncate text-[var(--text-primary)]">{{ b.memberName }}</span>
-                    </div>
-
-                    <span class="text-base font-black tracking-tight"
-                      [class.text-emerald-500]="b.netBalance > 0"
-                      [class.text-rose-500]="b.netBalance < 0"
-                      [class.text-[var(--text-muted)]]="b.netBalance === 0">
-                      {{ b.netBalance > 0 ? '+' : '' }}{{ b.netBalance | currency:'INR' }}
-                    </span>
-                  </div>
-
-                  <div class="grid grid-cols-3 gap-2 text-xs text-[var(--text-muted)] pt-2 border-t border-[var(--glass-border)]">
-                    <div class="flex flex-col">
-                      <span>Paid</span>
-                      <strong class="text-[var(--text-primary)] font-bold">{{ (b.totalPaid ?? 0) | currency:'INR' }}</strong>
-                    </div>
-                    <div class="flex flex-col">
-                      <span>Share</span>
-                      <strong class="text-[var(--text-primary)] font-bold">− {{ (b.totalShare ?? 0) | currency:'INR' }}</strong>
-                    </div>
-                    <div class="flex flex-col">
-                      <span>Settled</span>
-                      <strong class="font-bold" [class.text-emerald-500]="settledNet(b) > 0" [class.text-rose-500]="settledNet(b) < 0"
-                        [class.text-[var(--text-primary)]]="settledNet(b) === 0">
-                        {{ settledNet(b) > 0 ? '+' : (settledNet(b) < 0 ? '−' : '') }} {{ (settledNet(b) < 0 ? -settledNet(b) : settledNet(b)) | currency:'INR' }}
-                      </strong>
-                    </div>
-                  </div>
-                  <p class="text-[0.65rem] text-[var(--text-muted)] m-0">Paid − Share + Settled = Net balance</p>
-                  @if ((b.inTransit ?? 0) !== 0) {
-                    <span class="self-start text-[0.65rem] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                      {{ (b.inTransit ?? 0) > 0 ? 'Sent' : 'Receiving' }} {{ ((b.inTransit ?? 0) > 0 ? b.inTransit : -(b.inTransit ?? 0)) | currency:'INR' }} · awaiting confirmation
-                    </span>
-                  }
-                </div>
+              <div class="flex items-center gap-2 text-xs text-[var(--text-muted)] mt-0.5 flex-wrap">
+                <span class="font-medium text-[var(--text-primary)]">
+                  Paid by {{ expense.payers.length === 1 ? expense.payers[0]?.memberName : (expense.payers.length + '
+                  people') }}
+                </span>
+                <span>•</span>
+                <span class="text-[0.7rem]">{{ splitTypeLabel(expense.splitType) }} · {{ expense.participants.length }}
+                  {{ expense.participants.length === 1 ? 'person' : 'people' }}</span>
               </div>
+            </div>
+          </div>
+
+          <!-- Amount, your position & actions -->
+          <div class="flex items-center gap-3 shrink-0">
+            <div class="flex flex-col items-end">
+              <span class="text-base sm:text-xl font-black text-[var(--text-primary)] tracking-tight">
+                {{ expense.amount | currency:'INR' }}
+              </span>
+              @if (myPosition(expense); as pos) {
+              @if (pos.net > 0) {
+              <span class="text-[0.7rem] font-bold text-emerald-500">you lent {{ pos.net | currency:'INR' }}</span>
+              } @else if (pos.net < 0) { <span class="text-[0.7rem] font-bold text-rose-500">you owe {{ -pos.net |
+                currency:'INR' }}</span>
+                } @else {
+                <span class="text-[0.7rem] font-medium text-[var(--text-muted)]">you're even</span>
+                }
+                }
+            </div>
+            @if (!isGroupClosed()) {
+            <div class="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+              <button (click)="$event.stopPropagation(); openEditExpense(expense)" pTooltip="Edit Expense"
+                class="text-xs text-[var(--text-muted)] hover:text-[var(--primary-color,#3b82f6)] bg-transparent border-none cursor-pointer p-2 rounded-xl hover:bg-white/5 transition-all">
+                <i class="pi pi-pencil"></i>
+              </button>
+              <button (click)="$event.stopPropagation(); deleteExpense(expense)" pTooltip="Delete Expense"
+                class="text-xs text-red-500 hover:text-red-400 bg-transparent border-none cursor-pointer p-2 rounded-xl hover:bg-red-500/10 transition-all">
+                <i class="pi pi-trash"></i>
+              </button>
+            </div>
             }
+            <i class="pi text-xs text-[var(--text-muted)]"
+              [class.pi-chevron-down]="!expandedExpenseIds().has(expense.id)"
+              [class.pi-chevron-up]="expandedExpenseIds().has(expense.id)"></i>
           </div>
         </div>
 
-        <!-- Spend Breakdown by Category Analytics -->
-        @if (categoryBreakdown().length > 0) {
-          <div class="p-5 rounded-3xl bg-[var(--glass-bg)] border border-[var(--glass-border)] flex flex-col gap-4 shadow-sm">
-            <div class="flex items-center justify-between border-b border-[var(--glass-border)] pb-3">
-              <div class="flex items-center gap-2">
-                <div class="w-7 h-7 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 text-white flex items-center justify-center text-xs font-bold shadow-sm">
-                  <i class="pi pi-chart-pie"></i>
+        <!-- Per-person breakdown -->
+        @if (expandedExpenseIds().has(expense.id)) {
+        <div class="px-4 pb-4 pt-3 border-t border-[var(--glass-border)] flex flex-col gap-1.5">
+          <div
+            class="grid grid-cols-12 gap-2 text-[0.65rem] font-extrabold uppercase tracking-wider text-[var(--text-muted)]">
+            <span class="col-span-4">Person</span>
+            <span class="col-span-3 text-right">Paid</span>
+            <span class="col-span-3 text-right">Share</span>
+            <span class="col-span-2 text-right">Net</span>
+          </div>
+          @for (line of expenseLines(expense); track line.memberId) {
+          <div class="grid grid-cols-12 gap-2 text-xs items-center">
+            <span class="col-span-4 font-bold truncate text-[var(--text-primary)]">{{ line.name }}</span>
+            <span class="col-span-3 text-right text-[var(--text-muted)]">{{ line.paid > 0 ? (line.paid | currency:'INR')
+              : '—' }}</span>
+            <span class="col-span-3 text-right text-[var(--text-primary)] font-medium">{{ line.share > 0 ? (line.share |
+              currency:'INR') : '—' }}</span>
+            <span class="col-span-2 text-right font-bold" [class.text-emerald-500]="line.net > 0"
+              [class.text-rose-500]="line.net < 0" [class.text-[var(--text-muted)]]="line.net === 0">
+              {{ line.net > 0 ? '+' : '' }}{{ line.net | number:'1.0-2' }}
+            </span>
+          </div>
+          }
+        </div>
+        }
+      </div>
+      }
+    </section>
+    } @empty {
+    @if (isLoadingMore()) {
+    <div class="flex justify-center p-8"><p-progressSpinner styleClass="w-8 h-8"></p-progressSpinner></div>
+    } @else {
+    <app-empty-state icon="pi pi-receipt" title="No expenses found"
+      message="No expenses match your search or none logged yet." actionLabel="Add Expense"
+      (action)="openAddExpense()"></app-empty-state>
+    }
+    }
+
+    <!-- Infinite-scroll sentinel: loads the next page as it nears the viewport -->
+    @if (nextCursor()) {
+    <div appInfiniteScroll [disabled]="isLoadingMore() || expensesLoadFailed()" (reachedEnd)="loadMoreExpenses()"
+      class="flex justify-center py-4">
+      @if (expensesLoadFailed()) {
+      <p-button label="Couldn't load more — tap to retry" icon="pi pi-refresh" [text]="true" size="small"
+        (onClick)="retryLoadMore()"></p-button>
+      } @else {
+      <p-progressSpinner styleClass="w-7 h-7" strokeWidth="5"></p-progressSpinner>
+      }
+    </div>
+    } @else if (expenses().length > 0) {
+    <p class="text-center text-xs text-[var(--text-muted)] m-0 py-2">
+      That's everything · {{ expenses().length }} {{ expenses().length === 1 ? 'expense' : 'expenses' }}
+    </p>
+    }
+  </div>
+  }
+
+  <!-- Balances Tab Content -->
+  @if (activeTab() === 'balances') {
+  <div class="flex flex-col gap-6">
+    <!-- Individual Member Net Balances -->
+    <div class="flex flex-col gap-2">
+      <h3 class="text-xs font-extrabold text-[var(--text-muted)] uppercase tracking-wider m-0">Member Net Position
+        Summary</h3>
+      <div class="grid grid-cols-12 gap-3.5">
+        @for (b of balances()?.balances; track b.memberId) {
+        <div class="col-span-12 sm:col-span-6 lg:col-span-4">
+          <div class="p-4 rounded-2xl bg-[var(--glass-bg)] border flex flex-col gap-2.5 transition-all shadow-sm"
+            [class.border-emerald-500/40]="b.netBalance > 0" [class.border-rose-500/40]="b.netBalance < 0"
+            [class.border-[var(--glass-border)]]="b.netBalance === 0">
+
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <div
+                  class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                  {{ b.memberName.substring(0, 2).toUpperCase() }}
                 </div>
-                <h3 class="text-xs font-extrabold text-[var(--text-muted)] uppercase tracking-wider m-0">Spend Breakdown by Category</h3>
+                <span class="text-sm font-bold truncate text-[var(--text-primary)]">{{ b.memberName }}</span>
               </div>
-              <span class="px-2.5 py-1 rounded-full text-[0.7rem] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                {{ categoryBreakdown().length }} {{ categoryBreakdown().length === 1 ? 'Category' : 'Categories' }}
+
+              <span class="text-base font-black tracking-tight" [class.text-emerald-500]="b.netBalance > 0"
+                [class.text-rose-500]="b.netBalance < 0" [class.text-[var(--text-muted)]]="b.netBalance === 0">
+                {{ b.netBalance > 0 ? '+' : '' }}{{ b.netBalance | currency:'INR' }}
               </span>
             </div>
 
-            <div class="grid grid-cols-12 gap-3.5">
-              @for (item of categoryBreakdown(); track item.category) {
-                <div class="col-span-12" [class.lg:col-span-6]="categoryBreakdown().length > 1">
-                  <div class="p-3.5 rounded-2xl bg-black/10 dark:bg-white/5 border border-[var(--glass-border)] flex flex-col gap-2.5 hover:border-indigo-500/30 transition-all">
-                    <div class="flex items-center justify-between gap-2">
-                      <div class="flex items-center gap-2.5 min-w-0">
-                        <div class="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center text-xs font-bold shrink-0">
-                          <i [class]="getCategoryIcon(item.category)"></i>
-                        </div>
-                        <div class="flex items-center gap-2 min-w-0">
-                          <span class="font-extrabold text-sm text-[var(--text-primary)] truncate">{{ item.category }}</span>
-                          <span class="text-[0.65rem] font-bold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                            {{ item.percentage }}%
-                          </span>
-                        </div>
-                      </div>
-                      <span class="font-black text-sm sm:text-base text-[var(--text-primary)] tracking-tight shrink-0">{{ item.amount | currency:'INR' }}</span>
-                    </div>
-
-                    <!-- Progress Bar -->
-                    <div class="w-full bg-black/10 dark:bg-white/10 rounded-full h-2 overflow-hidden">
-                      <div class="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full transition-all duration-500" [style.width.%]="item.percentage"></div>
-                    </div>
-                  </div>
-                </div>
-              }
+            <div
+              class="grid grid-cols-3 gap-2 text-xs text-[var(--text-muted)] pt-2 border-t border-[var(--glass-border)]">
+              <div class="flex flex-col">
+                <span>Paid</span>
+                <strong class="text-[var(--text-primary)] font-bold">{{ (b.totalPaid ?? 0) | currency:'INR' }}</strong>
+              </div>
+              <div class="flex flex-col">
+                <span>Share</span>
+                <strong class="text-[var(--text-primary)] font-bold">− {{ (b.totalShare ?? 0) | currency:'INR'
+                  }}</strong>
+              </div>
+              <div class="flex flex-col">
+                <span>Settled</span>
+                <strong class="font-bold" [class.text-emerald-500]="settledNet(b) > 0"
+                  [class.text-rose-500]="settledNet(b) < 0" [class.text-[var(--text-primary)]]="settledNet(b) === 0">
+                  {{ settledNet(b) > 0 ? '+' : (settledNet(b) < 0 ? '−' : '' ) }} {{ (settledNet(b) < 0 ? -settledNet(b)
+                    : settledNet(b)) | currency:'INR' }} </strong>
+              </div>
             </div>
-          </div>
-        }
-
-        <!-- Pending Settlements & Direct Payment -->
-        <div class="flex flex-col gap-3">
-          <div class="flex items-center justify-between">
-            <h3 class="text-xs font-extrabold text-[var(--text-muted)] uppercase tracking-wider m-0">
-              {{ isGroupAdmin() ? 'Simplified Debts (All Members)' : 'Your Direct Obligations' }}
-            </h3>
-            @if (!isGroupAdmin() && (balances()?.simplifiedPlan?.length ?? 0) > visibleDebts().length) {
-              <span class="text-xs text-[var(--text-muted)] italic">Showing your settlements only</span>
+            <p class="text-[0.65rem] text-[var(--text-muted)] m-0">Paid − Share + Settled = Net balance</p>
+            @if ((b.inTransit ?? 0) !== 0) {
+            <span
+              class="self-start text-[0.65rem] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+              {{ (b.inTransit ?? 0) > 0 ? 'Sent' : 'Receiving' }} {{ ((b.inTransit ?? 0) > 0 ? b.inTransit :
+              -(b.inTransit ?? 0)) | currency:'INR' }} · awaiting confirmation
+            </span>
             }
           </div>
-
-          @if (visibleDebts().length > 0) {
-            <div class="flex flex-col gap-2.5">
-              @for (debt of visibleDebts(); track debt.fromMemberId + '-' + debt.toMemberId) {
-                <div class="p-4 rounded-2xl bg-[var(--glass-bg)] border border-[var(--glass-border)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm hover:border-indigo-500/30 transition-all">
-                  <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-500 border border-amber-500/20 flex items-center justify-center shrink-0">
-                      <i class="pi pi-arrow-right-arrow-left text-sm"></i>
-                    </div>
-                    <div class="flex flex-col">
-                      <span class="text-sm text-[var(--text-primary)] font-medium">
-                        <strong class="font-bold text-[var(--text-primary)]">{{ debt.fromMemberName }}</strong> owes <strong class="font-bold text-[var(--text-primary)]">{{ debt.toMemberName }}</strong>
-                      </span>
-                      <span class="text-xs font-black text-[var(--primary-color,#3b82f6)] mt-0.5">{{ debt.amount | currency:'INR' }}</span>
-                    </div>
-                  </div>
-
-                  <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-                    @if (canNudgeDebt(debt)) {
-                      <button (click)="nudgeDebtWhatsApp(debt)" pTooltip="Send WhatsApp Payment Reminder"
-                        class="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-all border border-emerald-500/20 cursor-pointer flex items-center gap-1.5 text-xs font-bold shrink-0">
-                        <i class="pi pi-whatsapp text-sm"></i>
-                        <span>Nudge</span>
-                      </button>
-                    }
-                    @if (canMemberSettleDebt(debt)) {
-                      <p-button label="Pay via UPI" icon="pi pi-qrcode" (onClick)="openSettleDialog(debt)"
-                        styleClass="rounded-2xl font-bold px-4 py-2 text-xs sm:text-sm shadow-sm flex-1 sm:flex-none"></p-button>
-                    }
-                  </div>
-                </div>
-              }
-            </div>
-          } @else {
-            <div class="p-6 rounded-3xl bg-[var(--glass-bg)] border border-[var(--glass-border)] text-center flex flex-col items-center gap-2">
-              <div class="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-xl">
-                <i class="pi pi-check-circle"></i>
-              </div>
-              <span class="text-sm font-bold text-[var(--text-primary)]">All Settled Up 🎉</span>
-              <p class="text-xs text-[var(--text-muted)] m-0">No outstanding debts remain in this group.</p>
-            </div>
-          }
         </div>
+        }
+      </div>
+    </div>
 
-        <!-- Settlement History Section -->
-        <div class="flex flex-col gap-2 mt-4">
-          <h3 class="text-sm font-bold text-[var(--text-muted)] m-0">Settlement History</h3>
-          @for (s of visibleSettlements(); track s.id) {
-            <div class="glass-card p-3 rounded-xl flex items-center justify-between text-sm flex-wrap gap-2">
-              <div class="flex items-center gap-2 text-[var(--text-primary)]">
-                <i class="pi" [class.pi-clock]="s.status === 0" [class.pi-send]="s.status === 1" [class.pi-check-circle]="s.status === 2"
-                  [class.text-amber-500]="s.status === 0" [class.text-blue-500]="s.status === 1" [class.text-emerald-500]="s.status === 2"></i>
-                <span><strong>{{ s.fromMemberName }}</strong> → <strong>{{ s.toMemberName }}</strong></span>
+    <!-- Spend Breakdown by Category Analytics -->
+    @if (categoryBreakdown().length > 0) {
+    <div class="p-5 rounded-3xl bg-[var(--glass-bg)] border border-[var(--glass-border)] flex flex-col gap-4 shadow-sm">
+      <div class="flex items-center justify-between border-b border-[var(--glass-border)] pb-3">
+        <div class="flex items-center gap-2">
+          <div
+            class="w-7 h-7 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 text-white flex items-center justify-center text-xs font-bold shadow-sm">
+            <i class="pi pi-chart-pie"></i>
+          </div>
+          <h3 class="text-xs font-extrabold text-[var(--text-muted)] uppercase tracking-wider m-0">Spend Breakdown by
+            Category</h3>
+        </div>
+        <span
+          class="px-2.5 py-1 rounded-full text-[0.7rem] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+          {{ categoryBreakdown().length }} {{ categoryBreakdown().length === 1 ? 'Category' : 'Categories' }}
+        </span>
+      </div>
+
+      <div class="grid grid-cols-12 gap-3.5">
+        @for (item of categoryBreakdown(); track item.category) {
+        <div class="col-span-12" [class.lg:col-span-6]="categoryBreakdown().length > 1">
+          <div
+            class="p-3.5 rounded-2xl bg-black/10 dark:bg-white/5 border border-[var(--glass-border)] flex flex-col gap-2.5 hover:border-indigo-500/30 transition-all">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <div
+                  class="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center text-xs font-bold shrink-0">
+                  <i [class]="getCategoryIcon(item.category)"></i>
+                </div>
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="font-extrabold text-sm text-[var(--text-primary)] truncate">{{ item.category }}</span>
+                  <span
+                    class="text-[0.65rem] font-bold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                    {{ item.percentage }}%
+                  </span>
+                </div>
               </div>
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="font-medium text-[var(--text-primary)]">{{ s.amount | currency:'INR' }}</span>
-                <p-tag [value]="s.status === 2 ? 'Completed' : (s.status === 1 ? 'Awaiting confirmation' : 'Pending')"
-                  [severity]="s.status === 2 ? 'success' : (s.status === 1 ? 'warn' : 'secondary')"></p-tag>
-                @if (canMarkPaymentSent(s)) {
-                  <p-button label="Mark as sent" size="small" [text]="true"
-                    (onClick)="onMarkPaymentSent(s.id)"></p-button>
-                }
-                @if (canConfirmPaymentReceived(s)) {
-                  <p-button label="Confirm received" size="small" severity="success"
-                    (onClick)="onConfirmPaymentReceived(s.id)"></p-button>
-                }
-                @if (canRejectPayment(s)) {
-                  <p-button label="Not received" size="small" severity="danger" [text]="true"
-                    (onClick)="onRejectPayment(s.id)"></p-button>
-                }
-              </div>
+              <span class="font-black text-sm sm:text-base text-[var(--text-primary)] tracking-tight shrink-0">{{
+                item.amount | currency:'INR' }}</span>
             </div>
-          } @empty {
-            <div class="glass-card p-4 rounded-xl text-center">
-              <p class="text-xs text-[var(--text-muted)] m-0">No settlements recorded yet.</p>
+
+            <!-- Progress Bar -->
+            <div class="w-full bg-black/10 dark:bg-white/10 rounded-full h-2 overflow-hidden">
+              <div
+                class="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full transition-all duration-500"
+                [style.width.%]="item.percentage"></div>
             </div>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+    }
+
+    <!-- Pending Settlements & Direct Payment -->
+    <div class="flex flex-col gap-3">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xs font-extrabold text-[var(--text-muted)] uppercase tracking-wider m-0">
+          {{ isGroupAdmin() ? 'Simplified Debts (All Members)' : 'Your Direct Obligations' }}
+        </h3>
+        @if (!isGroupAdmin() && (balances()?.simplifiedPlan?.length ?? 0) > visibleDebts().length) {
+        <span class="text-xs text-[var(--text-muted)] italic">Showing your settlements only</span>
+        }
+      </div>
+
+      @if (visibleDebts().length > 0) {
+      <div class="flex flex-col gap-2.5">
+        @for (debt of visibleDebts(); track debt.fromMemberId + '-' + debt.toMemberId) {
+        <div
+          class="p-4 rounded-2xl bg-[var(--glass-bg)] border border-[var(--glass-border)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm hover:border-indigo-500/30 transition-all">
+          <div class="flex items-center gap-3">
+            <div
+              class="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-500 border border-amber-500/20 flex items-center justify-center shrink-0">
+              <i class="pi pi-arrow-right-arrow-left text-sm"></i>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-sm text-[var(--text-primary)] font-medium">
+                <strong class="font-bold text-[var(--text-primary)]">{{ debt.fromMemberName }}</strong> owes <strong
+                  class="font-bold text-[var(--text-primary)]">{{ debt.toMemberName }}</strong>
+              </span>
+              <span class="text-xs font-black text-[var(--primary-color,#3b82f6)] mt-0.5">{{ debt.amount |
+                currency:'INR' }}</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+            @if (canNudgeDebt(debt)) {
+            <button (click)="nudgeDebtWhatsApp(debt)" pTooltip="Send WhatsApp Payment Reminder"
+              class="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-all border border-emerald-500/20 cursor-pointer flex items-center gap-1.5 text-xs font-bold shrink-0">
+              <i class="pi pi-whatsapp text-sm"></i>
+              <span>Nudge</span>
+            </button>
+            }
+            @if (canMemberSettleDebt(debt)) {
+            <p-button label="Pay via UPI" icon="pi pi-qrcode" (onClick)="openSettleDialog(debt)"
+              styleClass="rounded-2xl font-bold px-4 py-2 text-xs sm:text-sm shadow-sm flex-1 sm:flex-none"></p-button>
+            }
+          </div>
+        </div>
+        }
+      </div>
+      } @else {
+      <div
+        class="p-6 rounded-3xl bg-[var(--glass-bg)] border border-[var(--glass-border)] text-center flex flex-col items-center gap-2">
+        <div class="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-xl">
+          <i class="pi pi-check-circle"></i>
+        </div>
+        <span class="text-sm font-bold text-[var(--text-primary)]">All Settled Up 🎉</span>
+        <p class="text-xs text-[var(--text-muted)] m-0">No outstanding debts remain in this group.</p>
+      </div>
+      }
+    </div>
+
+    <!-- Settlement History Section -->
+    <div class="flex flex-col gap-2 mt-4">
+      <h3 class="text-sm font-bold text-[var(--text-muted)] m-0">Settlement History</h3>
+      @for (s of visibleSettlements(); track s.id) {
+      <div class="glass-card p-3 rounded-xl flex items-center justify-between text-sm flex-wrap gap-2">
+        <div class="flex items-center gap-2 text-[var(--text-primary)]">
+          <i class="pi" [class.pi-clock]="s.status === 0" [class.pi-send]="s.status === 1"
+            [class.pi-check-circle]="s.status === 2" [class.text-amber-500]="s.status === 0"
+            [class.text-blue-500]="s.status === 1" [class.text-emerald-500]="s.status === 2"></i>
+          <span><strong>{{ s.fromMemberName }}</strong> → <strong>{{ s.toMemberName }}</strong></span>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="font-medium text-[var(--text-primary)]">{{ s.amount | currency:'INR' }}</span>
+          <p-tag [value]="s.status === 2 ? 'Completed' : (s.status === 1 ? 'Awaiting confirmation' : 'Pending')"
+            [severity]="s.status === 2 ? 'success' : (s.status === 1 ? 'warn' : 'secondary')"></p-tag>
+          @if (canMarkPaymentSent(s)) {
+          <p-button label="Mark as sent" size="small" [text]="true" (onClick)="onMarkPaymentSent(s.id)"></p-button>
+          }
+          @if (canConfirmPaymentReceived(s)) {
+          <p-button label="Confirm received" size="small" severity="success"
+            (onClick)="onConfirmPaymentReceived(s.id)"></p-button>
+          }
+          @if (canRejectPayment(s)) {
+          <p-button label="Not received" size="small" severity="danger" [text]="true"
+            (onClick)="onRejectPayment(s.id)"></p-button>
           }
         </div>
       </div>
-    }
+      } @empty {
+      <div class="glass-card p-4 rounded-xl text-center">
+        <p class="text-xs text-[var(--text-muted)] m-0">No settlements recorded yet.</p>
+      </div>
+      }
+    </div>
+  </div>
+  }
   }
 </div>
 
@@ -526,8 +568,8 @@
     <div class="grid grid-cols-12 gap-3">
       <div class="col-span-12 sm:col-span-7 flex flex-col gap-1.5">
         <label class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">What was it for?</label>
-        <input type="text" pInputText class="w-full" placeholder="e.g. Dinner, Taxi, Hotel"
-          [ngModel]="expDescription()" (ngModelChange)="expDescription.set($event)" />
+        <input type="text" pInputText class="w-full" placeholder="e.g. Dinner, Taxi, Hotel" [ngModel]="expDescription()"
+          (ngModelChange)="expDescription.set($event)" />
       </div>
       <div class="col-span-12 sm:col-span-5 flex flex-col gap-1.5">
         <label class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">Category</label>
@@ -539,13 +581,13 @@
     <div class="grid grid-cols-2 gap-3">
       <div class="flex flex-col gap-1.5">
         <label class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">Amount</label>
-        <p-inputNumber [ngModel]="expAmount()" (ngModelChange)="onAmountChange($event)"
-          mode="currency" currency="INR" locale="en-IN" class="w-full"></p-inputNumber>
+        <p-inputNumber [ngModel]="expAmount()" (ngModelChange)="onAmountChange($event)" mode="currency" currency="INR"
+          locale="en-IN" class="w-full"></p-inputNumber>
       </div>
       <div class="flex flex-col gap-1.5">
         <label class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">Date</label>
-        <p-datepicker [ngModel]="expDate()" (ngModelChange)="expDate.set($event)"
-          [showIcon]="true" appendTo="body" class="w-full"></p-datepicker>
+        <p-datepicker [ngModel]="expDate()" (ngModelChange)="expDate.set($event)" [showIcon]="true" appendTo="body"
+          class="w-full"></p-datepicker>
       </div>
     </div>
 
@@ -559,44 +601,42 @@
       </div>
 
       @if (!splitPayment()) {
-        <p-select [options]="memberOptions()" [ngModel]="expPayerId()" (ngModelChange)="expPayerId.set($event)"
-          optionLabel="label" optionValue="value" appendTo="body" class="w-full"></p-select>
+      <p-select [options]="memberOptions()" [ngModel]="expPayerId()" (ngModelChange)="expPayerId.set($event)"
+        optionLabel="label" optionValue="value" appendTo="body" class="w-full"></p-select>
       } @else {
-        <div class="flex flex-col gap-2">
-          @for (row of expPayers(); track $index) {
-            <div class="flex items-center gap-2 w-full">
-              <div class="flex-1 min-w-0">
-                <p-select [options]="memberOptions()" [ngModel]="row.memberId"
-                  (ngModelChange)="updatePayerRow($index, { memberId: $event })"
-                  optionLabel="label" optionValue="value" appendTo="body"
-                  styleClass="w-full" class="w-full"
-                  placeholder="Who paid"></p-select>
-              </div>
-              <div class="w-28 sm:w-36 shrink-0">
-                <p-inputNumber [ngModel]="row.amount" (ngModelChange)="updatePayerRow($index, { amount: $event })"
-                  mode="currency" currency="INR" locale="en-IN"
-                  styleClass="w-full" class="w-full" placeholder="Amount"></p-inputNumber>
-              </div>
-              @if (expPayers().length > 1) {
-                <button (click)="removePayerRow($index)"
-                  class="text-red-500 bg-transparent border-none cursor-pointer text-sm shrink-0 p-1">✕</button>
-              }
-            </div>
-          }
-          <button (click)="addPayerRow()"
-            class="text-xs text-[var(--primary-color)] bg-transparent border-none cursor-pointer p-0 text-left">
-            + Add another payer
-          </button>
-          <div class="flex items-center justify-between text-xs pt-1">
-            <span class="text-[var(--text-muted)]">Payers total</span>
-            <span [class.text-red-500]="expAmount() !== null && payersTotal() !== expAmount()">
-              {{ payersTotal() | currency:'INR' }}
-              @if (expAmount() !== null) {
-                / {{ expAmount() | currency:'INR' }}
-              }
-            </span>
+      <div class="flex flex-col gap-2">
+        @for (row of expPayers(); track $index) {
+        <div class="flex items-center gap-2 w-full">
+          <div class="flex-1 min-w-0">
+            <p-select [options]="memberOptions()" [ngModel]="row.memberId"
+              (ngModelChange)="updatePayerRow($index, { memberId: $event })" optionLabel="label" optionValue="value"
+              appendTo="body" styleClass="w-full" class="w-full" placeholder="Who paid"></p-select>
           </div>
+          <div class="w-28 sm:w-36 shrink-0">
+            <p-inputNumber [ngModel]="row.amount" (ngModelChange)="updatePayerRow($index, { amount: $event })"
+              mode="currency" currency="INR" locale="en-IN" styleClass="w-full" class="w-full"
+              placeholder="Amount"></p-inputNumber>
+          </div>
+          @if (expPayers().length > 1) {
+          <button (click)="removePayerRow($index)"
+            class="text-red-500 bg-transparent border-none cursor-pointer text-sm shrink-0 p-1">✕</button>
+          }
         </div>
+        }
+        <button (click)="addPayerRow()"
+          class="text-xs text-[var(--primary-color)] bg-transparent border-none cursor-pointer p-0 text-left">
+          + Add another payer
+        </button>
+        <div class="flex items-center justify-between text-xs pt-1">
+          <span class="text-[var(--text-muted)]">Payers total</span>
+          <span [class.text-red-500]="expAmount() !== null && payersTotal() !== expAmount()">
+            {{ payersTotal() | currency:'INR' }}
+            @if (expAmount() !== null) {
+            / {{ expAmount() | currency:'INR' }}
+            }
+          </span>
+        </div>
+      </div>
       }
     </div>
 
@@ -610,79 +650,101 @@
       <div class="flex items-center justify-between gap-2 flex-wrap">
         <label class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">Split between</label>
         <div class="flex items-center gap-3 text-xs">
-          <button (click)="selectAllParticipants()" class="text-[var(--primary-color)] bg-transparent border-none cursor-pointer p-0">Everyone</button>
-          <button (click)="clearParticipants()" class="text-[var(--text-muted)] bg-transparent border-none cursor-pointer p-0">None</button>
+          <button (click)="selectAllParticipants()"
+            class="text-[var(--primary-color)] bg-transparent border-none cursor-pointer p-0">Everyone</button>
+          <button (click)="clearParticipants()"
+            class="text-[var(--text-muted)] bg-transparent border-none cursor-pointer p-0">None</button>
           @if (expSplitType() === SplitType.Exact || expSplitType() === SplitType.Percentage) {
-            <button (click)="resplitEvenly()" class="text-[var(--primary-color)] bg-transparent border-none cursor-pointer p-0">Split evenly</button>
+          <button (click)="resplitEvenly()"
+            class="text-[var(--primary-color)] bg-transparent border-none cursor-pointer p-0">Split evenly</button>
           }
         </div>
       </div>
 
       @for (member of group()?.members; track member.id) {
-        <div class="flex items-center gap-3 p-2.5 rounded-xl bg-[var(--glass-bg)] border border-[var(--glass-border)] transition-opacity"
-          [class.opacity-60]="!expParticipantIds().has(member.id)">
-          <input type="checkbox" [checked]="expParticipantIds().has(member.id)"
-            (change)="toggleParticipant(member.id)" class="w-4 h-4 accent-emerald-500 shrink-0" />
+      <div
+        class="flex flex-col gap-2 p-2.5 rounded-xl bg-[var(--glass-bg)] border border-[var(--glass-border)] transition-opacity"
+        [class.opacity-60]="!expParticipantIds().has(member.id)">
+        <div class="flex items-center gap-3">
+          <input type="checkbox" [checked]="expParticipantIds().has(member.id)" (change)="toggleParticipant(member.id)"
+            class="w-4 h-4 accent-emerald-500 shrink-0" />
 
           <div class="flex flex-col flex-1 min-w-0">
             <span class="text-sm text-[var(--text-primary)] font-medium truncate">{{ member.name }}</span>
             @if (previewPaid()[member.id] > 0) {
-              <span class="text-[0.65rem] text-[var(--text-muted)]">paid {{ previewPaid()[member.id] | currency:'INR' }}</span>
+            <span class="text-[0.65rem] text-[var(--text-muted)]">paid {{ previewPaid()[member.id] | currency:'INR'
+              }}</span>
             }
           </div>
 
-          @if (expParticipantIds().has(member.id)) {
-            @if (expSplitType() === SplitType.Exact) {
-              <p-inputNumber [ngModel]="expExactAmounts()[member.id]" (ngModelChange)="updateExactAmount(member.id, $event)"
-                mode="currency" currency="INR" locale="en-IN" styleClass="w-28"></p-inputNumber>
-            }
-            @if (expSplitType() === SplitType.Percentage) {
-              <p-inputNumber [ngModel]="expPercentages()[member.id]" (ngModelChange)="updatePercentage(member.id, $event)"
-                suffix="%" [maxFractionDigits]="2" styleClass="w-24"></p-inputNumber>
-            }
-            @if (expSplitType() === SplitType.Shares) {
-              <p-inputNumber [ngModel]="expShares()[member.id]" (ngModelChange)="updateShares(member.id, $event)"
-                placeholder="1" styleClass="w-20"></p-inputNumber>
-            }
-          }
-
           <!-- This person's amount for the expense, live -->
-          <div class="flex flex-col items-end text-right shrink-0 min-w-[5rem]">
+          <div class="flex flex-col items-end text-right shrink-0">
             @if (expParticipantIds().has(member.id)) {
-              <span class="text-sm font-black text-[var(--text-primary)]">{{ previewShares()[member.id] | currency:'INR' }}</span>
+            <span class="text-sm font-black text-[var(--text-primary)]">{{ previewShares()[member.id] | currency:'INR'
+              }}</span>
             } @else {
-              <span class="text-xs text-[var(--text-muted)]">not included</span>
+            <span class="text-xs text-[var(--text-muted)]">not included</span>
             }
             @if (memberImpact(member.id); as impact) {
-              <span class="text-[0.65rem] font-bold" [class.text-emerald-500]="impact > 0" [class.text-rose-500]="impact < 0">
-                {{ impact > 0 ? 'gets back ' : 'owes ' }}{{ (impact > 0 ? impact : -impact) | currency:'INR' }}
-              </span>
+            <span class="text-[0.65rem] font-bold" [class.text-emerald-500]="impact > 0"
+              [class.text-rose-500]="impact < 0">
+              {{ impact > 0 ? 'gets back ' : 'owes ' }}{{ (impact > 0 ? impact : -impact) | currency:'INR' }}
+            </span>
             }
           </div>
         </div>
+
+        @if (expParticipantIds().has(member.id)) {
+        @if (expSplitType() === SplitType.Exact) {
+        <div class="pl-7">
+          <p-inputNumber [ngModel]="expExactAmounts()[member.id]" (ngModelChange)="updateExactAmount(member.id, $event)"
+            mode="currency" currency="INR" locale="en-IN" class="w-full" styleClass="w-full"
+            inputStyleClass="w-full"></p-inputNumber>
+        </div>
+        }
+        @if (expSplitType() === SplitType.Percentage) {
+        <div class="pl-7">
+          <p-inputNumber [ngModel]="expPercentages()[member.id]" (ngModelChange)="updatePercentage(member.id, $event)"
+            suffix="%" [maxFractionDigits]="2" class="w-full" styleClass="w-full"
+            inputStyleClass="w-full"></p-inputNumber>
+        </div>
+        }
+        @if (expSplitType() === SplitType.Shares) {
+        <div class="pl-7">
+          <p-inputNumber [ngModel]="expShares()[member.id]" (ngModelChange)="updateShares(member.id, $event)"
+            placeholder="1" class="w-full" styleClass="w-full" inputStyleClass="w-full"></p-inputNumber>
+        </div>
+        }
+        }
+      </div>
       }
 
       <!-- Running summary for the chosen split type -->
       @if (selectedMemberIds().length === 0) {
-        <p class="text-xs text-rose-500 m-0">Pick at least one person to split with.</p>
+      <p class="text-xs text-rose-500 m-0">Pick at least one person to split with.</p>
       } @else if (expSplitType() === SplitType.Equal) {
-        <p class="text-xs text-[var(--text-muted)] m-0">
-          Split equally between {{ selectedMemberIds().length }} {{ selectedMemberIds().length === 1 ? 'person' : 'people' }}.
-          Tick or un-tick anyone and the amounts above adjust.
-        </p>
+      <p class="text-xs text-[var(--text-muted)] m-0">
+        Split equally between {{ selectedMemberIds().length }} {{ selectedMemberIds().length === 1 ? 'person' : 'people'
+        }}.
+        Tick or un-tick anyone and the amounts above adjust.
+      </p>
       } @else if (expSplitType() === SplitType.Exact) {
-        <p class="text-xs m-0" [class.text-rose-500]="splitTotals().exactLeft !== 0" [class.text-emerald-500]="splitTotals().exactLeft === 0">
-          Allocated {{ splitTotals().exact | currency:'INR' }} of {{ (expAmount() ?? 0) | currency:'INR' }}
-          @if (splitTotals().exactLeft !== 0) {
-            · {{ splitTotals().exactLeft > 0 ? 'still to assign' : 'over by' }} {{ (splitTotals().exactLeft > 0 ? splitTotals().exactLeft : -splitTotals().exactLeft) | currency:'INR' }}
-          }
-        </p>
+      <p class="text-xs m-0" [class.text-rose-500]="splitTotals().exactLeft !== 0"
+        [class.text-emerald-500]="splitTotals().exactLeft === 0">
+        Allocated {{ splitTotals().exact | currency:'INR' }} of {{ (expAmount() ?? 0) | currency:'INR' }}
+        @if (splitTotals().exactLeft !== 0) {
+        · {{ splitTotals().exactLeft > 0 ? 'still to assign' : 'over by' }} {{ (splitTotals().exactLeft > 0 ?
+        splitTotals().exactLeft : -splitTotals().exactLeft) | currency:'INR' }}
+        }
+      </p>
       } @else if (expSplitType() === SplitType.Percentage) {
-        <p class="text-xs m-0" [class.text-rose-500]="splitTotals().percent !== 100" [class.text-emerald-500]="splitTotals().percent === 100">
-          Percentages add up to {{ splitTotals().percent }}% {{ splitTotals().percent === 100 ? '✓' : '(must be 100%)' }}
-        </p>
+      <p class="text-xs m-0" [class.text-rose-500]="splitTotals().percent !== 100"
+        [class.text-emerald-500]="splitTotals().percent === 100">
+        Percentages add up to {{ splitTotals().percent }}% {{ splitTotals().percent === 100 ? '✓' : '(must be 100%)' }}
+      </p>
       } @else {
-        <p class="text-xs text-[var(--text-muted)] m-0">{{ splitTotals().shares }} shares in total — leave a box empty to count it as 1 share.</p>
+      <p class="text-xs text-[var(--text-muted)] m-0">{{ splitTotals().shares }} shares in total — leave a box empty to
+        count it as 1 share.</p>
       }
     </div>
   </div>
@@ -703,8 +765,9 @@
     </p>
     <div class="flex flex-col gap-1.5">
       <label class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">Import into which account?</label>
-      <p-select [options]="accountState.accounts()" [ngModel]="importAccountId()" (ngModelChange)="importAccountId.set($event)"
-        optionLabel="name" optionValue="id" placeholder="Select account" appendTo="body" class="w-full"></p-select>
+      <p-select [options]="accountState.accounts()" [ngModel]="importAccountId()"
+        (ngModelChange)="importAccountId.set($event)" optionLabel="name" optionValue="id" placeholder="Select account"
+        appendTo="body" class="w-full"></p-select>
     </div>
   </div>
   <ng-template pTemplate="footer">
@@ -714,61 +777,56 @@
 </p-dialog>
 
 <!-- QR Payment Dialog -->
-<p-dialog [visible]="qrCodeDataUrl() !== null" (visibleChange)="closeQrDialog()"
-  header="Scan to Pay" [modal]="true" [style]="{ width: '20rem' }">
+<p-dialog [visible]="qrCodeDataUrl() !== null" (visibleChange)="closeQrDialog()" header="Scan to Pay" [modal]="true"
+  [style]="{ width: '20rem' }">
   @if (qrPaymentDetails()) {
-    <div class="flex flex-col items-center gap-3 text-center">
-      <img [src]="qrCodeDataUrl()" alt="UPI payment QR code" class="rounded-xl border border-[var(--glass-border)]" />
-      <p class="text-sm text-[var(--text-primary)] m-0">
-        Pay <strong>{{ qrPaymentDetails()!.amount | currency:'INR' }}</strong>
-        to <strong>{{ qrPaymentDetails()!.payeeName }}</strong>
-      </p>
-      <p class="text-xs text-[var(--text-muted)] m-0">
-        Scan with any UPI app — GPay, PhonePe, Paytm, or your bank's app.
-      </p>
-      <a [href]="qrPaymentDetails()!.upiDeepLink"
-        class="text-xs text-[var(--primary-color)] no-underline font-medium hover:underline">
-        On this phone? Tap to open your UPI app directly
-      </a>
-      @if (qrPaymentDetails()?.settlementId) {
-        <div class="flex flex-col gap-2 w-full mt-2">
-          <p-button label="I've Sent the Payment" icon="pi pi-check" severity="success"
-            (onClick)="onMarkPaymentSent(qrPaymentDetails()!.settlementId!); closeQrDialog()"
-            styleClass="w-full text-xs sm:text-sm rounded-xl"></p-button>
-        </div>
-      }
+  <div class="flex flex-col items-center gap-3 text-center">
+    <img [src]="qrCodeDataUrl()" alt="UPI payment QR code" class="rounded-xl border border-[var(--glass-border)]" />
+    <p class="text-sm text-[var(--text-primary)] m-0">
+      Pay <strong>{{ qrPaymentDetails()!.amount | currency:'INR' }}</strong>
+      to <strong>{{ qrPaymentDetails()!.payeeName }}</strong>
+    </p>
+    <p class="text-xs text-[var(--text-muted)] m-0">
+      Scan with any UPI app — GPay, PhonePe, Paytm, or your bank's app.
+    </p>
+    <a [href]="qrPaymentDetails()!.upiDeepLink"
+      class="text-xs text-[var(--primary-color)] no-underline font-medium hover:underline">
+      On this phone? Tap to open your UPI app directly
+    </a>
+    @if (qrPaymentDetails()?.settlementId) {
+    <div class="flex flex-col gap-2 w-full mt-2">
+      <p-button label="I've Sent the Payment" icon="pi pi-check" severity="success"
+        (onClick)="onMarkPaymentSent(qrPaymentDetails()!.settlementId!); closeQrDialog()"
+        styleClass="w-full text-xs sm:text-sm rounded-xl"></p-button>
     </div>
+    }
+  </div>
   }
 </p-dialog>
 
 <!-- Partial Settle Debt Dialog -->
-<p-dialog [visible]="settlingDebt() !== null" (visibleChange)="closeSettleDialog()"
-  header="Settle Up" [modal]="true" [style]="{ width: '20rem' }">
+<p-dialog [visible]="settlingDebt() !== null" (visibleChange)="closeSettleDialog()" header="Settle Up" [modal]="true"
+  [style]="{ width: '20rem' }">
   @if (settlingDebt()) {
-    <div class="flex flex-col gap-3">
-      <p class="text-sm text-[var(--text-primary)] m-0">
-        {{ settlingDebt()!.fromMemberName }} owes {{ settlingDebt()!.toMemberName }}
-        <strong>{{ settlingDebt()!.amount | currency:'INR' }}</strong>
-      </p>
-      <div class="flex flex-col gap-1.5">
-        <label class="text-xs text-[var(--text-muted)] font-medium">Amount to pay now</label>
-        <p-inputNumber [ngModel]="settleAmount()" (ngModelChange)="settleAmount.set($event)"
-          mode="currency" currency="INR" locale="en-IN" class="w-full"></p-inputNumber>
-      </div>
-      <div class="flex justify-end gap-2 mt-2">
-        <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="closeSettleDialog()"></p-button>
-        <p-button label="Continue to Payment" (onClick)="confirmSettle()"></p-button>
-      </div>
+  <div class="flex flex-col gap-3">
+    <p class="text-sm text-[var(--text-primary)] m-0">
+      {{ settlingDebt()!.fromMemberName }} owes {{ settlingDebt()!.toMemberName }}
+      <strong>{{ settlingDebt()!.amount | currency:'INR' }}</strong>
+    </p>
+    <div class="flex flex-col gap-1.5">
+      <label class="text-xs text-[var(--text-muted)] font-medium">Amount to pay now</label>
+      <p-inputNumber [ngModel]="settleAmount()" (ngModelChange)="settleAmount.set($event)" mode="currency"
+        currency="INR" locale="en-IN" class="w-full"></p-inputNumber>
     </div>
+    <div class="flex justify-end gap-2 mt-2">
+      <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="closeSettleDialog()"></p-button>
+      <p-button label="Continue to Payment" (onClick)="confirmSettle()"></p-button>
+    </div>
+  </div>
   }
 </p-dialog>
 
 <!-- Group Settings Component -->
-<app-split-settings-dialog
-  [(visible)]="showSettingsModal"
-  [group]="group()"
-  [balances]="balances()"
-  [initialTab]="settingsTab()"
-  (reloadGroup)="loadAll(true)"
-  (openImport)="openImportDialog()">
+<app-split-settings-dialog [(visible)]="showSettingsModal" [group]="group()" [balances]="balances()"
+  [initialTab]="settingsTab()" (reloadGroup)="loadAll(true)" (openImport)="openImportDialog()">
 </app-split-settings-dialog>
