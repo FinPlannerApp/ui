@@ -223,6 +223,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/split/split-groups/split-groups').then(m => m.SplitGroups)
       },
       {
+        path: 'split/friends',
+        loadComponent: () => import('./features/split/split-friends/split-friends').then(m => m.SplitFriends)
+      },
+      {
         path: 'split/:id',
         loadComponent: () => import('./features/split/split-group-detail/split-group-detail').then(m => m.SplitGroupDetail)
       },

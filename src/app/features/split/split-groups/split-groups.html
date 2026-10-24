@@ -18,8 +18,12 @@
         <p class="text-xs text-[var(--text-muted)] m-0 mt-0.5 font-medium">Split group costs, track shared balances & settle up seamlessly</p>
       </div>
     </div>
-    <p-button label="New Trip / Group" icon="pi pi-plus" (onClick)="openCreateForm()"
-      styleClass="rounded-2xl font-bold px-5 py-2.5 text-xs sm:text-sm w-full sm:w-auto shadow-md hover:shadow-lg transition-all"></p-button>
+    <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+      <p-button label="Friends & Balances" icon="pi pi-users" [outlined]="true" routerLink="/app/split/friends"
+        styleClass="rounded-2xl font-bold px-5 py-2.5 text-xs sm:text-sm w-full sm:w-auto"></p-button>
+      <p-button label="New Trip / Group" icon="pi pi-plus" (onClick)="openCreateForm()"
+        styleClass="rounded-2xl font-bold px-5 py-2.5 text-xs sm:text-sm w-full sm:w-auto shadow-md hover:shadow-lg transition-all"></p-button>
+    </div>
   </div>
 
   <!-- Summary Statistics Bar -->

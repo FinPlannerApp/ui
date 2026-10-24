@@ -5,7 +5,8 @@ import {
   CreateExpenseRequest, CreateGroupRequest, CreateInviteRequest, CreateSettlementRequest,
   ExpensePage, GroupBalances, GroupExport, GroupFullDetails, ImportToLedgerRequest, ImportToLedgerResult,
   InviteCreated, InvitePreview, PaymentRequest, PublicGroupView, Settlement, SplitExpense, SplitGroup, SplitMember,
-  UpdateSettlementRequest, UpdateGroupSettingsRequest, ExpenseFilters, ActivityPage, GlobalExpenseHit
+  UpdateSettlementRequest, UpdateGroupSettingsRequest, CreateFriendRequest, SplitDashboard,
+  SettleWithPersonRequest, SettleWithPersonResult, ExpenseFilters, ActivityPage, GlobalExpenseHit
 } from '../../core/models/split.model';
 
 @Injectable({ providedIn: 'root' })
@@ -246,6 +247,25 @@ export class SplitService {
     const result = await firstValueFrom(
       this.api.post<boolean>(`Split/members/${sourceMemberId}/merge-into/${targetMemberId}`, {}));
     if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to merge members.');
+  }
+
+  /** Adds a friend: a hidden two-person ledger for expenses outside any group. */
+  async createFriend(req: CreateFriendRequest): Promise<SplitGroup> {
+    const result = await firstValueFrom(this.api.post<SplitGroup>('Split/friends', req));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to add friend.');
+    return result.value;
+  }
+
+  async getDashboard(): Promise<SplitDashboard> {
+    const result = await firstValueFrom(this.api.get<SplitDashboard>('Split/dashboard'));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to load balances.');
+    return result.value;
+  }
+
+  async settleWithPerson(req: SettleWithPersonRequest): Promise<SettleWithPersonResult> {
+    const result = await firstValueFrom(this.api.post<SettleWithPersonResult>('Split/dashboard/settle', req));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to settle up.');
+    return result.value;
   }
 
   async renameMember(memberId: number, name: string): Promise<SplitMember> {

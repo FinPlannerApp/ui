@@ -17,6 +17,8 @@ export interface SplitGroup {
   currency: string;
   /** true = fewest payments; false = pay back exactly who you owe. */
   simplifyDebts: boolean;
+  /** A hidden two-person ledger for a friend (expenses outside any group). */
+  isDirect?: boolean;
   /** Optional trip dates (ISO). */
   startDate?: string | null;
   endDate?: string | null;
@@ -278,6 +280,58 @@ export interface GlobalExpenseHit {
   category: string | null;
   paidBy: string;
   currency: string;
+}
+
+// ── Friends & cross-group dashboard ─────────────────────────────────────────
+export interface CreateFriendRequest {
+  friendName: string;
+  myName: string;
+}
+
+export interface DashboardLine {
+  groupId: number;
+  groupName: string;
+  isDirect: boolean;
+  currency: string;
+  /** Positive = they owe you; negative = you owe them. */
+  amount: number;
+}
+
+export interface DashboardTotal {
+  currency: string;
+  /** Positive = they owe you; negative = you owe them. */
+  net: number;
+}
+
+export interface DashboardPerson {
+  key: string;
+  name: string;
+  directGroupId: number | null;
+  totals: DashboardTotal[];
+  lines: DashboardLine[];
+}
+
+export interface DashboardCurrencyTotal {
+  currency: string;
+  youAreOwed: number;
+  youOwe: number;
+}
+
+export interface SplitDashboard {
+  totals: DashboardCurrencyTotal[];
+  people: DashboardPerson[];
+  groupCount: number;
+}
+
+export interface SettleWithPersonRequest {
+  personKey: string;
+  currency: string;
+  method: SettlementMethod;
+}
+
+export interface SettleWithPersonResult {
+  paymentsRecorded: number;
+  net: number;
 }
 
 

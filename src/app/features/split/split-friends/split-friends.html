@@ -1,0 +1,175 @@
+<p-toast></p-toast>
+
+<div class="flex flex-col gap-6 w-full max-w-4xl mx-auto px-4 md:px-8 py-6">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div class="flex items-center gap-3.5 min-w-0">
+      <a routerLink="/app/split" aria-label="Back to groups"
+         class="no-underline text-[var(--text-muted)] hover:text-[var(--primary-color,#3b82f6)] transition-all p-2.5 rounded-2xl bg-[var(--glass-bg)] border border-[var(--glass-border)] flex items-center justify-center shrink-0 shadow-sm">
+        <i class="pi pi-arrow-left text-sm"></i>
+      </a>
+      <div class="flex flex-col">
+        <h1 class="text-2xl sm:text-3xl font-black m-0 tracking-tight gradient-text">Friends & Balances</h1>
+        <p class="text-xs text-[var(--text-muted)] m-0 mt-0.5 font-medium">Everyone you owe or are owed, across all groups and one-to-one expenses</p>
+      </div>
+    </div>
+    <p-button label="Add friend" icon="pi pi-user-plus" (onClick)="openAddFriend()"
+      styleClass="rounded-2xl font-bold px-5 py-2.5 text-xs sm:text-sm w-full sm:w-auto shadow-md"></p-button>
+  </div>
+
+  @if (isLoading()) {
+    <div class="flex justify-center py-16"><p-progressSpinner strokeWidth="4" styleClass="w-10 h-10"></p-progressSpinner></div>
+  } @else if (dashboard(); as d) {
+    <!-- Overall position, per currency -->
+    @if (d.totals.length > 0) {
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+        @for (t of d.totals; track t.currency) {
+          <div class="p-4 rounded-2xl bg-[var(--glass-bg)] border border-[var(--glass-border)] shadow-sm flex items-center justify-between gap-3">
+            <div class="flex flex-col">
+              <span class="text-[0.65rem] font-bold text-[var(--text-muted)] uppercase tracking-wider">You are owed</span>
+              <span class="text-xl font-black text-emerald-500">{{ t.youAreOwed | currency:t.currency }}</span>
+            </div>
+            <div class="flex flex-col items-end">
+              <span class="text-[0.65rem] font-bold text-[var(--text-muted)] uppercase tracking-wider">You owe</span>
+              <span class="text-xl font-black text-rose-500">{{ t.youOwe | currency:t.currency }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <div class="flex gap-2" role="group" aria-label="Filter people">
+      <p-button label="Everyone" size="small" [outlined]="filter() !== 'all'" (onClick)="filter.set('all')"></p-button>
+      <p-button label="You owe" size="small" [outlined]="filter() !== 'owe'" (onClick)="filter.set('owe')"></p-button>
+      <p-button label="Owe you" size="small" [outlined]="filter() !== 'owed'" (onClick)="filter.set('owed')"></p-button>
+    </div>
+
+    @if (people().length === 0) {
+      <div class="p-8 rounded-2xl bg-[var(--glass-bg)] border border-[var(--glass-border)] text-center flex flex-col items-center gap-3">
+        <i class="pi pi-users text-3xl text-[var(--text-muted)]"></i>
+        <p class="m-0 text-sm text-[var(--text-muted)]">
+          @if (d.people.length === 0) { No balances yet. Add a friend to split expenses outside any group. }
+          @else { Nobody matches this filter. }
+        </p>
+      </div>
+    } @else {
+      <div class="flex flex-col gap-3">
+        @for (p of people(); track p.key) {
+          <div class="rounded-2xl bg-[var(--glass-bg)] border border-[var(--glass-border)] shadow-sm overflow-hidden">
+            <button (click)="toggle(p.key)" [attr.aria-expanded]="expandedKey() === p.key"
+              class="w-full flex items-center justify-between gap-3 p-4 bg-transparent border-none cursor-pointer text-left">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-10 h-10 rounded-full bg-indigo-500/10 text-indigo-400 flex items-center justify-center font-black shrink-0">
+                  {{ p.name.charAt(0).toUpperCase() }}
+                </div>
+                <div class="flex flex-col min-w-0">
+                  <span class="font-bold text-[var(--text-primary)] truncate">{{ p.name }}</span>
+                  <span class="text-[0.7rem] text-[var(--text-muted)]">
+                    {{ p.lines.length === 0 ? 'All settled up' : p.lines.length + (p.lines.length === 1 ? ' shared balance' : ' shared balances') }}
+                  </span>
+                </div>
+              </div>
+              <div class="flex flex-col items-end shrink-0">
+                @for (t of p.totals; track t.currency) {
+                  @if (t.net > 0) {
+                    <span class="text-sm font-black text-emerald-500">owes you {{ t.net | currency:t.currency }}</span>
+                  } @else {
+                    <span class="text-sm font-black text-rose-500">you owe {{ -t.net | currency:t.currency }}</span>
+                  }
+                } @empty {
+                  <span class="text-xs font-bold text-[var(--text-muted)]">settled</span>
+                }
+              </div>
+            </button>
+
+            @if (expandedKey() === p.key) {
+              <div class="px-4 pb-4 flex flex-col gap-3 border-t border-[var(--glass-border)] pt-3">
+                @for (l of p.lines; track l.groupId) {
+                  <a [routerLink]="['/app/split', l.groupId]"
+                     class="no-underline flex items-center justify-between gap-3 text-sm p-2.5 rounded-xl hover:bg-[var(--glass-bg)]">
+                    <span class="flex items-center gap-2 min-w-0 text-[var(--text-primary)]">
+                      <i class="pi" [class.pi-user]="l.isDirect" [class.pi-map]="!l.isDirect"></i>
+                      <span class="truncate">{{ l.isDirect ? 'Direct expenses' : l.groupName }}</span>
+                    </span>
+                    <span class="font-bold shrink-0" [class.text-emerald-500]="l.amount > 0" [class.text-rose-500]="l.amount < 0">
+                      {{ l.amount > 0 ? 'owes you ' : 'you owe ' }}{{ (l.amount > 0 ? l.amount : -l.amount) | currency:l.currency }}
+                    </span>
+                  </a>
+                }
+
+                <div class="flex flex-wrap gap-2 justify-end">
+                  @if (p.directGroupId) {
+                    <p-button label="Add expense" icon="pi pi-plus" size="small" [outlined]="true"
+                      [routerLink]="['/app/split', p.directGroupId]"></p-button>
+                  }
+                  @for (t of p.totals; track t.currency) {
+                    <p-button [label]="'Settle up ' + (p.totals.length > 1 ? t.currency : '')" icon="pi pi-check-circle" size="small"
+                      (onClick)="openSettle(p, t)"></p-button>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  }
+</div>
+
+<!-- Add friend -->
+<p-dialog header="Add a friend" [visible]="showAddFriend()" (visibleChange)="showAddFriend.set($event)"
+  [modal]="true" [style]="{ width: '24rem' }" [breakpoints]="{ '640px': '92vw' }">
+  <div class="flex flex-col gap-3">
+    <p class="m-0 text-sm text-[var(--text-muted)]">
+      Split bills outside any group. Your friend doesn't need an account — you can invite them to claim this ledger later.
+    </p>
+    <div class="flex flex-col gap-1.5">
+      <label for="friend-name" class="text-xs text-[var(--text-muted)] font-medium">Friend's name</label>
+      <input id="friend-name" type="text" pInputText class="w-full" placeholder="e.g. Asha"
+        [ngModel]="friendName()" (ngModelChange)="friendName.set($event)" (keyup.enter)="addFriend()" />
+    </div>
+    <div class="flex justify-end gap-2 mt-1">
+      <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="showAddFriend.set(false)"></p-button>
+      <p-button label="Add friend" [loading]="isAddingFriend()" (onClick)="addFriend()"></p-button>
+    </div>
+  </div>
+</p-dialog>
+
+<!-- Settle everything with one person -->
+<p-dialog [header]="settleTarget() ? 'Settle up with ' + settleTarget()!.person.name : ''"
+  [visible]="settleTarget() !== null" (visibleChange)="!$event && settleTarget.set(null)"
+  [modal]="true" [style]="{ width: '28rem' }" [breakpoints]="{ '640px': '92vw' }">
+  @if (settleTarget(); as t) {
+    <div class="flex flex-col gap-3">
+      <p class="m-0 text-sm text-[var(--text-primary)]">
+        @if (t.total.net > 0) {
+          {{ t.person.name }} owes you <strong>{{ t.total.net | currency:t.total.currency }}</strong> in total.
+        } @else {
+          You owe {{ t.person.name }} <strong>{{ -t.total.net | currency:t.total.currency }}</strong> in total.
+        }
+        One payment is recorded in each group below, so every balance becomes zero.
+      </p>
+      <div class="flex flex-col gap-1.5 p-3 rounded-xl bg-[var(--glass-bg)] border border-[var(--glass-border)]">
+        @for (l of settleLines(); track l.groupId) {
+          <div class="flex items-center justify-between gap-3 text-xs">
+            <span class="truncate text-[var(--text-muted)]">{{ l.isDirect ? 'Direct expenses' : l.groupName }}</span>
+            <span class="font-bold shrink-0">
+              {{ l.amount > 0 ? t.person.name + ' pays you ' : 'you pay ' + t.person.name + ' ' }}{{ (l.amount > 0 ? l.amount : -l.amount) | currency:l.currency }}
+            </span>
+          </div>
+        }
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs text-[var(--text-muted)] font-medium">How was it paid?</label>
+        <p-select [options]="methodOptions" [ngModel]="settleMethod()" (ngModelChange)="settleMethod.set($event)"
+          optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full" class="w-full"></p-select>
+      </div>
+      <p class="m-0 text-xs text-[var(--text-muted)]">
+        This records money that has already changed hands. Payments you record as the payer wait for {{ t.person.name }} to confirm them.
+      </p>
+      <div class="flex justify-end gap-2">
+        <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="settleTarget.set(null)"></p-button>
+        <p-button label="Record payments" icon="pi pi-check" [loading]="isSettling()" (onClick)="confirmSettle()"></p-button>
+      </div>
+    </div>
+  }
+</p-dialog>
