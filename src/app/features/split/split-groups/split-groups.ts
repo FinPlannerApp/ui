@@ -56,8 +56,20 @@ export class SplitGroups implements OnInit {
   }
 
   // Computed statistics
+  /** The most-used currency across the groups — totals are only added up within one currency. */
+  summaryCurrency = computed(() => {
+    const counts = new Map<string, number>();
+    for (const g of this.groups()) counts.set(g.currency || 'INR', (counts.get(g.currency || 'INR') ?? 0) + 1);
+    let best = 'INR', max = 0;
+    for (const [code, n] of counts) if (n > max) { best = code; max = n; }
+    return best;
+  });
+
   totalSpendSum = computed(() => {
-    return this.groups().reduce((acc, g) => acc + (g.totalSpend ?? 0), 0);
+    const code = this.summaryCurrency();
+    return this.groups()
+      .filter(g => (g.currency || 'INR') === code)
+      .reduce((acc, g) => acc + (g.totalSpend ?? 0), 0);
   });
 
   activeGroupsCount = computed(() => {

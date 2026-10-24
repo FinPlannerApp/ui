@@ -15,10 +15,23 @@ export interface SplitGroup {
   name: string;
   createdByUserId: string;
   currency: string;
+  /** true = fewest payments; false = pay back exactly who you owe. */
+  simplifyDebts: boolean;
+  /** Optional trip dates (ISO). */
+  startDate?: string | null;
+  endDate?: string | null;
   status: number;
   shareToken: string;
   members: SplitMember[];
   totalSpend: number;
+}
+
+export interface UpdateGroupSettingsRequest {
+  currency: string;
+  simplifyDebts: boolean;
+  /** YYYY-MM-DD */
+  startDate: string | null;
+  endDate: string | null;
 }
 
 export interface CreateGroupRequest {
@@ -197,6 +210,8 @@ export interface InvitePreview {
   memberCount: number;
   isValid: boolean;
   invalidReason: string | null;
+  /** Name-only members the joiner can claim as themselves. */
+  unclaimedMembers: { id: number; name: string }[];
 }
 
 export interface CreateInviteRequest {
@@ -262,6 +277,7 @@ export interface GlobalExpenseHit {
   date: string;
   category: string | null;
   paidBy: string;
+  currency: string;
 }
 
 

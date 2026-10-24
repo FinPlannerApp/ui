@@ -5,7 +5,7 @@ import {
   CreateExpenseRequest, CreateGroupRequest, CreateInviteRequest, CreateSettlementRequest,
   ExpensePage, GroupBalances, GroupExport, GroupFullDetails, ImportToLedgerRequest, ImportToLedgerResult,
   InviteCreated, InvitePreview, PaymentRequest, PublicGroupView, Settlement, SplitExpense, SplitGroup, SplitMember,
-  UpdateSettlementRequest, ExpenseFilters, ActivityPage, GlobalExpenseHit
+  UpdateSettlementRequest, UpdateGroupSettingsRequest, ExpenseFilters, ActivityPage, GlobalExpenseHit
 } from '../../core/models/split.model';
 
 @Injectable({ providedIn: 'root' })
@@ -207,8 +207,9 @@ export class SplitService {
     return result.value;
   }
 
-  async joinViaInvite(token: string, displayName: string): Promise<{ groupId: number }> {
-    const result = await firstValueFrom(this.api.post<any>('Split/invites/join', { token, displayName }));
+  async joinViaInvite(token: string, displayName: string, claimMemberId?: number | null): Promise<{ groupId: number }> {
+    const result = await firstValueFrom(
+      this.api.post<any>('Split/invites/join', { token, displayName, claimMemberId: claimMemberId ?? null }));
     if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to join.');
     return result.value;
   }
@@ -232,6 +233,19 @@ export class SplitService {
     const result = await firstValueFrom(this.api.put<SplitGroup>(`Split/groups/${groupId}`, { groupId, name }));
     if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to update group details.');
     return result.value;
+  }
+
+  async updateGroupSettings(groupId: number, settings: UpdateGroupSettingsRequest): Promise<SplitGroup> {
+    const result = await firstValueFrom(this.api.put<SplitGroup>(`Split/groups/${groupId}/settings`, settings));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to update settings.');
+    return result.value;
+  }
+
+  /** Folds a name-only member into another one (creator only). */
+  async mergeMembers(sourceMemberId: number, targetMemberId: number): Promise<void> {
+    const result = await firstValueFrom(
+      this.api.post<boolean>(`Split/members/${sourceMemberId}/merge-into/${targetMemberId}`, {}));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to merge members.');
   }
 
   async renameMember(memberId: number, name: string): Promise<SplitMember> {

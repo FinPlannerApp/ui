@@ -32,7 +32,7 @@
           </div>
           <div class="flex flex-col min-w-0">
             <span class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Total Group Spend</span>
-            <span class="text-xl sm:text-2xl font-black text-[var(--text-primary)] tracking-tight truncate">{{ totalSpendSum() | currency:'INR' }}</span>
+            <span class="text-xl sm:text-2xl font-black text-[var(--text-primary)] tracking-tight truncate">{{ totalSpendSum() | currency:summaryCurrency() }}</span>
           </div>
         </div>
       </div>
@@ -172,7 +172,7 @@
               <div class="font-bold text-sm truncate text-[var(--text-primary)]">{{ hit.description }}</div>
               <div class="text-xs text-[var(--text-muted)] truncate">{{ hit.groupName }} · paid by {{ hit.paidBy }} · {{ hit.date | date:'d MMM y' }}</div>
             </div>
-            <span class="font-bold text-sm text-[var(--text-primary)] shrink-0">{{ hit.amount | currency:'INR' }}</span>
+            <span class="font-bold text-sm text-[var(--text-primary)] shrink-0">{{ hit.amount | currency:hit.currency }}</span>
           </button>
         }
       </div>
@@ -249,7 +249,7 @@
               <div class="relative z-10 mt-4 pt-3 border-t border-[var(--glass-border)] flex items-center justify-between gap-2">
                 <div class="flex flex-col">
                   <span class="text-[0.65rem] font-bold text-[var(--text-muted)] uppercase tracking-wider">Total Group Spend</span>
-                  <span class="text-base sm:text-lg font-black gradient-text">{{ group.totalSpend | currency:'INR' }}</span>
+                  <span class="text-base sm:text-lg font-black gradient-text">{{ group.totalSpend | currency:(group.currency || 'INR') }}</span>
                 </div>
                 <div class="text-xs font-bold text-[var(--primary-color,#3b82f6)] flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                   <span>View Trip</span>

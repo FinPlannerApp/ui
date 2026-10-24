@@ -1,3 +1,4 @@
+import { currencySymbol } from './split-currency';
 import type { Cell, Row, Workbook, Worksheet } from 'exceljs';
 import { GroupExport, SettlementMethod, SettlementStatus, SplitType } from '../../core/models/split.model';
 
@@ -83,7 +84,7 @@ export async function exportSplitGroupToExcel(data: GroupExport): Promise<void> 
     wb.creator = 'FinPlanner';
     wb.created = new Date();
 
-    const sym = data.currency === 'INR' ? '₹' : '';
+    const sym = currencySymbol(data.currency).trim();
     const money = sym ? `"${sym}" #,##0.00;[Red]-"${sym}" #,##0.00` : '#,##0.00;[Red]-#,##0.00';
     const signedMoney = sym ? `+"${sym}" #,##0.00;-"${sym}" #,##0.00;"${sym}" 0.00` : '+#,##0.00;-#,##0.00;0.00';
 
@@ -147,7 +148,7 @@ export async function exportSplitGroupToExcel(data: GroupExport): Promise<void> 
     let r = lastMemberRow + 3;
     summary.getCell(r, 1).value =
         'Net balance = Paid for expenses − Fair share + Settled paid out − Settled received. ' +
-        'Positive means the person is owed money; negative means they owe money. The total net is always ₹0.';
+        'Positive means the person is owed money; negative means they owe money. The total net is always zero.';
     summary.getCell(r, 1).font = { italic: true, color: { argb: MUTED } };
     r += 2;
 

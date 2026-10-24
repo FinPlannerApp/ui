@@ -28,6 +28,8 @@ export class SplitInviteLanding implements OnInit {
   isJoining = signal(false);
 
   displayName = signal('');
+  /** The existing name-only member the joiner picked as "me" (null = join as a new person). */
+  claimMemberId = signal<number | null>(null);
 
   isLoggedIn = this.auth.isLoggedIn;
 
@@ -48,7 +50,8 @@ export class SplitInviteLanding implements OnInit {
       }
 
       const pendingToken = sessionStorage.getItem('pending_split_invite_token');
-      if (pendingToken === this.token && this.isLoggedIn() && userName) {
+      // With name-only members to claim, let the person choose who they are before joining.
+      if (pendingToken === this.token && this.isLoggedIn() && userName && previewData.unclaimedMembers.length === 0) {
         sessionStorage.removeItem('pending_split_invite_token');
         sessionStorage.removeItem('pending_return_url');
         await this.join();
@@ -78,7 +81,10 @@ export class SplitInviteLanding implements OnInit {
   }
 
   async join(): Promise<void> {
-    const name = this.displayName().trim();
+    const claimId = this.claimMemberId();
+    const name = claimId
+      ? (this.preview()?.unclaimedMembers.find(m => m.id === claimId)?.name ?? this.displayName().trim())
+      : this.displayName().trim();
     if (!name) {
       this.notificationService.showError('Enter a name to join with.');
       return;
@@ -86,7 +92,7 @@ export class SplitInviteLanding implements OnInit {
 
     this.isJoining.set(true);
     try {
-      const result = await this.splitService.joinViaInvite(this.token, name);
+      const result = await this.splitService.joinViaInvite(this.token, name, claimId);
       this.notificationService.showSuccess('Joined the trip.');
       this.router.navigate(['/app/split', result.groupId]);
     } catch (err: any) {

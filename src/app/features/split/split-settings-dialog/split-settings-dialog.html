@@ -61,6 +61,19 @@
           }
         </div>
 
+        @if (mergingMember(); as mm) {
+          <div class="p-3.5 rounded-2xl flex flex-col gap-2.5 bg-indigo-500/5 border border-indigo-500/20">
+            <span class="text-xs font-bold text-[var(--text-primary)]">Merge {{ mm.name }} into…</span>
+            <p-select [options]="mergeTargets()" [ngModel]="mergeTargetId()" (ngModelChange)="mergeTargetId.set($event)"
+              optionLabel="label" optionValue="value" placeholder="Choose the person they really are" appendTo="body"
+              styleClass="w-full" class="w-full"></p-select>
+            <div class="flex justify-end gap-2">
+              <p-button label="Cancel" severity="secondary" [text]="true" size="small" (onClick)="cancelMerge()"></p-button>
+              <p-button label="Merge" size="small" [disabled]="mergeTargetId() === null" (onClick)="confirmMerge()"></p-button>
+            </div>
+          </div>
+        }
+
         @if (showAddMember()) {
           <div class="p-3.5 rounded-2xl flex flex-col gap-2.5 bg-[var(--glass-bg)] border border-[var(--glass-border)] shadow-sm">
             <span class="text-xs font-bold text-[var(--text-primary)]">New Member Details</span>
@@ -139,6 +152,12 @@
                       <i class="pi pi-wallet"></i>
                     </button>
                   }
+                  @if (canMergeMember(m)) {
+                    <button (click)="startMerge(m)" pTooltip="Merge into another member"
+                      class="text-xs text-[var(--text-muted)] hover:text-indigo-400 bg-transparent border-none cursor-pointer p-1.5 rounded-lg hover:bg-[var(--glass-bg)]">
+                      <i class="pi pi-share-alt"></i>
+                    </button>
+                  }
                   @if (canRemoveMember(m)) {
                     <button (click)="removeMember(m)" [pTooltip]="isMe(m) ? 'Leave group' : 'Remove from group'"
                       class="text-xs text-red-500 hover:text-red-400 bg-transparent border-none cursor-pointer p-1.5 rounded-lg hover:bg-red-500/10">
@@ -156,6 +175,53 @@
     <!-- Trip Preferences Tab -->
     @if (settingsTab() === 'config') {
       <div class="flex flex-col gap-4 pb-2">
+        <!-- Group settings -->
+        <div class="p-4 rounded-2xl flex flex-col gap-3 bg-[var(--glass-bg)] border border-[var(--glass-border)] shadow-sm">
+          <span class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Group Settings</span>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-xs text-[var(--text-muted)] font-medium">Currency</label>
+            <p-select [options]="currencyOptions" [ngModel]="draftCurrency()" (ngModelChange)="draftCurrency.set($event)"
+              optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full" class="w-full"
+              [disabled]="!isGroupAdmin() || isGroupClosed()"></p-select>
+            <span class="text-[0.7rem] text-[var(--text-muted)]">Changes the symbol shown. Existing amounts are not converted.</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="flex flex-col gap-1">
+              <label class="text-xs text-[var(--text-muted)] font-medium">Trip starts</label>
+              <p-datepicker [ngModel]="draftStart()" (ngModelChange)="draftStart.set($event)" [showIcon]="true"
+                [showClear]="true" appendTo="body" class="w-full" [disabled]="!isGroupAdmin() || isGroupClosed()"></p-datepicker>
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-xs text-[var(--text-muted)] font-medium">Trip ends</label>
+              <p-datepicker [ngModel]="draftEnd()" (ngModelChange)="draftEnd.set($event)" [showIcon]="true"
+                [showClear]="true" appendTo="body" class="w-full" [disabled]="!isGroupAdmin() || isGroupClosed()"></p-datepicker>
+            </div>
+          </div>
+
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex flex-col min-w-0">
+              <span class="text-sm font-bold text-[var(--text-primary)]">Simplify debts</span>
+              <span class="text-[0.75rem] text-[var(--text-muted)]">
+                On: the fewest payments settle everyone, even if that means paying someone you didn't owe directly.
+                Off: everyone pays back exactly the people they owe.
+              </span>
+            </div>
+            <p-toggleswitch [ngModel]="draftSimplify()" (ngModelChange)="draftSimplify.set($event)"
+              [disabled]="!isGroupAdmin() || isGroupClosed()"></p-toggleswitch>
+          </div>
+
+          @if (isGroupAdmin() && !isGroupClosed()) {
+            <div class="flex justify-end">
+              <p-button label="Save settings" size="small" [disabled]="!settingsDirty()"
+                [loading]="savingSettings()" (onClick)="saveSettings()"></p-button>
+            </div>
+          } @else {
+            <span class="text-xs text-[var(--text-muted)] italic">Only the trip admin can change these.</span>
+          }
+        </div>
+
         <!-- Trip Name Section -->
         <div class="p-4 rounded-2xl flex flex-col gap-2 bg-[var(--glass-bg)] border border-[var(--glass-border)] shadow-sm">
           <div class="flex items-center justify-between">
@@ -267,7 +333,7 @@
           <span class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Settlement & Close Readiness</span>
           <div class="flex items-center justify-between text-xs pt-1">
             <span class="text-[var(--text-muted)]">Total Trip Spend:</span>
-            <strong class="text-sm font-bold text-[var(--primary-color,#3b82f6)]">{{ (group()?.totalSpend ?? 0) | currency:'INR' }}</strong>
+            <strong class="text-sm font-bold text-[var(--primary-color,#3b82f6)]">{{ (group()?.totalSpend ?? 0) | currency:(group()?.currency || 'INR') }}</strong>
           </div>
           <div class="flex items-center justify-between text-xs">
             <span class="text-[var(--text-muted)]">Unsettled Debts Remaining:</span>

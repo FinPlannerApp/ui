@@ -31,6 +31,15 @@
           }
         </div>
 
+        @if (tripDates(); as td) {
+          <span class="text-[0.7rem] sm:text-xs text-[var(--text-muted)] mt-0.5 flex items-center gap-1.5">
+            <i class="pi pi-calendar text-[0.65rem]"></i>
+            @if (td.start) { {{ td.start | date:'d MMM' }} }
+            @if (td.start && td.end) { – }
+            @if (td.end) { {{ td.end | date:'d MMM y' }} }
+          </span>
+        }
+
         <div class="flex items-center gap-2 mt-1">
           <!-- Clickable Member Count Badge -->
           <button (click)="membersOverlay.toggle($event)"
@@ -111,7 +120,7 @@
           <div class="flex flex-col min-w-0">
             <span class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Total Trip Expense</span>
             <span class="text-2xl sm:text-3xl font-black text-[var(--text-primary)] tracking-tight">{{
-              group()?.totalSpend | currency:'INR' }}</span>
+              group()?.totalSpend | currency:currencyCode() }}</span>
           </div>
         </div>
       </div>
@@ -137,15 +146,15 @@
             <div class="flex items-center gap-2">
               @if (myNetBalance() > 0) {
               <span class="text-xl sm:text-2xl font-black text-emerald-500 tracking-tight">+{{ myNetBalance() |
-                currency:'INR' }}</span>
+                currency:currencyCode() }}</span>
               <span class="text-[0.7rem] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">Gets
                 Back</span>
               } @else if (myNetBalance() < 0) { <span
-                class="text-xl sm:text-2xl font-black text-rose-500 tracking-tight">{{ myNetBalance() | currency:'INR'
+                class="text-xl sm:text-2xl font-black text-rose-500 tracking-tight">{{ myNetBalance() | currency:currencyCode()
                 }}</span>
                 <span class="text-[0.7rem] font-bold text-rose-500 bg-rose-500/10 px-2 py-0.5 rounded-full">Owes</span>
                 } @else {
-                <span class="text-xl sm:text-2xl font-black text-[var(--text-primary)] tracking-tight">₹0.00</span>
+                <span class="text-xl sm:text-2xl font-black text-[var(--text-primary)] tracking-tight">{{ 0 | currency:currencyCode() }}</span>
                 <span
                   class="text-[0.7rem] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full">Settled</span>
                 }
@@ -289,7 +298,7 @@
           }
           <span>{{ day.date | date:'EEE, d MMM y' }}</span>
         </h4>
-        <span class="text-xs font-bold text-[var(--text-muted)]">{{ day.total | currency:'INR' }}</span>
+        <span class="text-xs font-bold text-[var(--text-muted)]">{{ day.total | currency:currencyCode() }}</span>
       </div>
       }
 
@@ -342,13 +351,13 @@
           <div class="flex items-center gap-3 shrink-0">
             <div class="flex flex-col items-end">
               <span class="text-base sm:text-xl font-black text-[var(--text-primary)] tracking-tight">
-                {{ expense.amount | currency:'INR' }}
+                {{ expense.amount | currency:currencyCode() }}
               </span>
               @if (myPosition(expense); as pos) {
               @if (pos.net > 0) {
-              <span class="text-[0.7rem] font-bold text-emerald-500">you lent {{ pos.net | currency:'INR' }}</span>
+              <span class="text-[0.7rem] font-bold text-emerald-500">you lent {{ pos.net | currency:currencyCode() }}</span>
               } @else if (pos.net < 0) { <span class="text-[0.7rem] font-bold text-rose-500">you owe {{ -pos.net |
-                currency:'INR' }}</span>
+                currency:currencyCode() }}</span>
                 } @else {
                 <span class="text-[0.7rem] font-medium text-[var(--text-muted)]">you're even</span>
                 }
@@ -385,10 +394,10 @@
           @for (line of expenseLines(expense); track line.memberId) {
           <div class="grid grid-cols-12 gap-2 text-xs items-center">
             <span class="col-span-4 font-bold truncate text-[var(--text-primary)]">{{ line.name }}</span>
-            <span class="col-span-3 text-right text-[var(--text-muted)]">{{ line.paid > 0 ? (line.paid | currency:'INR')
+            <span class="col-span-3 text-right text-[var(--text-muted)]">{{ line.paid > 0 ? (line.paid | currency:currencyCode())
               : '—' }}</span>
             <span class="col-span-3 text-right text-[var(--text-primary)] font-medium">{{ line.share > 0 ? (line.share |
-              currency:'INR') : '—' }}</span>
+              currency:currencyCode()) : '—' }}</span>
             <span class="col-span-2 text-right font-bold" [class.text-emerald-500]="line.net > 0"
               [class.text-rose-500]="line.net < 0" [class.text-[var(--text-muted)]]="line.net === 0">
               {{ line.net > 0 ? '+' : '' }}{{ line.net | number:'1.0-2' }}
@@ -474,7 +483,7 @@
                 <div class="flex items-center justify-between gap-3 text-sm">
                   <div class="min-w-0">
                     <div class="font-bold truncate text-[var(--text-primary)]">{{ d.description }}</div>
-                    <div class="text-xs text-[var(--text-muted)]">{{ d.amount | currency:'INR' }} · deleted {{ d.deletedAt | date:'d MMM, h:mm a' }}</div>
+                    <div class="text-xs text-[var(--text-muted)]">{{ d.amount | currency:currencyCode() }} · deleted {{ d.deletedAt | date:'d MMM, h:mm a' }}</div>
                   </div>
                   @if (!isGroupClosed()) {
                     <p-button label="Restore" icon="pi pi-replay" size="small" [outlined]="true"
@@ -538,7 +547,7 @@
 
               <span class="text-base font-black tracking-tight" [class.text-emerald-500]="b.netBalance > 0"
                 [class.text-rose-500]="b.netBalance < 0" [class.text-[var(--text-muted)]]="b.netBalance === 0">
-                {{ b.netBalance > 0 ? '+' : '' }}{{ b.netBalance | currency:'INR' }}
+                {{ b.netBalance > 0 ? '+' : '' }}{{ b.netBalance | currency:currencyCode() }}
               </span>
             </div>
 
@@ -546,11 +555,11 @@
               class="grid grid-cols-3 gap-2 text-xs text-[var(--text-muted)] pt-2 border-t border-[var(--glass-border)]">
               <div class="flex flex-col">
                 <span>Paid</span>
-                <strong class="text-[var(--text-primary)] font-bold">{{ (b.totalPaid ?? 0) | currency:'INR' }}</strong>
+                <strong class="text-[var(--text-primary)] font-bold">{{ (b.totalPaid ?? 0) | currency:currencyCode() }}</strong>
               </div>
               <div class="flex flex-col">
                 <span>Share</span>
-                <strong class="text-[var(--text-primary)] font-bold">− {{ (b.totalShare ?? 0) | currency:'INR'
+                <strong class="text-[var(--text-primary)] font-bold">− {{ (b.totalShare ?? 0) | currency:currencyCode()
                   }}</strong>
               </div>
               <div class="flex flex-col">
@@ -558,7 +567,7 @@
                 <strong class="font-bold" [class.text-emerald-500]="settledNet(b) > 0"
                   [class.text-rose-500]="settledNet(b) < 0" [class.text-[var(--text-primary)]]="settledNet(b) === 0">
                   {{ settledNet(b) > 0 ? '+' : (settledNet(b) < 0 ? '−' : '' ) }} {{ (settledNet(b) < 0 ? -settledNet(b)
-                    : settledNet(b)) | currency:'INR' }} </strong>
+                    : settledNet(b)) | currency:currencyCode() }} </strong>
               </div>
             </div>
             <p class="text-[0.65rem] text-[var(--text-muted)] m-0">Paid − Share + Settled = Net balance</p>
@@ -566,7 +575,7 @@
             <span
               class="self-start text-[0.65rem] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
               {{ (b.inTransit ?? 0) > 0 ? 'Sent' : 'Receiving' }} {{ ((b.inTransit ?? 0) > 0 ? b.inTransit :
-              -(b.inTransit ?? 0)) | currency:'INR' }} · awaiting confirmation
+              -(b.inTransit ?? 0)) | currency:currencyCode() }} · awaiting confirmation
             </span>
             }
           </div>
@@ -613,7 +622,7 @@
                 </div>
               </div>
               <span class="font-black text-sm sm:text-base text-[var(--text-primary)] tracking-tight shrink-0">{{
-                item.amount | currency:'INR' }}</span>
+                item.amount | currency:currencyCode() }}</span>
             </div>
 
             <!-- Progress Bar -->
@@ -633,7 +642,7 @@
     <div class="flex flex-col gap-3">
       <div class="flex items-center justify-between">
         <h3 class="text-xs font-extrabold text-[var(--text-muted)] uppercase tracking-wider m-0">
-          {{ isGroupAdmin() ? 'Simplified Debts (All Members)' : 'Your Direct Obligations' }}
+          {{ isGroupAdmin() ? (isPairwise() ? 'Who Owes Whom (All Members)' : 'Simplified Debts (All Members)') : 'Your Direct Obligations' }}
         </h3>
         @if (!isGroupAdmin() && (balances()?.simplifiedPlan?.length ?? 0) > visibleDebts().length) {
         <span class="text-xs text-[var(--text-muted)] italic">Showing your settlements only</span>
@@ -656,7 +665,7 @@
                   class="font-bold text-[var(--text-primary)]">{{ debt.toMemberName }}</strong>
               </span>
               <span class="text-xs font-black text-[var(--primary-color,#3b82f6)] mt-0.5">{{ debt.amount |
-                currency:'INR' }}</span>
+                currency:currencyCode() }}</span>
             </div>
           </div>
 
@@ -701,7 +710,7 @@
           <span><strong>{{ s.fromMemberName }}</strong> → <strong>{{ s.toMemberName }}</strong></span>
         </div>
         <div class="flex items-center gap-2 flex-wrap">
-          <span class="font-medium text-[var(--text-primary)]">{{ s.amount | currency:'INR' }}</span>
+          <span class="font-medium text-[var(--text-primary)]">{{ s.amount | currency:currencyCode() }}</span>
           <span class="text-[0.65rem] text-[var(--text-muted)]">{{ s.method === 0 ? 'UPI' : (s.method === 1 ? 'Cash' : (s.method === 2 ? 'Bank' : 'Other')) }}</span>
           <p-tag [value]="s.status === 2 ? 'Completed' : (s.status === 1 ? 'Awaiting confirmation' : 'Pending')"
             [severity]="s.status === 2 ? 'success' : (s.status === 1 ? 'warn' : 'secondary')"></p-tag>
@@ -816,9 +825,9 @@
         <div class="flex items-center justify-between text-xs pt-1">
           <span class="text-[var(--text-muted)]">Payers total</span>
           <span [class.text-red-500]="expAmount() !== null && payersTotal() !== expAmount()">
-            {{ payersTotal() | currency:'INR' }}
+            {{ payersTotal() | currency:currencyCode() }}
             @if (expAmount() !== null) {
-            / {{ expAmount() | currency:'INR' }}
+            / {{ expAmount() | currency:currencyCode() }}
             }
           </span>
         </div>
@@ -858,7 +867,7 @@
           <div class="flex flex-col flex-1 min-w-0">
             <span class="text-sm text-[var(--text-primary)] font-medium truncate">{{ member.name }}</span>
             @if (previewPaid()[member.id] > 0) {
-            <span class="text-[0.65rem] text-[var(--text-muted)]">paid {{ previewPaid()[member.id] | currency:'INR'
+            <span class="text-[0.65rem] text-[var(--text-muted)]">paid {{ previewPaid()[member.id] | currency:currencyCode()
               }}</span>
             }
           </div>
@@ -866,7 +875,7 @@
           <!-- This person's amount for the expense, live -->
           <div class="flex flex-col items-end text-right shrink-0">
             @if (expParticipantIds().has(member.id)) {
-            <span class="text-sm font-black text-[var(--text-primary)]">{{ previewShares()[member.id] | currency:'INR'
+            <span class="text-sm font-black text-[var(--text-primary)]">{{ previewShares()[member.id] | currency:currencyCode()
               }}</span>
             } @else {
             <span class="text-xs text-[var(--text-muted)]">not included</span>
@@ -874,7 +883,7 @@
             @if (memberImpact(member.id); as impact) {
             <span class="text-[0.65rem] font-bold" [class.text-emerald-500]="impact > 0"
               [class.text-rose-500]="impact < 0">
-              {{ impact > 0 ? 'gets back ' : 'owes ' }}{{ (impact > 0 ? impact : -impact) | currency:'INR' }}
+              {{ impact > 0 ? 'gets back ' : 'owes ' }}{{ (impact > 0 ? impact : -impact) | currency:currencyCode() }}
             </span>
             }
           </div>
@@ -917,10 +926,10 @@
       } @else if (expSplitType() === SplitType.Exact) {
       <p class="text-xs m-0" [class.text-rose-500]="splitTotals().exactLeft !== 0"
         [class.text-emerald-500]="splitTotals().exactLeft === 0">
-        Allocated {{ splitTotals().exact | currency:'INR' }} of {{ (expAmount() ?? 0) | currency:'INR' }}
+        Allocated {{ splitTotals().exact | currency:currencyCode() }} of {{ (expAmount() ?? 0) | currency:currencyCode() }}
         @if (splitTotals().exactLeft !== 0) {
         · {{ splitTotals().exactLeft > 0 ? 'still to assign' : 'over by' }} {{ (splitTotals().exactLeft > 0 ?
-        splitTotals().exactLeft : -splitTotals().exactLeft) | currency:'INR' }}
+        splitTotals().exactLeft : -splitTotals().exactLeft) | currency:currencyCode() }}
         }
       </p>
       } @else if (expSplitType() === SplitType.Percentage) {
@@ -969,7 +978,7 @@
   <div class="flex flex-col items-center gap-3 text-center">
     <img [src]="qrCodeDataUrl()" alt="UPI payment QR code" class="rounded-xl border border-[var(--glass-border)]" />
     <p class="text-sm text-[var(--text-primary)] m-0">
-      Pay <strong>{{ qrPaymentDetails()!.amount | currency:'INR' }}</strong>
+      Pay <strong>{{ qrPaymentDetails()!.amount | currency:currencyCode() }}</strong>
       to <strong>{{ qrPaymentDetails()!.payeeName }}</strong>
     </p>
     <p class="text-xs text-[var(--text-muted)] m-0">
@@ -997,7 +1006,7 @@
     <div class="flex flex-col gap-3">
       <p class="text-sm text-[var(--text-primary)] m-0">
         {{ settlingDebt()!.fromMemberName }} owes {{ settlingDebt()!.toMemberName }}
-        <strong>{{ settlingDebt()!.amount | currency:'INR' }}</strong>
+        <strong>{{ settlingDebt()!.amount | currency:currencyCode() }}</strong>
       </p>
       <div class="flex flex-col gap-1.5">
         <label class="text-xs text-[var(--text-muted)] font-medium">Amount</label>
@@ -1006,7 +1015,7 @@
       </div>
       <div class="flex flex-col gap-1.5">
         <label class="text-xs text-[var(--text-muted)] font-medium">How was / will it be paid?</label>
-        <p-select [options]="paymentMethodOptions" [ngModel]="settleMethod()" (ngModelChange)="settleMethod.set($event)"
+        <p-select [options]="methodChoices()" [ngModel]="settleMethod()" (ngModelChange)="settleMethod.set($event)"
           optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full" class="w-full"></p-select>
       </div>
       @if (!settleNeedsUpiPayment()) {
@@ -1041,7 +1050,7 @@
       </div>
       <div class="flex flex-col gap-1.5">
         <label class="text-xs text-[var(--text-muted)] font-medium">Method</label>
-        <p-select [options]="paymentMethodOptions" [ngModel]="editSettlementMethod()" (ngModelChange)="editSettlementMethod.set($event)"
+        <p-select [options]="methodChoices()" [ngModel]="editSettlementMethod()" (ngModelChange)="editSettlementMethod.set($event)"
           optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full" class="w-full"></p-select>
       </div>
       <div class="flex justify-end gap-2 mt-2">

@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, model, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -8,6 +8,8 @@ import { SplitService } from '../split.service';
 import { GroupBalances, SplitGroup, SplitMember } from '../../../core/models/split.model';
 import { NotificationService } from '../../../core/services/notification.service';
 import { Auth } from '../../../core/services/auth';
+import { SPLIT_CURRENCIES, currencySymbol } from '../split-currency';
+import { fromDateOnlyString, toDateOnlyString } from '../../../core/utils/date-utils';
 
 @Component({
   selector: 'app-split-settings-dialog',
@@ -50,6 +52,105 @@ export class SplitSettingsDialog {
   tripNameInput = signal('');
 
   generatedInviteLink = signal<string | null>(null);
+
+  // ── Group settings (currency, simplify debts, trip dates) ───────────────────
+  readonly currencyOptions = SPLIT_CURRENCIES.map(c => ({ label: c.label, value: c.code }));
+  draftCurrency = signal('INR');
+  draftSimplify = signal(true);
+  draftStart = signal<Date | null>(null);
+  draftEnd = signal<Date | null>(null);
+  savingSettings = signal(false);
+
+  constructor() {
+    // Reset the draft whenever the group (re)loads, so it always starts from what's saved.
+    effect(() => {
+      const g = this.group();
+      if (!g) return;
+      this.draftCurrency.set(g.currency || 'INR');
+      this.draftSimplify.set(g.simplifyDebts !== false);
+      this.draftStart.set(fromDateOnlyString(g.startDate));
+      this.draftEnd.set(fromDateOnlyString(g.endDate));
+    });
+  }
+
+  settingsDirty = computed(() => {
+    const g = this.group();
+    if (!g) return false;
+    return this.draftCurrency() !== (g.currency || 'INR')
+      || this.draftSimplify() !== (g.simplifyDebts !== false)
+      || toDateOnlyString(this.draftStart()) !== (toDateOnlyString(fromDateOnlyString(g.startDate)))
+      || toDateOnlyString(this.draftEnd()) !== (toDateOnlyString(fromDateOnlyString(g.endDate)));
+  });
+
+  async saveSettings(): Promise<void> {
+    const g = this.group();
+    if (!g) return;
+    this.savingSettings.set(true);
+    try {
+      await this.splitService.updateGroupSettings(g.id, {
+        currency: this.draftCurrency(),
+        simplifyDebts: this.draftSimplify(),
+        startDate: toDateOnlyString(this.draftStart()),
+        endDate: toDateOnlyString(this.draftEnd())
+      });
+      this.notificationService.showSuccess('Group settings saved.');
+      this.reloadGroup.emit();
+    } catch (err: any) {
+      this.notificationService.showError(err?.message || 'Failed to save settings.');
+    } finally {
+      this.savingSettings.set(false);
+    }
+  }
+
+  // ── Merge duplicate members ─────────────────────────────────────────────────
+  mergingMember = signal<SplitMember | null>(null);
+  mergeTargetId = signal<number | null>(null);
+
+  /** Only name-only members can be merged away, and only by the admin. */
+  canMergeMember(m: SplitMember): boolean {
+    return this.isGroupAdmin() && !m.linkedUserId && !m.leftAt && !this.isGroupClosed()
+      && this.activeMembers().length > 1;
+  }
+
+  mergeTargets = computed(() => {
+    const source = this.mergingMember();
+    return this.activeMembers().filter(m => m.id !== source?.id).map(m => ({ label: m.name, value: m.id }));
+  });
+
+  startMerge(m: SplitMember): void {
+    this.mergingMember.set(m);
+    this.mergeTargetId.set(null);
+  }
+
+  cancelMerge(): void {
+    this.mergingMember.set(null);
+  }
+
+  confirmMerge(): void {
+    const source = this.mergingMember();
+    const targetId = this.mergeTargetId();
+    const target = this.activeMembers().find(m => m.id === targetId);
+    if (!source || !target) return;
+    this.confirmationService.confirm({
+      header: `Merge ${source.name} into ${target.name}?`,
+      message: `All of ${source.name}'s expenses and payments become ${target.name}'s, and ${source.name} is removed. This can't be undone.`,
+      icon: 'pi pi-share-alt',
+      acceptLabel: 'Merge',
+      rejectLabel: 'Cancel',
+      accept: async () => {
+        try {
+          await this.splitService.mergeMembers(source.id, target.id);
+          this.mergingMember.set(null);
+          this.notificationService.showSuccess(`${source.name} was merged into ${target.name}.`);
+          this.reloadGroup.emit();
+        } catch (err: any) {
+          this.notificationService.showError(err?.message || 'Could not merge these members.');
+        }
+      }
+    });
+  }
+
+  readonly sym = computed(() => currencySymbol(this.group()?.currency));
 
   // Computed properties
   isGroupAdmin = computed(() => {
@@ -236,7 +337,7 @@ export class SplitSettingsDialog {
 
     let message = 'Closing this trip group will archive it, mark it complete, and stop new expenses.';
     if (totalUnsettled > 0) {
-      message += ` ⚠️ Note: There are still ${debts.length} unsettled debt(s) totaling ₹${totalUnsettled.toFixed(2)}.`;
+      message += ` ⚠️ Note: There are still ${debts.length} unsettled debt(s) totaling ${this.sym()}${totalUnsettled.toFixed(2)}.`;
     }
 
     this.confirmationService.confirm({

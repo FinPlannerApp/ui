@@ -24,6 +24,7 @@ import { SplitSettingsDialog } from '../split-settings-dialog/split-settings-dia
 import { computeShares, equalPercentages } from '../split-share-math';
 import { compareExpenses, expenseDayKey, groupExpensesByDay } from '../split-expense-utils';
 import { exportSplitGroupToExcel } from '../split-excel-export';
+import { currencySymbol } from '../split-currency';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -114,6 +115,20 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
       : (this.balances()?.expenseCount ?? this.matchingTotal() ?? this.expenses().length));
   isLoading = signal(true);
   activeTab = signal<'expenses' | 'balances' | 'activity'>('expenses');
+  /** The group's currency (a display label — amounts are never converted). */
+  currencyCode = computed(() => this.group()?.currency || 'INR');
+  /** Trip date range for the header, e.g. "12 Oct – 18 Oct 2026", or null. */
+  tripDates = computed(() => {
+    const g = this.group();
+    const start = fromDateOnlyString(g?.startDate);
+    const end = fromDateOnlyString(g?.endDate);
+    if (!start && !end) return null;
+    return { start, end };
+  });
+  /** Symbol for messages, e.g. ₹ or $. */
+  sym = computed(() => currencySymbol(this.group()?.currency));
+  /** True when payments follow who-owes-whom instead of the fewest-payments plan. */
+  isPairwise = computed(() => this.group()?.simplifyDebts === false);
 
   // ── Close, Import, Settlement History ───────────────────────────────────────
   showImportDialog = signal(false);
@@ -307,6 +322,11 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
     { label: 'Other', value: SettlementMethod.Other }
   ];
 
+  /** UPI only exists for rupee groups; every other currency records cash / bank / other. */
+  methodChoices = computed(() => this.currencyCode() === 'INR'
+    ? this.paymentMethodOptions
+    : this.paymentMethodOptions.filter(o => o.value !== SettlementMethod.Upi));
+
   /**
    * True when the payer still has to pay right now via UPI (shows the QR). In every other
    * case — cash, bank, other, or the receiver recording money they got — the money has
@@ -314,7 +334,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
    */
   settleNeedsUpiPayment = computed(() => {
     const debt = this.settlingDebt();
-    if (!debt || this.settleMethod() !== SettlementMethod.Upi) return false;
+    if (!debt || this.settleMethod() !== SettlementMethod.Upi || this.currencyCode() !== 'INR') return false;
     const me = this.currentUserMember()?.id;
     return me === debt.fromMemberId || (this.isGroupAdmin() && me !== debt.toMemberId);
   });
@@ -329,7 +349,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
   openSettleDialog(debt: SimplifiedDebt): void {
     this.settlingDebt.set(debt);
     this.settleAmount.set(debt.amount);
-    this.settleMethod.set(this.iAmReceiverOf(debt) ? SettlementMethod.Cash : SettlementMethod.Upi);
+    this.settleMethod.set(this.iAmReceiverOf(debt) || this.currencyCode() !== 'INR' ? SettlementMethod.Cash : SettlementMethod.Upi);
   }
 
   closeSettleDialog(): void {
@@ -345,7 +365,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
       return;
     }
     if (amount > debt.amount + 0.005) {
-      this.notificationService.showError(`Can't pay more than the ₹${debt.amount.toFixed(2)} owed.`);
+      this.notificationService.showError(`Can't pay more than the ${this.sym()}${debt.amount.toFixed(2)} owed.`);
       return;
     }
 
@@ -424,8 +444,8 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
     this.confirmationService.confirm({
       header: completed ? 'Undo this payment?' : 'Cancel this payment?',
       message: completed
-        ? `₹${s.amount.toFixed(2)} from ${s.fromMemberName} to ${s.toMemberName} will be removed and the balances will go back to what they were before it.`
-        : `The ₹${s.amount.toFixed(2)} payment from ${s.fromMemberName} to ${s.toMemberName} will be cancelled.`,
+        ? `${this.sym()}${s.amount.toFixed(2)} from ${s.fromMemberName} to ${s.toMemberName} will be removed and the balances will go back to what they were before it.`
+        : `The ${this.sym()}${s.amount.toFixed(2)} payment from ${s.fromMemberName} to ${s.toMemberName} will be cancelled.`,
       icon: 'pi pi-trash',
       acceptLabel: completed ? 'Undo payment' : 'Cancel payment',
       rejectLabel: 'Keep it',
@@ -624,7 +644,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
 
     let message = 'Closing this trip group will archive it and mark it complete.';
     if (totalUnsettled > 0) {
-      message += ` ⚠️ Note: There are still ${debts.length} unsettled debt(s) totaling ₹${totalUnsettled.toFixed(2)}.`;
+      message += ` ⚠️ Note: There are still ${debts.length} unsettled debt(s) totaling ${this.sym()}${totalUnsettled.toFixed(2)}.`;
     }
 
     this.confirmationService.confirm({
@@ -692,7 +712,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
     const toMember = g.members.find(m => m.id === debt.toMemberId);
     const upiText = toMember?.upiId ? `\n💳 Payee UPI ID: *${toMember.upiId}*` : '';
     const tripUrl = `${window.location.origin}/app/split/${g.id}`;
-    const message = `Hey ${debt.fromMemberName}! 👋\n\nGentle reminder for our trip *'${g.name}'*:\nYou owe *₹${debt.amount.toFixed(2)}* to *${debt.toMemberName}*.${upiText}\n\n📲 Tap link to scan QR Code or mark as paid:\n${tripUrl}`;
+    const message = `Hey ${debt.fromMemberName}! 👋\n\nGentle reminder for our trip *'${g.name}'*:\nYou owe *${this.sym()}${debt.amount.toFixed(2)}* to *${debt.toMemberName}*.${upiText}\n\n📲 Tap link to scan QR Code or mark as paid:\n${tripUrl}`;
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank');
   }
 
@@ -1229,10 +1249,10 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
       `${g?.name} — Settlement Summary`,
       '',
       ...settlements.map(s =>
-        `${s.fromMemberName} → ${s.toMemberName}: ₹${s.amount.toFixed(2)} (${s.status === 2 ? 'Completed' : (s.status === 1 ? 'Awaiting confirmation' : 'Pending')})`
+        `${s.fromMemberName} → ${s.toMemberName}: ${this.sym()}${s.amount.toFixed(2)} (${s.status === 2 ? 'Completed' : (s.status === 1 ? 'Awaiting confirmation' : 'Pending')})`
       ),
       '',
-      `Total spend: ₹${g?.totalSpend?.toFixed(2) ?? '0.00'}`
+      `Total spend: ${this.sym()}${g?.totalSpend?.toFixed(2) ?? '0.00'}`
     ];
     await navigator.clipboard.writeText(lines.join('\n'));
     this.notificationService.showSuccess('Summary copied — paste it anywhere to share.');
@@ -1426,7 +1446,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
 
     if (this.expSplitType() === SplitType.Exact && Math.abs(this.splitTotals().exactLeft) > 0.01) {
       this.notificationService.showError(
-        `The amounts add up to ₹${this.splitTotals().exact.toFixed(2)}, but the expense is ₹${amount.toFixed(2)}.`);
+        `The amounts add up to ${this.sym()}${this.splitTotals().exact.toFixed(2)}, but the expense is ${this.sym()}${amount.toFixed(2)}.`);
       return;
     }
     if (this.expSplitType() === SplitType.Percentage && Math.abs(this.splitTotals().percent - 100) > 0.01) {
@@ -1445,7 +1465,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
       const total = this.payersTotal();
       if (Math.abs(total - amount) > 0.01) {
         this.notificationService.showError(
-          `Payers add up to ₹${total.toFixed(2)}, but the expense total is ₹${amount.toFixed(2)}.`
+          `Payers add up to ${this.sym()}${total.toFixed(2)}, but the expense total is ${this.sym()}${amount.toFixed(2)}.`
         );
         return;
       }

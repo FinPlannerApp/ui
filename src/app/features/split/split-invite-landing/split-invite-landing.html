@@ -45,12 +45,35 @@
         </div>
       } @else {
         <div class="flex flex-col gap-4 text-left pt-2 border-t border-white/10">
+          @if (preview()!.unclaimedMembers.length > 0) {
+            <div class="flex flex-col gap-2">
+              <span class="text-xs sm:text-sm font-semibold text-[var(--text-muted)]">Are you already on the list?</span>
+              <div class="flex flex-wrap gap-2">
+                @for (m of preview()!.unclaimedMembers; track m.id) {
+                  <button (click)="claimMemberId.set(claimMemberId() === m.id ? null : m.id)"
+                    class="px-3 py-1.5 rounded-full text-xs font-bold border cursor-pointer transition-all"
+                    [class.bg-[var(--primary-color,#3b82f6)]]="claimMemberId() === m.id"
+                    [class.text-white]="claimMemberId() === m.id"
+                    [class.bg-transparent]="claimMemberId() !== m.id"
+                    [class.text-[var(--text-primary)]]="claimMemberId() !== m.id"
+                    [class.border-[var(--glass-border)]]="claimMemberId() !== m.id">
+                    I'm {{ m.name }}
+                  </button>
+                }
+              </div>
+              <span class="text-[0.7rem] text-[var(--text-muted)]">
+                Pick your name to keep the expenses already logged for you, or leave it unselected to join as someone new.
+              </span>
+            </div>
+          }
+          @if (claimMemberId() === null) {
           <div class="flex flex-col gap-1.5">
             <label class="text-xs sm:text-sm font-semibold text-[var(--text-muted)]">Your display name for this trip</label>
             <input type="text" pInputText class="w-full text-sm rounded-xl py-2.5" placeholder="e.g. Alex M."
               [ngModel]="displayName()" (ngModelChange)="displayName.set($event)"
               (keyup.enter)="join()" />
           </div>
+          }
           <p-button label="Join Trip Now" icon="pi pi-check" (onClick)="join()" [loading]="isJoining()"
             styleClass="w-full rounded-2xl font-bold py-3 text-xs sm:text-sm shadow-md"></p-button>
         </div>
