@@ -76,11 +76,11 @@
     <div class="relative w-full sm:w-72 md:w-80">
       <i class="pi pi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)] pointer-events-none z-10"></i>
       <input type="text" pInputText placeholder="Search trip or member name..."
-        [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)"
+        [ngModel]="searchQuery()" (ngModelChange)="onSearchInput($event)"
         style="padding-left: 2.5rem !important;"
         class="w-full pr-8 py-2 text-xs sm:text-sm rounded-xl border-none bg-transparent focus:ring-0 text-[var(--text-primary)]" />
       @if (searchQuery()) {
-        <button (click)="searchQuery.set('')" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-transparent border-none cursor-pointer p-0">
+        <button (click)="onSearchInput('')" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-transparent border-none cursor-pointer p-0">
           <i class="pi pi-times"></i>
         </button>
       }
@@ -161,6 +161,23 @@
       <p-progressSpinner styleClass="w-12 h-12"></p-progressSpinner>
     </div>
   } @else {
+    <!-- Expenses matching the search, across all trips -->
+    @if (expenseHits().length > 0) {
+      <div class="mb-4 rounded-2xl bg-[var(--glass-bg)] border border-[var(--glass-border)] divide-y divide-[var(--glass-border)]">
+        <div class="px-4 py-2.5 text-xs font-extrabold uppercase tracking-wider text-[var(--text-muted)]">Matching expenses</div>
+        @for (hit of expenseHits(); track hit.expenseId) {
+          <button (click)="openHit(hit)"
+            class="w-full text-left px-4 py-3 flex items-center justify-between gap-3 bg-transparent border-none cursor-pointer hover:bg-white/5">
+            <div class="min-w-0">
+              <div class="font-bold text-sm truncate text-[var(--text-primary)]">{{ hit.description }}</div>
+              <div class="text-xs text-[var(--text-muted)] truncate">{{ hit.groupName }} · paid by {{ hit.paidBy }} · {{ hit.date | date:'d MMM y' }}</div>
+            </div>
+            <span class="font-bold text-sm text-[var(--text-primary)] shrink-0">{{ hit.amount | currency:'INR' }}</span>
+          </button>
+        }
+      </div>
+    }
+
     <!-- Trips Cards Grid -->
     <div class="grid grid-cols-12 gap-4 sm:gap-5">
       @for (group of filteredGroups(); track group.id; let i = $index) {

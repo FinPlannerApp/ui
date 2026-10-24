@@ -19,6 +19,8 @@ export interface ExpenseDayGroup {
   date: Date | null;
   total: number;
   items: SplitExpense[];
+  /** True for the single un-dated section used when sorting by amount / oldest first. */
+  flat?: boolean;
 }
 
 export function groupExpensesByDay(sorted: SplitExpense[], now: Date = new Date()): ExpenseDayGroup[] {

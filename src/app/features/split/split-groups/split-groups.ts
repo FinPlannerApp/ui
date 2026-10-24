@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { sharedPrimeModules } from '../../../shared/prime-imports';
 import { SplitService } from '../split.service';
-import { SplitGroup } from '../../../core/models/split.model';
+import { GlobalExpenseHit, SplitGroup } from '../../../core/models/split.model';
 import { NotificationService } from '../../../core/services/notification.service';
 import { Auth } from '../../../core/services/auth';
 
@@ -32,6 +32,28 @@ export class SplitGroups implements OnInit {
   // Search & Filter
   searchQuery = signal('');
   statusFilter = signal<'all' | 'active' | 'closed'>('all');
+
+  // Expenses matching the search text, across every group
+  expenseHits = signal<GlobalExpenseHit[]>([]);
+  private hitTimer: ReturnType<typeof setTimeout> | null = null;
+
+  onSearchInput(value: string): void {
+    this.searchQuery.set(value);
+    if (this.hitTimer) clearTimeout(this.hitTimer);
+    const q = value.trim();
+    if (q.length < 2) {
+      this.expenseHits.set([]);
+      return;
+    }
+    this.hitTimer = setTimeout(async () => {
+      try {
+        const hits = await this.splitService.searchAcrossGroups(q);
+        if (this.searchQuery().trim() === q) this.expenseHits.set(hits);
+      } catch {
+        this.expenseHits.set([]);
+      }
+    }, 300);
+  }
 
   // Computed statistics
   totalSpendSum = computed(() => {
@@ -70,6 +92,10 @@ export class SplitGroups implements OnInit {
       return true;
     });
   });
+
+  openHit(hit: GlobalExpenseHit): void {
+    void this.router.navigate(['/app/split', hit.groupId], { fragment: 'expense-' + hit.expenseId });
+  }
 
   async ngOnInit(): Promise<void> {
     await this.load();

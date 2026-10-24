@@ -329,7 +329,7 @@ export class SplitSettingsDialog {
           if (leaving) {
             this.visible.set(false);
             this.notificationService.showSuccess('You left the group.');
-            void this.router.navigate(['/split']);
+            void this.router.navigate(['/app/split']);
           } else {
             this.notificationService.showSuccess(`${m.name} was removed.`);
             this.reloadGroup.emit();
@@ -356,7 +356,7 @@ export class SplitSettingsDialog {
           await this.splitService.deleteGroup(g.id);
           this.visible.set(false);
           this.notificationService.showSuccess('Group deleted.');
-          void this.router.navigate(['/split']);
+          void this.router.navigate(['/app/split']);
         } catch (err: any) {
           this.notificationService.showError(err?.message || 'Failed to delete group.');
         }

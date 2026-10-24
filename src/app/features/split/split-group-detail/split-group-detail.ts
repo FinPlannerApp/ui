@@ -7,7 +7,7 @@ import { ConfirmationService } from 'primeng/api';
 import { sharedPrimeModules } from '../../../shared/prime-imports';
 import { SplitService } from '../split.service';
 import {
-  ExpenseParticipantLine, GroupBalances, Settlement, SettlementMethod, SettlementStatus, SimplifiedDebt,
+  ActivityItem, ExpenseFilters, ExpenseParticipantLine, ExpenseSort, GroupBalances, Settlement, SettlementMethod, SettlementStatus, SimplifiedDebt,
   SplitExpense, SplitGroup, SplitMember, SplitType
 } from '../../../core/models/split.model';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -22,8 +22,9 @@ import { EmptyState } from '../../../shared/empty-state/empty-state';
 import { InfiniteScrollDirective } from '../../../shared/directives/infinite-scroll.directive';
 import { SplitSettingsDialog } from '../split-settings-dialog/split-settings-dialog';
 import { computeShares, equalPercentages } from '../split-share-math';
-import { compareExpenses, groupExpensesByDay } from '../split-expense-utils';
+import { compareExpenses, expenseDayKey, groupExpensesByDay } from '../split-expense-utils';
 import { exportSplitGroupToExcel } from '../split-excel-export';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-split-group-detail',
@@ -97,14 +98,22 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   /** Loaded expenses, grouped under day headers (Today, Yesterday, 12 Sep 2026 …). */
-  expenseGroups = computed(() => groupExpensesByDay(this.expenses()));
+  expenseGroups = computed(() => {
+    const list = this.expenses();
+    if (this.fSort() === 'date_desc') return groupExpensesByDay(list);
+    // Other orders (by amount, oldest first) aren't day-grouped: one flat section in the server's order.
+    return [{
+      dayKey: 'sorted', label: '', date: null,
+      total: list.reduce((sum, e) => sum + e.amount, 0), items: list, flat: true
+    }];
+  });
   /** Count shown on the tab: the live group total, or the search-match total while searching. */
   expenseCount = computed(() =>
-    this.expenseSearchQuery().trim()
+    this.listIsCustomised()
       ? (this.matchingTotal() ?? this.expenses().length)
       : (this.balances()?.expenseCount ?? this.matchingTotal() ?? this.expenses().length));
   isLoading = signal(true);
-  activeTab = signal<'expenses' | 'balances'>('expenses');
+  activeTab = signal<'expenses' | 'balances' | 'activity'>('expenses');
 
   // ── Close, Import, Settlement History ───────────────────────────────────────
   showImportDialog = signal(false);
@@ -142,11 +151,96 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
     return b?.netBalance ?? 0;
   });
 
-  private matchesSearch(e: SplitExpense): boolean {
+  // ── Filters & sort (applied on the server, so they cover every expense) ─────
+  filtersOpen = signal(false);
+  fCategory = signal<string | null>(null);
+  fPayerId = signal<number | null>(null);
+  fParticipantId = signal<number | null>(null);
+  fFrom = signal<Date | null>(null);
+  fTo = signal<Date | null>(null);
+  fMin = signal<number | null>(null);
+  fMax = signal<number | null>(null);
+  fSort = signal<ExpenseSort>('date_desc');
+
+  readonly sortOptions: { label: string; value: ExpenseSort }[] = [
+    { label: 'Newest first', value: 'date_desc' },
+    { label: 'Oldest first', value: 'date_asc' },
+    { label: 'Highest amount', value: 'amount_desc' },
+    { label: 'Lowest amount', value: 'amount_asc' }
+  ];
+
+  categoryFilterOptions = computed(() =>
+    (this.balances()?.categoryBreakdown ?? []).map(c => ({ label: c.category, value: c.category })));
+
+  memberFilterOptions = computed(() =>
+    (this.group()?.members ?? []).map(m => ({ label: m.leftAt ? `${m.name} (left)` : m.name, value: m.id })));
+
+  private currentFilters = computed<ExpenseFilters>(() => ({
+    search: this.expenseSearchQuery().trim() || undefined,
+    category: this.fCategory(),
+    payerId: this.fPayerId(),
+    participantId: this.fParticipantId(),
+    from: this.fFrom() ? toDateOnlyString(this.fFrom()!) : null,
+    to: this.fTo() ? toDateOnlyString(this.fTo()!) : null,
+    minAmount: this.fMin(),
+    maxAmount: this.fMax(),
+    sort: this.fSort()
+  }));
+
+  /** How many filters (besides the search text) are narrowing or re-ordering the list. */
+  activeFilterCount = computed(() =>
+    [this.fCategory(), this.fPayerId(), this.fParticipantId(), this.fFrom(), this.fTo(), this.fMin(), this.fMax()]
+      .filter(v => v !== null).length + (this.fSort() !== 'date_desc' ? 1 : 0));
+
+  /** True when what's listed isn't simply "everything, newest first". */
+  listIsCustomised = computed(() => !!this.expenseSearchQuery().trim() || this.activeFilterCount() > 0);
+
+  private filterKey(): string {
+    return JSON.stringify(this.currentFilters());
+  }
+
+  /** Does an expense (e.g. one that just arrived live) belong in the list under the current filters? */
+  private matchesFilters(e: SplitExpense): boolean {
     const query = this.expenseSearchQuery().toLowerCase().trim();
-    if (!query) return true;
-    return e.description.toLowerCase().includes(query)
-      || e.payers.some(p => p.memberName.toLowerCase().includes(query));
+    if (query && !(e.description.toLowerCase().includes(query)
+      || (e.notes ?? '').toLowerCase().includes(query)
+      || e.payers.some(p => p.memberName.toLowerCase().includes(query)))) return false;
+
+    const category = this.fCategory();
+    if (category && (e.category || 'General').toLowerCase() !== category.toLowerCase()) return false;
+
+    const payer = this.fPayerId();
+    if (payer && !e.payers.some(p => p.memberId === payer)) return false;
+    const participant = this.fParticipantId();
+    if (participant && !e.participants.some(p => p.memberId === participant)) return false;
+
+    const day = expenseDayKey(e);
+    const from = this.fFrom() ? toDateOnlyString(this.fFrom()!) : null;
+    const to = this.fTo() ? toDateOnlyString(this.fTo()!) : null;
+    if (from && day < from) return false;
+    if (to && day > to) return false;
+
+    const min = this.fMin();
+    const max = this.fMax();
+    if (min !== null && e.amount < min) return false;
+    if (max !== null && e.amount > max) return false;
+    return true;
+  }
+
+  onFilterChange(): void {
+    this.scheduleReload();
+  }
+
+  clearFilters(): void {
+    this.fCategory.set(null);
+    this.fPayerId.set(null);
+    this.fParticipantId.set(null);
+    this.fFrom.set(null);
+    this.fTo.set(null);
+    this.fMin.set(null);
+    this.fMax.set(null);
+    this.fSort.set('date_desc');
+    this.scheduleReload();
   }
 
   visibleDebts = computed(() => {
@@ -560,6 +654,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
   ];
 
   expCategory = signal<string>('General');
+  expNotes = signal('');
 
   getCategoryIcon(category: string | null | undefined): string {
     switch ((category || '').toLowerCase()) {
@@ -801,7 +896,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
 
           case 'GroupDeleted':
             this.notificationService.showError('This group was deleted by its creator.');
-            void this.router.navigate(['/split']);
+            void this.router.navigate(['/app/split']);
             break;
 
           case 'GroupStatusChanged':
@@ -816,6 +911,12 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
             if (payload.group) this.group.set(payload.group);
             this.loadAll(true);
             break;
+        }
+
+        // Keep the history tab live while it's open.
+        if (this.activeTab() === 'activity') {
+          void this.loadActivity(true);
+          void this.loadDeleted();
         }
       }
     });
@@ -835,7 +936,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
       // A silent refresh (triggered by realtime events) must not throw away pages the
       // user has already scrolled through, so the list is only (re)seeded on a full load.
       if (!silent || this.expenses().length === 0) {
-        if (!this.expenseSearchQuery().trim()) {
+        if (!this.listIsCustomised()) {
           this.expenses.set([...data.expenses].sort(compareExpenses));
           this.nextCursor.set(data.nextCursor);
           this.matchingTotal.set(data.totalExpenseCount);
@@ -847,7 +948,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
       // The group is gone, or this person was removed / left — nothing left to show.
       if (/not found|access/i.test(err?.message ?? '')) {
         this.notificationService.showError('This group is no longer available to you.');
-        void this.router.navigate(['/split']);
+        void this.router.navigate(['/app/split']);
       } else if (!silent) {
         this.notificationService.showError('Could not load this group.');
       }
@@ -862,11 +963,11 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
     const cursor = this.nextCursor();
     if (!cursor || this.isLoadingMore()) return;
 
-    const search = this.expenseSearchQuery();
+    const key = this.filterKey();
     this.isLoadingMore.set(true);
     try {
-      const page = await this.splitService.getExpensesPage(this.groupId, { cursor, search });
-      if (search !== this.expenseSearchQuery()) return; // the search changed while this was loading
+      const page = await this.splitService.getExpensesPage(this.groupId, { ...this.currentFilters(), cursor });
+      if (key !== this.filterKey()) return; // the filters changed while this was loading
       this.expenses.update(list => this.mergeExpenses(list, page.items));
       this.nextCursor.set(page.nextCursor);
       this.matchingTotal.set(page.totalCount);
@@ -885,18 +986,22 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
 
   onSearchChange(value: string): void {
     this.expenseSearchQuery.set(value);
+    this.scheduleReload();
+  }
+
+  private scheduleReload(): void {
     if (this.searchTimer) clearTimeout(this.searchTimer);
     this.searchTimer = setTimeout(() => void this.reloadExpenses(), 300);
   }
 
-  /** Re-fetches the first page for the current search (server-side, so it covers every expense, not just loaded ones). */
+  /** Re-fetches the first page for the current search / filters / sort. */
   async reloadExpenses(): Promise<void> {
-    const search = this.expenseSearchQuery();
+    const key = this.filterKey();
     this.isLoadingMore.set(true);
     try {
-      const page = await this.splitService.getExpensesPage(this.groupId, { search });
-      if (search !== this.expenseSearchQuery()) return;
-      this.expenses.set([...page.items].sort(compareExpenses));
+      const page = await this.splitService.getExpensesPage(this.groupId, this.currentFilters());
+      if (key !== this.filterKey()) return;
+      this.expenses.set(this.fSort() === 'date_desc' ? [...page.items].sort(compareExpenses) : page.items);
       this.nextCursor.set(page.nextCursor);
       this.matchingTotal.set(page.totalCount);
       this.expensesLoadFailed.set(false);
@@ -908,9 +1013,18 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
   }
 
   private mergeExpenses(current: SplitExpense[], incoming: SplitExpense[]): SplitExpense[] {
-    const byId = new Map<number, SplitExpense>();
-    for (const e of [...current, ...incoming]) byId.set(e.id, e);
-    return [...byId.values()].sort(compareExpenses);
+    if (this.fSort() === 'date_desc') {
+      const byId = new Map<number, SplitExpense>();
+      for (const e of [...current, ...incoming]) byId.set(e.id, e);
+      return [...byId.values()].sort(compareExpenses);
+    }
+    // Other orders come from the server already sorted — just append what's new.
+    const merged = [...current];
+    for (const e of incoming) {
+      const i = merged.findIndex(x => x.id === e.id);
+      if (i >= 0) merged[i] = e; else merged.push(e);
+    }
+    return merged;
   }
 
   /**
@@ -920,8 +1034,13 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
    * left to arrive with the scroll instead.
    */
   private upsertExpense(expense: SplitExpense): void {
-    if (!this.matchesSearch(expense)) {
+    if (!this.matchesFilters(expense)) {
       this.removeExpense(expense.id);
+      return;
+    }
+    if (this.fSort() !== 'date_desc') {
+      // Position in an amount / oldest-first list is the server's call — fetch it again.
+      this.scheduleReload();
       return;
     }
     this.expenses.update(list => {
@@ -1138,6 +1257,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
       this.expDescription.set(draft.description ?? '');
       this.expAmount.set(draft.amount ?? null);
       this.expCategory.set(draft.category ?? 'General');
+      this.expNotes.set('');
       this.expSplitType.set(draft.splitType ?? SplitType.Equal);
       this.expParticipantIds.set(new Set(draft.participantIds ?? []));
       this.expPayerId.set(this.defaultPayerId());
@@ -1151,6 +1271,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
       this.notificationService.showSuccess('Restored your unfinished expense from earlier.');
     } else {
       this.expDescription.set('');
+      this.expNotes.set('');
       this.expAmount.set(null);
       this.expCategory.set('General');
       this.expDate.set(new Date());
@@ -1172,6 +1293,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
     this.expDescription.set(expense.description);
     this.expAmount.set(expense.amount);
     this.expCategory.set(expense.category ?? 'General');
+    this.expNotes.set(expense.notes ?? '');
     this.expDate.set(fromDateOnlyString(expense.date) ?? new Date(expense.date));
     this.expSplitType.set(expense.splitType);
     this.expParticipantIds.set(new Set(expense.participants.map(p => p.memberId)));
@@ -1206,12 +1328,13 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
 
   async deleteExpense(expense: SplitExpense): Promise<void> {
     this.confirmationService.confirm({
-      message: `Delete "${expense.description}"? This can't be undone.`,
+      message: `Delete "${expense.description}"? You can bring it back from the Activity tab.`,
       accept: async () => {
         try {
           const result = await this.splitService.deleteExpense(expense.id);
           this.removeExpense(expense.id);
           void this.refreshBalances();
+          void this.loadDeleted();
           if (result.wasAlreadyImported) {
             this.notificationService.showError(
               'Deleted here, but this expense was already imported to a real account — that transaction still exists and needs removing separately.'
@@ -1351,6 +1474,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
         amount,
         date: toDateOnlyString(this.expDate())!,
         category: this.expCategory(),
+        notes: this.expNotes().trim() || null,
         splitType: type,
         payers,
         participants
@@ -1376,6 +1500,121 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
     } catch (err: any) {
       this.notificationService.showError(err?.message || 'Failed to save expense.');
     }
+  }
+
+  // ── Receipts ─────────────────────────────────────────────────────────────────
+  uploadingReceiptId = signal<number | null>(null);
+
+  /** Full URL of an uploaded receipt (the API serves them from its own origin). */
+  receiptSrc(path: string | null | undefined): string | null {
+    if (!path) return null;
+    return environment.apiBaseUrl.replace(/\/api$/, '') + path;
+  }
+
+  async onReceiptSelected(expense: SplitExpense, event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = ''; // so picking the same file again still fires
+    if (!file) return;
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
+      this.notificationService.showError('Only JPG, PNG or WebP images can be attached.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      this.notificationService.showError('The receipt must be 5 MB or smaller.');
+      return;
+    }
+    this.uploadingReceiptId.set(expense.id);
+    try {
+      const path = await this.splitService.uploadReceipt(expense.id, file);
+      this.setReceiptLocally(expense.id, path);
+      this.notificationService.showSuccess('Receipt attached.');
+    } catch (err: any) {
+      this.notificationService.showError(err?.message || 'Failed to upload the receipt.');
+    } finally {
+      this.uploadingReceiptId.set(null);
+    }
+  }
+
+  async removeReceipt(expense: SplitExpense): Promise<void> {
+    try {
+      await this.splitService.removeReceipt(expense.id);
+      this.setReceiptLocally(expense.id, null);
+    } catch (err: any) {
+      this.notificationService.showError(err?.message || 'Failed to remove the receipt.');
+    }
+  }
+
+  private setReceiptLocally(expenseId: number, path: string | null): void {
+    this.expenses.update(list => list.map(e => e.id === expenseId ? { ...e, receiptUrl: path } : e));
+  }
+
+  // ── Activity (history) and recently deleted ──────────────────────────────────
+  activityItems = signal<ActivityItem[]>([]);
+  activityCursor = signal<string | null>(null);
+  activityLoading = signal(false);
+  activityLoaded = signal(false);
+  deletedExpenses = signal<SplitExpense[]>([]);
+  showDeleted = signal(false);
+  restoringId = signal<number | null>(null);
+
+  async openActivityTab(): Promise<void> {
+    this.activeTab.set('activity');
+    if (!this.activityLoaded()) await this.loadActivity(true);
+    void this.loadDeleted();
+  }
+
+  async loadActivity(reset = false): Promise<void> {
+    if (this.activityLoading() && !reset) return;
+    if (!reset && !this.activityCursor() && this.activityLoaded()) return;
+    this.activityLoading.set(true);
+    try {
+      const page = await this.splitService.getActivity(this.groupId, reset ? null : this.activityCursor());
+      this.activityItems.update(list => reset ? page.items : [...list, ...page.items]);
+      this.activityCursor.set(page.nextCursor);
+      this.activityLoaded.set(true);
+    } catch {
+      this.notificationService.showError('Could not load the history.');
+    } finally {
+      this.activityLoading.set(false);
+    }
+  }
+
+  async loadDeleted(): Promise<void> {
+    try {
+      this.deletedExpenses.set(await this.splitService.getDeletedExpenses(this.groupId));
+    } catch {
+      // the list is a convenience — stay quiet if it can't load
+    }
+  }
+
+  async restoreExpense(expense: SplitExpense): Promise<void> {
+    this.restoringId.set(expense.id);
+    try {
+      const restored = await this.splitService.restoreExpense(expense.id);
+      this.deletedExpenses.update(list => list.filter(e => e.id !== expense.id));
+      this.upsertExpense(restored);
+      void this.refreshBalances();
+      this.notificationService.showSuccess(`"${expense.description}" is back.`);
+      void this.loadActivity(true);
+    } catch (err: any) {
+      this.notificationService.showError(err?.message || 'Could not restore this expense.');
+    } finally {
+      this.restoringId.set(null);
+    }
+  }
+
+  activityIcon(type: string): string {
+    if (type.startsWith('Expense')) {
+      return type === 'ExpenseDeleted' ? 'pi pi-trash text-red-400'
+        : type === 'ExpenseEdited' ? 'pi pi-pencil text-amber-400'
+        : type === 'ExpenseRestored' ? 'pi pi-replay text-emerald-400'
+        : 'pi pi-plus-circle text-emerald-400';
+    }
+    if (type.startsWith('Payment')) return 'pi pi-wallet text-blue-400';
+    if (type.startsWith('Member')) return 'pi pi-user text-indigo-400';
+    if (type === 'ReceiptChanged') return 'pi pi-camera text-purple-400';
+    return 'pi pi-info-circle text-[var(--text-muted)]';
   }
 
   // ── Settle ───────────────────────────────────────────────────────────────────

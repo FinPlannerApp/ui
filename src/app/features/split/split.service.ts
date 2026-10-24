@@ -5,7 +5,7 @@ import {
   CreateExpenseRequest, CreateGroupRequest, CreateInviteRequest, CreateSettlementRequest,
   ExpensePage, GroupBalances, GroupExport, GroupFullDetails, ImportToLedgerRequest, ImportToLedgerResult,
   InviteCreated, InvitePreview, PaymentRequest, PublicGroupView, Settlement, SplitExpense, SplitGroup, SplitMember,
-  UpdateSettlementRequest
+  UpdateSettlementRequest, ExpenseFilters, ActivityPage, GlobalExpenseHit
 } from '../../core/models/split.model';
 
 @Injectable({ providedIn: 'root' })
@@ -75,15 +75,26 @@ export class SplitService {
     return result.value;
   }
 
-  /** Newest day first. Pass the previous page's nextCursor to continue. */
+  /**
+   * Newest day first by default. Pass the previous page's nextCursor to continue.
+   * Filters and sort are applied on the server, so they cover every expense — not just loaded ones.
+   */
   async getExpensesPage(
     groupId: number,
-    opts: { cursor?: string | null; limit?: number; search?: string } = {}
+    opts: ExpenseFilters & { cursor?: string | null; limit?: number } = {}
   ): Promise<ExpensePage> {
     const params = new URLSearchParams();
     if (opts.cursor) params.set('cursor', opts.cursor);
     if (opts.limit) params.set('limit', String(opts.limit));
     if (opts.search?.trim()) params.set('search', opts.search.trim());
+    if (opts.category) params.set('category', opts.category);
+    if (opts.payerId) params.set('payerId', String(opts.payerId));
+    if (opts.participantId) params.set('participantId', String(opts.participantId));
+    if (opts.from) params.set('from', opts.from);
+    if (opts.to) params.set('to', opts.to);
+    if (opts.minAmount != null) params.set('minAmount', String(opts.minAmount));
+    if (opts.maxAmount != null) params.set('maxAmount', String(opts.maxAmount));
+    if (opts.sort && opts.sort !== 'date_desc') params.set('sort', opts.sort);
     const qs = params.toString();
     const result = await firstValueFrom(
       this.api.get<ExpensePage>(`Split/groups/${groupId}/expenses${qs ? '?' + qs : ''}`));
@@ -261,6 +272,52 @@ export class SplitService {
   async deleteSettlement(settlementId: number): Promise<void> {
     const result = await firstValueFrom(this.api.delete<boolean>(`Split/settlements/${settlementId}`));
     if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to delete payment.');
+  }
+
+  // ── History, undo, receipts, cross-group search ─────────────────────────────
+
+  /** The group's audit trail, newest first. */
+  async getActivity(groupId: number, cursor?: string | null): Promise<ActivityPage> {
+    const qs = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
+    const result = await firstValueFrom(this.api.get<ActivityPage>(`Split/groups/${groupId}/activity${qs}`));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to load history.');
+    return { items: result.value?.items ?? [], nextCursor: result.value?.nextCursor ?? null };
+  }
+
+  /** Recently deleted expenses (for undo). */
+  async getDeletedExpenses(groupId: number): Promise<SplitExpense[]> {
+    const result = await firstValueFrom(this.api.get<SplitExpense[]>(`Split/groups/${groupId}/expenses/deleted`));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to load deleted expenses.');
+    return result.value ?? [];
+  }
+
+  async restoreExpense(expenseId: number): Promise<SplitExpense> {
+    const result = await firstValueFrom(this.api.post<SplitExpense>(`Split/expenses/${expenseId}/restore`, {}));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to restore expense.');
+    return result.value;
+  }
+
+  /** Returns the receipt's relative URL. */
+  async uploadReceipt(expenseId: number, file: File): Promise<string | null> {
+    const form = new FormData();
+    form.append('file', file);
+    const result = await firstValueFrom(
+      this.api.postFormData<{ currentPath: string | null }>(`Split/expenses/${expenseId}/receipt`, form));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to upload the receipt.');
+    return result.value?.currentPath ?? null;
+  }
+
+  async removeReceipt(expenseId: number): Promise<void> {
+    const result = await firstValueFrom(this.api.delete<unknown>(`Split/expenses/${expenseId}/receipt`));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to remove the receipt.');
+  }
+
+  /** Expenses matching the text across every group the signed-in user is in. */
+  async searchAcrossGroups(query: string): Promise<GlobalExpenseHit[]> {
+    const result = await firstValueFrom(
+      this.api.get<GlobalExpenseHit[]>(`Split/search?q=${encodeURIComponent(query)}`));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Search failed.');
+    return result.value ?? [];
   }
 }
 

@@ -160,7 +160,7 @@
   <div
     class="flex flex-col sm:flex-row items-center justify-between gap-3 p-2 rounded-2xl bg-[var(--glass-bg)] border border-[var(--glass-border)] shadow-sm">
     <div
-      class="grid grid-cols-2 sm:flex items-center gap-1 p-1 rounded-xl bg-black/10 dark:bg-white/5 w-full sm:w-auto shrink-0 justify-center sm:justify-start">
+      class="grid grid-cols-3 sm:flex items-center gap-1 p-1 rounded-xl bg-black/10 dark:bg-white/5 w-full sm:w-auto shrink-0 justify-center sm:justify-start">
       <button (click)="activeTab.set('expenses')"
         class="w-full sm:w-auto px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm border-none cursor-pointer transition-all font-bold flex items-center justify-center gap-1.5"
         [class.bg-[var(--primary-color,#3b82f6)]]="activeTab() === 'expenses'"
@@ -179,31 +179,107 @@
         <i class="pi pi-calculator text-xs shrink-0"></i>
         <span class="truncate">Balances & Analytics</span>
       </button>
+      <button (click)="openActivityTab()"
+        class="w-full sm:w-auto px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm border-none cursor-pointer transition-all font-bold flex items-center justify-center gap-1.5"
+        [class.bg-[var(--primary-color,#3b82f6)]]="activeTab() === 'activity'"
+        [class.text-white]="activeTab() === 'activity'"
+        [class.shadow-md]="activeTab() === 'activity'"
+        [class.bg-transparent]="activeTab() !== 'activity'"
+        [class.text-[var(--text-muted)]]="activeTab() !== 'activity'">
+        <i class="pi pi-history text-xs shrink-0"></i>
+        <span class="truncate">Activity</span>
+      </button>
     </div>
 
     <!-- Expense Search Field (Proper padding & no overlapping icon) -->
     @if (activeTab() === 'expenses') {
-    <div class="relative w-full sm:w-80">
-      <i
-        class="pi pi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)] pointer-events-none z-10"></i>
-      <input type="text" pInputText placeholder="Search expenses or payers..." [ngModel]="expenseSearchQuery()"
-        (ngModelChange)="onSearchChange($event)" style="padding-left: 2.5rem !important;"
-        class="w-full pr-8 py-2 text-xs sm:text-sm rounded-xl border border-[var(--glass-border)] bg-[var(--glass-bg)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--primary-color,#3b82f6)] transition-all shadow-inner" />
-      @if (expenseSearchQuery()) {
-      <button (click)="onSearchChange('')"
-        class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-transparent border-none cursor-pointer p-0">
-        <i class="pi pi-times"></i>
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+      <div class="relative flex-1 sm:w-72">
+        <i
+          class="pi pi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)] pointer-events-none z-10"></i>
+        <input type="text" pInputText placeholder="Search expenses or payers..." [ngModel]="expenseSearchQuery()"
+          (ngModelChange)="onSearchChange($event)" style="padding-left: 2.5rem !important;"
+          class="w-full pr-8 py-2 text-xs sm:text-sm rounded-xl border border-[var(--glass-border)] bg-[var(--glass-bg)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--primary-color,#3b82f6)] transition-all shadow-inner" />
+        @if (expenseSearchQuery()) {
+        <button (click)="onSearchChange('')"
+          class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-transparent border-none cursor-pointer p-0">
+          <i class="pi pi-times"></i>
+        </button>
+        }
+      </div>
+      <button (click)="filtersOpen.set(!filtersOpen())" aria-label="Filters and sort"
+        class="relative shrink-0 px-3 py-2 rounded-xl text-xs sm:text-sm border border-[var(--glass-border)] bg-[var(--glass-bg)] text-[var(--text-primary)] cursor-pointer font-bold flex items-center gap-1.5"
+        [class.border-[var(--primary-color,#3b82f6)]]="filtersOpen() || activeFilterCount() > 0">
+        <i class="pi pi-sliders-h text-xs"></i>
+        <span class="hidden sm:inline">Filters</span>
+        @if (activeFilterCount() > 0) {
+          <span class="min-w-5 h-5 px-1 rounded-full bg-[var(--primary-color,#3b82f6)] text-white text-[0.65rem] flex items-center justify-center">{{ activeFilterCount() }}</span>
+        }
       </button>
-      }
-    </div>
+      </div>
     }
   </div>
+
+  <!-- Filters & sort -->
+  @if (activeTab() === 'expenses' && filtersOpen()) {
+    <div class="p-4 rounded-2xl bg-[var(--glass-bg)] border border-[var(--glass-border)] grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="flex flex-col gap-1">
+        <label class="text-[0.7rem] font-bold text-[var(--text-muted)] uppercase">Category</label>
+        <p-select [options]="categoryFilterOptions()" [ngModel]="fCategory()" (ngModelChange)="fCategory.set($event); onFilterChange()"
+          optionLabel="label" optionValue="value" placeholder="Any" [showClear]="true" appendTo="body" styleClass="w-full" class="w-full"></p-select>
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-[0.7rem] font-bold text-[var(--text-muted)] uppercase">Paid by</label>
+        <p-select [options]="memberFilterOptions()" [ngModel]="fPayerId()" (ngModelChange)="fPayerId.set($event); onFilterChange()"
+          optionLabel="label" optionValue="value" placeholder="Anyone" [showClear]="true" appendTo="body" styleClass="w-full" class="w-full"></p-select>
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-[0.7rem] font-bold text-[var(--text-muted)] uppercase">Shared with</label>
+        <p-select [options]="memberFilterOptions()" [ngModel]="fParticipantId()" (ngModelChange)="fParticipantId.set($event); onFilterChange()"
+          optionLabel="label" optionValue="value" placeholder="Anyone" [showClear]="true" appendTo="body" styleClass="w-full" class="w-full"></p-select>
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-[0.7rem] font-bold text-[var(--text-muted)] uppercase">Sort by</label>
+        <p-select [options]="sortOptions" [ngModel]="fSort()" (ngModelChange)="fSort.set($event); onFilterChange()"
+          optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full" class="w-full"></p-select>
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-[0.7rem] font-bold text-[var(--text-muted)] uppercase">From</label>
+        <p-datepicker [ngModel]="fFrom()" (ngModelChange)="fFrom.set($event); onFilterChange()" [showClear]="true"
+          [showIcon]="true" appendTo="body" class="w-full"></p-datepicker>
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-[0.7rem] font-bold text-[var(--text-muted)] uppercase">To</label>
+        <p-datepicker [ngModel]="fTo()" (ngModelChange)="fTo.set($event); onFilterChange()" [showClear]="true"
+          [showIcon]="true" appendTo="body" class="w-full"></p-datepicker>
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-[0.7rem] font-bold text-[var(--text-muted)] uppercase">Min amount</label>
+        <p-inputNumber [ngModel]="fMin()" (ngModelChange)="fMin.set($event); onFilterChange()"
+          mode="currency" currency="INR" locale="en-IN" class="w-full"></p-inputNumber>
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-[0.7rem] font-bold text-[var(--text-muted)] uppercase">Max amount</label>
+        <p-inputNumber [ngModel]="fMax()" (ngModelChange)="fMax.set($event); onFilterChange()"
+          mode="currency" currency="INR" locale="en-IN" class="w-full"></p-inputNumber>
+      </div>
+      @if (activeFilterCount() > 0) {
+        <div class="col-span-2 lg:col-span-4 flex justify-between items-center">
+          <span class="text-xs text-[var(--text-muted)]">
+            @if (matchingTotal() !== null) { {{ matchingTotal() }} matching }
+          </span>
+          <p-button label="Clear filters" icon="pi pi-filter-slash" [text]="true" size="small" (onClick)="clearFilters()"></p-button>
+        </div>
+      }
+    </div>
+  }
 
   <!-- Expenses Tab Content (grouped by day, loads more as you scroll) -->
   @if (activeTab() === 'expenses') {
   <div class="flex flex-col gap-5">
     @for (day of expenseGroups(); track day.dayKey) {
     <section class="flex flex-col gap-2.5">
+      @if (!day.flat) {
       <div class="flex items-center justify-between px-1">
         <h4
           class="m-0 text-xs font-extrabold uppercase tracking-wider text-[var(--text-muted)] flex items-center gap-1.5">
@@ -215,6 +291,7 @@
         </h4>
         <span class="text-xs font-bold text-[var(--text-muted)]">{{ day.total | currency:'INR' }}</span>
       </div>
+      }
 
       @for (expense of day.items; track expense.id) {
       <div [id]="'expense-' + expense.id"
@@ -252,6 +329,11 @@
                 <span>•</span>
                 <span class="text-[0.7rem]">{{ splitTypeLabel(expense.splitType) }} · {{ expense.participants.length }}
                   {{ expense.participants.length === 1 ? 'person' : 'people' }}</span>
+                @if (day.flat) {
+                  <span>•</span>
+                  <span class="text-[0.7rem]">{{ expense.date | date:'d MMM y' }}</span>
+                }
+                @if (expense.receiptUrl) { <i class="pi pi-paperclip text-[0.7rem]" aria-label="Has a receipt"></i> }
               </div>
             </div>
           </div>
@@ -313,6 +395,35 @@
             </span>
           </div>
           }
+
+          @if (expense.notes) {
+            <p class="m-0 mt-2 text-xs text-[var(--text-muted)] whitespace-pre-line border-l-2 border-[var(--glass-border)] pl-2.5">{{ expense.notes }}</p>
+          }
+
+          <!-- Receipt -->
+          <div class="mt-2 flex items-center gap-3 flex-wrap">
+            @if (receiptSrc(expense.receiptUrl); as src) {
+              <a [href]="src" target="_blank" rel="noopener">
+                <img [src]="src" alt="Receipt for {{ expense.description }}" loading="lazy"
+                  class="h-20 w-auto rounded-lg border border-[var(--glass-border)] object-cover" />
+              </a>
+              @if (!isGroupClosed()) {
+                <p-button label="Remove" icon="pi pi-trash" [text]="true" severity="danger" size="small"
+                  (onClick)="removeReceipt(expense)"></p-button>
+              }
+            }
+            @if (!isGroupClosed()) {
+              <label class="text-xs font-bold text-[var(--primary-color,#3b82f6)] cursor-pointer flex items-center gap-1.5">
+                @if (uploadingReceiptId() === expense.id) {
+                  <i class="pi pi-spin pi-spinner"></i> Uploading…
+                } @else {
+                  <i class="pi pi-camera"></i> {{ expense.receiptUrl ? 'Replace receipt' : 'Attach receipt' }}
+                }
+                <input type="file" accept="image/jpeg,image/png,image/webp" class="hidden"
+                  (change)="onReceiptSelected(expense, $event)" />
+              </label>
+            }
+          </div>
         </div>
         }
       </div>
@@ -323,7 +434,7 @@
     <div class="flex justify-center p-8"><p-progressSpinner styleClass="w-8 h-8"></p-progressSpinner></div>
     } @else {
     <app-empty-state icon="pi pi-receipt" title="No expenses found"
-      message="No expenses match your search or none logged yet." actionLabel="Add Expense"
+      [message]="listIsCustomised() ? 'No expenses match your search or filters.' : 'No expenses logged yet.'" actionLabel="Add Expense"
       (action)="openAddExpense()"></app-empty-state>
     }
     }
@@ -345,6 +456,61 @@
     </p>
     }
   </div>
+  }
+
+  <!-- Activity Tab Content -->
+  @if (activeTab() === 'activity') {
+    <div class="flex flex-col gap-4">
+      @if (deletedExpenses().length > 0) {
+        <div class="rounded-2xl bg-[var(--glass-bg)] border border-[var(--glass-border)]">
+          <button (click)="showDeleted.set(!showDeleted())"
+            class="w-full p-3.5 flex items-center justify-between bg-transparent border-none cursor-pointer text-[var(--text-primary)] text-sm font-bold">
+            <span class="flex items-center gap-2"><i class="pi pi-trash text-xs"></i> Recently deleted ({{ deletedExpenses().length }})</span>
+            <i class="pi text-xs" [class.pi-chevron-down]="!showDeleted()" [class.pi-chevron-up]="showDeleted()"></i>
+          </button>
+          @if (showDeleted()) {
+            <div class="px-3.5 pb-3.5 flex flex-col gap-2">
+              @for (d of deletedExpenses(); track d.id) {
+                <div class="flex items-center justify-between gap-3 text-sm">
+                  <div class="min-w-0">
+                    <div class="font-bold truncate text-[var(--text-primary)]">{{ d.description }}</div>
+                    <div class="text-xs text-[var(--text-muted)]">{{ d.amount | currency:'INR' }} · deleted {{ d.deletedAt | date:'d MMM, h:mm a' }}</div>
+                  </div>
+                  @if (!isGroupClosed()) {
+                    <p-button label="Restore" icon="pi pi-replay" size="small" [outlined]="true"
+                      [loading]="restoringId() === d.id" (onClick)="restoreExpense(d)"></p-button>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <div class="rounded-2xl bg-[var(--glass-bg)] border border-[var(--glass-border)] divide-y divide-[var(--glass-border)]">
+        @for (a of activityItems(); track a.id) {
+          <div class="p-3.5 flex items-start gap-3">
+            <i [class]="activityIcon(a.type)" class="mt-0.5 text-sm"></i>
+            <div class="min-w-0 flex-1">
+              <div class="text-sm text-[var(--text-primary)]"><span class="font-bold">{{ a.actorName }}</span> {{ a.message }}</div>
+              <div class="text-xs text-[var(--text-muted)] mt-0.5">{{ a.createdAt | date:'EEE, d MMM y · h:mm a' }}</div>
+            </div>
+          </div>
+        } @empty {
+          @if (activityLoading()) {
+            <div class="flex justify-center p-8"><p-progressSpinner styleClass="w-8 h-8"></p-progressSpinner></div>
+          } @else {
+            <p class="m-0 p-6 text-center text-sm text-[var(--text-muted)]">No activity yet.</p>
+          }
+        }
+      </div>
+
+      @if (activityCursor()) {
+        <div appInfiniteScroll [disabled]="activityLoading()" (reachedEnd)="loadActivity()" class="flex justify-center py-4">
+          <p-progressSpinner styleClass="w-7 h-7" strokeWidth="5"></p-progressSpinner>
+        </div>
+      }
+    </div>
   }
 
   <!-- Balances Tab Content -->
@@ -603,6 +769,12 @@
         <p-datepicker [ngModel]="expDate()" (ngModelChange)="expDate.set($event)" [showIcon]="true" appendTo="body"
           class="w-full"></p-datepicker>
       </div>
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <label class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">Notes (optional)</label>
+      <textarea pInputText rows="2" maxlength="1000" placeholder="Anything worth remembering…"
+        class="w-full resize-none" [ngModel]="expNotes()" (ngModelChange)="expNotes.set($event)"></textarea>
     </div>
 
     <div class="flex flex-col gap-1.5">

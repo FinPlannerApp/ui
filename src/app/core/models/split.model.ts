@@ -55,6 +55,7 @@ export interface CreateExpenseRequest {
   date: string;
   category: string | null;
   splitType: SplitType;
+  notes?: string | null;
   payers: ExpensePayerLine[];
   participants: ExpenseParticipantLine[];
 }
@@ -79,6 +80,11 @@ export interface SplitExpense {
   date: string;
   category: string | null;
   splitType: SplitType;
+  notes?: string | null;
+  /** Relative URL of the receipt photo (prefix with the API origin). */
+  receiptUrl?: string | null;
+  /** Only present in the "recently deleted" list. */
+  deletedAt?: string | null;
   payers: PayerLine[];
   participants: ParticipantLine[];
 }
@@ -213,6 +219,49 @@ export interface ImportToLedgerRequest {
 export interface ImportToLedgerResult {
   transactionsCreated: number;
   alreadyImportedCount: number;
+}
+
+export type ExpenseSort = 'date_desc' | 'date_asc' | 'amount_desc' | 'amount_asc';
+
+/** Everything the expense list can be narrowed or re-ordered by (all optional). */
+export interface ExpenseFilters {
+  search?: string;
+  category?: string | null;
+  payerId?: number | null;
+  participantId?: number | null;
+  /** YYYY-MM-DD */
+  from?: string | null;
+  /** YYYY-MM-DD */
+  to?: string | null;
+  minAmount?: number | null;
+  maxAmount?: number | null;
+  sort?: ExpenseSort;
+}
+
+export interface ActivityItem {
+  id: number;
+  actorName: string;
+  type: string;
+  /** Shown as "{actorName} {message}". */
+  message: string;
+  expenseId: number | null;
+  createdAt: string;
+}
+
+export interface ActivityPage {
+  items: ActivityItem[];
+  nextCursor: string | null;
+}
+
+export interface GlobalExpenseHit {
+  expenseId: number;
+  groupId: number;
+  groupName: string;
+  description: string;
+  amount: number;
+  date: string;
+  category: string | null;
+  paidBy: string;
 }
 
 
