@@ -2,12 +2,12 @@ import { Component, OnInit, OnDestroy, computed, inject, signal } from '@angular
 import { CommonModule } from '@angular/common';
 import * as QRCode from 'qrcode';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ConfirmationService } from 'primeng/api';
 import { sharedPrimeModules } from '../../../shared/prime-imports';
 import { SplitService } from '../split.service';
 import {
-  ExpenseParticipantLine, GroupBalances, Settlement, SettlementMethod, SimplifiedDebt,
+  ExpenseParticipantLine, GroupBalances, Settlement, SettlementMethod, SettlementStatus, SimplifiedDebt,
   SplitExpense, SplitGroup, SplitMember, SplitType
 } from '../../../core/models/split.model';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -34,6 +34,7 @@ import { exportSplitGroupToExcel } from '../split-excel-export';
 })
 export class SplitGroupDetail implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private splitService = inject(SplitService);
   private notificationService = inject(NotificationService);
   private confirmationService = inject(ConfirmationService);
@@ -161,20 +162,25 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
     if (this.isGroupAdmin()) return list;
     const myMemberId = this.currentUserMember()?.id;
     return list.filter(s => {
-      // Pending settlements (status 0) are only visible to the payer (A) and Admin
+      // Pending settlements (status 0) are only visible to the two people involved and the admin
       if (s.status === 0) {
-        return myMemberId !== undefined && s.fromMemberId === myMemberId;
+        return myMemberId !== undefined && (s.fromMemberId === myMemberId || s.toMemberId === myMemberId);
       }
       // Awaiting confirmation (status 1) and Completed (status 2) are visible to all members
       return true;
     });
   });
 
+  /** Either side of a debt (or the admin) can record a payment against it. */
   canMemberSettleDebt(debt: SimplifiedDebt): boolean {
     if (!this.canSettle()) return false;
     if (this.isGroupAdmin()) return true;
     const myMemberId = this.currentUserMember()?.id;
-    return myMemberId === debt.fromMemberId;
+    return myMemberId !== undefined && (myMemberId === debt.fromMemberId || myMemberId === debt.toMemberId);
+  }
+
+  iAmReceiverOf(debt: SimplifiedDebt): boolean {
+    return this.currentUserMember()?.id === debt.toMemberId;
   }
 
   canMarkPaymentSent(s: any): boolean {
@@ -195,13 +201,41 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
     return this.canConfirmPaymentReceived(s);
   }
 
-  // Partial Settlement
+  // Partial Settlement / recording a payment
   settlingDebt = signal<SimplifiedDebt | null>(null);
   settleAmount = signal<number | null>(null);
+  settleMethod = signal<SettlementMethod>(SettlementMethod.Upi);
+
+  readonly paymentMethodOptions = [
+    { label: 'UPI', value: SettlementMethod.Upi },
+    { label: 'Cash', value: SettlementMethod.Cash },
+    { label: 'Bank transfer', value: SettlementMethod.BankTransfer },
+    { label: 'Other', value: SettlementMethod.Other }
+  ];
+
+  /**
+   * True when the payer still has to pay right now via UPI (shows the QR). In every other
+   * case — cash, bank, other, or the receiver recording money they got — the money has
+   * already moved and we just record it.
+   */
+  settleNeedsUpiPayment = computed(() => {
+    const debt = this.settlingDebt();
+    if (!debt || this.settleMethod() !== SettlementMethod.Upi) return false;
+    const me = this.currentUserMember()?.id;
+    return me === debt.fromMemberId || (this.isGroupAdmin() && me !== debt.toMemberId);
+  });
+
+  settleActionLabel = computed(() => {
+    const debt = this.settlingDebt();
+    if (!debt) return 'Record payment';
+    if (this.settleNeedsUpiPayment()) return 'Continue to Payment';
+    return this.iAmReceiverOf(debt) ? 'Record as received' : 'Record payment';
+  });
 
   openSettleDialog(debt: SimplifiedDebt): void {
     this.settlingDebt.set(debt);
     this.settleAmount.set(debt.amount);
+    this.settleMethod.set(this.iAmReceiverOf(debt) ? SettlementMethod.Cash : SettlementMethod.Upi);
   }
 
   closeSettleDialog(): void {
@@ -216,17 +250,101 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
       this.notificationService.showError('Enter an amount greater than zero.');
       return;
     }
-    if (amount > debt.amount) {
+    if (amount > debt.amount + 0.005) {
       this.notificationService.showError(`Can't pay more than the ₹${debt.amount.toFixed(2)} owed.`);
       return;
     }
 
     try {
-      await this.settleDebt(debt, amount);
+      if (this.settleNeedsUpiPayment()) {
+        await this.settleDebt(debt, amount);
+      } else {
+        await this.recordPayment(debt, amount, this.settleMethod());
+      }
       this.closeSettleDialog();
     } catch (err: any) {
       this.notificationService.showError(err?.message || 'Failed to create settlement.');
     }
+  }
+
+  /** Records money that has already changed hands (cash, bank transfer, UPI sent earlier ...). */
+  async recordPayment(debt: SimplifiedDebt, amount: number, method: SettlementMethod): Promise<void> {
+    const settlement = await this.splitService.createSettlement({
+      groupId: this.groupId,
+      fromMemberId: debt.fromMemberId,
+      toMemberId: debt.toMemberId,
+      amount,
+      method,
+      alreadyPaid: true
+    });
+    const status = (settlement as Settlement).status;
+    this.notificationService.showSuccess(
+      status === SettlementStatus.Completed
+        ? 'Payment recorded.'
+        : `Recorded — waiting for ${debt.toMemberName} to confirm they received it.`);
+    await this.loadAll(true);
+  }
+
+  // ── Edit / delete a payment ─────────────────────────────────────────────────
+  editingSettlement = signal<Settlement | null>(null);
+  editSettlementAmount = signal<number | null>(null);
+  editSettlementMethod = signal<SettlementMethod>(SettlementMethod.Upi);
+
+  /** Admin, or either person in the payment — while the group isn't archived. */
+  canManageSettlement(s: Settlement): boolean {
+    if (this.group()?.status === 3) return false;
+    if (this.isGroupAdmin()) return true;
+    const me = this.currentUserMember()?.id;
+    return me !== undefined && (me === s.fromMemberId || me === s.toMemberId);
+  }
+
+  openEditSettlement(s: Settlement): void {
+    this.editingSettlement.set(s);
+    this.editSettlementAmount.set(s.amount);
+    this.editSettlementMethod.set(s.method);
+  }
+
+  closeEditSettlement(): void {
+    this.editingSettlement.set(null);
+  }
+
+  async saveEditedSettlement(): Promise<void> {
+    const s = this.editingSettlement();
+    const amount = this.editSettlementAmount();
+    if (!s || amount === null || amount <= 0) {
+      this.notificationService.showError('Enter an amount greater than zero.');
+      return;
+    }
+    try {
+      await this.splitService.updateSettlement(s.id, { amount, method: this.editSettlementMethod() });
+      this.closeEditSettlement();
+      this.notificationService.showSuccess('Payment updated.');
+      await this.loadAll(true);
+    } catch (err: any) {
+      this.notificationService.showError(err?.message || 'Failed to update payment.');
+    }
+  }
+
+  deleteSettlement(s: Settlement): void {
+    const completed = s.status === SettlementStatus.Completed;
+    this.confirmationService.confirm({
+      header: completed ? 'Undo this payment?' : 'Cancel this payment?',
+      message: completed
+        ? `₹${s.amount.toFixed(2)} from ${s.fromMemberName} to ${s.toMemberName} will be removed and the balances will go back to what they were before it.`
+        : `The ₹${s.amount.toFixed(2)} payment from ${s.fromMemberName} to ${s.toMemberName} will be cancelled.`,
+      icon: 'pi pi-trash',
+      acceptLabel: completed ? 'Undo payment' : 'Cancel payment',
+      rejectLabel: 'Keep it',
+      accept: async () => {
+        try {
+          await this.splitService.deleteSettlement(s.id);
+          this.notificationService.showSuccess(completed ? 'Payment undone.' : 'Payment cancelled.');
+          await this.loadAll(true);
+        } catch (err: any) {
+          this.notificationService.showError(err?.message || 'Failed to remove payment.');
+        }
+      }
+    });
   }
 
   // Two-step confirmation handlers
@@ -549,8 +667,26 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
     { label: 'Shares', value: SplitType.Shares }
   ];
 
+  /** Members still in the group (people who left are kept only for history). */
+  activeMembers = computed(() => (this.group()?.members ?? []).filter(m => !m.leftAt));
+
+  /**
+   * Who can be picked in the expense dialog: everyone still in the group, plus — when
+   * editing an old expense — anyone on it who has since left (so editing never silently
+   * drops them from the split).
+   */
+  memberRoster = computed(() => {
+    const editId = this.editingExpenseId();
+    const expense = editId !== null ? this.expenses().find(e => e.id === editId) : undefined;
+    const keep = new Set<number>([
+      ...(expense?.payers ?? []).map(p => p.memberId),
+      ...(expense?.participants ?? []).map(p => p.memberId)
+    ]);
+    return (this.group()?.members ?? []).filter(m => !m.leftAt || keep.has(m.id));
+  });
+
   memberOptions = computed(() =>
-    (this.group()?.members ?? []).map(m => ({ label: m.name, value: m.id }))
+    this.memberRoster().map(m => ({ label: m.name, value: m.id }))
   );
 
   /** True once the user has typed their own exact amounts / percentages (so ticking people no longer auto-redistributes). */
@@ -558,7 +694,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
 
   /** Ticked members in group order — the same order the API receives them, so rounding matches. */
   selectedMemberIds = computed(() =>
-    (this.group()?.members ?? []).filter(m => this.expParticipantIds().has(m.id)).map(m => m.id)
+    this.memberRoster().filter(m => this.expParticipantIds().has(m.id)).map(m => m.id)
   );
 
   /** Live "who owes how much" for the expense being entered. Updates on every tick, amount or split change. */
@@ -663,6 +799,11 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
             this.loadAll(true);
             break;
 
+          case 'GroupDeleted':
+            this.notificationService.showError('This group was deleted by its creator.');
+            void this.router.navigate(['/split']);
+            break;
+
           case 'GroupStatusChanged':
             if (payload.status !== undefined) {
               this.group.update(g => g ? { ...g, status: payload.status } : g);
@@ -702,8 +843,14 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
         }
       }
       await this.loadSettlementHistory();
-    } catch {
-      if (!silent) this.notificationService.showError('Could not load this group.');
+    } catch (err: any) {
+      // The group is gone, or this person was removed / left — nothing left to show.
+      if (/not found|access/i.test(err?.message ?? '')) {
+        this.notificationService.showError('This group is no longer available to you.');
+        void this.router.navigate(['/split']);
+      } else if (!silent) {
+        this.notificationService.showError('Could not load this group.');
+      }
     } finally {
       if (!silent) this.isLoading.set(false);
     }
@@ -975,6 +1122,11 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
   // ── Add/Edit/Delete expense ──────────────────────────────────────────────────
   editingExpenseId = signal<number | null>(null);
 
+  /** The signed-in user's own member if they're in the group, otherwise the first active member. */
+  private defaultPayerId(): number | null {
+    return this.currentUserMember()?.id ?? this.activeMembers()[0]?.id ?? null;
+  }
+
   openAddExpense(): void {
     if (this.isGroupClosed()) {
       this.notificationService.showError('This group is locked — new expenses cannot be added.');
@@ -988,7 +1140,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
       this.expCategory.set(draft.category ?? 'General');
       this.expSplitType.set(draft.splitType ?? SplitType.Equal);
       this.expParticipantIds.set(new Set(draft.participantIds ?? []));
-      this.expPayerId.set(this.group()?.members[0]?.id ?? null);
+      this.expPayerId.set(this.defaultPayerId());
       this.splitPayment.set(false);
       this.expPayers.set([{ memberId: null, amount: null }]);
       this.expExactAmounts.set({});
@@ -1003,8 +1155,8 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
       this.expCategory.set('General');
       this.expDate.set(new Date());
       this.expSplitType.set(SplitType.Equal);
-      this.expPayerId.set(this.group()?.members[0]?.id ?? null);
-      this.expParticipantIds.set(new Set((this.group()?.members ?? []).map(m => m.id)));
+      this.expPayerId.set(this.defaultPayerId());
+      this.expParticipantIds.set(new Set(this.memberRoster().map(m => m.id)));
       this.expExactAmounts.set({});
       this.expPercentages.set({});
       this.expShares.set({});
@@ -1083,7 +1235,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
   }
 
   selectAllParticipants(): void {
-    this.expParticipantIds.set(new Set((this.group()?.members ?? []).map(m => m.id)));
+    this.expParticipantIds.set(new Set(this.memberRoster().map(m => m.id)));
     if (!this.splitCustomised()) this.redistributeEqually();
   }
 

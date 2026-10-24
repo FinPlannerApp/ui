@@ -52,7 +52,7 @@
     @if (settingsTab() === 'members') {
       <div class="flex flex-col gap-3">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Group Members ({{ group()?.members?.length }})</span>
+          <span class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Group Members ({{ activeMembers().length }})</span>
           @if (!isGroupClosed()) {
             <button (click)="showAddMember.set(true)"
               class="text-xs text-[var(--primary-color,#3b82f6)] bg-transparent border-none cursor-pointer font-bold flex items-center gap-1 hover:underline">
@@ -78,7 +78,7 @@
         }
 
         <div class="flex flex-col gap-2.5 max-h-64 sm:max-h-80 overflow-y-auto pr-1 pb-4">
-          @for (m of group()?.members; track m.id) {
+          @for (m of activeMembers(); track m.id) {
             <div class="p-3 sm:p-3.5 rounded-2xl flex items-center justify-between gap-3 bg-[var(--glass-bg)] border border-[var(--glass-border)] shadow-sm">
               <div class="flex items-center gap-3 min-w-0">
                 <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 text-white font-bold text-xs sm:text-sm flex items-center justify-center shrink-0 shadow-sm">
@@ -137,6 +137,12 @@
                     <button (click)="startEditUpi(m)" pTooltip="Edit UPI ID"
                       class="text-xs text-[var(--text-muted)] hover:text-emerald-500 bg-transparent border-none cursor-pointer p-1.5 rounded-lg hover:bg-[var(--glass-bg)]">
                       <i class="pi pi-wallet"></i>
+                    </button>
+                  }
+                  @if (canRemoveMember(m)) {
+                    <button (click)="removeMember(m)" [pTooltip]="isMe(m) ? 'Leave group' : 'Remove from group'"
+                      class="text-xs text-red-500 hover:text-red-400 bg-transparent border-none cursor-pointer p-1.5 rounded-lg hover:bg-red-500/10">
+                      <i class="pi" [class.pi-sign-out]="isMe(m)" [class.pi-user-minus]="!isMe(m)"></i>
                     </button>
                   }
                 }
@@ -282,6 +288,30 @@
               </div>
               <p-button label="Close Group" icon="pi pi-archive" severity="danger" size="small"
                 [disabled]="isGroupClosed()" (onClick)="closeGroupAction()"></p-button>
+            </div>
+          </div>
+        }
+
+        @if (isGroupAdmin()) {
+          <div class="p-4 rounded-2xl flex flex-col gap-3 bg-red-500/5 border border-red-500/20 shadow-sm">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <div class="flex flex-col">
+                <span class="text-xs font-bold text-[var(--text-primary)]">Delete Group</span>
+                <span class="text-[0.75rem] text-[var(--text-muted)]">Permanently removes this group, its expenses and payments for everyone.</span>
+              </div>
+              <p-button label="Delete Group" icon="pi pi-trash" severity="danger" size="small"
+                (onClick)="deleteGroupAction()"></p-button>
+            </div>
+          </div>
+        } @else if (currentUserMember()) {
+          <div class="p-4 rounded-2xl flex flex-col gap-3 bg-red-500/5 border border-red-500/20 shadow-sm">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <div class="flex flex-col">
+                <span class="text-xs font-bold text-[var(--text-primary)]">Leave Group</span>
+                <span class="text-[0.75rem] text-[var(--text-muted)]">You can leave once you're settled up. Your past expenses stay in the history.</span>
+              </div>
+              <p-button label="Leave Group" icon="pi pi-sign-out" severity="danger" size="small"
+                (onClick)="removeMember(currentUserMember()!)"></p-button>
             </div>
           </div>
         }

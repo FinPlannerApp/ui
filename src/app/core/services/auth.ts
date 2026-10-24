@@ -115,6 +115,10 @@ export class Auth {
       return;
     }
 
+    if (typeof window !== 'undefined') {
+      (window as any).__AUTH_TOKEN__ = accessToken;
+    }
+
     this._accessToken.set(accessToken);
     this.decodeAndSetUser(accessToken);
     this.startSilentRefresh();

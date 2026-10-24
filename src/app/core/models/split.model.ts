@@ -7,6 +7,7 @@ export interface SplitMember {
   name: string;
   linkedUserId: string | null;
   upiId: string | null;
+  leftAt?: string | null;
 }
 
 export interface SplitGroup {
@@ -114,6 +115,7 @@ export interface Settlement {
   status: SettlementStatus;
   paymentReference: string;
   completedAt: string | null;
+  createdAt?: string;
 }
 
 export interface CategorySpend {
@@ -157,6 +159,12 @@ export interface CreateSettlementRequest {
   groupId: number;
   fromMemberId: number;
   toMemberId: number;
+  amount: number;
+  method: SettlementMethod;
+  alreadyPaid?: boolean;
+}
+
+export interface UpdateSettlementRequest {
   amount: number;
   method: SettlementMethod;
 }

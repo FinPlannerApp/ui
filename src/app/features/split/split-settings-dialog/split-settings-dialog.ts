@@ -1,6 +1,7 @@
 import { Component, computed, inject, input, model, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ConfirmationService } from 'primeng/api';
 import { sharedPrimeModules } from '../../../shared/prime-imports';
 import { SplitService } from '../split.service';
@@ -20,6 +21,7 @@ export class SplitSettingsDialog {
   private notificationService = inject(NotificationService);
   private confirmationService = inject(ConfirmationService);
   private authService = inject(Auth);
+  private router = inject(Router);
 
   // Model & Inputs
   visible = model<boolean>(false);
@@ -63,6 +65,9 @@ export class SplitSettingsDialog {
     const currentUserId = this.authService.currentUserDetails()?.id;
     return g.members.find(m => m.linkedUserId && m.linkedUserId === currentUserId) ?? null;
   });
+
+  /** Members still in the group (people who left are kept only for history). */
+  activeMembers = computed(() => (this.group()?.members ?? []).filter(m => !m.leftAt));
 
   isGroupLocked = computed(() => this.group()?.status === 1);
   isGroupClosed = computed(() => {
@@ -289,5 +294,73 @@ export class SplitSettingsDialog {
     const link = this.shareLink() || this.generatedInviteLink() || window.location.href;
     const text = encodeURIComponent(`Hey! Join/view our trip group '${g.name}' on FinPlanner:\n${link}`);
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+  }
+
+  // ── Leave / remove / delete ─────────────────────────────────────────────────
+
+  isCreatorMember(m: SplitMember): boolean {
+    return !!m.linkedUserId && m.linkedUserId === this.group()?.createdByUserId;
+  }
+
+  isMe(m: SplitMember): boolean {
+    return !!m.linkedUserId && m.linkedUserId === this.currentUserMember()?.linkedUserId;
+  }
+
+  /** The admin can remove anyone but themselves; everyone else can only leave themselves. */
+  canRemoveMember(m: SplitMember): boolean {
+    if (this.group()?.status === 3) return false;
+    if (this.isCreatorMember(m)) return false;
+    return this.isGroupAdmin() || this.isMe(m);
+  }
+
+  removeMember(m: SplitMember): void {
+    const leaving = this.isMe(m);
+    this.confirmationService.confirm({
+      header: leaving ? 'Leave this group?' : `Remove ${m.name}?`,
+      message: leaving
+        ? 'You can leave once you are settled up. You will lose access to this group, but your past expenses stay in its history.'
+        : `${m.name} can be removed once they are settled up. Their past expenses stay in the group history.`,
+      icon: 'pi pi-sign-out',
+      acceptLabel: leaving ? 'Leave group' : 'Remove',
+      rejectLabel: 'Cancel',
+      accept: async () => {
+        try {
+          await this.splitService.removeMember(m.id);
+          if (leaving) {
+            this.visible.set(false);
+            this.notificationService.showSuccess('You left the group.');
+            void this.router.navigate(['/split']);
+          } else {
+            this.notificationService.showSuccess(`${m.name} was removed.`);
+            this.reloadGroup.emit();
+          }
+        } catch (err: any) {
+          // e.g. "Rahul isn't settled up yet (owes ₹120.00). Settle up first, then they can leave."
+          this.notificationService.showError(err?.message || 'Could not remove this member.');
+        }
+      }
+    });
+  }
+
+  deleteGroupAction(): void {
+    const g = this.group();
+    if (!g) return;
+    this.confirmationService.confirm({
+      header: 'Delete this group?',
+      message: `"${g.name}" and all of its expenses and payments will be deleted for everyone, and its share link will stop working. This can't be undone.`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Delete group',
+      rejectLabel: 'Keep it',
+      accept: async () => {
+        try {
+          await this.splitService.deleteGroup(g.id);
+          this.visible.set(false);
+          this.notificationService.showSuccess('Group deleted.');
+          void this.router.navigate(['/split']);
+        } catch (err: any) {
+          this.notificationService.showError(err?.message || 'Failed to delete group.');
+        }
+      }
+    });
   }
 }

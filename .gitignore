@@ -40,3 +40,20 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+
+# Test reports & artifacts
+/cypress/screenshots/
+/cypress/videos/
+/cypress/downloads/
+/playwright-report/
+/test-results/
+/blob-report/
+test-playwright.js
+capture_all.js
+
+# AI & IDE directories
+.cursor/
+.windsurf/
+.claude/
+.junie/
+.gemini/

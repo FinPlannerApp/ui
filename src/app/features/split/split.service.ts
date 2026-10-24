@@ -4,7 +4,8 @@ import { GenericApi } from '../../core/services/generic-api';
 import {
   CreateExpenseRequest, CreateGroupRequest, CreateInviteRequest, CreateSettlementRequest,
   ExpensePage, GroupBalances, GroupExport, GroupFullDetails, ImportToLedgerRequest, ImportToLedgerResult,
-  InviteCreated, InvitePreview, PaymentRequest, PublicGroupView, Settlement, SplitExpense, SplitGroup, SplitMember
+  InviteCreated, InvitePreview, PaymentRequest, PublicGroupView, Settlement, SplitExpense, SplitGroup, SplitMember,
+  UpdateSettlementRequest
 } from '../../core/models/split.model';
 
 @Injectable({ providedIn: 'root' })
@@ -238,6 +239,28 @@ export class SplitService {
     const result = await firstValueFrom(this.api.get<Settlement[]>(`Split/groups/${groupId}/settlements`));
     if (!result.isSuccess) throw new Error(result.error?.description || 'Could not load settlement history.');
     return result.value ?? [];
+  }
+
+  /** Leave the group (yourself) or remove someone (admin). They must be settled up first. */
+  async removeMember(memberId: number): Promise<void> {
+    const result = await firstValueFrom(this.api.delete<boolean>(`Split/members/${memberId}`));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to remove member.');
+  }
+
+  async deleteGroup(groupId: number): Promise<void> {
+    const result = await firstValueFrom(this.api.delete<boolean>(`Split/groups/${groupId}`));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to delete group.');
+  }
+
+  async updateSettlement(settlementId: number, req: UpdateSettlementRequest): Promise<Settlement> {
+    const result = await firstValueFrom(this.api.put<Settlement>(`Split/settlements/${settlementId}`, req));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to update payment.');
+    return result.value;
+  }
+
+  async deleteSettlement(settlementId: number): Promise<void> {
+    const result = await firstValueFrom(this.api.delete<boolean>(`Split/settlements/${settlementId}`));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to delete payment.');
   }
 }
 
