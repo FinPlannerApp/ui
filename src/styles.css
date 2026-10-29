@@ -348,7 +348,7 @@
   width: 26rem !important;
   max-width: calc(100vw - 1.5rem) !important;
   opacity: 0.98 !important;
-  z-index: 99999 !important;
+  z-index: 100000 !important;
 }
 
 @media (max-width: 640px) {
@@ -653,10 +653,6 @@ body {
    Global PrimeNG Component Overrides
    ============================================================ */
 
-/* --- Toast Z-Index --- */
-.p-toast {
-  z-index: 10002 !important;
-}
 
 /* --- Cards --- */
 .p-card {
@@ -735,7 +731,6 @@ body {
   backdrop-filter: blur(8px) !important;
   -webkit-backdrop-filter: blur(8px) !important;
   background-color: rgba(0, 0, 0, 0.5) !important;
-  z-index: 10000 !important;
   padding: 1rem !important;
   align-items: flex-start !important;
   justify-content: center !important;
@@ -957,10 +952,18 @@ span.p-select,
   width: auto !important;
 }
 
-/* Select Popup Overlay Panel */
+/* Select & Floating Overlay Popup Panels */
 .p-select-overlay,
 .p-select-panel,
-.p-dropdown-panel {
+.p-dropdown-panel,
+.p-autocomplete-overlay,
+.p-autocomplete-panel,
+.p-multiselect-overlay,
+.p-multiselect-panel,
+.p-popover,
+.p-overlaypanel,
+.p-menu.p-menu-overlay,
+.p-contextmenu {
   background: var(--glass-bg-solid, rgba(18, 18, 24, 0.96)) !important;
   backdrop-filter: blur(24px) !important;
   -webkit-backdrop-filter: blur(24px) !important;
@@ -970,7 +973,6 @@ span.p-select,
   overflow: hidden !important;
   padding: 0.4rem !important;
   color: var(--text-main, #f4f4f5) !important;
-  z-index: 10000 !important;
 }
 
 .p-select-overlay .p-select-option,
@@ -1174,7 +1176,6 @@ div.p-datepicker-panel {
   border-radius: 20px !important;
   padding: 1rem !important;
   color: #f4f4f5 !important;
-  z-index: 9999 !important;
   margin-top: 6px !important;
 }
 
@@ -2022,7 +2023,7 @@ label {
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 9999;
+  z-index: 1000;
   padding: 0.75rem 1rem;
   background: rgba(15, 15, 25, 0.92);
   backdrop-filter: blur(20px);

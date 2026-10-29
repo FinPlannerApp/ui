@@ -88,11 +88,12 @@ export const appConfig: ApplicationConfig = {
           darkModeSelector: '.my-app-dark'
         }
       },
+      overlayAppendTo: 'body',
       zIndex: {
         modal: 2000,
-        overlay: 2000,
-        menu: 2000,
-        tooltip: 2000
+        overlay: 2100,
+        menu: 2100,
+        tooltip: 2200
       }
     }),
     {

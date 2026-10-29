@@ -289,7 +289,6 @@ export class AccountsPage implements OnInit {
       width: '90%',
       style: { maxWidth: '650px' },
       contentStyle: { overflow: 'auto', 'max-height': '90vh' },
-      baseZIndex: 10000,
       data: {
         accountId: acc.id,
         accountName: acc.name,

@@ -222,7 +222,6 @@ export class CcSimulatorComponent implements OnInit {
         width: '90%',
         style: { maxWidth: '650px' },
         contentStyle: { overflow: 'auto', 'max-height': '90vh' },
-        baseZIndex: 10000,
         data: {
           accountId: this.accountIdInput || 1,
           accountName: this.cardName(),
