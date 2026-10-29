@@ -1,32 +1,32 @@
 <p-toast></p-toast>
-<div class="p-4 md:p-6">
-  <p-card header="Contact Support & Feedback">
-    <p class="m-0 mb-4 text-[var(--text-muted)]">
+<div class="p-3 md:p-6 w-full max-w-4xl mx-auto">
+  <p-card header="Contact Support & Feedback" styleClass="glass-card">
+    <p class="m-0 mb-4 text-xs sm:text-sm text-[var(--text-muted)]">
       Found a bug or have an idea for a new feature? Let us know!
     </p>
 
     <form [formGroup]="supportForm" (ngSubmit)="onSubmit()">
-      <div class="formgrid grid">
-        <div class="field col-span-12 md:col-span-6">
-          <label for="name">Your Name</label>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="flex flex-col gap-1">
+          <label for="name" class="text-xs sm:text-sm font-semibold text-[var(--text-main)]">Your Name</label>
           <input id="name" type="text" pInputText formControlName="name" class="w-full" />
         </div>
-        <div class="field col-span-12 md:col-span-6">
-          <label for="email">Your Email</label>
+        <div class="flex flex-col gap-1">
+          <label for="email" class="text-xs sm:text-sm font-semibold text-[var(--text-main)]">Your Email</label>
           <input id="email" type="email" pInputText formControlName="email" class="w-full" />
         </div>
-        <div class="field col-12">
-          <label for="type">Submission Type</label>
+        <div class="flex flex-col gap-1 md:col-span-2">
+          <label for="type" class="text-xs sm:text-sm font-semibold text-[var(--text-main)]">Submission Type</label>
           <p-select id="type" [options]="submissionTypes" formControlName="type"
-                      placeholder="Select a type" styleClass="w-full"></p-select>
+                      placeholder="Select a type" styleClass="w-full" appendTo="body"></p-select>
         </div>
-        <div class="field col-12">
-          <label for="description">Description</label>
+        <div class="flex flex-col gap-1 md:col-span-2">
+          <label for="description" class="text-xs sm:text-sm font-semibold text-[var(--text-main)]">Description</label>
           <p-editor formControlName="description" [style]="{ 'height': '200px' }"></p-editor>
         </div>
       </div>
-      <div class="flex justify-end mt-4">
-        <p-button label="Submit Feedback" type="submit" icon="pi pi-send"></p-button>
+      <div class="flex justify-end mt-4 pt-2 border-t border-[var(--glass-border)]">
+        <p-button label="Submit Feedback" type="submit" icon="pi pi-send" styleClass="w-full sm:w-auto justify-center"></p-button>
       </div>
     </form>
   </p-card>

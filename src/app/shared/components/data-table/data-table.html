@@ -1,6 +1,7 @@
-<p-table [value]="data || []" [tableStyle]="{'min-width': '50rem'}" [lazy]="lazy" (onLazyLoad)="onLazyLoad.emit($event)"
+<div class="overflow-x-auto w-full">
+<p-table [value]="data || []" [tableStyle]="{'min-width': '100%'}" [lazy]="lazy" (onLazyLoad)="onLazyLoad.emit($event)"
   [totalRecords]="totalRecords || 0" [rows]="rows" [paginator]="true" [showCurrentPageReport]="true"
-  [rowsPerPageOptions]="[10, 25, 50]" [loading]="loading || false">
+  [rowsPerPageOptions]="[10, 25, 50]" [loading]="loading || false" responsiveLayout="scroll">
   <ng-template pTemplate="header">
     <tr>
       @for (col of columns; track col.field) {
@@ -57,3 +58,4 @@
     </tr>
   </ng-template>
 </p-table>
+</div>

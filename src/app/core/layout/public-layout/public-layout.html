@@ -1,12 +1,13 @@
 <div class="public-layout layout-wrapper min-h-screen flex flex-col auth-background p-0">
-    <!-- Sticky Frosted Navbar -->
+    <!-- Sticky Frosted Navbar with Safe Area Support -->
     <header
-        class="sticky top-0 z-[100] w-full bg-[var(--glass-bg-solid)] backdrop-blur-xl border-b border-[var(--glass-border)]">
-        <div class="flex items-center justify-between w-full px-4 py-3 md:px-8 gap-4 md:gap-8">
+        class="sticky top-0 z-[100] w-full bg-[var(--glass-bg-solid)] backdrop-blur-xl border-b border-[var(--glass-border)]"
+        style="padding-top: max(0.5rem, env(safe-area-inset-top, 0px)); padding-left: max(0.5rem, env(safe-area-inset-left, 0px)); padding-right: max(0.5rem, env(safe-area-inset-right, 0px));">
+        <div class="flex items-center justify-between w-full px-4 py-3 md:px-8 gap-3 md:gap-8">
             <!-- Logo -->
-            <a routerLink="/" class="no-underline flex items-center gap-2 cursor-pointer">
-                <i class="pi pi-wallet text-3xl gradient-text"></i>
-                <h2 class="m-0 font-bold gradient-text">Financial Planner</h2>
+            <a routerLink="/" class="no-underline flex items-center gap-2 cursor-pointer min-w-0">
+                <i class="pi pi-wallet text-2xl sm:text-3xl gradient-text shrink-0"></i>
+                <h2 class="m-0 font-bold gradient-text text-base sm:text-xl truncate max-w-[150px] sm:max-w-none">Financial Planner</h2>
             </a>
 
             <!-- Desktop Nav Links -->
@@ -29,7 +30,7 @@
             </nav>
 
             <!-- Right Side Actions -->
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2 sm:gap-3 shrink-0">
                 <p-button [icon]="themeEngine.isDark() ? 'pi pi-sun' : 'pi pi-moon'" [text]="true" [rounded]="true"
                     (onClick)="themeEngine.toggleDarkMode()">
                 </p-button>
@@ -46,9 +47,58 @@
                     <p-button label="Get Started" icon="pi pi-arrow-right" iconPos="right" size="small"></p-button>
                 </a>
                 }
+
+                <!-- Mobile Menu Hamburger Button -->
+                <p-button icon="pi pi-bars" [text]="true" (onClick)="mobileMenuVisible = true" styleClass="md:hidden" aria-label="Open Navigation Menu"></p-button>
             </div>
         </div>
     </header>
+
+    <!-- Mobile Slide-over Drawer -->
+    <p-drawer [(visible)]="mobileMenuVisible" position="right" [style]="{ 'max-width': '85vw', width: '300px' }">
+        <ng-template pTemplate="header">
+            <div class="flex items-center gap-2 px-2" style="padding-top: max(0.5rem, env(safe-area-inset-top, 0px));">
+                <i class="pi pi-wallet text-xl gradient-text"></i>
+                <h3 class="my-0 font-bold gradient-text">Menu</h3>
+            </div>
+        </ng-template>
+        <ng-template pTemplate="content">
+            <div class="flex flex-col gap-2 py-2">
+                <a routerLink="/features" (click)="mobileMenuVisible = false" routerLinkActive="!text-[var(--primary-color)] !font-bold"
+                    class="no-underline text-[var(--text-main)] py-2.5 px-3 rounded-xl hover:bg-white/5 transition-colors font-medium">Features</a>
+                <a routerLink="/blog" (click)="mobileMenuVisible = false" routerLinkActive="!text-[var(--primary-color)] !font-bold"
+                    class="no-underline text-[var(--text-main)] py-2.5 px-3 rounded-xl hover:bg-white/5 transition-colors font-medium">Blog</a>
+                <a routerLink="/feedback" (click)="mobileMenuVisible = false" routerLinkActive="!text-[var(--primary-color)] !font-bold"
+                    class="no-underline text-[var(--text-main)] py-2.5 px-3 rounded-xl hover:bg-white/5 transition-colors font-medium">Feedback Hub</a>
+                <a routerLink="/about" (click)="mobileMenuVisible = false" routerLinkActive="!text-[var(--primary-color)] !font-bold"
+                    class="no-underline text-[var(--text-main)] py-2.5 px-3 rounded-xl hover:bg-white/5 transition-colors font-medium">About</a>
+                <a routerLink="/contact" (click)="mobileMenuVisible = false" routerLinkActive="!text-[var(--primary-color)] !font-bold"
+                    class="no-underline text-[var(--text-main)] py-2.5 px-3 rounded-xl hover:bg-white/5 transition-colors font-medium">Contact</a>
+
+                <hr class="border-[var(--glass-border)] my-2" />
+
+                @if(isLoggedIn()) {
+                <a routerLink="/app/dashboard" (click)="mobileMenuVisible = false" class="no-underline mt-1">
+                    <p-button label="Go to Dashboard" icon="pi pi-arrow-right" iconPos="right" styleClass="w-full justify-center"></p-button>
+                </a>
+                } @else {
+                <div class="flex flex-col gap-2 mt-1">
+                    <a routerLink="/login" (click)="mobileMenuVisible = false" class="no-underline">
+                        <p-button label="Log In" [text]="true" styleClass="w-full justify-center"></p-button>
+                    </a>
+                    <a routerLink="/register" (click)="mobileMenuVisible = false" class="no-underline">
+                        <p-button label="Get Started" icon="pi pi-arrow-right" iconPos="right" styleClass="w-full justify-center"></p-button>
+                    </a>
+                </div>
+                }
+            </div>
+        </ng-template>
+        <ng-template pTemplate="footer">
+            <div class="p-3 text-center border-t border-[var(--glass-border)]" style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));">
+                <span class="text-xs text-[var(--text-muted)]">&copy; 2026 Financial Planner</span>
+            </div>
+        </ng-template>
+    </p-drawer>
 
     <!-- Main Content Area -->
     <main class="grow z-[1] relative">

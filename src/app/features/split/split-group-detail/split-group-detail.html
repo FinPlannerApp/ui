@@ -92,11 +92,15 @@
         pTooltip="Download an Excel report with balances, who owes whom and every expense"
         styleClass="w-full rounded-2xl font-bold text-xs sm:text-sm shadow-sm" severity="secondary"></p-button>
       @if (!isGroupClosed()) {
-      <p-button label="Add Expense" icon="pi pi-plus" (onClick)="openAddExpense()"
-        styleClass="w-full rounded-2xl font-bold text-xs sm:text-sm shadow-sm"></p-button>
+      <div class="col-span-2 sm:col-span-1 sm:w-auto">
+        <p-button label="Add Expense" icon="pi pi-plus" (onClick)="openAddExpense()"
+          styleClass="w-full rounded-2xl font-bold text-xs sm:text-sm shadow-sm"></p-button>
+      </div>
       } @else {
-      <p-button label="Import to Ledger" icon="pi pi-wallet" (onClick)="openImportDialog()"
-        styleClass="w-full rounded-2xl font-bold text-xs sm:text-sm shadow-sm"></p-button>
+      <div class="col-span-2 sm:col-span-1 sm:w-auto">
+        <p-button label="Import to Ledger" icon="pi pi-wallet" (onClick)="openImportDialog()"
+          styleClass="w-full rounded-2xl font-bold text-xs sm:text-sm shadow-sm"></p-button>
+      </div>
       }
     </div>
   </div>

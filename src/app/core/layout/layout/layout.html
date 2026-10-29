@@ -1,7 +1,7 @@
 <div class="layout-wrapper min-h-screen flex flex-col relative">
   <!-- Global Top Progress Bar -->
   @if(loadingService.isLoading()) {
-    <div class="fixed top-0 left-0 right-0 z-[1000]">
+    <div class="fixed top-0 left-0 right-0 z-[1000]" style="padding-top: env(safe-area-inset-top, 0px);">
       <p-progressBar mode="indeterminate" [style]="{ height: '3px' }"></p-progressBar>
     </div>
   }
@@ -21,11 +21,12 @@
 
   <!-- Header -->
   <header
-    class="p-3 bg-[var(--glass-bg-solid)] backdrop-blur-xl border-b border-[var(--glass-border)] flex items-center justify-between sticky top-0 z-500">
-    <div class="flex items-center">
+    class="p-3 bg-[var(--glass-bg-solid)] backdrop-blur-xl border-b border-[var(--glass-border)] flex items-center justify-between sticky top-0 z-500"
+    style="padding-top: max(0.75rem, env(safe-area-inset-top, 0px)); padding-left: max(0.75rem, env(safe-area-inset-left, 0px)); padding-right: max(0.75rem, env(safe-area-inset-right, 0px));">
+    <div class="flex items-center min-w-0">
       <p-button icon="pi pi-bars" [text]="true" (onClick)="sidebarVisible = true"></p-button>
-      <a routerLink="/app/dashboard" class="no-underline">
-        <h2 class="ml-2 my-0 gradient-text">Financial Planner</h2>
+      <a routerLink="/app/dashboard" class="no-underline min-w-0 flex items-center">
+        <h2 class="ml-2 my-0 gradient-text text-base sm:text-xl font-bold truncate max-w-[130px] sm:max-w-none">Financial Planner</h2>
       </a>
 
       <!-- Breadcrumbs & Refresh -->
@@ -36,7 +37,7 @@
       </div>
     </div>
 
-    <div class="flex items-center gap-3">
+    <div class="flex items-center gap-2 sm:gap-3 shrink-0">
       <!-- Theme Toggle Button -->
       <p-button [icon]="themeEngine.isDark() ? 'pi pi-sun' : 'pi pi-moon'" [text]="true"
         [rounded]="true" (onClick)="themeEngine.toggleDarkMode()">
@@ -44,8 +45,8 @@
 
       <!-- User Profile Section with Signals -->
       @if(authService.currentUser(); as userName) {
-      <div class="flex items-center gap-3">
-        <p-avatar [label]="userInitials()!" styleClass="bg-primary text-white" shape="circle"
+      <div class="flex items-center gap-2 sm:gap-3">
+        <p-avatar [label]="userInitials()!" styleClass="bg-primary text-white cursor-pointer" shape="circle"
           (click)="op.toggle($event)"></p-avatar>
 
         <p-popover #op>
@@ -73,26 +74,29 @@
   </header>
 
 
-  <!-- Sidebar -->
-  <p-drawer [(visible)]="sidebarVisible">
+  <!-- Sidebar Drawer with Safe Area Bounds -->
+  <p-drawer [(visible)]="sidebarVisible" [style]="{ 'max-width': '85vw', width: '320px' }">
     <ng-template pTemplate="header">
-      <h3 class="p-3 my-0">Menu</h3>
+      <div class="flex items-center gap-2 px-2" style="padding-top: max(0.5rem, env(safe-area-inset-top, 0px));">
+        <i class="pi pi-wallet text-xl gradient-text"></i>
+        <h3 class="my-0 gradient-text">Menu</h3>
+      </div>
     </ng-template>
     <ng-template pTemplate="content">
-      <div class="grow">
+      <div class="grow overflow-y-auto">
         <p-menu [model]="navItems" styleClass="w-full"></p-menu>
       </div>
     </ng-template>
     <ng-template pTemplate="footer">
-      <div class="p-3 mt-auto border-t border-[var(--glass-border)]">
+      <div class="p-3 mt-auto border-t border-[var(--glass-border)]" style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));">
         <span class="text-sm text-[var(--text-muted)]">Version {{ appVersion }}</span>
       </div>
     </ng-template>
   </p-drawer>
 
-  <!-- Main Content Area -->
+  <!-- Main Content Area with Dynamic Viewport Height & Safe Area Inset -->
   <div class="layout-main grow">
-    <main class="p-3 md:p-5 relative z-[1]">
+    <main class="p-3 md:p-5 relative z-[1] pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
       <router-outlet></router-outlet>
     </main>
   </div>
