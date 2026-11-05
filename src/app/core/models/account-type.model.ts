@@ -23,6 +23,12 @@ export interface CreditCardDetails {
     statementClosingDate?: string | null;
     annualFee?: number | null;
     interestRate?: number | null;
+    latestBillAmount?: number | null;
+    latestBillIsPaid?: boolean;
+    remainingBillAmount?: number | null;
+    totalPaidForCycle?: number | null;
+    isPaid?: boolean;
+    lastStatementDate?: string | null;
 }
 
 export interface LoanDetails {

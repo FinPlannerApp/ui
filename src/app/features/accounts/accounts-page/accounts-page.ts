@@ -24,6 +24,8 @@ export interface CategoryFilterOption {
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { StatCard } from '../../../shared/components/stat-card/stat-card';
 import { PayCcBill } from '../pay-cc-bill/pay-cc-bill';
+import { RecordCcBill } from '../record-cc-bill/record-cc-bill';
+import { AccountType } from '../../../core/models/account-type.model';
 
 @Component({
   selector: 'app-accounts-page',
@@ -282,13 +284,132 @@ export class AccountsPage implements OnInit {
     this.router.navigate(['/app/accounts', acc.id, 'transactions']);
   }
 
-  openPayCcBillModal(acc: Account): void {
-    const outstanding = acc.creditCardDetails?.minimumDueAmount || Math.abs(acc.balance);
-    this.ref = this.dialogService.open(PayCcBill, {
-      header: `Pay Credit Card Statement — ${acc.name}`,
+  isCreditCard(acc: Account): boolean {
+    if (acc.accountType === AccountType.CreditCard) return true;
+    if (acc.creditCardDetails != null) return true;
+    const catLower = (acc.accountCategoryName || '').toLowerCase();
+    return catLower.includes('credit') || (catLower.includes('card') && !catLower.includes('debit'));
+  }
+
+  isCreditCardPaid(acc: Account): boolean {
+    if (!this.isCreditCard(acc)) return true;
+    const details = acc.creditCardDetails;
+
+    // 1. Check backend-computed isPaid
+    if (details?.isPaid !== undefined && details.isPaid !== null) {
+      return details.isPaid;
+    }
+
+    // 2. Check if latest recorded bill is marked paid
+    if (details?.latestBillIsPaid) {
+      return true;
+    }
+
+    // 3. Check if remaining bill amount is 0 or less
+    if (details?.remainingBillAmount !== undefined && details.remainingBillAmount !== null) {
+      if (details.remainingBillAmount <= 0) return true;
+    }
+
+    // 4. Check if total payments for cycle cover the bill
+    if (details?.latestBillAmount && details.latestBillAmount > 0 && details.totalPaidForCycle !== undefined && details.totalPaidForCycle !== null) {
+      if (details.totalPaidForCycle >= details.latestBillAmount) return true;
+    }
+
+    // 5. If balance is zero or positive (no debt)
+    if (acc.balance >= 0) {
+      return true;
+    }
+
+    return false;
+  }
+
+  isPostBillDate(acc: Account): boolean {
+    if (!this.isCreditCard(acc)) return false;
+    const details = acc.creditCardDetails;
+    if (!details?.statementClosingDate) return true;
+
+    try {
+      const stmtDate = new Date(details.statementClosingDate);
+      if (isNaN(stmtDate.getTime())) return true;
+
+      const billDay = stmtDate.getDate();
+      const today = new Date();
+      const todayDay = today.getDate();
+
+      // If current day of month is on or after the bill closing day,
+      // statement has closed for this monthly cycle
+      if (todayDay >= billDay) return true;
+
+      // If before bill closing day, but cycle bill wasn't set or remains unpaid
+      if (!details.latestBillAmount || !details.latestBillIsPaid) return true;
+
+      return false;
+    } catch {
+      return true;
+    }
+  }
+
+  getBillCycleLabel(acc: Account): string {
+    const details = acc.creditCardDetails;
+    if (!details?.statementClosingDate) return 'Monthly Cycle';
+    try {
+      const d = new Date(details.statementClosingDate);
+      if (isNaN(d.getTime())) return 'Monthly Cycle';
+      const day = d.getDate();
+      const suffix = (day >= 11 && day <= 13) ? 'th' : ['th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th'][day % 10];
+      return `Closes ${day}${suffix} monthly`;
+    } catch {
+      return 'Monthly Cycle';
+    }
+  }
+
+  openRecordCcBill(acc: Account): void {
+    const details = acc.creditCardDetails;
+    this.ref = this.dialogService.open(RecordCcBill, {
+      header: `Set CC Bill Amount — ${acc.name}`,
       width: '90%',
-      style: { maxWidth: '650px' },
-      contentStyle: { overflow: 'auto', 'max-height': '90vh' },
+      style: { maxWidth: '480px' },
+      modal: true,
+      closable: true,
+      data: {
+        accountId: acc.id,
+        accountName: acc.name,
+        billAmount: details?.latestBillAmount ?? null,
+        minimumDue: details?.minimumDueAmount ?? null,
+        dueDate: details?.dueDate ? new Date(details.dueDate) : null
+      }
+    });
+
+    if (this.ref) {
+      this.ref.onClose.subscribe(async (result: boolean) => {
+        if (result) {
+          await this.refreshData();
+        }
+      });
+    }
+  }
+
+  openPayCcBillModal(acc: Account): void {
+    const details = acc.creditCardDetails;
+    let outstanding = 0;
+    if (details?.remainingBillAmount !== undefined && details.remainingBillAmount !== null && details.remainingBillAmount > 0) {
+      outstanding = details.remainingBillAmount;
+    } else if (details?.latestBillAmount && !details.latestBillIsPaid) {
+      outstanding = details.latestBillAmount;
+    } else {
+      outstanding = Math.abs(acc.balance);
+    }
+
+    this.ref = this.dialogService.open(PayCcBill, {
+      header: `1-Tap Settlement — ${acc.name}`,
+      width: '92vw',
+      styleClass: 'max-w-2xl text-left',
+      contentStyle: { 'max-height': '85vh', 'overflow-y': 'auto' },
+      breakpoints: {
+        '960px': '90vw',
+        '640px': '95vw'
+      },
+      modal: true,
       data: {
         accountId: acc.id,
         accountName: acc.name,
@@ -297,9 +418,9 @@ export class AccountsPage implements OnInit {
     });
 
     if (this.ref) {
-      this.ref.onClose.subscribe((result: boolean) => {
+      this.ref.onClose.subscribe(async (result: boolean) => {
         if (result) {
-          this.refreshData();
+          await this.refreshData();
         }
       });
     }

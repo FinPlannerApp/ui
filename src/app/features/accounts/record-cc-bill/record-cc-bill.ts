@@ -30,9 +30,9 @@ export class RecordCcBill {
   accountId: number = this.config.data?.accountId;
   accountName: string = this.config.data?.accountName ?? '';
 
-  billAmount = signal<number | null>(null);
-  minimumDue = signal<number | null>(null);
-  dueDate = signal<Date | null>(null);
+  billAmount = signal<number | null>(this.config.data?.billAmount ?? null);
+  minimumDue = signal<number | null>(this.config.data?.minimumDue ?? null);
+  dueDate = signal<Date | null>(this.config.data?.dueDate ? new Date(this.config.data.dueDate) : null);
 
   isSubmitting = signal(false);
   result = signal<CreditCardBillResult | null>(null);
