@@ -21,7 +21,7 @@ export class DataSync {
         this.timer = setTimeout(() => {
             this.timer = null;
             // Only refresh if the user is currently viewing the dashboard
-            if (this.dashboard.hasData && this.router.url.includes('/dashboard')) {
+            if (this.dashboard.hasData && /\/dashboard\/?$/i.test(this.router.url.split('?')[0].split('#')[0])) {
                 this.dashboard.refresh(true);
             }
         }, 300);
