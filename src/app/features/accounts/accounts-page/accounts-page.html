@@ -226,89 +226,101 @@
 
                 <!-- Credit Card Details Sub-panel (if applicable) -->
                 @if (isCreditCard(acc)) {
-                  <div class="text-xs bg-purple-500/10 p-3.5 rounded-2xl border border-purple-500/20 mb-4 flex flex-col gap-2.5 shadow-lg">
-                    @if (acc.creditCardDetails) {
-                      <div class="flex justify-between items-center text-[var(--text-muted)]">
-                        <span class="font-medium flex items-center gap-1.5">
-                          <i class="pi pi-credit-card text-purple-400"></i>
-                          <span>Credit Limit:</span>
-                        </span>
-                        <span class="font-bold text-white">{{ acc.creditCardDetails.creditLimit | currency:'INR':'symbol':'1.0-0' }}</span>
-                      </div>
-                      <div class="w-full bg-black/30 rounded-full h-2 overflow-hidden border border-white/5 p-0.5">
-                        <div class="bg-gradient-to-r from-purple-500 to-indigo-400 h-full rounded-full transition-all duration-500" [style.width.%]="getCreditUtilizationPercent(acc)"></div>
-                      </div>
-
-                      <!-- Bill Cycle & Statement Info -->
-                      <div class="p-2.5 rounded-xl bg-black/30 border border-white/5 flex flex-col gap-1.5">
-                        <div class="flex justify-between items-center text-[11px]">
-                          <span class="text-[var(--text-muted)] flex items-center gap-1">
-                            <i class="pi pi-calendar text-[10px] text-purple-300"></i>
-                            <span>Bill Cycle:</span>
+                  <div class="text-xs bg-purple-500/10 p-3 rounded-2xl border border-purple-500/20 mb-4 flex flex-col gap-2 shadow-lg">
+                    @if (isCreditCardPaid(acc)) {
+                      <!-- Minimal Paid State: Just Paid button (opens history) -->
+                      @if (acc.creditCardDetails?.creditLimit) {
+                        <div class="flex justify-between items-center text-[var(--text-muted)] text-[11px]">
+                          <span class="flex items-center gap-1.5">
+                            <i class="pi pi-credit-card text-purple-400"></i>
+                            <span>Credit Limit:</span>
                           </span>
-                          <span class="font-semibold text-purple-200">
-                            {{ getBillCycleLabel(acc) }}
+                          <span class="font-bold text-white">{{ acc.creditCardDetails?.creditLimit | currency:'INR':'symbol':'1.0-0' }}</span>
+                        </div>
+                      }
+                      <button type="button" (click)="openCcPaymentHistory(acc)"
+                        class="w-full py-2 px-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 font-extrabold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm">
+                        <i class="pi pi-check-circle text-emerald-400 text-xs"></i>
+                        <span>Paid</span>
+                      </button>
+                    } @else {
+                      <!-- Unpaid Credit Card Details: Limit, Utilization, Bill Cycle Breakdown & 1-Tap Settlement -->
+                      @if (acc.creditCardDetails) {
+                        <div class="flex justify-between items-center text-[var(--text-muted)]">
+                          <span class="font-medium flex items-center gap-1.5">
+                            <i class="pi pi-credit-card text-purple-400"></i>
+                            <span>Credit Limit:</span>
                           </span>
+                          <span class="font-bold text-white">{{ acc.creditCardDetails.creditLimit | currency:'INR':'symbol':'1.0-0' }}</span>
+                        </div>
+                        <div class="w-full bg-black/30 rounded-full h-2 overflow-hidden border border-white/5 p-0.5">
+                          <div class="bg-gradient-to-r from-purple-500 to-indigo-400 h-full rounded-full transition-all duration-500" [style.width.%]="getCreditUtilizationPercent(acc)"></div>
                         </div>
 
-                        <!-- Statement Bill Amount -->
-                        @if (acc.creditCardDetails.latestBillAmount !== null && acc.creditCardDetails.latestBillAmount !== undefined) {
-                          <div class="flex justify-between items-center pt-1 border-t border-white/5">
-                            <span class="text-[var(--text-muted)]">Bill Amount:</span>
-                            <div class="flex items-center gap-1.5">
-                              <span class="font-extrabold text-white">{{ acc.creditCardDetails.latestBillAmount | currency:'INR':'symbol':'1.0-0' }}</span>
-                              @if (isPostBillDate(acc)) {
-                                <button type="button" (click)="openRecordCcBill(acc)" pTooltip="Edit Bill Amount"
-                                  class="text-[10px] text-purple-400 hover:text-purple-300 bg-transparent border-none p-0 cursor-pointer">
-                                  <i class="pi pi-pencil text-[10px]"></i>
-                                </button>
-                              }
-                            </div>
+                        <!-- Bill Cycle & Statement Info -->
+                        <div class="p-2.5 rounded-xl bg-black/30 border border-white/5 flex flex-col gap-1.5">
+                          <div class="flex justify-between items-center text-[11px]">
+                            <span class="text-[var(--text-muted)] flex items-center gap-1">
+                              <i class="pi pi-calendar text-[10px] text-purple-300"></i>
+                              <span>Bill Cycle:</span>
+                            </span>
+                            <span class="font-semibold text-purple-200">
+                              {{ getBillCycleLabel(acc) }}
+                            </span>
                           </div>
 
-                          @if (acc.creditCardDetails.minimumDueAmount) {
-                            <div class="flex justify-between items-center text-[11px] text-rose-300">
-                              <span>Min Due:</span>
-                              <span class="font-semibold">{{ acc.creditCardDetails.minimumDueAmount | currency:'INR':'symbol':'1.0-0' }}</span>
+                          <!-- Statement Bill Amount -->
+                          @if (acc.creditCardDetails.latestBillAmount !== null && acc.creditCardDetails.latestBillAmount !== undefined) {
+                            <div class="flex justify-between items-center pt-1 border-t border-white/5">
+                              <span class="text-[var(--text-muted)]">Bill Amount:</span>
+                              <div class="flex items-center gap-1.5">
+                                <span class="font-extrabold text-white">{{ acc.creditCardDetails.latestBillAmount | currency:'INR':'symbol':'1.0-0' }}</span>
+                                @if (isPostBillDate(acc)) {
+                                  <button type="button" (click)="openRecordCcBill(acc)" pTooltip="Edit Bill Amount"
+                                    class="text-[10px] text-purple-400 hover:text-purple-300 bg-transparent border-none p-0 cursor-pointer">
+                                    <i class="pi pi-pencil text-[10px]"></i>
+                                  </button>
+                                }
+                              </div>
+                            </div>
+
+                            @if (acc.creditCardDetails.minimumDueAmount) {
+                              <div class="flex justify-between items-center text-[11px] text-rose-300">
+                                <span>Min Due:</span>
+                                <span class="font-semibold">{{ acc.creditCardDetails.minimumDueAmount | currency:'INR':'symbol':'1.0-0' }}</span>
+                              </div>
+                            }
+
+                            @if (acc.creditCardDetails.dueDate) {
+                              <div class="flex justify-between items-center text-[11px] text-[var(--text-muted)]">
+                                <span>Due Date:</span>
+                                <span class="font-medium text-white">{{ acc.creditCardDetails.dueDate | date:'mediumDate' }}</span>
+                              </div>
+                            }
+                          } @else {
+                            <div class="flex justify-between items-center pt-1 border-t border-white/5 text-[11px]">
+                              <span class="text-[var(--text-muted)]">Bill Status:</span>
+                              <span class="text-amber-300/80 italic">No bill set for cycle</span>
                             </div>
                           }
+                        </div>
+                      }
 
-                          @if (acc.creditCardDetails.dueDate) {
-                            <div class="flex justify-between items-center text-[11px] text-[var(--text-muted)]">
-                              <span>Due Date:</span>
-                              <span class="font-medium text-white">{{ acc.creditCardDetails.dueDate | date:'mediumDate' }}</span>
-                            </div>
-                          }
-                        } @else {
-                          <div class="flex justify-between items-center pt-1 border-t border-white/5 text-[11px]">
-                            <span class="text-[var(--text-muted)]">Bill Status:</span>
-                            <span class="text-amber-300/80 italic">No bill set for cycle</span>
-                          </div>
-                        }
-                      </div>
-                    }
+                      <!-- Post Bill Date Action: Set CC bill amount for the bill cycle -->
+                      @if (isPostBillDate(acc) && (!acc.creditCardDetails?.latestBillAmount)) {
+                        <button type="button" (click)="openRecordCcBill(acc)"
+                          class="w-full py-1.5 px-3 rounded-xl bg-purple-600/25 hover:bg-purple-600/40 text-purple-200 border border-purple-500/30 font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                          <i class="pi pi-receipt text-xs"></i>
+                          <span>Set CC Bill Amount</span>
+                        </button>
+                      }
 
-                    <!-- Post Bill Date Action: Set CC bill amount for the bill cycle -->
-                    @if (isPostBillDate(acc) && (!acc.creditCardDetails?.latestBillAmount)) {
-                      <button type="button" (click)="openRecordCcBill(acc)"
-                        class="w-full py-1.5 px-3 rounded-xl bg-purple-600/25 hover:bg-purple-600/40 text-purple-200 border border-purple-500/30 font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer">
-                        <i class="pi pi-receipt text-xs"></i>
-                        <span>Set CC Bill Amount</span>
-                      </button>
-                    }
-
-                    <!-- 1-Tap Settlement: Show if and only if it is not paid; unless dont show it -->
-                    @if (!isCreditCardPaid(acc)) {
+                      <!-- 1-Tap Settlement: Show if and only if it is not paid; unless dont show it -->
                       <button type="button" (click)="openPayCcBillModal(acc)"
                         class="mt-1 w-full py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs shadow-md hover:shadow-emerald-500/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer border-0">
                         <i class="pi pi-check-circle text-xs"></i>
                         <span>1-Tap Settlement</span>
                       </button>
-                    } @else {
-                      <div class="w-full py-1.5 px-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-bold text-xs flex items-center justify-center gap-1.5">
-                        <i class="pi pi-check-circle text-emerald-400 text-xs"></i>
-                        <span>Settled &bull; Bill Paid</span>
-                      </div>
                     }
                   </div>
                 }
@@ -406,6 +418,9 @@
                 </td>
                 <td class="text-center whitespace-nowrap" (click)="$event.stopPropagation()">
                   <div class="flex items-center justify-center gap-1">
+                    @if (isCreditCard(acc) && isCreditCardPaid(acc)) {
+                      <p-button icon="pi pi-check-circle" [text]="true" [rounded]="true" severity="success" size="small" pTooltip="Paid (View History)" (onClick)="openCcPaymentHistory(acc)"></p-button>
+                    }
                     @if (isCreditCard(acc) && isPostBillDate(acc) && (!acc.creditCardDetails?.latestBillAmount)) {
                       <p-button icon="pi pi-receipt" [text]="true" [rounded]="true" severity="help" size="small" pTooltip="Set CC Bill Amount" (onClick)="openRecordCcBill(acc)"></p-button>
                     }

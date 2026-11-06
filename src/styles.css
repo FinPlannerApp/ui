@@ -517,8 +517,17 @@ body::-webkit-scrollbar-corner,
    Base Styles
    ============================================================ */
 
+html {
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
 body {
   margin: 0;
+  min-height: 100%;
+  overflow-x: clip;
+  overflow-y: visible;
   font-family: var(--font-family-sans, 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
   color: var(--text-main);
   background-color: var(--bg-gradient-1);
@@ -731,7 +740,6 @@ body {
   backdrop-filter: blur(8px) !important;
   -webkit-backdrop-filter: blur(8px) !important;
   background-color: rgba(0, 0, 0, 0.55) !important;
-  display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   padding: 1rem !important;
@@ -739,6 +747,11 @@ body {
   padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px)) !important;
   padding-left: max(1rem, env(safe-area-inset-left, 0px)) !important;
   padding-right: max(1rem, env(safe-area-inset-right, 0px)) !important;
+}
+
+.p-dialog-mask[style*="display: none"] {
+  display: none !important;
+  pointer-events: none !important;
 }
 
 .p-dialog {
@@ -2362,12 +2375,18 @@ p-datepicker:not(.w-auto),
 }
 
 /* 2. Global Viewport & Touch Optimization */
-html,
-body {
+html {
   max-width: 100vw;
   overflow-x: hidden;
+  overflow-y: auto;
   -webkit-tap-highlight-color: transparent;
-  overscroll-behavior-y: none;
+}
+
+body {
+  max-width: 100vw;
+  overflow-x: clip;
+  overflow-y: visible;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* 3. Global Responsive DataTable Wrapper */

@@ -284,6 +284,10 @@ export class AccountsPage implements OnInit {
     this.router.navigate(['/app/accounts', acc.id, 'transactions']);
   }
 
+  openCcPaymentHistory(acc: Account): void {
+    this.viewTransactions(acc);
+  }
+
   isCreditCard(acc: Account): boolean {
     if (acc.accountType === AccountType.CreditCard) return true;
     if (acc.creditCardDetails != null) return true;
