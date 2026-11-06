@@ -2201,6 +2201,33 @@ body.compact-view {
 }
 
 /* ============================================================
+   MODERN DASHBOARD STRICT DIMENSION CLAMPING & GUARDS
+   ============================================================ */
+
+.spending-donut-wrapper {
+  width: 170px !important;
+  height: 170px !important;
+  max-width: 170px !important;
+  max-height: 170px !important;
+  position: relative !important;
+  overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 auto !important;
+}
+
+.spending-donut-wrapper p-chart,
+.spending-donut-wrapper .p-chart,
+.spending-donut-wrapper canvas {
+  width: 170px !important;
+  height: 170px !important;
+  max-width: 170px !important;
+  max-height: 170px !important;
+  display: block !important;
+}
+
+/* ============================================================
    AUTHENTIC MODERN EXCEL SPREADSHEET & BULK ADD COMPONENT STYLES
    ============================================================ */
 

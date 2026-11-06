@@ -21,10 +21,13 @@ export class UpcomingObligationsWidget implements OnInit {
   isLoading = signal(true);
   showDrawer = signal(false);
 
-  // Max 4 items on the main dashboard row
-  displayedObligations = computed(() => this.obligations().slice(0, 4));
+  // In stack mode (side column), show up to 6 obligations with smooth scrolling
+  // In row mode (full-width grid), show 4 cards for a clean grid
+  maxDisplayed = computed(() => this.layout() === 'stack' ? 6 : 4);
+  displayedObligations = computed(() => this.obligations().slice(0, this.maxDisplayed()));
   totalCount = computed(() => this.obligations().length);
-  hasMore = computed(() => this.obligations().length > 4);
+  hasMore = computed(() => this.obligations().length > this.maxDisplayed());
+  remainingCount = computed(() => Math.max(0, this.totalCount() - this.maxDisplayed()));
   totalUpcomingAmount = computed(() => this.obligations().reduce((acc, curr) => acc + (curr.amount ?? curr.minimumDueAmount ?? 0), 0));
 
   async ngOnInit(): Promise<void> {
