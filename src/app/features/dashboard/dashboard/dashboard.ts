@@ -146,9 +146,10 @@ export class Dashboard implements OnInit {
 
   setupModernChartOptions(): void {
     this.modernChartOptions = {
-      cutout: '74%',
+      cutout: '72%',
       responsive: true,
-      maintainAspectRatio: false,
+      maintainAspectRatio: true,
+      aspectRatio: 1,
       plugins: {
         legend: {
           display: false

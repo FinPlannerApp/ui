@@ -43,10 +43,10 @@
   </ng-template>
 
   @if (isLoading()) {
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-      <div class="h-20 rounded-2xl bg-white/5 animate-pulse"></div>
-      <div class="h-20 rounded-2xl bg-white/5 animate-pulse"></div>
-      <div class="h-20 rounded-2xl bg-white/5 animate-pulse"></div>
+    <div [ngClass]="layout() === 'stack' ? 'flex flex-col gap-2.5 mt-1' : 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3'">
+      <div class="h-16 rounded-2xl bg-white/5 animate-pulse"></div>
+      <div class="h-16 rounded-2xl bg-white/5 animate-pulse"></div>
+      <div class="h-16 rounded-2xl bg-white/5 animate-pulse"></div>
     </div>
   } @else if (obligations().length === 0) {
     <div class="flex flex-col items-center justify-center py-6 text-center">
@@ -57,39 +57,75 @@
       <p class="text-xs text-muted m-0 mt-0.5">You have no recurring bills due in the next 30 days.</p>
     </div>
   } @else {
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 mt-1">
-      @for (obligation of displayedObligations(); track $index) {
-        <div class="p-2.5 sm:p-3.5 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between gap-2 hover:bg-white/[0.08] transition-all overflow-hidden min-w-0">
-          <div class="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
-            <div 
-              class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl border flex items-center justify-center shrink-0"
-              [ngClass]="obligation.source === 'CreditCard' ? 'bg-sky-500/10 border-sky-500/30 text-sky-400' : (obligation.source === 'Loan' ? 'bg-rose-500/10 border-rose-500/30 text-rose-400' : 'bg-amber-500/10 border-amber-500/30 text-amber-400')"
-            >
-              <i class="pi text-base sm:text-lg" [ngClass]="obligation.source === 'CreditCard' ? 'pi-credit-card' : (obligation.source === 'Loan' ? 'pi-building-columns' : 'pi-receipt')"></i>
+    @if (layout() === 'stack') {
+      <div class="flex flex-col gap-2.5 mt-1">
+        @for (obligation of displayedObligations(); track $index) {
+          <div class="p-3 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between gap-3 hover:bg-white/[0.08] transition-all overflow-hidden min-w-0">
+            <div class="flex items-center gap-2.5 min-w-0 flex-1">
+              <div 
+                class="w-9 h-9 rounded-2xl border flex items-center justify-center shrink-0"
+                [ngClass]="obligation.source === 'CreditCard' ? 'bg-sky-500/10 border-sky-500/30 text-sky-400' : (obligation.source === 'Loan' ? 'bg-rose-500/10 border-rose-500/30 text-rose-400' : 'bg-amber-500/10 border-amber-500/30 text-amber-400')"
+              >
+                <i class="pi text-base" [ngClass]="obligation.source === 'CreditCard' ? 'pi-credit-card' : (obligation.source === 'Loan' ? 'pi-building-columns' : 'pi-receipt')"></i>
+              </div>
+              <div class="flex flex-col min-w-0 flex-1">
+                <span class="text-xs sm:text-sm font-extrabold text-main truncate" [title]="obligation.description">{{ obligation.description }}</span>
+                <span class="text-[11px] text-muted font-medium truncate" [title]="obligation.accountName">{{ obligation.accountName }}</span>
+                @if (obligation.isShortfallRisk) {
+                  <span class="text-[10px] text-rose-400 flex items-center gap-1 font-bold mt-0.5">
+                    <i class="pi pi-exclamation-triangle"></i> Insufficient balance
+                  </span>
+                }
+              </div>
             </div>
-            <div class="flex flex-col min-w-0 flex-1">
-              <span class="text-xs sm:text-sm font-extrabold text-main truncate" [title]="obligation.description">{{ obligation.description }}</span>
-              <span class="text-[11px] sm:text-xs text-muted font-medium truncate" [title]="obligation.accountName">{{ obligation.accountName }}</span>
-              @if (obligation.isShortfallRisk) {
-                <span class="text-[10px] text-rose-400 flex items-center gap-1 font-bold mt-0.5">
-                  <i class="pi pi-exclamation-triangle"></i> Insufficient balance
-                </span>
-              }
-            </div>
-          </div>
 
-          <div class="flex flex-col items-end shrink-0 pl-1.5 text-right">
-            <span class="text-xs sm:text-base font-extrabold whitespace-nowrap" [ngClass]="obligation.source === 'CreditCard' ? 'text-sky-400' : (obligation.source === 'Loan' ? 'text-rose-400' : 'text-amber-400')">{{ displayAmount(obligation) }}</span>
-            <span 
-              class="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full mt-0.5 sm:mt-1 whitespace-nowrap" 
-              [ngClass]="isUrgent(obligation) ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-white/10 text-muted'"
-            >
-              {{ dueLabel(obligation) }}
-            </span>
+            <div class="flex flex-col items-end shrink-0 pl-2 text-right">
+              <span class="text-xs sm:text-sm font-extrabold whitespace-nowrap" [ngClass]="obligation.source === 'CreditCard' ? 'text-sky-400' : (obligation.source === 'Loan' ? 'text-rose-400' : 'text-amber-400')">{{ displayAmount(obligation) }}</span>
+              <span 
+                class="text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5 whitespace-nowrap" 
+                [ngClass]="isUrgent(obligation) ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-white/10 text-muted'"
+              >
+                {{ dueLabel(obligation) }}
+              </span>
+            </div>
           </div>
-        </div>
-      }
-    </div>
+        }
+      </div>
+    } @else {
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 mt-1">
+        @for (obligation of displayedObligations(); track $index) {
+          <div class="p-2.5 sm:p-3.5 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between gap-2 hover:bg-white/[0.08] transition-all overflow-hidden min-w-0">
+            <div class="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+              <div 
+                class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl border flex items-center justify-center shrink-0"
+                [ngClass]="obligation.source === 'CreditCard' ? 'bg-sky-500/10 border-sky-500/30 text-sky-400' : (obligation.source === 'Loan' ? 'bg-rose-500/10 border-rose-500/30 text-rose-400' : 'bg-amber-500/10 border-amber-500/30 text-amber-400')"
+              >
+                <i class="pi text-base sm:text-lg" [ngClass]="obligation.source === 'CreditCard' ? 'pi-credit-card' : (obligation.source === 'Loan' ? 'pi-building-columns' : 'pi-receipt')"></i>
+              </div>
+              <div class="flex flex-col min-w-0 flex-1">
+                <span class="text-xs sm:text-sm font-extrabold text-main truncate" [title]="obligation.description">{{ obligation.description }}</span>
+                <span class="text-[11px] sm:text-xs text-muted font-medium truncate" [title]="obligation.accountName">{{ obligation.accountName }}</span>
+                @if (obligation.isShortfallRisk) {
+                  <span class="text-[10px] text-rose-400 flex items-center gap-1 font-bold mt-0.5">
+                    <i class="pi pi-exclamation-triangle"></i> Insufficient balance
+                  </span>
+                }
+              </div>
+            </div>
+
+            <div class="flex flex-col items-end shrink-0 pl-1.5 text-right">
+              <span class="text-xs sm:text-base font-extrabold whitespace-nowrap" [ngClass]="obligation.source === 'CreditCard' ? 'text-sky-400' : (obligation.source === 'Loan' ? 'text-rose-400' : 'text-amber-400')">{{ displayAmount(obligation) }}</span>
+              <span 
+                class="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full mt-0.5 sm:mt-1 whitespace-nowrap" 
+                [ngClass]="isUrgent(obligation) ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-white/10 text-muted'"
+              >
+                {{ dueLabel(obligation) }}
+              </span>
+            </div>
+          </div>
+        }
+      </div>
+    }
   }
 </p-card>
 

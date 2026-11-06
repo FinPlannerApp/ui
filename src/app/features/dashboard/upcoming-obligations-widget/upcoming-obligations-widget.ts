@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
 import { GenericApi } from '../../../core/services/generic-api';
@@ -13,6 +13,9 @@ import { sharedPrimeModules } from '../../../shared/prime-imports';
 })
 export class UpcomingObligationsWidget implements OnInit {
   private api = inject(GenericApi);
+
+  /** Layout mode: 'row' (grid for full-width) or 'stack' (vertical list for side column) */
+  layout = input<'row' | 'stack'>('row');
 
   obligations = signal<UpcomingObligation[]>([]);
   isLoading = signal(true);
