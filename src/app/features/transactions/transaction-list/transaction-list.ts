@@ -534,8 +534,7 @@ export class TransactionList implements OnInit, OnDestroy {
     this.ref = this.dialogService.open(PayCcBill, {
       header: 'Pay Credit Card Bill',
       width: '92vw',
-      styleClass: 'max-w-2xl text-left',
-      contentStyle: { 'max-height': '85vh', 'overflow-y': 'auto' },
+      styleClass: 'max-w-2xl text-left pay-cc-dialog',
       breakpoints: {
         '960px': '90vw',
         '640px': '95vw'

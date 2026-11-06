@@ -221,7 +221,7 @@ export class CcSimulatorComponent implements OnInit {
         header: `Pay Credit Card Statement — ${this.cardName()}`,
         width: '90%',
         style: { maxWidth: '650px' },
-        contentStyle: { overflow: 'auto', 'max-height': '90vh' },
+        styleClass: 'pay-cc-dialog',
         data: {
           accountId: this.accountIdInput || 1,
           accountName: this.cardName(),

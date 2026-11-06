@@ -407,8 +407,7 @@ export class AccountsPage implements OnInit {
     this.ref = this.dialogService.open(PayCcBill, {
       header: `1-Tap Settlement — ${acc.name}`,
       width: '92vw',
-      styleClass: 'max-w-2xl text-left',
-      contentStyle: { 'max-height': '85vh', 'overflow-y': 'auto' },
+      styleClass: 'max-w-2xl text-left pay-cc-dialog',
       breakpoints: {
         '960px': '90vw',
         '640px': '95vw'

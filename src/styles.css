@@ -2484,3 +2484,14 @@ a,
     margin-right: auto;
   }
 }
+
+/* Pay Credit Card Bill dialog: exactly ONE scroll region (inside the component),
+   footer pinned. Overrides the generic scrolling dialog content for this dialog only. */
+.p-dialog.pay-cc-dialog .p-dialog-content {
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  padding: 1rem 1.25rem 1.25rem !important;
+  max-height: calc(100dvh - 8rem) !important;
+}

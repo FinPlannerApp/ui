@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -9,7 +9,13 @@ import { NotificationService } from '../../../core/services/notification.service
 import { AccountState } from '../../../core/state/account-state.service';
 import { AccountType } from '../../../core/models/account-type.model';
 
+/** Round to paise so JS float residue (0.1 + 0.2) never reaches the API or the UI. */
+const r2 = (n: number): number => Math.round((n + Number.EPSILON) * 100) / 100;
+
+let rowUid = 0;
+
 export interface PaymentRow {
+  uid: number;
   payingAccountId: number | null;
   amount: number | null;
   paymentAppName: string;
@@ -17,7 +23,6 @@ export interface PaymentRow {
   cashbackAmount: number | null;
   cashbackType: number | null; // 0 = Direct, 1 = Indirect
   cashbackAccountId: number | null;
-  interestCategoryId: number | null;
   suggestions: AccountSuggestion[];
   showSuggestions: boolean;
   isLoadingSuggestions?: boolean;
@@ -51,7 +56,9 @@ export interface CreditCardPaymentBatchResult {
   selector: 'app-pay-cc-bill',
   standalone: true,
   imports: [CommonModule, FormsModule, ...sharedPrimeModules],
-  templateUrl: './pay-cc-bill.html'
+  templateUrl: './pay-cc-bill.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'flex flex-col min-h-0 flex-1' }
 })
 export class PayCcBill implements OnInit {
   public ref = inject(DynamicDialogRef);
@@ -67,7 +74,6 @@ export class PayCcBill implements OnInit {
   isSubmitting = signal(false);
   errorMessage = signal<string | null>(null);
   result = signal<CreditCardPaymentBatchResult | null>(null);
-  categories = signal<{ id: number; name: string }[]>([]);
   knownPaymentApps = signal<string[]>([]);
   filteredPaymentApps = signal<string[]>([]);
   walletBalances = signal<Record<string, number>>({});
@@ -79,13 +85,43 @@ export class PayCcBill implements OnInit {
   );
 
   totalEntered = computed(() =>
-    this.rows().reduce((sum, r) => sum + (r.amount ?? 0), 0)
+    r2(this.rows().reduce((sum, r) => sum + (r.amount ?? 0), 0))
   );
 
-  exceedsOutstanding = computed(() => this.totalEntered() > (this.outstandingBalance + 0.01));
+  /** Wallet money used across all rows — reduces what leaves the bank, not the bill. */
+  totalFromWallet = computed(() =>
+    r2(this.rows().reduce((sum, r) => sum + (r.appliedWalletAmount ?? 0), 0))
+  );
+
+  /** Cash that actually leaves bank/cash accounts. */
+  totalFromBank = computed(() => r2(this.totalEntered() - this.totalFromWallet()));
+
+  /** Per-row cash leaving the paying account (amount minus wallet applied). */
+  bankAmount(row: PaymentRow): number {
+    return r2((row.amount ?? 0) - (row.appliedWalletAmount ?? 0));
+  }
+
+  /** Wallet balance of this row's app still unspent by rows above it. */
+  walletLeft(index: number): number {
+    const rows = this.rows();
+    const app = (rows[index]?.paymentAppName ?? '').trim();
+    if (!app) return 0;
+    let used = 0;
+    for (let i = 0; i < index; i++) {
+      if ((rows[i].paymentAppName ?? '').trim() === app) used += rows[i].appliedWalletAmount ?? 0;
+    }
+    return Math.max(0, r2(this.availableWalletBalance(app) - used));
+  }
+
+  /** Most wallet this row may apply: its app's remaining balance, capped at the payment itself. */
+  walletCap(index: number): number {
+    return r2(Math.min(this.walletLeft(index), this.rows()[index]?.amount ?? 0));
+  }
+
+  exceedsOutstanding = computed(() => this.totalEntered() > r2(this.outstandingBalance + 0.01));
 
   remainingBalance = computed(() =>
-    Math.max(0, this.outstandingBalance - this.totalEntered())
+    Math.max(0, r2(this.outstandingBalance - this.totalEntered()))
   );
 
   coveragePercent = computed(() => {
@@ -95,32 +131,39 @@ export class PayCcBill implements OnInit {
   });
 
   async ngOnInit(): Promise<void> {
-    await this.accountState.loadAccounts();
-    const result = await firstValueFrom(this.api.get<{ id: number; name: string }[]>('TransactionCategories'));
-    if (result.isSuccess) this.categories.set(result.value ?? []);
+    try {
+      // Independent requests — run together instead of one after another.
+      const [, appsRes, walletsRes] = await Promise.all([
+        this.accountState.loadAccounts(),
+        firstValueFrom(this.api.get<string[]>('Accounts/payment-app-names')),
+        firstValueFrom(
+          this.api.get<{ paymentAppName: string; currentBalance: number }[]>('Accounts/payment-app-wallets')
+        )
+      ]);
 
-    const appsRes = await firstValueFrom(this.api.get<string[]>('Accounts/payment-app-names'));
-    if (appsRes.isSuccess) this.knownPaymentApps.set(appsRes.value ?? []);
+      if (appsRes.isSuccess) this.knownPaymentApps.set(appsRes.value ?? []);
 
-    const walletsRes = await firstValueFrom(
-      this.api.get<{ paymentAppName: string; currentBalance: number }[]>('Accounts/payment-app-wallets')
-    );
-    if (walletsRes.isSuccess) {
-      const map: Record<string, number> = {};
-      for (const w of walletsRes.value ?? []) {
-        map[w.paymentAppName] = w.currentBalance;
+      if (walletsRes.isSuccess) {
+        const map: Record<string, number> = {};
+        for (const w of walletsRes.value ?? []) {
+          map[w.paymentAppName] = w.currentBalance;
+        }
+        this.walletBalances.set(map);
       }
-      this.walletBalances.set(map);
+    } catch {
+      // Wallets/app names are conveniences; the payment itself still works without them.
+      this.errorMessage.set('Could not load payment apps and wallet balances. You can still pay from an account.');
     }
 
     // Default first row amount to full outstanding balance for convenience
     if (this.outstandingBalance > 0) {
-      this.updateRow(0, { amount: this.outstandingBalance });
+      this.updateRow(0, { amount: r2(this.outstandingBalance) });
     }
   }
 
   private newRow(): PaymentRow {
     return {
+      uid: ++rowUid,
       payingAccountId: null,
       amount: null,
       paymentAppName: '',
@@ -128,7 +171,6 @@ export class PayCcBill implements OnInit {
       cashbackAmount: null,
       cashbackType: null,
       cashbackAccountId: null,
-      interestCategoryId: null,
       suggestions: [],
       showSuggestions: false,
       isLoadingSuggestions: false,
@@ -140,7 +182,7 @@ export class PayCcBill implements OnInit {
     const remaining = this.remainingBalance();
     const nextRow = this.newRow();
     if (remaining > 0) {
-      nextRow.amount = remaining;
+      nextRow.amount = r2(remaining);
     }
     this.rows.update(rows => [...rows, nextRow]);
   }
@@ -151,7 +193,32 @@ export class PayCcBill implements OnInit {
   }
 
   updateRow(index: number, patch: Partial<PaymentRow>): void {
-    this.rows.update(rows => rows.map((r, i) => i === index ? { ...r, ...patch } : r));
+    this.rows.update(rows => this.normalizeWallets(rows.map((r, i) => i === index ? { ...r, ...patch } : r)));
+  }
+
+  /** Changing the app invalidates any wallet amount that was applied for the old one. */
+  setPaymentApp(index: number, name: string | null): void {
+    this.updateRow(index, { paymentAppName: name ?? '', appliedWalletAmount: null });
+  }
+
+  /**
+   * Keeps every row's applied wallet amount legal after any edit: zero when
+   * there's no app / no balance, never above the payment amount, and never
+   * above what the app's wallet still holds after rows above it.
+   */
+  private normalizeWallets(rows: PaymentRow[]): PaymentRow[] {
+    const used: Record<string, number> = {};
+    return rows.map(r => {
+      const app = (r.paymentAppName ?? '').trim();
+      if (!app || !r.appliedWalletAmount || r.appliedWalletAmount <= 0) {
+        return r.appliedWalletAmount ? { ...r, appliedWalletAmount: null } : r;
+      }
+      const left = Math.max(0, r2(this.availableWalletBalance(app) - (used[app] ?? 0)));
+      const cap = r2(Math.min(left, r.amount ?? 0));
+      const applied = r2(Math.min(r.appliedWalletAmount, cap));
+      used[app] = (used[app] ?? 0) + applied;
+      return applied === r.appliedWalletAmount ? r : { ...r, appliedWalletAmount: applied > 0 ? applied : null };
+    });
   }
 
   async loadSuggestionsFor(index: number): Promise<void> {
@@ -191,7 +258,7 @@ export class PayCcBill implements OnInit {
 
   fillFullAmount(index: number): void {
     const currentEnteredOther = this.rows().reduce((sum, r, i) => i === index ? sum : sum + (r.amount ?? 0), 0);
-    const fillAmount = Math.max(0, this.outstandingBalance - currentEnteredOther);
+    const fillAmount = Math.max(0, r2(this.outstandingBalance - currentEnteredOther));
     this.updateRow(index, { amount: fillAmount });
   }
 
@@ -215,8 +282,31 @@ export class PayCcBill implements OnInit {
         this.notificationService.showError('Every payment needs an account and an amount greater than zero.');
         return;
       }
+      if ((row.appliedWalletAmount ?? 0) < 0 || (row.appliedWalletAmount ?? 0) > row.amount) {
+        this.notificationService.showError('Wallet amount must be between 0 and the payment amount.');
+        return;
+      }
+      if ((row.cashbackAmount ?? 0) > 0 && row.cashbackType === null) {
+        this.notificationService.showError('Choose a cashback type (direct, indirect or statement credit).');
+        return;
+      }
       if (row.cashbackType === 0 && !row.cashbackAccountId) {
         this.notificationService.showError('Direct cashback needs an account to credit it to.');
+        return;
+      }
+    }
+
+    // Cash leaving each account, summed across rows, must fit its balance.
+    const perAccount = new Map<number, number>();
+    for (const row of rows) {
+      perAccount.set(row.payingAccountId!, r2((perAccount.get(row.payingAccountId!) ?? 0) + this.bankAmount(row)));
+    }
+    for (const [accId, cash] of perAccount) {
+      const acc = this.eligibleAccounts().find(a => a.id === accId);
+      if (acc && cash > acc.balance) {
+        this.notificationService.showError(
+          `${acc.name} has ₹${acc.balance.toFixed(2)} but ₹${cash.toFixed(2)} would leave it.`
+        );
         return;
       }
     }
@@ -238,11 +328,10 @@ export class PayCcBill implements OnInit {
           amount: r.amount,
           appliedWalletAmount: r.appliedWalletAmount ?? 0,
           date: new Date().toISOString(),
-          paymentAppName: r.paymentAppName || null,
+          paymentAppName: r.paymentAppName.trim() || null,
           cashbackAmount: r.cashbackAmount,
           cashbackType: r.cashbackType,
-          cashbackAccountId: r.cashbackAccountId,
-          interestCategoryId: r.interestCategoryId
+          cashbackAccountId: r.cashbackAccountId
         }))
       };
 
