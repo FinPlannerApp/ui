@@ -162,8 +162,8 @@
                   <div class="min-w-[200px] sm:min-w-[240px] max-w-[260px] p-3.5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-all flex flex-col justify-between shrink-0 snap-start">
                     <div class="flex justify-between items-start mb-2 gap-2 min-w-0">
                       <span class="font-extrabold text-sm text-main truncate min-w-0 flex-1" [title]="tx.description">{{ tx.description }}</span>
-                      <span class="font-black text-sm shrink-0 whitespace-nowrap" [ngClass]="tx.type === 1 ? 'text-emerald-400' : 'text-rose-400'">
-                        {{ tx.type === 1 ? '+' : '-' }}{{ tx.amount | currency:'INR' }}
+                      <span class="font-black text-sm shrink-0 whitespace-nowrap" [ngClass]="tx.type === 0 ? 'text-emerald-400' : 'text-rose-400'">
+                        {{ tx.type === 0 ? '+' : '-' }}{{ tx.amount | currency:'INR' }}
                       </span>
                     </div>
                     <div class="flex items-center justify-between text-xs text-muted font-medium pt-2 border-t border-white/5 gap-1 min-w-0">
@@ -192,8 +192,8 @@
                   <div class="min-w-[200px] sm:min-w-[240px] max-w-[260px] p-3.5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-all flex flex-col justify-between shrink-0 snap-start">
                     <div class="flex justify-between items-start mb-2 gap-2 min-w-0">
                       <span class="font-extrabold text-sm text-main truncate min-w-0 flex-1" [title]="tx.description">{{ tx.description }}</span>
-                      <span class="font-black text-sm shrink-0 whitespace-nowrap" [ngClass]="tx.type === 1 ? 'text-emerald-400' : 'text-rose-400'">
-                        {{ tx.type === 1 ? '+' : '-' }}{{ tx.amount | currency:'INR' }}
+                      <span class="font-black text-sm shrink-0 whitespace-nowrap" [ngClass]="tx.type === 0 ? 'text-emerald-400' : 'text-rose-400'">
+                        {{ tx.type === 0 ? '+' : '-' }}{{ tx.amount | currency:'INR' }}
                       </span>
                     </div>
                     <div class="flex items-center text-xs text-muted font-medium pt-2 border-t border-white/5">
