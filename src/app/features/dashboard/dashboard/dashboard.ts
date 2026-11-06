@@ -30,12 +30,55 @@ import { BreadcrumbService } from '../../../core/layout/breadcrumb.service';
 export class Dashboard implements OnInit {
   public state = inject(DashboardState);
   private cdr = inject(ChangeDetectorRef);
+  readonly Math = Math;
+
+  // Dashboard version state (persisted in localStorage, default: modern)
+  dashboardVersion = signal<'modern' | 'classic'>(
+    (typeof localStorage !== 'undefined' && (localStorage.getItem('finplanner_dashboard_version') as 'modern' | 'classic')) || 'modern'
+  );
+
+  setDashboardVersion(version: 'modern' | 'classic') {
+    this.dashboardVersion.set(version);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('finplanner_dashboard_version', version);
+    }
+    this.cdr.markForCheck();
+  }
 
   // Expose signals for easier template access
   summary = this.state.summary;
   isLoading = this.state.isLoading;
   insights = this.state.insights;
   selectedGlobalDate = this.state.selectedDate;
+
+  // Modern dashboard computed helpers
+  netSavings = computed(() => {
+    const s = this.summary();
+    if (!s) return 0;
+    return (s.monthlyIncome || 0) - (s.monthlyExpenses || 0);
+  });
+
+  savingsRate = computed(() => {
+    const s = this.summary();
+    if (!s || !s.monthlyIncome || s.monthlyIncome <= 0) return 0;
+    const net = (s.monthlyIncome || 0) - (s.monthlyExpenses || 0);
+    return Math.round((net / s.monthlyIncome) * 100);
+  });
+
+  topSpendingCategories = computed(() => {
+    const data = this.state.spending();
+    if (!data || data.length === 0) return [];
+    const total = data.reduce((sum: number, item: any) => sum + (item.totalAmount || 0), 0);
+    const colors = [
+      '#10b981', '#38bdf8', '#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6', '#f97316'
+    ];
+    return data.slice(0, 5).map((item: any, idx: number) => ({
+      categoryName: item.categoryName,
+      totalAmount: item.totalAmount,
+      percentage: total > 0 ? Math.round((item.totalAmount / total) * 100) : 0,
+      color: colors[idx % colors.length]
+    }));
+  });
 
   // Local Insights UI State
   insightType = signal<'amount' | 'timeline' | 'category' | 'account'>('amount');
@@ -77,6 +120,7 @@ export class Dashboard implements OnInit {
   });
 
   spendingChartOptions: any;
+  modernChartOptions: any;
 
   constructor() {
     this.localDate = this.selectedGlobalDate();
@@ -96,7 +140,35 @@ export class Dashboard implements OnInit {
 
   ngOnInit() {
     this.setupSpendingChartOptions();
+    this.setupModernChartOptions();
     this.cdr.markForCheck();
+  }
+
+  setupModernChartOptions(): void {
+    this.modernChartOptions = {
+      cutout: '74%',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          backgroundColor: 'rgba(15, 23, 42, 0.95)',
+          titleColor: '#f4f4f5',
+          bodyColor: '#38bdf8',
+          borderColor: 'rgba(255, 255, 255, 0.15)',
+          borderWidth: 1,
+          padding: 10,
+          boxPadding: 4,
+          usePointStyle: true
+        }
+      },
+      animation: {
+        animateScale: true,
+        animateRotate: true
+      }
+    };
   }
 
   onDateChange(newDate: any) {
