@@ -15,40 +15,94 @@
 <div class="flex justify-center p-6">
   <p-progressSpinner></p-progressSpinner>
 </div>
+} @else if (state.error() && !summary()) {
+<div class="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-200 flex items-center justify-between gap-3 mb-4">
+  <div class="flex items-center gap-2 min-w-0">
+    <i class="pi pi-exclamation-triangle text-rose-400"></i>
+    <span class="text-sm">{{ state.error() }}</span>
+  </div>
+  <p-button label="Retry" icon="pi pi-refresh" size="small" [outlined]="true" (onClick)="state.refresh()"></p-button>
+</div>
 } @else if (summary()) {
 <!-- Summary Cards Grid (6 Cards Balanced Row) -->
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-4">
   <div>
     <app-stat-card label="Net Worth" [value]="(summary()?.netWorth | currency:'INR')!" icon="pi pi-wallet"
-      iconColor="var(--blue-500)"></app-stat-card>
+      variant="info" subtitle="Everything you own minus everything you owe"></app-stat-card>
   </div>
 
   <div>
     <app-stat-card label="Real Available Cash" [value]="(summary()?.realAvailableCash | currency:'INR')!"
-      icon="pi pi-money-bill" iconColor="var(--teal-500)"
-      secondaryValue="Liquid cash minus unpaid credit card debt"></app-stat-card>
+      icon="pi pi-money-bill" variant="success"
+      subtitle="Bank + cash, minus everything owed on your credit cards"></app-stat-card>
   </div>
 
   <div>
     <app-stat-card label="Reserved for Payment" [value]="(summary()?.reservedForPayment | currency:'INR')!"
-      icon="pi pi-lock" iconColor="var(--orange-500)"
-      secondaryValue="What's actually due on your credit cards right now"></app-stat-card>
+      icon="pi pi-lock" variant="amber"
+      subtitle="Unpaid part of your latest card bills (already deducted from Real Available Cash)"></app-stat-card>
   </div>
 
   <div>
     <app-stat-card label="Monthly Income" [value]="(summary()?.monthlyIncome | currency:'INR')!" icon="pi pi-arrow-up"
-      iconColor="var(--green-500)"></app-stat-card>
+      variant="success" subtitle="Income this month, excluding transfers"></app-stat-card>
   </div>
 
   <div>
     <app-stat-card label="Monthly Expenses" [value]="(summary()?.monthlyExpenses | currency:'INR')!"
-      icon="pi pi-arrow-down" iconColor="var(--red-500)"></app-stat-card>
+      icon="pi pi-arrow-down" variant="danger" subtitle="Spending this month, excluding transfers"></app-stat-card>
   </div>
 
   <div class="sm:col-span-2 lg:col-span-1 xl:col-span-1">
-    <app-stat-card label="B/F Amount" [value]="((summary()?.broughtForwardAmount || 0) | currency:'INR')!"
-      icon="pi pi-history" iconColor="var(--orange-500)" secondaryValue="Opening balance for this month">
+    <app-stat-card label="Carried Forward" [value]="((summary()?.broughtForwardAmount || 0) | currency:'INR')!"
+      icon="pi pi-history" variant="amber" subtitle="Net of all income and spending before this month">
     </app-stat-card>
+  </div>
+</div>
+
+<!-- Cash position: how Real Available Cash and Safe to Spend are built, step by step -->
+<div class="glass-card rounded-2xl p-4 mb-4 border border-white/10">
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+    <h3 class="m-0 text-base font-extrabold flex items-center gap-2">
+      <i class="pi pi-sitemap text-emerald-400"></i> Where your cash stands
+    </h3>
+    <span class="text-xs text-[var(--text-muted)]">Commitments counted: next {{ summary()?.obligationWindowDays || 30 }} days</span>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-5 gap-2.5 items-stretch">
+    <div class="p-3 rounded-xl bg-white/[0.04] border border-white/10 flex flex-col gap-0.5">
+      <span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">Cash you hold</span>
+      <span class="text-lg font-black text-white">{{ summary()?.liquidCash | currency:'INR' }}</span>
+      <span class="text-[11px] text-[var(--text-muted)]">Bank and cash accounts</span>
+    </div>
+
+    <div class="p-3 rounded-xl bg-white/[0.04] border border-white/10 flex flex-col gap-0.5">
+      <span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">− Card debt</span>
+      <span class="text-lg font-black text-rose-300">{{ summary()?.creditCardDebt | currency:'INR' }}</span>
+      <span class="text-[11px] text-[var(--text-muted)]">Billed and unbilled spending on cards</span>
+    </div>
+
+    <div class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex flex-col gap-0.5">
+      <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-300">= Real available cash</span>
+      <span class="text-lg font-black text-emerald-300">{{ summary()?.realAvailableCash | currency:'INR' }}</span>
+      <span class="text-[11px] text-[var(--text-muted)]">What is truly yours today</span>
+    </div>
+
+    <div class="p-3 rounded-xl bg-white/[0.04] border border-white/10 flex flex-col gap-0.5">
+      <span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">− Coming up</span>
+      <span class="text-lg font-black text-amber-300">{{ summary()?.upcomingObligationsTotal | currency:'INR' }}</span>
+      <span class="text-[11px] text-[var(--text-muted)]">EMIs, subscriptions, recurring bills and charges (card bills excluded: already above)</span>
+    </div>
+
+    <div class="p-3 rounded-xl border flex flex-col gap-0.5"
+         [class.bg-sky-500/10]="(summary()?.safeToSpend || 0) >= 0" [class.border-sky-500/30]="(summary()?.safeToSpend || 0) >= 0"
+         [class.bg-rose-500/10]="(summary()?.safeToSpend || 0) < 0" [class.border-rose-500/40]="(summary()?.safeToSpend || 0) < 0">
+      <span class="text-[10px] font-bold uppercase tracking-wider" [class.text-sky-300]="(summary()?.safeToSpend || 0) >= 0" [class.text-rose-300]="(summary()?.safeToSpend || 0) < 0">= Safe to spend</span>
+      <span class="text-lg font-black" [class.text-sky-300]="(summary()?.safeToSpend || 0) >= 0" [class.text-rose-300]="(summary()?.safeToSpend || 0) < 0">{{ summary()?.safeToSpend | currency:'INR' }}</span>
+      <span class="text-[11px] text-[var(--text-muted)]">
+        @if ((summary()?.safeToSpend || 0) < 0) { Commitments exceed your available cash } @else { What you can spend without missing a commitment }
+      </span>
+    </div>
   </div>
 </div>
 

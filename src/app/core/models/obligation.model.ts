@@ -4,6 +4,8 @@ export interface UpcomingObligation {
   amount: number | null;
   minimumDueAmount: number | null; // only set for source === 'CreditCard'
   dueDate: string;
-  source: 'Recurring' | 'CreditCard' | 'Loan';
+  source: 'Recurring' | 'CreditCard' | 'Loan' | 'AccountCharge';
   isShortfallRisk?: boolean;
+  isOverdue?: boolean;
+  reducesAvailableCash?: boolean;
 }

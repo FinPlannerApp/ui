@@ -20,6 +20,7 @@ export class DashboardState {
     private _budgets = signal<any[]>([]);
     private _financialHealth = signal<FinancialHealth | null>(null);
     private _isLoading = signal<boolean>(false);
+    private _error = signal<string | null>(null);
 
     // Global Filter Date (Defaults to current Month/Year)
     private _selectedDate = signal<Date>(new Date());
@@ -31,6 +32,7 @@ export class DashboardState {
     public budgets = this._budgets.asReadonly();
     public financialHealth = this._financialHealth.asReadonly();
     public isLoading = this._isLoading.asReadonly();
+    public error = this._error.asReadonly();
     public selectedDate = this._selectedDate.asReadonly();
 
     constructor() {
@@ -45,6 +47,7 @@ export class DashboardState {
 
         this._loadPromise = (async () => {
             this._isLoading.set(true);
+            this._error.set(null);
             try {
                 // Calculate Start & End of the selected Month
                 const current = this._selectedDate();
@@ -69,13 +72,17 @@ export class DashboardState {
                     firstValueFrom(healthReq)
                 ]);
 
+                if (!summaryRes?.isSuccess) {
+                    this._error.set(summaryRes?.error?.description || 'Could not load your dashboard.');
+                }
                 this._summary.set(summaryRes?.value ?? null);
                 this._spending.set(spendingRes?.value ?? []);
                 this._insights.set(insightsRes?.value ?? null);
                 this._budgets.set(budgetsRes?.value ?? []);
                 this._financialHealth.set(healthRes?.value ?? null);
 
-            } catch (err) {
+            } catch (err: any) {
+                this._error.set(err?.message || 'Could not load your dashboard.');
             } finally {
                 this._isLoading.set(false);
                 this._loadPromise = null;

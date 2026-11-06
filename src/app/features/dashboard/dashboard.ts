@@ -16,6 +16,11 @@ export interface DashboardSummary {
   broughtForwardAmount: number;
   realAvailableCash: number;
   reservedForPayment: number;
+  liquidCash: number;
+  creditCardDebt: number;
+  upcomingObligationsTotal: number;
+  safeToSpend: number;
+  obligationWindowDays: number;
 }
 
 export interface SpendingByCategory {

@@ -21,7 +21,7 @@
     @if (health(); as h) {
     <div class="flex flex-col items-center gap-3">
         <!-- Custom SVG Gauge -->
-        <div class="gauge-container relative flex justify-center mt-1 w-full max-w-[200px]">
+        <div class="gauge-container flex flex-col items-center mt-1 w-full max-w-[200px]">
             <svg class="w-full h-auto max-w-[200px]" viewBox="0 0 200 110">
                 <!-- Background Track -->
                 <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="12"
@@ -48,7 +48,8 @@
                 <circle cx="100" cy="100" r="7" fill="#38bdf8" />
             </svg>
 
-            <div class="absolute bottom-0 text-center flex flex-col items-center justify-end pb-1">
+            <!-- Score sits BELOW the dial (in normal flow) so the needle can never cross the label. -->
+            <div class="text-center flex flex-col items-center -mt-1">
                 <div class="text-3xl font-extrabold text-main leading-none">{{ score() }}</div>
                 <div class="text-xs font-bold uppercase mt-1 tracking-wider" [class]="statusClass()">{{ h.status }}</div>
             </div>

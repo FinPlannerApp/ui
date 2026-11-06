@@ -36,13 +36,32 @@ export class UpcomingObligationsWidget implements OnInit {
     }
   }
 
+  /** Whole calendar days until the due date; negative when it is already overdue. */
   daysUntil(dateStr: string): number {
-    const days = (new Date(dateStr).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24);
-    return Math.max(0, Math.round(days));
+    const due = new Date(dateStr);
+    const startOf = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    return Math.round((startOf(due) - startOf(new Date())) / (1000 * 60 * 60 * 24));
+  }
+
+  /** Badge text, e.g. "Overdue by 3 days", "Due today", "In 9 days". */
+  dueLabel(o: UpcomingObligation): string {
+    const d = this.daysUntil(o.dueDate);
+    if (d < 0 || o.isOverdue) {
+      const n = Math.abs(d);
+      return n <= 1 ? 'Overdue' : `Overdue by ${n} days`;
+    }
+    if (d === 0) return 'Due today';
+    return d === 1 ? 'Tomorrow' : `In ${d} days`;
+  }
+
+  isUrgent(o: UpcomingObligation): boolean {
+    return !!o.isOverdue || this.daysUntil(o.dueDate) <= 0;
   }
 
   displayAmount(obligation: UpcomingObligation): string {
     if (obligation.source === 'CreditCard') {
+      // `amount` is what is still unpaid on the latest statement.
+      if (obligation.amount != null) return `₹${obligation.amount.toLocaleString('en-IN')} due`;
       return obligation.minimumDueAmount != null
         ? `Min. due: ₹${obligation.minimumDueAmount.toLocaleString('en-IN')}`
         : 'Amount not set';
