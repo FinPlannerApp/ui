@@ -6,8 +6,10 @@
   </div>
   <!-- Action Buttons (Balanced 2-col Grid on Mobile, Inline Row on Desktop) -->
   <div class="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
-    <p-button label="Bulk Add" icon="pi pi-table" routerLink="/app/bulk-transaction-add" severity="success" styleClass="w-full sm:w-auto whitespace-nowrap rounded-xl py-2 text-xs sm:text-sm font-bold justify-center text-center"></p-button>
-    <p-button label="View Accounts" icon="pi pi-wallet" routerLink="/app/accounts" [outlined]="true" styleClass="w-full sm:w-auto whitespace-nowrap rounded-xl py-2 text-xs sm:text-sm font-bold justify-center text-center"></p-button>
+    <p-button label="Bulk Add" icon="pi pi-table" routerLink="/app/bulk-transaction-add" severity="success"
+      styleClass="w-full sm:w-auto whitespace-nowrap rounded-xl py-2 text-xs sm:text-sm font-bold justify-center text-center"></p-button>
+    <p-button label="View Accounts" icon="pi pi-wallet" routerLink="/app/accounts" [outlined]="true"
+      styleClass="w-full sm:w-auto whitespace-nowrap rounded-xl py-2 text-xs sm:text-sm font-bold justify-center text-center"></p-button>
   </div>
 </div>
 
@@ -16,7 +18,8 @@
   <p-progressSpinner></p-progressSpinner>
 </div>
 } @else if (state.error() && !summary()) {
-<div class="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-200 flex items-center justify-between gap-3 mb-4">
+<div
+  class="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-200 flex items-center justify-between gap-3 mb-4">
   <div class="flex items-center gap-2 min-w-0">
     <i class="pi pi-exclamation-triangle text-rose-400"></i>
     <span class="text-sm">{{ state.error() }}</span>
@@ -54,8 +57,8 @@
   </div>
 
   <div class="sm:col-span-2 lg:col-span-1 xl:col-span-1">
-    <app-stat-card label="Carried Forward" [value]="((summary()?.broughtForwardAmount || 0) | currency:'INR')!"
-      icon="pi pi-history" variant="amber" subtitle="Net of all income and spending before this month">
+    <app-stat-card label="Cash at Start of Month" [value]="((summary()?.broughtForwardAmount || 0) | currency:'INR')!"
+      icon="pi pi-history" variant="amber" subtitle="Bank + cash balance on the 1st of this month">
     </app-stat-card>
   </div>
 </div>
@@ -66,7 +69,8 @@
     <h3 class="m-0 text-base font-extrabold flex items-center gap-2">
       <i class="pi pi-sitemap text-emerald-400"></i> Where your cash stands
     </h3>
-    <span class="text-xs text-[var(--text-muted)]">Commitments counted: next {{ summary()?.obligationWindowDays || 30 }} days</span>
+    <span class="text-xs text-[var(--text-muted)]">Commitments counted: next {{ summary()?.obligationWindowDays || 30 }}
+      days</span>
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-5 gap-2.5 items-stretch">
@@ -91,17 +95,22 @@
     <div class="p-3 rounded-xl bg-white/[0.04] border border-white/10 flex flex-col gap-0.5">
       <span class="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">− Coming up</span>
       <span class="text-lg font-black text-amber-300">{{ summary()?.upcomingObligationsTotal | currency:'INR' }}</span>
-      <span class="text-[11px] text-[var(--text-muted)]">EMIs, subscriptions, recurring bills and charges (card bills excluded: already above)</span>
+      <span class="text-[11px] text-[var(--text-muted)]">EMIs, subscriptions, recurring bills and charges (card bills
+        excluded: already above)</span>
     </div>
 
-    <div class="p-3 rounded-xl border flex flex-col gap-0.5"
-         [class.bg-sky-500/10]="(summary()?.safeToSpend || 0) >= 0" [class.border-sky-500/30]="(summary()?.safeToSpend || 0) >= 0"
-         [class.bg-rose-500/10]="(summary()?.safeToSpend || 0) < 0" [class.border-rose-500/40]="(summary()?.safeToSpend || 0) < 0">
-      <span class="text-[10px] font-bold uppercase tracking-wider" [class.text-sky-300]="(summary()?.safeToSpend || 0) >= 0" [class.text-rose-300]="(summary()?.safeToSpend || 0) < 0">= Safe to spend</span>
-      <span class="text-lg font-black" [class.text-sky-300]="(summary()?.safeToSpend || 0) >= 0" [class.text-rose-300]="(summary()?.safeToSpend || 0) < 0">{{ summary()?.safeToSpend | currency:'INR' }}</span>
+    <div class="p-3 rounded-xl border flex flex-col gap-0.5" [class.bg-sky-500/10]="(summary()?.safeToSpend || 0) >= 0"
+      [class.border-sky-500/30]="(summary()?.safeToSpend || 0) >= 0"
+      [class.bg-rose-500/10]="(summary()?.safeToSpend || 0) < 0"
+      [class.border-rose-500/40]="(summary()?.safeToSpend || 0) < 0">
+      <span class="text-[10px] font-bold uppercase tracking-wider"
+        [class.text-sky-300]="(summary()?.safeToSpend || 0) >= 0"
+        [class.text-rose-300]="(summary()?.safeToSpend || 0) < 0">= Safe to spend</span>
+      <span class="text-lg font-black" [class.text-sky-300]="(summary()?.safeToSpend || 0) >= 0"
+        [class.text-rose-300]="(summary()?.safeToSpend || 0) < 0">{{ summary()?.safeToSpend | currency:'INR' }}</span>
       <span class="text-[11px] text-[var(--text-muted)]">
-        @if ((summary()?.safeToSpend || 0) < 0) { Commitments exceed your available cash } @else { What you can spend without missing a commitment }
-      </span>
+        @if ((summary()?.safeToSpend || 0) < 0) { Commitments exceed your available cash } @else { What you can spend
+          without missing a commitment } </span>
     </div>
   </div>
 </div>
@@ -167,201 +176,214 @@
       </ng-template>
 
       @if (insights()) {
-        <!-- Filter Tabs (2x2 Grid on Mobile, 4-Col Row on Tablet & Desktop) -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
-          <p-button 
-            label="💸 Large Spends" 
-            (onClick)="toggleInsight('amount')" 
-            [outlined]="insightType() !== 'amount'"
-            [severity]="insightType() === 'amount' ? 'primary' : 'secondary'"
-            styleClass="w-full text-[11px] sm:text-xs font-extrabold rounded-2xl justify-center text-center whitespace-nowrap py-2 px-1.5 sm:py-2.5 sm:px-2"
-          ></p-button>
-          <p-button 
-            label="🕒 Recent Activity" 
-            (onClick)="toggleInsight('timeline')"
-            [outlined]="insightType() !== 'timeline'"
-            [severity]="insightType() === 'timeline' ? 'primary' : 'secondary'"
-            styleClass="w-full text-[11px] sm:text-xs font-extrabold rounded-2xl justify-center text-center whitespace-nowrap py-2 px-1.5 sm:py-2.5 sm:px-2"
-          ></p-button>
-          <p-button 
-            label="📊 Category Peaks" 
-            (onClick)="toggleInsight('category')"
-            [outlined]="insightType() !== 'category'"
-            [severity]="insightType() === 'category' ? 'primary' : 'secondary'"
-            styleClass="w-full text-[11px] sm:text-xs font-extrabold rounded-2xl justify-center text-center whitespace-nowrap py-2 px-1.5 sm:py-2.5 sm:px-2"
-          ></p-button>
-          <p-button 
-            label="🏦 Account Peaks" 
-            (onClick)="toggleInsight('account')" 
-            [outlined]="insightType() !== 'account'"
-            [severity]="insightType() === 'account' ? 'primary' : 'secondary'"
-            styleClass="w-full text-[11px] sm:text-xs font-extrabold rounded-2xl justify-center text-center whitespace-nowrap py-2 px-1.5 sm:py-2.5 sm:px-2"
-          ></p-button>
+      <!-- Filter Tabs (2x2 Grid on Mobile, 4-Col Row on Tablet & Desktop) -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+        <p-button label="💸 Large Spends" (onClick)="toggleInsight('amount')" [outlined]="insightType() !== 'amount'"
+          [severity]="insightType() === 'amount' ? 'primary' : 'secondary'"
+          styleClass="w-full text-[11px] sm:text-xs font-extrabold rounded-2xl justify-center text-center whitespace-nowrap py-2 px-1.5 sm:py-2.5 sm:px-2"></p-button>
+        <p-button label="🕒 Recent Activity" (onClick)="toggleInsight('timeline')"
+          [outlined]="insightType() !== 'timeline'" [severity]="insightType() === 'timeline' ? 'primary' : 'secondary'"
+          styleClass="w-full text-[11px] sm:text-xs font-extrabold rounded-2xl justify-center text-center whitespace-nowrap py-2 px-1.5 sm:py-2.5 sm:px-2"></p-button>
+        <p-button label="📊 Category Peaks" (onClick)="toggleInsight('category')"
+          [outlined]="insightType() !== 'category'" [severity]="insightType() === 'category' ? 'primary' : 'secondary'"
+          styleClass="w-full text-[11px] sm:text-xs font-extrabold rounded-2xl justify-center text-center whitespace-nowrap py-2 px-1.5 sm:py-2.5 sm:px-2"></p-button>
+        <p-button label="🏦 Account Peaks" (onClick)="toggleInsight('account')" [outlined]="insightType() !== 'account'"
+          [severity]="insightType() === 'account' ? 'primary' : 'secondary'"
+          styleClass="w-full text-[11px] sm:text-xs font-extrabold rounded-2xl justify-center text-center whitespace-nowrap py-2 px-1.5 sm:py-2.5 sm:px-2"></p-button>
+      </div>
+
+      <div class="p-3 sm:p-4 rounded-2xl bg-white/[0.03] border border-white/10">
+        @switch (insightType()) {
+        @case ('amount') {
+        <div class="flex justify-between items-center mb-4 min-w-0 gap-2">
+          <h3
+            class="m-0 text-sm sm:text-base font-extrabold flex items-center gap-2 text-amber-400 truncate min-w-0 flex-1">
+            <i class="pi pi-sort-alt shrink-0"></i>
+            <span class="truncate">{{ isAscending() ? 'Smallest 5 Transactions' : 'Largest 5 Transactions' }}</span>
+          </h3>
+          <span
+            class="text-muted text-xs cursor-pointer hover:text-amber-400 transition-colors flex items-center gap-1 shrink-0 whitespace-nowrap"
+            (click)="isAscending.set(!isAscending())">
+            <i class="pi pi-sync text-xs"></i>Reverse Order
+          </span>
         </div>
-
-        <div class="p-3 sm:p-4 rounded-2xl bg-white/[0.03] border border-white/10">
-          @switch (insightType()) {
-            @case ('amount') {
-              <div class="flex justify-between items-center mb-4 min-w-0 gap-2">
-                <h3 class="m-0 text-sm sm:text-base font-extrabold flex items-center gap-2 text-amber-400 truncate min-w-0 flex-1">
-                  <i class="pi pi-sort-alt shrink-0"></i>
-                  <span class="truncate">{{ isAscending() ? 'Smallest 5 Transactions' : 'Largest 5 Transactions' }}</span>
-                </h3>
-                <span class="text-muted text-xs cursor-pointer hover:text-amber-400 transition-colors flex items-center gap-1 shrink-0 whitespace-nowrap" (click)="isAscending.set(!isAscending())">
-                  <i class="pi pi-sync text-xs"></i>Reverse Order
-                </span>
-              </div>
-              <div class="flex gap-3 overflow-x-auto pb-2 snap-x">
-                @for (tx of (isAscending() ? insights()?.lowestAmountTransactions : insights()?.highestAmountTransactions); track tx.id) {
-                  <div class="min-w-[200px] sm:min-w-[240px] max-w-[260px] p-3.5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-all flex flex-col justify-between shrink-0 snap-start">
-                    <div class="flex justify-between items-start mb-2 gap-2 min-w-0">
-                      <span class="font-extrabold text-sm text-main truncate min-w-0 flex-1" [title]="tx.description">{{ tx.description }}</span>
-                      <span class="font-black text-sm shrink-0 whitespace-nowrap" [ngClass]="tx.type === 0 ? 'text-emerald-400' : 'text-rose-400'">
-                        {{ tx.type === 0 ? '+' : '-' }}{{ tx.amount | currency:'INR' }}
-                      </span>
-                    </div>
-                    <div class="flex items-center justify-between text-xs text-muted font-medium pt-2 border-t border-white/5 gap-1 min-w-0">
-                      <span class="shrink-0"><i class="pi pi-calendar text-xs mr-1 text-amber-400"></i>{{ tx.date | date:'shortDate' }}</span>
-                      <span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-xs font-semibold truncate min-w-0"><i class="pi pi-tag text-xs mr-1 shrink-0"></i>{{ tx.categoryName }}</span>
-                    </div>
-                  </div>
-                } @empty {
-                  <div class="w-full text-center py-8 text-muted font-semibold">No transactions recorded for this period.</div>
-                }
-              </div>
-            }
-
-            @case ('timeline') {
-              <div class="flex justify-between items-center mb-4 min-w-0 gap-2">
-                <h3 class="m-0 text-sm sm:text-base font-extrabold flex items-center gap-2 text-amber-400 truncate min-w-0 flex-1">
-                  <i class="pi pi-clock shrink-0"></i>
-                  <span class="truncate">{{ isAscending() ? 'First 5 Transactions' : 'Last 5 Transactions' }}</span>
-                </h3>
-                <span class="text-muted text-xs cursor-pointer hover:text-amber-400 transition-colors flex items-center gap-1 shrink-0 whitespace-nowrap" (click)="isAscending.set(!isAscending())">
-                  <i class="pi pi-sync text-xs"></i>Reverse Order
-                </span>
-              </div>
-              <div class="flex gap-3 overflow-x-auto pb-2 snap-x">
-                @for (tx of (isAscending() ? insights()?.oldestTransactions : insights()?.latestTransactions); track tx.id) {
-                  <div class="min-w-[200px] sm:min-w-[240px] max-w-[260px] p-3.5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-all flex flex-col justify-between shrink-0 snap-start">
-                    <div class="flex justify-between items-start mb-2 gap-2 min-w-0">
-                      <span class="font-extrabold text-sm text-main truncate min-w-0 flex-1" [title]="tx.description">{{ tx.description }}</span>
-                      <span class="font-black text-sm shrink-0 whitespace-nowrap" [ngClass]="tx.type === 0 ? 'text-emerald-400' : 'text-rose-400'">
-                        {{ tx.type === 0 ? '+' : '-' }}{{ tx.amount | currency:'INR' }}
-                      </span>
-                    </div>
-                    <div class="flex items-center text-xs text-muted font-medium pt-2 border-t border-white/5">
-                      <i class="pi pi-calendar text-xs mr-1.5 text-amber-400 shrink-0"></i>{{ tx.date | date:'shortDate' }}
-                    </div>
-                  </div>
-                } @empty {
-                  <div class="w-full text-center py-8 text-muted font-semibold">No recent activity.</div>
-                }
-              </div>
-            }
-
-            @case ('category') {
-              <div class="flex justify-between items-center mb-4">
-                <h3 class="m-0 text-base font-extrabold flex items-center gap-2 text-amber-400">
-                  <i class="pi pi-filter"></i>
-                  Category Highs & Lows
-                </h3>
-                <span class="text-muted text-xs font-medium">
-                  {{ insights()?.categoryExtremes?.length || 0 }} Categories Analyzed
-                </span>
-              </div>
-
-              <div class="max-h-[460px] overflow-y-auto pr-1">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                  @for (grp of insights()?.categoryExtremes; track grp.groupName) {
-                    <div class="p-3.5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-all flex flex-col justify-between">
-                      <div class="font-extrabold text-sm text-main mb-2.5 pb-2 border-b border-white/10 flex items-center gap-2">
-                        <i class="pi pi-folder text-amber-400 text-xs shrink-0"></i>
-                        <span class="truncate">{{ grp.groupName }}</span>
-                      </div>
-                      <div class="flex flex-col gap-2">
-                        <div class="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between">
-                          <div class="flex flex-col min-w-0 pr-2">
-                            <span class="text-[10px] font-black text-emerald-400 uppercase tracking-wider">Max Tx</span>
-                            <span class="font-extrabold text-xs text-main truncate">{{ grp.maxTransaction?.description || 'N/A' }}</span>
-                          </div>
-                          <span class="text-xs font-black text-emerald-400 shrink-0">
-                            {{ grp.maxTransaction ? (grp.maxTransaction.amount | currency:'INR') : '-' }}
-                          </span>
-                        </div>
-
-                        <div class="p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-between">
-                          <div class="flex flex-col min-w-0 pr-2">
-                            <span class="text-[10px] font-black text-purple-400 uppercase tracking-wider">Min Tx</span>
-                            <span class="font-extrabold text-xs text-main truncate">{{ grp.minTransaction?.description || 'N/A' }}</span>
-                          </div>
-                          <span class="text-xs font-black text-purple-400 shrink-0">
-                            {{ grp.minTransaction ? (grp.minTransaction.amount | currency:'INR') : '-' }}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  } @empty {
-                    <div class="col-span-full text-center py-8 text-muted font-semibold">No category data found.</div>
-                  }
-                </div>
-              </div>
-            }
-
-            @case ('account') {
-              <div class="flex justify-between items-center mb-4">
-                <h3 class="m-0 text-base font-extrabold flex items-center gap-2 text-amber-400">
-                  <i class="pi pi-building"></i>
-                  Account Highs & Lows
-                </h3>
-                <span class="text-muted text-xs font-medium">
-                  {{ insights()?.accountExtremes?.length || 0 }} Accounts Analyzed
-                </span>
-              </div>
-
-              <div class="max-h-[460px] overflow-y-auto pr-1">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                  @for (grp of insights()?.accountExtremes; track grp.groupName) {
-                    <div class="p-3.5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-all flex flex-col justify-between">
-                      <div class="font-extrabold text-sm text-main mb-2.5 pb-2 border-b border-white/10 flex items-center gap-2">
-                        <i class="pi pi-credit-card text-amber-400 text-xs shrink-0"></i>
-                        <span class="truncate">{{ grp.groupName }}</span>
-                      </div>
-                      <div class="flex flex-col gap-2">
-                        <div class="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-between">
-                          <div class="flex flex-col min-w-0 pr-2">
-                            <span class="text-[10px] font-black text-cyan-400 uppercase tracking-wider">Max Tx</span>
-                            <span class="font-extrabold text-xs text-main truncate">{{ grp.maxTransaction?.description || 'N/A' }}</span>
-                          </div>
-                          <span class="text-xs font-black text-cyan-400 shrink-0">
-                            {{ grp.maxTransaction ? (grp.maxTransaction.amount | currency:'INR') : '-' }}
-                          </span>
-                        </div>
-
-                        <div class="p-2.5 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-between">
-                          <div class="flex flex-col min-w-0 pr-2">
-                            <span class="text-[10px] font-black text-teal-400 uppercase tracking-wider">Min Tx</span>
-                            <span class="font-extrabold text-xs text-main truncate">{{ grp.minTransaction?.description || 'N/A' }}</span>
-                          </div>
-                          <span class="text-xs font-black text-teal-400 shrink-0">
-                            {{ grp.minTransaction ? (grp.minTransaction.amount | currency:'INR') : '-' }}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  } @empty {
-                    <div class="col-span-full text-center py-8 text-muted font-semibold">No account data found.</div>
-                  }
-                </div>
-              </div>
-            }
+        <div class="flex gap-3 overflow-x-auto pb-2 snap-x">
+          @for (tx of (isAscending() ? insights()?.lowestAmountTransactions : insights()?.highestAmountTransactions);
+          track tx.id) {
+          <div
+            class="min-w-[200px] sm:min-w-[240px] max-w-[260px] p-3.5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-all flex flex-col justify-between shrink-0 snap-start">
+            <div class="flex justify-between items-start mb-2 gap-2 min-w-0">
+              <span class="font-extrabold text-sm text-main truncate min-w-0 flex-1" [title]="tx.description">{{
+                tx.description }}</span>
+              <span class="font-black text-sm shrink-0 whitespace-nowrap"
+                [ngClass]="tx.type === 0 ? 'text-emerald-400' : 'text-rose-400'">
+                {{ tx.type === 0 ? '+' : '-' }}{{ tx.amount | currency:'INR' }}
+              </span>
+            </div>
+            <div
+              class="flex items-center justify-between text-xs text-muted font-medium pt-2 border-t border-white/5 gap-1 min-w-0">
+              <span class="shrink-0"><i class="pi pi-calendar text-xs mr-1 text-amber-400"></i>{{ tx.date |
+                date:'shortDate' }}</span>
+              <span
+                class="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-xs font-semibold truncate min-w-0"><i
+                  class="pi pi-tag text-xs mr-1 shrink-0"></i>{{ tx.categoryName }}</span>
+            </div>
+          </div>
+          } @empty {
+          <div class="w-full text-center py-8 text-muted font-semibold">No transactions recorded for this period.</div>
           }
         </div>
-      } @else {
-        <div class="flex flex-col items-center justify-center p-12 text-center">
-          <p-progressSpinner strokeWidth="4"></p-progressSpinner>
-          <p class="mt-3 text-muted font-semibold text-sm">Crunching your financial data...</p>
+        }
+
+        @case ('timeline') {
+        <div class="flex justify-between items-center mb-4 min-w-0 gap-2">
+          <h3
+            class="m-0 text-sm sm:text-base font-extrabold flex items-center gap-2 text-amber-400 truncate min-w-0 flex-1">
+            <i class="pi pi-clock shrink-0"></i>
+            <span class="truncate">{{ isAscending() ? 'First 5 Transactions' : 'Last 5 Transactions' }}</span>
+          </h3>
+          <span
+            class="text-muted text-xs cursor-pointer hover:text-amber-400 transition-colors flex items-center gap-1 shrink-0 whitespace-nowrap"
+            (click)="isAscending.set(!isAscending())">
+            <i class="pi pi-sync text-xs"></i>Reverse Order
+          </span>
         </div>
+        <div class="flex gap-3 overflow-x-auto pb-2 snap-x">
+          @for (tx of (isAscending() ? insights()?.oldestTransactions : insights()?.latestTransactions); track tx.id) {
+          <div
+            class="min-w-[200px] sm:min-w-[240px] max-w-[260px] p-3.5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-all flex flex-col justify-between shrink-0 snap-start">
+            <div class="flex justify-between items-start mb-2 gap-2 min-w-0">
+              <span class="font-extrabold text-sm text-main truncate min-w-0 flex-1" [title]="tx.description">{{
+                tx.description }}</span>
+              <span class="font-black text-sm shrink-0 whitespace-nowrap"
+                [ngClass]="tx.type === 0 ? 'text-emerald-400' : 'text-rose-400'">
+                {{ tx.type === 0 ? '+' : '-' }}{{ tx.amount | currency:'INR' }}
+              </span>
+            </div>
+            <div class="flex items-center text-xs text-muted font-medium pt-2 border-t border-white/5">
+              <i class="pi pi-calendar text-xs mr-1.5 text-amber-400 shrink-0"></i>{{ tx.date | date:'shortDate' }}
+            </div>
+          </div>
+          } @empty {
+          <div class="w-full text-center py-8 text-muted font-semibold">No recent activity.</div>
+          }
+        </div>
+        }
+
+        @case ('category') {
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="m-0 text-base font-extrabold flex items-center gap-2 text-amber-400">
+            <i class="pi pi-filter"></i>
+            Category Highs & Lows
+          </h3>
+          <span class="text-muted text-xs font-medium">
+            {{ insights()?.categoryExtremes?.length || 0 }} Categories Analyzed
+          </span>
+        </div>
+
+        <div class="max-h-[460px] overflow-y-auto pr-1">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            @for (grp of insights()?.categoryExtremes; track grp.groupName) {
+            <div
+              class="p-3.5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-all flex flex-col justify-between">
+              <div
+                class="font-extrabold text-sm text-main mb-2.5 pb-2 border-b border-white/10 flex items-center gap-2">
+                <i class="pi pi-folder text-amber-400 text-xs shrink-0"></i>
+                <span class="truncate">{{ grp.groupName }}</span>
+              </div>
+              <div class="flex flex-col gap-2">
+                <div
+                  class="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between">
+                  <div class="flex flex-col min-w-0 pr-2">
+                    <span class="text-[10px] font-black text-emerald-400 uppercase tracking-wider">Max Tx</span>
+                    <span class="font-extrabold text-xs text-main truncate">{{ grp.maxTransaction?.description || 'N/A'
+                      }}</span>
+                  </div>
+                  <span class="text-xs font-black text-emerald-400 shrink-0">
+                    {{ grp.maxTransaction ? (grp.maxTransaction.amount | currency:'INR') : '-' }}
+                  </span>
+                </div>
+
+                <div
+                  class="p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-between">
+                  <div class="flex flex-col min-w-0 pr-2">
+                    <span class="text-[10px] font-black text-purple-400 uppercase tracking-wider">Min Tx</span>
+                    <span class="font-extrabold text-xs text-main truncate">{{ grp.minTransaction?.description || 'N/A'
+                      }}</span>
+                  </div>
+                  <span class="text-xs font-black text-purple-400 shrink-0">
+                    {{ grp.minTransaction ? (grp.minTransaction.amount | currency:'INR') : '-' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            } @empty {
+            <div class="col-span-full text-center py-8 text-muted font-semibold">No category data found.</div>
+            }
+          </div>
+        </div>
+        }
+
+        @case ('account') {
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="m-0 text-base font-extrabold flex items-center gap-2 text-amber-400">
+            <i class="pi pi-building"></i>
+            Account Highs & Lows
+          </h3>
+          <span class="text-muted text-xs font-medium">
+            {{ insights()?.accountExtremes?.length || 0 }} Accounts Analyzed
+          </span>
+        </div>
+
+        <div class="max-h-[460px] overflow-y-auto pr-1">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            @for (grp of insights()?.accountExtremes; track grp.groupName) {
+            <div
+              class="p-3.5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-all flex flex-col justify-between">
+              <div
+                class="font-extrabold text-sm text-main mb-2.5 pb-2 border-b border-white/10 flex items-center gap-2">
+                <i class="pi pi-credit-card text-amber-400 text-xs shrink-0"></i>
+                <span class="truncate">{{ grp.groupName }}</span>
+              </div>
+              <div class="flex flex-col gap-2">
+                <div
+                  class="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-between">
+                  <div class="flex flex-col min-w-0 pr-2">
+                    <span class="text-[10px] font-black text-cyan-400 uppercase tracking-wider">Max Tx</span>
+                    <span class="font-extrabold text-xs text-main truncate">{{ grp.maxTransaction?.description || 'N/A'
+                      }}</span>
+                  </div>
+                  <span class="text-xs font-black text-cyan-400 shrink-0">
+                    {{ grp.maxTransaction ? (grp.maxTransaction.amount | currency:'INR') : '-' }}
+                  </span>
+                </div>
+
+                <div
+                  class="p-2.5 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-between">
+                  <div class="flex flex-col min-w-0 pr-2">
+                    <span class="text-[10px] font-black text-teal-400 uppercase tracking-wider">Min Tx</span>
+                    <span class="font-extrabold text-xs text-main truncate">{{ grp.minTransaction?.description || 'N/A'
+                      }}</span>
+                  </div>
+                  <span class="text-xs font-black text-teal-400 shrink-0">
+                    {{ grp.minTransaction ? (grp.minTransaction.amount | currency:'INR') : '-' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            } @empty {
+            <div class="col-span-full text-center py-8 text-muted font-semibold">No account data found.</div>
+            }
+          </div>
+        </div>
+        }
+        }
+      </div>
+      } @else {
+      <div class="flex flex-col items-center justify-center p-12 text-center">
+        <p-progressSpinner strokeWidth="4"></p-progressSpinner>
+        <p class="mt-3 text-muted font-semibold text-sm">Crunching your financial data...</p>
+      </div>
       }
     </p-card>
   </div>

@@ -64,6 +64,7 @@ function initializeApp(
 }
 
 import { loadingInterceptor } from './core/interceptors/loading-interceptor';
+import { dataSyncInterceptor } from './core/interceptors/data-sync-interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -71,7 +72,7 @@ export const appConfig: ApplicationConfig = {
     provideZonelessChangeDetection(),
     provideRouter(routes),
     provideHttpClient(
-      withInterceptors([loadingInterceptor, authInterceptor, errorInterceptor, statusInterceptor]),
+      withInterceptors([loadingInterceptor, authInterceptor, errorInterceptor, statusInterceptor, dataSyncInterceptor]),
       withXsrfConfiguration({
         cookieName: 'XSRF-TOKEN',
         headerName: 'X-XSRF-TOKEN'

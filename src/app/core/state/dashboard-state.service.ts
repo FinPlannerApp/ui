@@ -39,14 +39,22 @@ export class DashboardState {
     }
 
     private _loadPromise: Promise<void> | null = null;
+    // Guards against an older, slower response overwriting a newer one
+    // (e.g. two quick edits → two refreshes finishing out of order).
+    private _seq = 0;
 
-    async load(force: boolean = false): Promise<void> {
+    /**
+     * @param force  bypass the in-flight request dedupe
+     * @param silent keep the current numbers on screen while refetching (no skeleton flash)
+     */
+    async load(force: boolean = false, silent: boolean = false): Promise<void> {
         if (this._loadPromise && !force) {
             return this._loadPromise;
         }
 
-        this._loadPromise = (async () => {
-            this._isLoading.set(true);
+        const seq = ++this._seq;
+        const promise = (async () => {
+            if (!silent) this._isLoading.set(true);
             this._error.set(null);
             try {
                 // Calculate Start & End of the selected Month
@@ -72,6 +80,9 @@ export class DashboardState {
                     firstValueFrom(healthReq)
                 ]);
 
+                // A newer load started while this one was in flight — drop this stale result.
+                if (seq !== this._seq) return;
+
                 if (!summaryRes?.isSuccess) {
                     this._error.set(summaryRes?.error?.description || 'Could not load your dashboard.');
                 }
@@ -82,14 +93,24 @@ export class DashboardState {
                 this._financialHealth.set(healthRes?.value ?? null);
 
             } catch (err: any) {
-                this._error.set(err?.message || 'Could not load your dashboard.');
+                if (seq === this._seq) {
+                    this._error.set(err?.message || 'Could not load your dashboard.');
+                }
             } finally {
-                this._isLoading.set(false);
-                this._loadPromise = null;
+                if (seq === this._seq) {
+                    this._isLoading.set(false);
+                    this._loadPromise = null;
+                }
             }
         })();
 
-        return this._loadPromise;
+        this._loadPromise = promise;
+        return promise;
+    }
+
+    /** True once the dashboard has data on screen that could go stale. */
+    get hasData(): boolean {
+        return this._summary() !== null;
     }
 
     updateDate(newDate: Date) {
@@ -97,7 +118,7 @@ export class DashboardState {
         this.load(true);
     }
 
-    refresh() {
-        return this.load(true);
+    refresh(silent: boolean = false) {
+        return this.load(true, silent);
     }
 }
