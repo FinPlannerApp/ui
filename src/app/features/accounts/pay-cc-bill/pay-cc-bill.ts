@@ -65,6 +65,7 @@ export class PayCcBill implements OnInit {
   outstandingBalance: number = this.config.data?.outstandingBalance ?? 0;
 
   isSubmitting = signal(false);
+  errorMessage = signal<string | null>(null);
   result = signal<CreditCardPaymentBatchResult | null>(null);
   categories = signal<{ id: number; name: string }[]>([]);
   knownPaymentApps = signal<string[]>([]);
@@ -227,6 +228,7 @@ export class PayCcBill implements OnInit {
       return;
     }
 
+    this.errorMessage.set(null);
     this.isSubmitting.set(true);
     try {
       const payload = {
@@ -252,9 +254,15 @@ export class PayCcBill implements OnInit {
         this.result.set(res.value);
         this.notificationService.showSuccess('Payment recorded.');
         await this.accountState.refresh();
+      } else {
+        const errorMsg = res.error?.description || 'Payment failed.';
+        this.errorMessage.set(errorMsg);
+        this.notificationService.showError(errorMsg, 'Payment Failed');
       }
     } catch (err: any) {
-      this.notificationService.showError(err?.message || 'Payment failed.');
+      const errorMsg = err?.message || 'Payment failed.';
+      this.errorMessage.set(errorMsg);
+      this.notificationService.showError(errorMsg, 'Payment Failed');
     } finally {
       this.isSubmitting.set(false);
     }

@@ -35,6 +35,7 @@ export class RecordCcBill {
   dueDate = signal<Date | null>(this.config.data?.dueDate ? new Date(this.config.data.dueDate) : null);
 
   isSubmitting = signal(false);
+  errorMessage = signal<string | null>(null);
   result = signal<CreditCardBillResult | null>(null);
 
   async save(): Promise<void> {
@@ -44,6 +45,7 @@ export class RecordCcBill {
       return;
     }
 
+    this.errorMessage.set(null);
     this.isSubmitting.set(true);
     try {
       const res = await firstValueFrom(this.api.post<CreditCardBillResult>('Accounts/record-credit-card-bill', {
@@ -56,9 +58,15 @@ export class RecordCcBill {
       if (res.isSuccess) {
         this.result.set(res.value);
         this.notificationService.showSuccess('Credit card bill recorded.');
+      } else {
+        const errorMsg = res.error?.description || 'Failed to record credit card bill.';
+        this.errorMessage.set(errorMsg);
+        this.notificationService.showError(errorMsg, 'Error');
       }
     } catch (err: any) {
-      this.notificationService.showError(err?.message || 'Failed to record credit card bill.');
+      const errorMsg = err?.message || 'Failed to record credit card bill.';
+      this.errorMessage.set(errorMsg);
+      this.notificationService.showError(errorMsg, 'Error');
     } finally {
       this.isSubmitting.set(false);
     }

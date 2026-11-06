@@ -43,13 +43,18 @@ export class AdjustBalance {
 
     this.isSubmitting.set(true);
     try {
-      await firstValueFrom(this.api.post<any>('Accounts/adjust-balance', {
+      const res = await firstValueFrom(this.api.post<any>('Accounts/adjust-balance', {
         accountId: this.accountId,
         newBalance: nb,
         reason: this.reason().trim() || null
       }));
-      this.notificationService.showSuccess('Balance adjusted.');
-      this.ref.close(true);
+
+      if (res.isSuccess) {
+        this.notificationService.showSuccess('Balance adjusted.');
+        this.ref.close(true);
+      } else {
+        this.notificationService.showError(res.error?.description || 'Failed to adjust balance.', 'Error');
+      }
     } catch (err: any) {
       this.notificationService.showError(err?.message || 'Failed to adjust balance.');
     } finally {

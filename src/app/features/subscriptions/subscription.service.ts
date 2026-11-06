@@ -14,6 +14,9 @@ export class SubscriptionService {
 
   async create(request: CreateSubscriptionRequest): Promise<number> {
     const result = await firstValueFrom(this.api.post<number>('Subscriptions', request));
+    if (!result.isSuccess) {
+      throw new Error(result.error?.description || 'Failed to create subscription.');
+    }
     return result.value;
   }
 

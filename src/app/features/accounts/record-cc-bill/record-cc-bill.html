@@ -22,6 +22,13 @@
         [showIcon]="true" appendTo="body" class="w-full" placeholder="Select due date"></p-datepicker>
     </div>
 
+    @if (errorMessage()) {
+      <div class="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+        <i class="pi pi-exclamation-triangle text-rose-400 text-sm shrink-0"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+
     <div class="flex justify-end gap-2 mt-2">
       <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="ref.close(false)"></p-button>
       <p-button label="Save Bill" (onClick)="save()" [loading]="isSubmitting()" [disabled]="billAmount() === null || billAmount()! < 0"></p-button>
