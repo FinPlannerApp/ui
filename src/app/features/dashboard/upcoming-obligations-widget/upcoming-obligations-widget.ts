@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { GenericApi } from '../../../core/services/generic-api';
 import { UpcomingObligation } from '../../../core/models/obligation.model';
 import { sharedPrimeModules } from '../../../shared/prime-imports';
+import { ConfirmationService, MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-upcoming-obligations-widget',
@@ -13,9 +14,13 @@ import { sharedPrimeModules } from '../../../shared/prime-imports';
 })
 export class UpcomingObligationsWidget implements OnInit {
   private api = inject(GenericApi);
+  private confirm = inject(ConfirmationService);
+  private toast = inject(MessageService);
 
   /** Layout mode: 'row' (grid for full-width) or 'stack' (vertical list for side column) */
   layout = input<'row' | 'stack'>('row');
+
+  busyLoanId = signal<number | null>(null);
 
   obligations = signal<UpcomingObligation[]>([]);
   isLoading = signal(true);
@@ -31,6 +36,10 @@ export class UpcomingObligationsWidget implements OnInit {
   totalUpcomingAmount = computed(() => this.obligations().reduce((acc, curr) => acc + (curr.amount ?? curr.minimumDueAmount ?? 0), 0));
 
   async ngOnInit(): Promise<void> {
+    await this.load();
+  }
+
+  private async load(): Promise<void> {
     try {
       const result = await firstValueFrom(this.api.get<UpcomingObligation[]>('RecurringTransactions/upcoming-obligations?daysAhead=30'));
       this.obligations.set(result.value ?? []);
@@ -40,6 +49,39 @@ export class UpcomingObligationsWidget implements OnInit {
     } finally {
       this.isLoading.set(false);
     }
+  }
+
+  /** Overdue loan EMIs the user can mark as already paid (auto-debited by the bank). */
+  canMarkPaid(o: UpcomingObligation): boolean {
+    return o.source === 'Loan' && !!o.isOverdue && !!o.loanAccountId && (o.overdueInstallments ?? 0) > 0;
+  }
+
+  markLoanPaid(o: UpcomingObligation): void {
+    const n = Math.max(1, o.overdueInstallments ?? 1);
+    this.confirm.confirm({
+      header: 'Mark EMI as already paid?',
+      message: `This moves "${o.accountName}" forward by ${n} month${n > 1 ? 's' : ''} without recording any payment or changing any balance. ` +
+        `Use it only when your bank already took the money and your balances already reflect it.`,
+      icon: 'pi pi-info-circle',
+      acceptLabel: `Yes, mark ${n} paid`,
+      rejectLabel: 'Cancel',
+      accept: async () => {
+        this.busyLoanId.set(o.loanAccountId!);
+        try {
+          const res = await firstValueFrom(this.api.post<string>(`Accounts/${o.loanAccountId}/advance-due-date`, { months: n }));
+          if (res.isSuccess) {
+            this.toast.add({ severity: 'success', summary: 'Updated', detail: 'EMI schedule moved forward.' });
+            await this.load();
+          } else {
+            this.toast.add({ severity: 'error', summary: 'Could not update', detail: res.error?.description ?? 'Please try again.' });
+          }
+        } catch {
+          this.toast.add({ severity: 'error', summary: 'Could not update', detail: 'Please try again.' });
+        } finally {
+          this.busyLoanId.set(null);
+        }
+      }
+    });
   }
 
   /** Whole calendar days until the due date; negative when it is already overdue. */

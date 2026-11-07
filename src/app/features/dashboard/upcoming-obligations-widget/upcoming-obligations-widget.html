@@ -44,9 +44,9 @@
 
   @if (isLoading()) {
     <div [ngClass]="layout() === 'stack' ? 'flex flex-col gap-2.5 mt-1' : 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3'">
-      <div class="h-16 rounded-2xl bg-white/5 animate-pulse"></div>
-      <div class="h-16 rounded-2xl bg-white/5 animate-pulse"></div>
-      <div class="h-16 rounded-2xl bg-white/5 animate-pulse"></div>
+      <div class="h-16 sm:h-20 rounded-2xl bg-white/5 animate-pulse"></div>
+      <div class="h-16 sm:h-20 rounded-2xl bg-white/5 animate-pulse"></div>
+      <div class="h-16 sm:h-20 rounded-2xl bg-white/5 animate-pulse"></div>
     </div>
   } @else if (obligations().length === 0) {
     <div class="flex flex-col items-center justify-center py-6 text-center">
@@ -76,6 +76,17 @@
                     <i class="pi pi-exclamation-triangle shrink-0"></i>
                     <span class="truncate">Insufficient balance</span>
                   </span>
+                }
+                @if (obligation.isAutoPay) {
+                  <span class="text-[10px] flex items-center gap-1 font-bold mt-0.5" [ngClass]="obligation.isOverdue ? 'text-rose-400' : 'text-emerald-400'">
+                    <i class="pi pi-sync"></i> {{ obligation.isOverdue ? 'Auto-debit did not post' : 'Auto-debit' }}
+                  </span>
+                }
+                @if (canMarkPaid(obligation)) {
+                  <button type="button" (click)="markLoanPaid(obligation)" [disabled]="busyLoanId() === obligation.loanAccountId"
+                    class="mt-1 self-start text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 cursor-pointer hover:bg-emerald-500/25 transition-colors">
+                    <i class="pi pi-check text-[9px] mr-1"></i>Already paid{{ (obligation.overdueInstallments ?? 0) > 1 ? ' (' + obligation.overdueInstallments + ')' : '' }}
+                  </button>
                 }
               </div>
             </div>
@@ -112,13 +123,24 @@
                     <span class="truncate">Insufficient balance</span>
                   </span>
                 }
+                @if (obligation.isAutoPay) {
+                  <span class="text-[10px] flex items-center gap-1 font-bold mt-0.5" [ngClass]="obligation.isOverdue ? 'text-rose-400' : 'text-emerald-400'">
+                    <i class="pi pi-sync"></i> {{ obligation.isOverdue ? 'Auto-debit did not post' : 'Auto-debit' }}
+                  </span>
+                }
+                @if (canMarkPaid(obligation)) {
+                  <button type="button" (click)="markLoanPaid(obligation)" [disabled]="busyLoanId() === obligation.loanAccountId"
+                    class="mt-1 self-start text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 cursor-pointer hover:bg-emerald-500/25 transition-colors">
+                    <i class="pi pi-check text-[9px] mr-1"></i>Already paid{{ (obligation.overdueInstallments ?? 0) > 1 ? ' (' + obligation.overdueInstallments + ')' : '' }}
+                  </button>
+                }
               </div>
             </div>
 
             <div class="flex flex-col items-end shrink-0 pl-1.5 text-right">
-              <span class="text-xs sm:text-base font-black whitespace-nowrap" [ngClass]="obligation.source === 'CreditCard' ? 'text-sky-400' : (obligation.source === 'Loan' ? 'text-rose-400' : 'text-amber-400')">{{ displayAmount(obligation) }}</span>
+              <span class="text-xs sm:text-base font-extrabold whitespace-nowrap" [ngClass]="obligation.source === 'CreditCard' ? 'text-sky-400' : (obligation.source === 'Loan' ? 'text-rose-400' : 'text-amber-400')">{{ displayAmount(obligation) }}</span>
               <span 
-                class="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full mt-0.5 sm:mt-1 whitespace-nowrap shrink-0" 
+                class="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full mt-0.5 sm:mt-1 whitespace-nowrap" 
                 [ngClass]="isUrgent(obligation) ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-white/10 text-muted'"
               >
                 {{ dueLabel(obligation) }}
@@ -174,9 +196,9 @@
           Scheduled Payments & Bills
         </h3>
 
-        <div class="flex flex-col gap-3 max-h-[calc(100vh-230px)] overflow-y-auto pr-1">
+        <div class="flex flex-col gap-3">
           @for (obligation of obligations(); track $index) {
-            <div class="p-3 sm:p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between gap-2.5 hover:bg-white/[0.08] transition-all min-w-0 overflow-hidden">
+            <div class="p-3 sm:p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between gap-2 hover:bg-white/[0.08] transition-all min-w-0">
               <div class="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
                 <div 
                   class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl border flex items-center justify-center shrink-0"
@@ -185,24 +207,35 @@
                   <i class="pi text-base sm:text-lg" [ngClass]="obligation.source === 'CreditCard' ? 'pi-credit-card' : (obligation.source === 'Loan' ? 'pi-building-columns' : 'pi-receipt')"></i>
                 </div>
                 <div class="flex flex-col min-w-0 flex-1">
-                  <span class="text-xs sm:text-sm font-extrabold text-main truncate" [title]="obligation.description">{{ obligation.description }}</span>
+                  <span class="text-xs sm:text-sm font-extrabold text-main truncate">{{ obligation.description }}</span>
                   <div class="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-muted mt-0.5 min-w-0 flex-wrap">
                     <span class="truncate"><i class="pi pi-wallet text-xs mr-1"></i>{{ obligation.accountName }}</span>
                     <span class="shrink-0">•</span>
                     <span class="capitalize font-medium shrink-0">{{ obligation.source === 'CreditCard' ? 'Credit Card Bill' : (obligation.source === 'Loan' ? 'Loan EMI' : 'Recurring Bill') }}</span>
                     @if (obligation.isShortfallRisk) {
-                      <span class="text-[10px] text-rose-400 flex items-center gap-1 font-bold truncate">
-                        <i class="pi pi-exclamation-triangle shrink-0"></i> <span class="truncate">Insufficient balance</span>
+                      <span class="text-[10px] text-rose-400 flex items-center gap-1 font-bold">
+                        <i class="pi pi-exclamation-triangle"></i> Insufficient balance
                       </span>
+                    }
+                    @if (obligation.isAutoPay) {
+                      <span class="text-[10px] flex items-center gap-1 font-bold" [ngClass]="obligation.isOverdue ? 'text-rose-400' : 'text-emerald-400'">
+                        <i class="pi pi-sync"></i> {{ obligation.isOverdue ? 'Auto-debit did not post' : 'Auto-debit' }}
+                      </span>
+                    }
+                    @if (canMarkPaid(obligation)) {
+                      <button type="button" (click)="markLoanPaid(obligation)" [disabled]="busyLoanId() === obligation.loanAccountId"
+                        class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 cursor-pointer hover:bg-emerald-500/25 transition-colors">
+                        <i class="pi pi-check text-[9px] mr-1"></i>Already paid{{ (obligation.overdueInstallments ?? 0) > 1 ? ' (' + obligation.overdueInstallments + ')' : '' }}
+                      </button>
                     }
                   </div>
                 </div>
               </div>
 
               <div class="flex flex-col items-end shrink-0 pl-1.5 text-right">
-                <span class="text-xs sm:text-base font-black whitespace-nowrap" [ngClass]="obligation.source === 'CreditCard' ? 'text-sky-400' : (obligation.source === 'Loan' ? 'text-rose-400' : 'text-amber-400')">{{ displayAmount(obligation) }}</span>
+                <span class="text-xs sm:text-base font-extrabold whitespace-nowrap" [ngClass]="obligation.source === 'CreditCard' ? 'text-sky-400' : (obligation.source === 'Loan' ? 'text-rose-400' : 'text-amber-400')">{{ displayAmount(obligation) }}</span>
                 <span 
-                  class="text-[10px] sm:text-xs font-bold px-2 sm:px-2.5 py-0.5 rounded-full mt-1 whitespace-nowrap shrink-0" 
+                  class="text-[10px] sm:text-xs font-bold px-2 sm:px-2.5 py-0.5 rounded-full mt-1 whitespace-nowrap" 
                   [ngClass]="isUrgent(obligation) ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-white/10 text-muted'"
                 >
                   {{ dueLabel(obligation) }}
@@ -213,14 +246,6 @@
         </div>
       </div>
 
-    </div>
-  } @else {
-    <div class="flex flex-col items-center justify-center py-12 text-center">
-      <div class="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-muted mb-3">
-        <i class="pi pi-check-circle text-3xl text-emerald-400"></i>
-      </div>
-      <p class="text-base font-bold text-main m-0">No Upcoming Obligations</p>
-      <p class="text-xs text-muted m-0 mt-1">You have no recurring bills or obligations scheduled.</p>
     </div>
   }
 </p-drawer>

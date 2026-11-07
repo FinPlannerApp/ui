@@ -8,4 +8,7 @@ export interface UpcomingObligation {
   isShortfallRisk?: boolean;
   isOverdue?: boolean;
   reducesAvailableCash?: boolean;
+  loanAccountId?: number | null;
+  overdueInstallments?: number;
+  isAutoPay?: boolean;
 }
