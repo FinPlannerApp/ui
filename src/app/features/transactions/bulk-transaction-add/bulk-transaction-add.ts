@@ -16,7 +16,6 @@ import { toDateOnlyString } from '../../../core/utils/date-utils';
 import { Observable } from 'rxjs';
 import { GenericApi, PaginatedResult } from '../../../core/services/generic-api';
 import { sharedPrimeModules } from '../../../shared/prime-imports';
-import * as XLSX from 'xlsx';
 
 interface BulkTransactionRow {
     index: number;

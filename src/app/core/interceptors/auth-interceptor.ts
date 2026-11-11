@@ -1,68 +1,52 @@
-import { HttpInterceptorFn, HttpErrorResponse, HttpRequest, HttpHandlerFn, HttpEvent } from '@angular/common/http';
+import { HttpInterceptorFn, HttpErrorResponse, HttpRequest, HttpHandlerFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { catchError, switchMap, throwError, BehaviorSubject, filter, take, Observable } from 'rxjs';
+import { catchError, switchMap, throwError, finalize, map, shareReplay, Observable } from 'rxjs';
 import { Auth } from '../services/auth';
 
-let isRefreshing = false;
-let refreshTokenSubject: BehaviorSubject<string | null> = new BehaviorSubject<string | null>(null);
+/** Endpoints whose 401 must NOT trigger a token refresh (they are part of signing in/out themselves). */
+const AUTH_ENDPOINTS = /\/auth\/(login|refresh|logout|register|verify-registration|forgot-password|verify-otp|reset-password|check-email|check-username)/i;
+
+/**
+ * The single in-flight refresh, shared by every request that hits a 401 meanwhile.
+ * Success: all of them get the new token. Failure: all of them get the error (nobody waits forever),
+ * and Auth.refreshToken() has already signed the user out exactly once.
+ */
+let refreshInFlight$: Observable<string> | null = null;
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(Auth);
   const accessToken = authService.accessToken();
 
-  // 1. Add the access token if we have one
   if (accessToken) {
     req = addToken(req, accessToken);
   }
 
   return next(req).pipe(
     catchError(error => {
-      // 2. If we get a 401, try to refresh
-      if (error instanceof HttpErrorResponse && error.status === 401) {
-        return handle401Error(req, next, authService);
+      if (error instanceof HttpErrorResponse && error.status === 401 && !AUTH_ENDPOINTS.test(req.url)) {
+        return refreshAccessToken(authService).pipe(
+          switchMap(token => next(addToken(req, token)))
+        );
       }
       return throwError(() => error);
     })
   );
 };
 
-const addToken = (req: HttpRequest<any>, token: string): HttpRequest<any> => {
-  return req.clone({
-    setHeaders: {
-      Authorization: `Bearer ${token}`
-    }
-  });
-};
+const addToken = (req: HttpRequest<unknown>, token: string): HttpRequest<unknown> =>
+  req.clone({ setHeaders: { Authorization: `Bearer ${token}` } });
 
-const handle401Error = (req: HttpRequest<any>, next: HttpHandlerFn, authService: Auth): Observable<HttpEvent<any>> => {
-  if (!isRefreshing) {
-    isRefreshing = true;
-    refreshTokenSubject.next(null);
-
-    return authService.refreshToken().pipe(
-      switchMap((success: boolean) => {
-        isRefreshing = false;
-        if (success) {
-          const newToken = authService.accessToken();
-          refreshTokenSubject.next(newToken);
-          return next(addToken(req, newToken!));
-        } else {
-          return throwError(() => new Error('Session expired'));
-        }
+const refreshAccessToken = (authService: Auth): Observable<string> => {
+  if (!refreshInFlight$) {
+    refreshInFlight$ = authService.refreshToken().pipe(
+      map(success => {
+        const token = authService.accessToken();
+        if (!success || !token) throw new Error('Session expired');
+        return token;
       }),
-      catchError((err) => {
-        isRefreshing = false;
-        return throwError(() => err);
-      })
-    );
-  } else {
-    // If already refreshing, wait for the new token
-    return refreshTokenSubject.pipe(
-      filter(token => token != null),
-      take(1),
-      switchMap(jwt => {
-        return next(addToken(req, jwt!));
-      })
+      finalize(() => { refreshInFlight$ = null; }),
+      shareReplay({ bufferSize: 1, refCount: false })
     );
   }
+  return refreshInFlight$;
 };
