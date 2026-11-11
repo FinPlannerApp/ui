@@ -600,17 +600,40 @@
 
                             <div class="grid grid-cols-2 gap-2 min-w-0">
                                 <div class="min-w-0 flex-1">
-                                    <label class="text-[11px] font-bold text-muted block mb-1">Type</label>
-                                    <p-select 
-                                        [options]="transactionTypes" 
-                                        [(ngModel)]="row.type" 
-                                        optionLabel="label"
-                                        optionValue="value" 
-                                        (onChange)="onRowChange(row)" 
-                                        appendTo="body"
-                                        class="w-full block min-w-0"
-                                        styleClass="w-full"
-                                    ></p-select>
+                                    @if (row.transactionCategoryId?.isTransferCategory) {
+                                        <label class="text-[11px] font-bold text-muted block mb-1">To Account</label>
+                                        <p-autoComplete 
+                                            [suggestions]="filteredAccounts()" 
+                                            [(ngModel)]="row.destinationAccountId"
+                                            field="name" 
+                                            optionLabel="name" 
+                                            (completeMethod)="filterAccounts($event)"
+                                            (onSelect)="onRowChange(row)" 
+                                            (ngModelChange)="onRowChange(row)" 
+                                            [dropdown]="false"
+                                            placeholder="To Account" 
+                                            appendTo="body" 
+                                            class="w-full block min-w-0"
+                                            styleClass="w-full"
+                                            inputStyleClass="w-full text-xs font-semibold"
+                                        >
+                                            <ng-template let-item pTemplate="item">
+                                                <span class="text-xs font-semibold">{{ item.name || item }}</span>
+                                            </ng-template>
+                                        </p-autoComplete>
+                                    } @else {
+                                        <label class="text-[11px] font-bold text-muted block mb-1">Type</label>
+                                        <p-select 
+                                            [options]="transactionTypes" 
+                                            [(ngModel)]="row.type" 
+                                            optionLabel="label"
+                                            optionValue="value" 
+                                            (onChange)="onRowChange(row)" 
+                                            appendTo="body"
+                                            class="w-full block min-w-0"
+                                            styleClass="w-full"
+                                        ></p-select>
+                                    }
                                 </div>
                                 <div class="min-w-0 flex-1">
                                     <label class="text-[11px] font-bold text-muted block mb-1">Amount (₹)</label>
@@ -696,4 +719,4 @@
     <ng-template pTemplate="footer">
         <p-button label="Review Spreadsheet" icon="pi pi-check" (onClick)="showImportSummary.set(false)" styleClass="w-full text-xs font-extrabold rounded-2xl py-2.5"></p-button>
     </ng-template>
-</p-dialog>
+</p-dialog>

@@ -431,21 +431,14 @@
     }
   } @else {
     <!-- Transactions Table Card -->
-    <div class="glass-card rounded-2xl overflow-x-auto border border-[var(--glass-border)] w-full">
+    <div class="glass-card rounded-2xl table-cards border border-[var(--glass-border)] w-full overflow-hidden">
       <p-table
         [value]="transactions()"
         [loading]="isLoading()"
-        [paginator]="true"
-        [rows]="rows()"
-        [rowsPerPageOptions]="[10, 25, 50]"
-        [totalRecords]="totalRecords()"
         [lazy]="true"
+        [lazyLoadOnInit]="false"
         (onLazyLoad)="onLazyLoad($event)"
-        [scrollable]="true"
-        scrollHeight="500px"
-        [virtualScroll]="true"
-        [virtualScrollItemSize]="48"
-        responsiveLayout="scroll"
+        [tableStyle]="{ 'min-width': '100%' }"
         styleClass="p-datatable-sm p-datatable-striped w-full">
         
         <ng-template pTemplate="header">
@@ -460,24 +453,24 @@
 
         <ng-template pTemplate="body" let-tx>
           <tr class="hover:bg-white/5 transition-colors">
-            <td class="whitespace-nowrap font-medium text-xs text-[var(--text-muted)]">
+            <td data-label="Date" class="whitespace-nowrap font-medium text-xs text-[var(--text-muted)]">
               {{ tx.date | date:'mediumDate' }}
             </td>
-            <td class="whitespace-nowrap font-bold text-white">
+            <td data-label="Description" class="cell-full whitespace-nowrap font-bold text-white">
               {{ tx.description }}
             </td>
-            <td class="whitespace-nowrap">
+            <td data-label="Category" class="whitespace-nowrap">
               @if (tx.categoryName) {
                 <p-tag [value]="tx.categoryName" severity="secondary" [rounded]="true" styleClass="font-semibold text-xs"></p-tag>
               } @else {
                 <span class="text-xs text-[var(--text-muted)]">—</span>
               }
             </td>
-            <td class="text-right font-extrabold text-base whitespace-nowrap"
+            <td data-label="Amount" class="text-right font-extrabold text-base whitespace-nowrap"
                 [ngClass]="tx.type === 0 ? 'text-emerald-400' : 'text-rose-400'">
               {{ tx.type === 0 ? '+' : '-' }}{{ tx.amount | currency:'INR':'symbol':'1.2-2' }}
             </td>
-            <td class="text-center whitespace-nowrap">
+            <td class="cell-full text-center whitespace-nowrap">
               <div class="flex items-center justify-center gap-1">
                 <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" size="small" pTooltip="Edit Transaction" (onClick)="showTransactionForm(tx)"></p-button>
                 <p-button icon="pi pi-sync" [text]="true" [rounded]="true" size="small" pTooltip="Switch Account" (onClick)="showSwitchAccountForm(tx)"></p-button>
@@ -497,6 +490,15 @@
           </tr>
         </ng-template>
       </p-table>
+
+      <div appInfiniteScroll [disabled]="isLoading() || isLoadingMore() || !hasMore()" (reachedEnd)="loadMore()"
+           class="flex items-center justify-center gap-2 py-3 text-xs text-[var(--text-muted)]">
+        @if (isLoadingMore()) {
+          <p-progressSpinner styleClass="w-4 h-4" strokeWidth="6"></p-progressSpinner> Loading more…
+        } @else if (transactions().length > 0) {
+          Showing {{ transactions().length }} of {{ totalRecords() }}
+        }
+      </div>
     </div>
   }
 
@@ -545,4 +547,4 @@
       </div>
     </p-dialog>
   }
-</div>
+</div>

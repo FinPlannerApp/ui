@@ -1,3 +1,4 @@
+import { PageHeader } from '../../../shared/components/page-header/page-header';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -12,7 +13,7 @@ import { toDateOnlyString, fromDateOnlyString } from '../../../core/utils/date-u
 @Component({
   selector: 'app-goals',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ...sharedPrimeModules],
+  imports: [PageHeader, CommonModule, FormsModule, ...sharedPrimeModules],
   templateUrl: './goals.html',
 })
 export class Goals implements OnInit {

@@ -1,3 +1,4 @@
+import { PageHeader } from '../../shared/components/page-header/page-header';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -13,7 +14,7 @@ import { sharedPrimeModules } from '../../shared/prime-imports';
 @Component({
   selector: 'app-challenge',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, AccordionModule, ProgressBarModule, TextareaModule, ...sharedPrimeModules],
+  imports: [PageHeader, CommonModule, FormsModule, RouterLink, AccordionModule, ProgressBarModule, TextareaModule, ...sharedPrimeModules],
   templateUrl: './challenge.html',
 })
 export class Challenge implements OnInit {

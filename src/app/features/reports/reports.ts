@@ -1,3 +1,4 @@
+import { PageHeader } from '../../shared/components/page-header/page-header';
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
@@ -13,7 +14,7 @@ type ReportType = 'monthly-summary' | 'category-analysis' | 'budget-vs-actual' |
 @Component({
   selector: 'app-reports',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, FormField, ...sharedPrimeModules],
+  imports: [PageHeader, CommonModule, ReactiveFormsModule, FormField, ...sharedPrimeModules],
   templateUrl: './reports.html',
 })
 export class Reports {

@@ -1,3 +1,4 @@
+import { PageHeader } from '../../../shared/components/page-header/page-header';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -15,7 +16,7 @@ import { toDateOnlyString } from '../../../core/utils/date-utils';
 @Component({
   selector: 'app-subscriptions',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ...sharedPrimeModules],
+  imports: [PageHeader, CommonModule, FormsModule, ...sharedPrimeModules],
   templateUrl: './subscriptions.html'
 })
 export class Subscriptions implements OnInit {

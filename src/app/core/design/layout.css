@@ -1,0 +1,64 @@
+/* ============================================================
+   LAYOUT PRIMITIVES — one generic way to build responsive pages.
+   Mobile-first. Breakpoints (match ViewportService):
+     compact < 640 · medium 640–1023 · expanded >= 1024 (large >= 1440)
+   Prefer these over per-page media queries.
+   ============================================================ */
+
+/* Page shell */
+.page { width: 100%; max-width: var(--page-max); margin-inline: auto; padding-inline: var(--page-gutter); }
+.page-stack { display: flex; flex-direction: column; gap: var(--space-4); }
+@media (min-width: 1024px) { .page-stack { gap: var(--space-6); } }
+
+/* Auto-fit grid: as many columns as fit, never overflows. --min is the smallest card width. */
+.grid-auto { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--min, 16rem)), 1fr)); }
+.grid-auto.sm { --min: 11rem; } .grid-auto.lg { --min: 22rem; }
+
+/* Row that wraps instead of overflowing */
+.cluster { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.cluster-between { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); }
+
+/* Children that contain long text must be allowed to shrink */
+.min-w-0-all > * { min-width: 0; }
+
+/* Tables: horizontal scroll with a hint, never breaks the page width */
+.table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+.table-responsive > table, .table-responsive .p-datatable-table { min-width: 36rem; }
+
+/* Table -> cards on phones. Put data-label="Column" on each <td>. */
+@media (max-width: 639px) {
+  .table-cards table, .table-cards thead { display: block; }
+  .table-cards thead { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); }
+  .table-cards tbody { display: grid; gap: var(--space-3); }
+  .table-cards tr { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2) var(--space-3);
+    padding: var(--space-3); border: 1px solid var(--surface-border); border-radius: var(--radius-lg); background: var(--surface); }
+  .table-cards td { display: flex; flex-direction: column; gap: 2px; border: 0 !important; padding: 0 !important; min-width: 0; text-align: left !important; }
+  .table-cards td::before { content: attr(data-label); font-size: var(--text-xs); color: var(--text-dim); font-weight: 600; }
+  .table-cards td[data-full], .table-cards td.cell-full { grid-column: 1 / -1; }
+}
+
+/* Dialogs: centred card on large screens, bottom sheet on phones */
+@media (max-width: 639px) {
+  .p-dialog-mask { align-items: flex-end !important; padding: 0 !important; }
+  .p-dialog { width: 100vw !important; max-width: 100vw !important; margin: 0 !important;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0 !important;
+    max-height: calc(100dvh - var(--safe-top) - 1rem) !important;
+    padding-bottom: var(--safe-bottom); animation: sheet-in var(--dur-slow) var(--ease-out) both !important; }
+}
+@keyframes sheet-in { from { transform: translateY(100%); } to { transform: none; } }
+
+/* Touch targets */
+@media (pointer: coarse) {
+  .p-button, .p-select, .p-inputtext, .p-paginator .p-paginator-page { min-height: var(--tap-min); }
+}
+
+/* Sticky action bar for forms/lists on phones */
+.action-bar-mobile { position: sticky; bottom: 0; padding: var(--space-3) var(--page-gutter) calc(var(--space-3) + var(--safe-bottom));
+  background: var(--surface-solid); border-top: 1px solid var(--surface-border); z-index: var(--z-sticky); }
+
+/* Visibility helpers driven by html[data-bp] (set by ViewportService) */
+[data-bp="compact"] .hide-compact, [data-bp="medium"] .hide-medium, [data-bp="expanded"] .hide-expanded, [data-bp="large"] .hide-expanded { display: none !important; }
+
+/* Never allow accidental sideways page scroll */
+html, body { max-width: 100%; overflow-x: clip; }
+img, svg, canvas, video { max-width: 100%; height: auto; }

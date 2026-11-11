@@ -1,3 +1,4 @@
+import { PageHeader } from '../../../shared/components/page-header/page-header';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -11,7 +12,7 @@ import { NotificationService } from '../../../core/services/notification.service
 @Component({
   selector: 'app-merchants',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ...sharedPrimeModules],
+  imports: [PageHeader, CommonModule, FormsModule, ...sharedPrimeModules],
   templateUrl: './merchants.html',
 })
 export class Merchants implements OnInit {

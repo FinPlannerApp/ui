@@ -6,16 +6,14 @@
     </div>
   }
 
-  <!-- Global Screen Freeze Overlay for Mutating API Operations -->
+  <!-- Mutation feedback: a non-blocking pill + click shield BELOW dialogs/toasts (z 1500 < PrimeNG modal 2000),
+       so popups opened while a save is running are never hidden behind it. -->
   @if(loadingService.isMutating()) {
-    <div class="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-[9999] flex items-center justify-center transition-all duration-300">
-      <div class="bg-[var(--glass-bg-solid)] border border-[var(--glass-border)] rounded-2xl p-6 shadow-2xl flex items-center gap-4">
-        <p-progressSpinner styleClass="w-8 h-8" strokeWidth="4"></p-progressSpinner>
-        <div class="flex flex-col">
-          <span class="font-bold text-sm text-[var(--text-main)]">Processing transaction...</span>
-          <span class="text-xs text-[var(--text-muted)]">Please wait while your data is synchronized securely</span>
-        </div>
-      </div>
+    <div class="fixed inset-0 z-[1500] cursor-progress" aria-hidden="true"></div>
+    <div class="fixed left-1/2 -translate-x-1/2 z-[1501] pill-saving"
+         style="bottom: max(1.25rem, env(safe-area-inset-bottom, 0px));" role="status" aria-live="polite">
+      <p-progressSpinner styleClass="w-4 h-4" strokeWidth="6"></p-progressSpinner>
+      <span>Saving…</span>
     </div>
   }
 
@@ -100,4 +98,4 @@
       <router-outlet></router-outlet>
     </main>
   </div>
-</div>
+</div>

@@ -1,0 +1,62 @@
+/* ============================================================
+   DESIGN TOKENS — the contract between components and themes.
+   Components use ONLY these (and the colour variables each
+   theme file sets). A new theme = one file that sets the palette
+   block in THEMING.md; spacing, type, radius, motion, z-index and
+   breakpoints below are shared and never need to change per theme.
+   ============================================================ */
+:root {
+  /* Spacing scale (4px base) */
+  --space-1: .25rem; --space-2: .5rem; --space-3: .75rem; --space-4: 1rem;
+  --space-5: 1.25rem; --space-6: 1.5rem; --space-8: 2rem; --space-10: 2.5rem;
+
+  /* Fluid type — scales smoothly 360px → 1440px, no per-breakpoint overrides needed */
+  --text-xs: clamp(.7rem, .68rem + .1vw, .75rem);
+  --text-sm: clamp(.8rem, .77rem + .15vw, .875rem);
+  --text-base: clamp(.9rem, .86rem + .2vw, 1rem);
+  --text-lg: clamp(1.05rem, .98rem + .35vw, 1.25rem);
+  --text-xl: clamp(1.25rem, 1.1rem + .7vw, 1.75rem);
+  --text-2xl: clamp(1.5rem, 1.2rem + 1.4vw, 2.25rem);
+
+  /* Shape */
+  --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 24px; --radius-pill: 999px;
+
+  /* Layout */
+  --page-max: 1280px;
+  --page-gutter: clamp(.75rem, 2.5vw, 2rem);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --tap-min: 44px; /* minimum comfortable touch target */
+
+  /* Motion */
+  --ease-out: cubic-bezier(.2, .8, .2, 1);
+  --dur-fast: 120ms; --dur-base: 200ms; --dur-slow: 320ms;
+
+  /* Stacking — the ONLY z-index values the app should use */
+  --z-content: 1;
+  --z-sticky: 500;
+  --z-shield: 1500;
+  --z-modal: 2000;
+  --z-overlay: 2100;
+  --z-toast: 100000;
+
+  /* Semantic aliases: map the theme palette to roles, so components
+     never reference raw theme variables directly. */
+  --surface: var(--glass-bg);
+  --surface-solid: var(--glass-bg-solid);
+  --surface-border: var(--glass-border);
+  --text: var(--text-main);
+  --text-dim: var(--text-muted);
+  --accent: var(--accent-color);
+  --positive: #34d399;
+  --negative: #fb7185;
+  --warning: #fbbf24;
+}
+
+/* Density hook: ThemeEngine.isCompact toggles [data-density="compact"] */
+[data-density="compact"] {
+  --space-3: .5rem; --space-4: .75rem; --space-6: 1rem;
+  --tap-min: 36px;
+}

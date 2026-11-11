@@ -1,11 +1,6 @@
 <p-toast></p-toast>
-<div class="flex flex-col gap-3 p-4">
-  <div class="flex items-center justify-between">
-    <h2 class="m-0">Decision Journal</h2>
-    <a routerLink="/app/dashboard" class="p-button p-button-text">
-      <i class="pi pi-arrow-left mr-2"></i>Back to Dashboard
-    </a>
-  </div>
+<div class="page page-stack py-3 md:py-6">
+  <app-page-header title="Decision Journal" backLink="/app/dashboard" />
 
   <p class="text-sm text-secondary mt-0">
     Write down the reasoning behind a financial decision before you make

@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { ThemeEngine } from './core/services/theme';
+import { ViewportService } from './core/services/viewport.service';
 import { ToastModule } from 'primeng/toast';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
@@ -21,6 +22,7 @@ import { DiagramViewerModalComponent } from './shared/components/diagram-viewer-
 })
 export class App {
   private themeEngine = inject(ThemeEngine);
+  private viewport = inject(ViewportService); // starts breakpoint tracking (sets html[data-bp])
   private sessionSync = inject(SessionSyncService);
   protected backendStatus = inject(BackendStatusService);
   protected readonly title = signal('Financial Management App');

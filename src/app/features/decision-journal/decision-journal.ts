@@ -1,3 +1,4 @@
+import { PageHeader } from '../../shared/components/page-header/page-header';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -12,7 +13,7 @@ import { toDateOnlyString } from '../../core/utils/date-utils';
 @Component({
   selector: 'app-decision-journal',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink, ...sharedPrimeModules],
+  imports: [PageHeader, CommonModule, FormsModule, ReactiveFormsModule, ...sharedPrimeModules],
   templateUrl: './decision-journal.html',
 })
 export class DecisionJournal implements OnInit {

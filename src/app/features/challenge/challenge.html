@@ -1,10 +1,5 @@
-<div class="flex flex-col gap-3 p-4">
-  <div class="flex items-center justify-between">
-    <h2 class="m-0">30-Day Money Challenge</h2>
-    <a routerLink="/app/dashboard" class="p-button p-button-text">
-      <i class="pi pi-arrow-left mr-2"></i>Back to Dashboard
-    </a>
-  </div>
+<div class="page page-stack py-3 md:py-6">
+  <app-page-header title="30-Day Money Challenge" backLink="/app/dashboard" />
 
   @if (isLoading()) {
     <div class="flex justify-center p-6">

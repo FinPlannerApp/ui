@@ -1,13 +1,8 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
-<div class="flex flex-col gap-3 p-4">
-  <div class="flex items-center justify-between">
-    <h2 class="m-0">Merchants</h2>
-    <a routerLink="/app/dashboard" class="p-button p-button-text">
-      <i class="pi pi-arrow-left mr-2"></i>Back to Dashboard
-    </a>
-  </div>
+<div class="page page-stack py-3 md:py-6">
+  <app-page-header title="Merchants" backLink="/app/dashboard" />
 
   <p class="text-sm text-secondary mt-0">
     Create a merchant once, add the different ways it shows up in your

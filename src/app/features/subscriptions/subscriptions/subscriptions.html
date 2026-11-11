@@ -2,12 +2,7 @@
 <p-confirmDialog></p-confirmDialog>
 
 <div class="flex flex-col gap-4 p-3 md:p-6 w-full max-w-7xl mx-auto">
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-    <h2 class="m-0 text-xl sm:text-2xl font-bold gradient-text">Subscriptions</h2>
-    <a routerLink="/app/dashboard" class="p-button p-button-text self-start sm:self-auto text-xs sm:text-sm">
-      <i class="pi pi-arrow-left mr-2"></i>Back to Dashboard
-    </a>
-  </div>
+  <app-page-header title="Subscriptions" backLink="/app/dashboard" />
 
   @if (subscriptions().length > 0) {
     <p-card styleClass="glass-card">

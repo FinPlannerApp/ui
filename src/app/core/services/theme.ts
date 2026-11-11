@@ -191,6 +191,7 @@ export class ThemeEngine {
   private applyCompact(enabled: boolean): void {
     if (!this.isBrowser) return;
     document.body.classList.toggle('compact-view', enabled);
+    document.documentElement.dataset['density'] = enabled ? 'compact' : 'comfortable';
   }
 
   /* ------------------------------------------------------------------ */

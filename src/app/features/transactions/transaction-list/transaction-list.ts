@@ -24,6 +24,7 @@ import { StatCard } from '../../../shared/components/stat-card/stat-card';
 import { AccountType, InterestFrequency } from '../../../core/models/account-type.model';
 import { Account } from '../../accounts/account';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
+import { InfiniteScrollDirective } from '../../../shared/directives/infinite-scroll.directive';
 
 @Component({
   selector: 'app-transaction-list',
@@ -34,6 +35,7 @@ import { EmptyState } from '../../../shared/components/empty-state/empty-state';
     RouterLink,
     EmptyState,
     StatCard,
+    InfiniteScrollDirective,
     ...sharedPrimeModules
   ],
   templateUrl: './transaction-list.html',
@@ -165,7 +167,9 @@ export class TransactionList implements OnInit, OnDestroy {
   }
 
   totalRecords = signal(0);
-  rows = signal(10);
+  rows = signal(25);
+  isLoadingMore = signal(false);
+  hasMore = computed(() => this.transactions().length < this.totalRecords());
   lastLazyLoadEvent: any;
   ready = signal(false);
 
@@ -308,8 +312,8 @@ export class TransactionList implements OnInit, OnDestroy {
     const id = this.accountId();
     if (id === null || this.isLoading()) return;
 
-    const pageNumber = event ? (event.first / event.rows + 1) : (this.lastLazyLoadEvent ? (this.lastLazyLoadEvent.first / this.lastLazyLoadEvent.rows + 1) : 1);
-    const pageSize = event ? event.rows : (this.lastLazyLoadEvent ? this.lastLazyLoadEvent.rows : this.rows());
+    const pageNumber = 1; // every (re)load restarts the list; further pages are appended by loadMore()
+    const pageSize = this.rows();
     const sortBy = event?.sortField || this.lastLazyLoadEvent?.sortField || 'date';
     const sortOrder = event?.sortOrder === 1 ? 'asc' : (event?.sortOrder === -1 ? 'desc' : (this.lastLazyLoadEvent?.sortOrder === 1 ? 'asc' : 'desc'));
 
@@ -339,7 +343,7 @@ export class TransactionList implements OnInit, OnDestroy {
     }
 
     this.isLoading.set(true);
-    if (event) this.lastLazyLoadEvent = event;
+    if (event && event.sortField) this.lastLazyLoadEvent = event;
 
     try {
       this.lastQueryKey = currentQueryKey;
@@ -374,6 +378,40 @@ export class TransactionList implements OnInit, OnDestroy {
       this.lastQueryKey = null;
     } finally {
       this.isLoading.set(false);
+      this.cdr.markForCheck();
+    }
+  }
+
+  /** Infinite scroll: fetch the next page and APPEND it, so rows already shown never disappear. */
+  async loadMore(): Promise<void> {
+    const id = this.accountId();
+    if (id === null || this.isLoading() || this.isLoadingMore() || !this.hasMore()) return;
+
+    this.isLoadingMore.set(true);
+    const pageSize = this.rows();
+    const nextPage = Math.floor(this.transactions().length / pageSize) + 1;
+    const keyAtStart = this.lastQueryKey;
+    const filters: { [key: string]: string } = {
+      month: (this.selectedDate().getMonth() + 1).toString(),
+      year: this.selectedDate().getFullYear().toString(),
+    };
+    if (this.selectedCategory()) filters['categoryName'] = this.selectedCategory()!;
+    const sortBy = this.lastLazyLoadEvent?.sortField || 'date';
+    const sortOrder = this.lastLazyLoadEvent?.sortOrder === 1 ? 'asc' : 'desc';
+
+    try {
+      const page = await firstValueFrom(this.transactionService.getTransactionsForAccount(id, {
+        pageNumber: nextPage, pageSize, sortBy, sortOrder, filters, globalSearch: this.globalSearch() || ''
+      }));
+      // Filters/sort changed while this page was in flight: it belongs to an old list, drop it.
+      if (keyAtStart !== this.lastQueryKey) return;
+      const seen = new Set(this.transactions().map(t => t.id));
+      this.transactions.update(list => [...list, ...page.data.filter(t => !seen.has(t.id))]);
+      this.totalRecords.set(page.totalRecords);
+    } catch (err) {
+      console.error('Failed to load more transactions', err);
+    } finally {
+      this.isLoadingMore.set(false);
       this.cdr.markForCheck();
     }
   }
@@ -557,4 +595,4 @@ export class TransactionList implements OnInit, OnDestroy {
       });
     }
   }
-}
+}
