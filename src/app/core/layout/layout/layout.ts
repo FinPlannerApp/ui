@@ -3,6 +3,8 @@ import { Router, RouterOutlet } from '@angular/router';
 import { Auth } from '../../services/auth';
 import { MenuItem } from 'primeng/api';
 import { environment } from '../../../../environments/environment';
+import { ChangelogService } from '../../services/changelog.service';
+import { WhatsNew } from '../../../shared/components/whats-new/whats-new';
 import { ThemeEngine } from '../../services/theme';
 import { BreadcrumbService } from '../breadcrumb.service';
 import { CommonModule } from '@angular/common';
@@ -11,7 +13,7 @@ import { sharedPrimeModules } from '../../../shared/prime-imports';
 
 @Component({
   selector: 'app-layout',
-  imports: [RouterOutlet, CommonModule, ...sharedPrimeModules],
+  imports: [RouterOutlet, CommonModule, WhatsNew, ...sharedPrimeModules],
   templateUrl: './layout.html',
 })
 
@@ -20,6 +22,7 @@ export class Layout {
   public themeEngine = inject(ThemeEngine);
   public breadcrumbService = inject(BreadcrumbService);
   public loadingService = inject(LoadingService);
+  public changelog = inject(ChangelogService);
   private router = inject(Router);
 
   sidebarVisible = false;
@@ -33,6 +36,7 @@ export class Layout {
 
   constructor() {
     this.appVersion = environment.appVersion;
+    void this.changelog.loadServerVersion();
     this.navItems = [
       {
         label: 'Overview',

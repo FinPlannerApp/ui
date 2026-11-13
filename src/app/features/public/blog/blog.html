@@ -51,6 +51,33 @@
         </button>
     </div>
 
+    <!-- Recent releases (from the database; minor and major releases also have an article below) -->
+    @if (changelog.recent().length > 0) {
+        <section class="glass-card mb-4 p-5 rounded-2xl border border-indigo-500/30">
+            <div class="flex items-center gap-2 mb-3 text-xs font-extrabold uppercase tracking-wider text-indigo-400">
+                <i class="pi pi-megaphone"></i> Recent releases
+            </div>
+            <ul class="list-none m-0 p-0 flex flex-col gap-3">
+                @for (r of changelog.recent(); track r.id) {
+                    <li class="flex flex-col gap-1">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">{{ changelog.label(r) }}</span>
+                            <span class="text-xs" style="color: var(--text-muted);">{{ r.releasedOn | date: 'mediumDate' }}</span>
+                            @if (r.blogSlug) {
+                                <a [routerLink]="['/blog', r.blogSlug]" class="text-xs font-bold text-indigo-400 no-underline">Read the write-up →</a>
+                            }
+                        </div>
+                        <ul class="m-0 pl-5 text-sm leading-relaxed" style="color: var(--text-muted);">
+                            @for (n of r.items.slice(0, 3); track n.text) {
+                                <li>{{ n.text }}</li>
+                            }
+                        </ul>
+                    </li>
+                }
+            </ul>
+        </section>
+    }
+
     <!-- Article Cards Grid -->
     <div class="grid grid-cols-12 gap-4">
         @if (isLoading()) {

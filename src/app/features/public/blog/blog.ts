@@ -2,6 +2,7 @@ import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { BlogLoaderService } from './blog-loader.service';
 import { Auth } from '../../../core/services/auth';
+import { ChangelogService } from '../../../core/services/changelog.service';
 
 export const BLOG_POSTS = [
   {
@@ -996,6 +997,7 @@ import { CommonModule } from '@angular/common';
 export class Blog implements OnInit {
   private blogLoader = inject(BlogLoaderService);
   auth = inject(Auth);
+  changelog = inject(ChangelogService);
   sortAscending = signal(false); // default: newest first (descending)
   posts = signal<any[]>([]);
 
@@ -1009,6 +1011,7 @@ export class Blog implements OnInit {
   availableTags = ['All', 'Guide', 'Release', 'Security', 'Feature', 'Architecture'];
 
   async ngOnInit(): Promise<void> {
+    void this.changelog.loadRecent(3);
     await this.loadServerSide();
   }
 

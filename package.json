@@ -1,6 +1,6 @@
 {
   "name": "angular-app",
-  "version": "6.0.0",
+  "version": "6.1.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -12,7 +12,9 @@
     "test:e2e": "playwright test",
     "serve:ssr:angular-app": "node dist/angular-app/server/server.mjs",
     "e2e": "cypress open",
-    "e2e:run": "cypress run"
+    "e2e:run": "cypress run",
+    "release:dry": "node scripts/release.mjs --dry-run",
+    "test:release": "node --test scripts/release.test.mjs"
   },
   "prettier": {
     "printWidth": 100,

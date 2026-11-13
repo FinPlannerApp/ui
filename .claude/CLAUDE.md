@@ -45,3 +45,14 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 - Design services around a single responsibility
 - Use the `providedIn: 'root'` option for singleton services
 - Use the `inject()` function instead of constructor injection
+
+## Versions and release notes
+
+Every push to `main` gets an automatic **UI version** (`.github/workflows/release-version.yml`, `scripts/release.mjs`): `feat` bumps the minor version, anything else the patch, `!` or a `BREAKING CHANGE:` line the major. The backend has its own version (API repo, same rules). Preview the next UI version with `npm run release:dry`. Never edit `version` in `package.json`, `appVersion` in the environments or `release.json` by hand.
+
+What users read ("What's new" window and the blog) lives in the database and is written as a Flyway migration in the **API repo**: `db/migrations/V<n>__release_notes_<app|server>_<x_y_z>.sql` (copy `V44__release_notes_app_6_1_0.sql`).
+
+- Every release gets short notes (`new` / `improved` / `fixed`) for the window, written in plain language from the user's point of view.
+- **Minor and major** releases also get a blog article (a `BlogPosts` row whose slug contains "release", linked through `BlogSlug`). **Patch** releases have notes only; they are listed automatically at the bottom of the next minor/major article ("Also fixed and improved since ...").
+- The version in the migration must match the one the pipeline assigns: check it with `npm run release:dry` (UI) or `node .github/scripts/release-api.mjs dry` (API) before pushing. A commit that only adds a release-notes migration does not trigger a new backend release.
+- Use Conventional Commits (`feat:`, `fix:`, `perf:`, `refactor:`, `chore:`, `docs:`, `test:`, `ci:`); the type decides the version bump.

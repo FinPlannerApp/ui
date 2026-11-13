@@ -1,0 +1,68 @@
+name: Release Version
+
+# Gives the UI an automatic version number after every successful push to main (package.json,
+# environment.appVersion, release.json). See scripts/release.mjs for the rules.
+#
+# What users read ("What's new" and the blog) is not produced here: it is written as a Flyway
+# migration in the API repo (db/migrations/V*__release_notes_*.sql) and served from the database.
+on:
+  workflow_run:
+    workflows: ["Frontend CI/CD Pipeline"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Version
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main (full history)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Check the release script
+        run: node --test scripts/release.test.mjs
+
+      - name: Bump version, commit, tag and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # If main moves while we work, start again from the new main. The script is idempotent
+          # (it computes from release.json), so nothing is released twice or skipped.
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git reset --hard origin/main
+
+            node scripts/release.mjs
+            if git diff --quiet; then
+              echo "Nothing to release."
+              exit 0
+            fi
+
+            VERSION=$(node -p "require('./package.json').version")
+            git add package.json package-lock.json src/environments release.json
+            git commit -m "chore(release): v${VERSION}"
+            git tag -f "v${VERSION}"
+
+            if git push origin main "refs/tags/v${VERSION}"; then
+              echo "Released v${VERSION}."
+              exit 0
+            fi
+            echo "main moved, retrying ($attempt/5)..."
+            git tag -d "v${VERSION}" || true
+            sleep $((attempt * 3))
+          done
+          echo "Could not push the release commit" >&2
+          exit 1
