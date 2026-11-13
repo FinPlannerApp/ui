@@ -48,6 +48,8 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 
 ## Versions and release notes
 
+The full step-by-step guide (templates, rules, checklist) is in the API repo: `docs/RELEASE_NOTES.md` (https://github.com/FinPlannerApp/api/blob/main/docs/RELEASE_NOTES.md). Follow it for every release.
+
 Every push to `main` gets an automatic **UI version** (`.github/workflows/release-version.yml`, `scripts/release.mjs`): `feat` bumps the minor version, anything else the patch, `!` or a `BREAKING CHANGE:` line the major. The backend has its own version (API repo, same rules). Preview the next UI version with `npm run release:dry`. Never edit `version` in `package.json`, `appVersion` in the environments or `release.json` by hand.
 
 What users read ("What's new" window and the blog) lives in the database and is written as a Flyway migration in the **API repo**: `db/migrations/V<n>__release_notes_<app|server>_<x_y_z>.sql` (copy `V44__release_notes_app_6_1_0.sql`).
