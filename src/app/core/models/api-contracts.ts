@@ -5,6 +5,8 @@ export interface UpsertAccountRequest {
     name: string;
     accountCategoryId: number; // Enforce explicit ID
     balance?: number; // Optional for updates?
+    purpose?: string | null;
+    cashRole?: number; // 0 Auto, 1 Spendable, 2 EmergencyFund, 3 HeldForOthers
 }
 
 export interface UpsertTransactionRequest {

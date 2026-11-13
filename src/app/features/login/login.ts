@@ -34,12 +34,14 @@ export class Login {
 
   loginForm: FormGroup;
   isSubmitting: boolean = false;
-  showConcurrentLoginModal: boolean = false;
+  /** True after the API asked for the emailed code that confirms a new device. */
+  awaitingDeviceCode: boolean = false;
 
   constructor() {
     this.loginForm = this.fb.group({
       userName: ['', Validators.required],
-      password: ['', Validators.required]
+      password: ['', Validators.required],
+      deviceVerificationCode: ['']
     });
   }
 
@@ -49,7 +51,18 @@ export class Login {
       return;
     }
 
-    const credentials: LoginUserDto = this.loginForm.value;
+    const { userName, password, deviceVerificationCode } = this.loginForm.value;
+    const credentials: LoginUserDto = { userName, password };
+
+    if (this.awaitingDeviceCode) {
+      const code = (deviceVerificationCode ?? '').toString().trim();
+      if (!code) {
+        this.notificationService.showError('Enter the code we emailed you.', 'Verification Needed');
+        return;
+      }
+      credentials.deviceVerificationCode = code;
+    }
+
     this.performLogin(credentials);
   }
 
@@ -61,7 +74,7 @@ export class Login {
       next: (response) => {
         this.isSubmitting = false;
         if (response.isSuccess) {
-          this.showConcurrentLoginModal = false;
+          this.awaitingDeviceCode = false;
           const returnUrl = this.route.snapshot.queryParams['returnUrl'] || sessionStorage.getItem('pending_return_url');
           if (returnUrl) {
             sessionStorage.removeItem('pending_return_url');
@@ -78,11 +91,23 @@ export class Login {
             });
           }
         } else {
-          // Check for Concurrent Login (Backend returns 200 OK with failure)
-          if (response.error?.code === 'Auth.ConcurrentLogin') {
-            this.showConcurrentLoginModal = true;
+          const code = response.error?.code;
+
+          // A new device: the API emailed a code. Show the code field and let the user resubmit.
+          if (code === 'Auth.DeviceVerificationRequired') {
+            this.awaitingDeviceCode = true;
+            this.loginForm.get('deviceVerificationCode')?.reset('');
+            this.notificationService.showInfo(
+              response.error?.description || 'We emailed a verification code to confirm this new device.',
+              'Check Your Email');
             this.cdr.markForCheck();
             return;
+          }
+
+          // Too many wrong codes: start over so a fresh code gets sent.
+          if (code === 'Auth.TooManyAttempts') {
+            this.awaitingDeviceCode = false;
+            this.loginForm.get('deviceVerificationCode')?.reset('');
           }
 
           const msg = response.error?.description || 'Login failed';
@@ -92,27 +117,6 @@ export class Login {
       },
       error: (err: HttpErrorResponse) => {
         this.isSubmitting = false;
-
-        // Check for Concurrent Login Error
-        if (err.status === 400) {
-          const errorBody = err.error;
-          let isConcurrent = false;
-
-          if (errorBody?.errors && Array.isArray(errorBody.errors)) {
-            isConcurrent = errorBody.errors.includes('ConcurrentLogin');
-          }
-
-          if (!isConcurrent && errorBody?.message) {
-            isConcurrent = errorBody.message.includes('already logged in') || errorBody.message.includes('ConcurrentLogin');
-          }
-
-          if (isConcurrent) {
-            this.showConcurrentLoginModal = true;
-            this.cdr.markForCheck();
-            return;
-          }
-        }
-
         const detail = err.error?.message || 'An unknown error occurred.';
         this.notificationService.showError(detail, 'Error');
         this.cdr.markForCheck();
@@ -120,18 +124,10 @@ export class Login {
     });
   }
 
-  confirmForceLogin(): void {
-    const credentials: LoginUserDto = {
-      ...this.loginForm.value,
-      forceLogin: true
-    };
-    this.performLogin(credentials);
-  }
-
-  cancelForceLogin(): void {
-    this.showConcurrentLoginModal = false;
-    this.loginForm.reset();
+  /** Back out of the code step (wrong account, or the code never arrived). */
+  cancelDeviceCode(): void {
+    this.awaitingDeviceCode = false;
+    this.loginForm.get('deviceVerificationCode')?.reset('');
     this.cdr.markForCheck();
   }
 }
-

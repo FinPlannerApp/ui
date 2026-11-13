@@ -272,6 +272,68 @@
               </div>
             </div>
 
+            <!-- Signed-in Devices Card -->
+            <div class="md:col-span-2 p-5 rounded-3xl glass-card border border-white/10 flex flex-col gap-4 shadow-xl">
+              <div class="flex items-center justify-between gap-3 border-b border-white/10 pb-3 flex-wrap">
+                <div class="flex items-center gap-2">
+                  <i class="pi pi-mobile text-emerald-400 text-base"></i>
+                  <span class="font-extrabold text-sm text-main">Signed-in Devices</span>
+                </div>
+                @if (otherSessionCount() > 0) {
+                  <button
+                    type="button"
+                    (click)="signOutOtherDevices()"
+                    class="px-3 py-1.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-extrabold flex items-center gap-2 hover:bg-red-500/20 transition-all cursor-pointer"
+                  >
+                    <i class="pi pi-sign-out text-xs"></i>
+                    <span>Sign out all other devices</span>
+                  </button>
+                }
+              </div>
+
+              <p class="text-xs text-muted leading-relaxed m-0">
+                These devices are signed in to your account. If you see one you do not recognise, sign it out and change your password.
+              </p>
+
+              @if (sessionsLoading() && sessions().length === 0) {
+                <p class="text-xs text-muted m-0">Loading devices…</p>
+              } @else if (sessionsError()) {
+                <div class="flex items-center justify-between gap-3 p-3 rounded-2xl bg-white/5 border border-white/10 text-xs">
+                  <span class="text-muted">Could not load your devices.</span>
+                  <button type="button" (click)="loadSessions()" class="text-emerald-400 font-extrabold bg-transparent border-0 cursor-pointer">Retry</button>
+                </div>
+              } @else {
+                <ul class="list-none m-0 p-0 flex flex-col gap-2">
+                  @for (s of sessions(); track s.sessionId) {
+                    <li class="p-3 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between gap-3">
+                      <div class="min-w-0 flex flex-col gap-0.5">
+                        <div class="flex items-center gap-2 flex-wrap">
+                          <span class="text-sm font-extrabold text-main truncate">{{ s.device }}</span>
+                          @if (s.isCurrent) {
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">This device</span>
+                          }
+                        </div>
+                        <span class="text-[11px] text-muted truncate">
+                          {{ s.ipAddress || 'Unknown IP' }} · Active {{ s.lastActiveUtc | date: 'medium' }} · Signed in {{ s.signedInUtc | date: 'mediumDate' }}
+                        </span>
+                      </div>
+                      @if (!s.isCurrent) {
+                        <button
+                          type="button"
+                          (click)="signOutDevice(s)"
+                          class="shrink-0 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-main text-xs font-extrabold hover:bg-white/10 transition-all cursor-pointer"
+                        >
+                          Sign out
+                        </button>
+                      }
+                    </li>
+                  } @empty {
+                    <li class="text-xs text-muted">No other devices are signed in.</li>
+                  }
+                </ul>
+              }
+            </div>
+
           </div>
         </div>
       }

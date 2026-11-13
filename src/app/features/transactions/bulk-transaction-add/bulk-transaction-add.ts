@@ -69,6 +69,7 @@ export class BulkTransactionAdd {
     isSaving = signal(false);
 
     showImportSummary = signal(false);
+    isChecking = signal(false);
     importSummaryData = signal({ total: 0, valid: 0, invalid: 0 });
 
     batchAccount = signal<any>(null);
@@ -304,6 +305,8 @@ export class BulkTransactionAdd {
         const hasValidDest = isTransfer ? !!(row.destinationAccountId && typeof row.destinationAccountId === 'object' && row.destinationAccountId.id) : true;
         const hasValidType = isTransfer ? true : (row.type !== undefined && row.type !== null);
 
+        if (isTransfer && hasValidDest && row.destinationAccountId.id === row.accountId.id) return false;
+
         const amountValue = row.amount !== null ? Math.abs(row.amount) : 0;
         return !!(row.date && hasValidAccount && hasValidCategory && amountValue > 0 && row.description && hasValidDest && hasValidType);
     }
@@ -395,21 +398,73 @@ export class BulkTransactionAdd {
         }
     }
 
+    /** One id per attempt: a double click or retry of the same submit can never save twice. */
+    private batchId: string = crypto.randomUUID();
+
+    private buildPayload(rows: BulkTransactionRow[]) {
+        return {
+            batchId: this.batchId,
+            transactions: rows.map(r => {
+                const isTransfer = this.isTransferCategory(r.transactionCategoryId);
+                return {
+                    accountId: r.accountId?.id,
+                    destinationAccountId: isTransfer ? r.destinationAccountId?.id : undefined,
+                    transaction: {
+                        description: r.description,
+                        amount: r.amount,
+                        date: toDateOnlyString(r.date)!,
+                        type: isTransfer ? TransactionType.Expense : r.type,
+                        transactionCategoryId: r.transactionCategoryId?.id
+                    }
+                };
+            })
+        };
+    }
+
     confirmSave(event: Event) {
-        const validCount = this.activeRows.filter(r => this.isValid(r)).length;
-        if (validCount === 0) {
+        if (this.isSaving() || this.isChecking()) return;
+        const rowsToCheck = this.activeRows.filter(r => this.isValid(r));
+        if (rowsToCheck.length === 0) {
             this.messageService.add({ severity: 'warn', summary: 'No valid rows', detail: 'Please enter at least one valid transaction.' });
             return;
         }
 
-        this.confirmationService.confirm({
-            message: `Are you sure you want to save ${validCount} valid transactions to the database?`,
-            header: 'Confirm Save',
-            icon: 'pi pi-exclamation-triangle',
-            acceptLabel: 'Yes, Save',
-            rejectLabel: 'Cancel',
-            accept: () => {
-                this.saveAll();
+        // Dry run on the server first: balances replayed in date order, duplicates flagged. Nothing is saved yet.
+        this.isChecking.set(true);
+        this.transactionService.bulkValidateTransactions(this.buildPayload(rowsToCheck)).subscribe({
+            next: (res: any) => {
+                this.isChecking.set(false);
+                const issues: { index: number; severity: string; message: string }[] = res.issues ?? [];
+                const errors = issues.filter(i => i.severity === 'error');
+                const warnings = issues.filter(i => i.severity === 'warning');
+
+                rowsToCheck.forEach((r, i) => {
+                    const mine = issues.filter(x => x.index === i);
+                    r.errorMessage = mine.map(x => x.message).join(' ') || undefined;
+                    r.status = mine.some(x => x.severity === 'error') ? 'error' : 'valid';
+                });
+                this.rows.update(r => [...r]);
+
+                if (errors.length > 0) {
+                    this.messageService.add({ severity: 'error', summary: 'Fix before saving', detail: `${errors.length} row(s) would fail. Nothing was saved. Hover the red icon on each row for the reason.`, life: 8000 });
+                    return;
+                }
+                const warnText = warnings.length
+                    ? `\n\n${warnings.length} row(s) look suspicious (duplicates / future dates). First: ${warnings[0].message}`
+                    : '';
+                this.confirmationService.confirm({
+                    message: `Save ${rowsToCheck.length} transactions? They are applied together: if any row fails, none are saved.${warnText}`,
+                    header: 'Confirm Save',
+                    icon: 'pi pi-exclamation-triangle',
+                    acceptLabel: warnings.length ? 'Save anyway' : 'Yes, Save',
+                    rejectLabel: 'Cancel',
+                    accept: () => { this.saveAll(); }
+                });
+            },
+            error: (err: any) => {
+                this.isChecking.set(false);
+                const detail = err?.error?.description ?? err?.message ?? 'Could not check the rows. Nothing was saved.';
+                this.messageService.add({ severity: 'error', summary: 'Check failed', detail });
             }
         });
     }
@@ -426,33 +481,20 @@ export class BulkTransactionAdd {
         this.isSaving.set(true);
         validRowsToSave.forEach(r => r.status = 'saving');
 
-        const payload = {
-            transactions: validRowsToSave.map(r => {
-                const isTransfer = this.isTransferCategory(r.transactionCategoryId);
-                return {
-                    accountId: r.accountId?.id,
-                    destinationAccountId: isTransfer ? r.destinationAccountId?.id : undefined,
-                    transaction: {
-                        description: r.description,
-                        amount: r.amount,
-                        date: toDateOnlyString(r.date)!,
-                        type: isTransfer ? TransactionType.Expense : r.type,
-                        transactionCategoryId: r.transactionCategoryId?.id
-                    }
-                };
-            })
-        };
+        const payload = this.buildPayload(validRowsToSave);
 
         this.transactionService.bulkUpsertTransactions(payload).subscribe({
             next: (res) => {
                 this.isSaving.set(false);
-                const { successfulCount, failedCount, failedTransactions } = res;
+                const { successfulCount, failedCount, failedTransactions, rolledBack } = res;
 
                 if (failedCount === 0) {
                     this.messageService.add({ severity: 'success', summary: 'Saved', detail: `Successfully saved ${successfulCount} transactions.` });
                     this.router.navigate(['/app/dashboard']);
                 } else {
-                    this.messageService.add({ severity: 'warn', summary: 'Partial Success', detail: `Saved ${successfulCount}, failed ${failedCount}. Please review highlighted rows.` });
+                    this.messageService.add({ severity: 'warn', summary: 'Partial Success', detail: rolledBack
+                        ? `Nothing was saved: ${failedCount} row(s) failed, so the whole batch was cancelled. Fix the highlighted rows and save again.`
+                        : `Saved ${successfulCount}, failed ${failedCount}. Please review highlighted rows.` });
 
                     this.rows.update(current => {
                         // Remove successful rows by marking deleted
@@ -464,6 +506,10 @@ export class BulkTransactionAdd {
                                 if (failedInfo) {
                                     realRow.status = 'error';
                                     realRow.errorMessage = failedInfo.errors.join(', ');
+                                } else if (rolledBack) {
+                                    // The server rolls the whole batch back when any row fails: this row was NOT saved.
+                                    realRow.status = 'valid';
+                                    realRow.errorMessage = undefined;
                                 } else {
                                     realRow.isDeleted = true; // Was successful
                                 }

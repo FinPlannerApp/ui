@@ -37,6 +37,13 @@
       placeholder="e.g. Emergency Fund, Daily Spends" />
   </app-form-field>
 
+  @if (selectedAccountType() !== AccountType.CreditCard && selectedAccountType() !== AccountType.Loan) {
+    <app-form-field label="How should this count?" inputId="cashRole">
+      <p-select id="cashRole" [options]="cashRoleOptions" formControlName="cashRole"
+        optionLabel="label" optionValue="value" appendTo="body" class="w-full"></p-select>
+    </app-form-field>
+  }
+
   <!-- Credit Card fields -->
   @if (selectedAccountType() === AccountType.CreditCard) {
     <div class="grid grid-cols-12 gap-4 items-start">

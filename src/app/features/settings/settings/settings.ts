@@ -7,7 +7,7 @@ import { firstValueFrom } from 'rxjs';
 import { GenericApi } from '../../../core/services/generic-api';
 import { NotificationService } from '../../../core/services/notification.service';
 import { ThemeEngine } from '../../../core/services/theme';
-import { Auth } from '../../../core/services/auth';
+import { Auth, SessionDto } from '../../../core/services/auth';
 import { sharedPrimeModules } from '../../../shared/prime-imports';
 
 const PREFERENCES_KEY = 'finplanner_user_preferences';
@@ -82,6 +82,67 @@ export class Settings implements OnInit {
 
   ngOnInit(): void {
     this.loadPreferences();
+    void this.loadSessions();
+  }
+
+  // --- Signed-in devices ---
+
+  sessions = signal<SessionDto[]>([]);
+  sessionsLoading = signal(false);
+  sessionsError = signal(false);
+  otherSessionCount = computed(() => this.sessions().filter(s => !s.isCurrent).length);
+
+  async loadSessions(): Promise<void> {
+    if (!this.isBrowser) return;
+    this.sessionsLoading.set(true);
+    this.sessionsError.set(false);
+    try {
+      const result = await firstValueFrom(this.authService.getSessions());
+      this.sessions.set(result.isSuccess && result.value ? result.value : []);
+      this.sessionsError.set(!result.isSuccess);
+    } catch {
+      this.sessionsError.set(true);
+    } finally {
+      this.sessionsLoading.set(false);
+    }
+  }
+
+  signOutDevice(session: SessionDto): void {
+    this.confirmationService.confirm({
+      header: 'Sign out this device',
+      message: `Sign out ${session.device}? It will need to sign in again.`,
+      icon: 'pi pi-sign-out',
+      accept: async () => {
+        try {
+          const result = await firstValueFrom(this.authService.revokeSession(session.sessionId));
+          if (result.isSuccess) {
+            this.notificationService.showSuccess(`${session.device} was signed out.`);
+          } else {
+            this.notificationService.showInfo(result.error?.description || 'That device was already signed out.');
+          }
+        } catch {
+          this.notificationService.showError('Could not sign out that device.');
+        }
+        await this.loadSessions();
+      }
+    });
+  }
+
+  signOutOtherDevices(): void {
+    this.confirmationService.confirm({
+      header: 'Sign out other devices',
+      message: 'Every device except this one will be signed out and will need to sign in again. Continue?',
+      icon: 'pi pi-sign-out',
+      accept: async () => {
+        try {
+          await firstValueFrom(this.authService.revokeOtherSessions());
+          this.notificationService.showSuccess('All other devices were signed out.');
+        } catch {
+          this.notificationService.showError('Could not sign out the other devices.');
+        }
+        await this.loadSessions();
+      }
+    });
   }
 
   private loadPreferences(): void {

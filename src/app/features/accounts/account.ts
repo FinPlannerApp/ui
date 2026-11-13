@@ -12,6 +12,7 @@ export interface Account {
   accountCategoryId?: number;
   isLiability?: boolean;
   accountType?: AccountType;
+  cashRole?: number;
   creditCardDetails?: CreditCardDetails | null;
   loanDetails?: LoanDetails | null;
   bankAccountDetails?: BankAccountDetails | null;

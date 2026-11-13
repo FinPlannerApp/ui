@@ -192,7 +192,7 @@ export class TransactionsPage implements OnInit {
       this.totalIncome = result.totalIncome;
       this.totalExpenses = result.totalExpenses;
       this.totalSavings = result.totalSavings;
-      this.closingBalance = this.balanceBF + this.totalSavings;
+      this.closingBalance = result.closingBalance ?? (this.balanceBF + this.totalSavings);
 
       // Update categories
       this.categoryOptions = result.availableCategories.map(c => ({ label: c, value: c }));

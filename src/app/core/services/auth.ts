@@ -24,7 +24,18 @@ export interface UserDetails {
 export interface LoginUserDto {
   userName: string;
   password: string;
-  forceLogin?: boolean;
+  /** The emailed code, sent on the second step when a login from a new device needs verifying. */
+  deviceVerificationCode?: string;
+}
+
+/** One signed-in device, from GET Auth/sessions. */
+export interface SessionDto {
+  sessionId: string;
+  device: string;
+  ipAddress?: string | null;
+  signedInUtc: string;
+  lastActiveUtc: string;
+  isCurrent: boolean;
 }
 
 export interface LoginResponseDto {
@@ -52,6 +63,9 @@ export interface ResetPasswordDto {
   otp: string;
   newPassword: string;
 }
+
+/** Sent on the cookie-based endpoints (refresh/logout); the API's CSRF guard requires it. */
+const CSRF_HEADERS = { 'X-Requested-With': 'XMLHttpRequest' };
 
 @Injectable({
   providedIn: 'root'
@@ -243,6 +257,21 @@ export class Auth {
     );
   }
 
+  // --- SIGNED-IN DEVICES ---
+
+  getSessions(): Observable<ApiResult<SessionDto[]>> {
+    return this.http.get<ApiResult<SessionDto[]>>(this.buildUrl('Auth', 'sessions'));
+  }
+
+  revokeSession(sessionId: string): Observable<ApiResult<boolean>> {
+    return this.http.delete<ApiResult<boolean>>(this.buildUrl('Auth', 'sessions', sessionId));
+  }
+
+  /** Signs out every device except this one. */
+  revokeOtherSessions(): Observable<ApiResult<boolean>> {
+    return this.http.post<ApiResult<boolean>>(this.buildUrl('Auth', 'sessions', 'revoke-others'), {});
+  }
+
   changePassword(dto: ChangePasswordDto): Observable<ApiResult<boolean>> {
     return this.http.post<ApiResult<boolean>>(this.buildUrl('Auth', 'change-password'), dto);
   }
@@ -268,7 +297,7 @@ export class Auth {
     return this.http.post<ApiResult<LoginResponseDto>>(
       this.buildUrl('Auth', 'refresh'),
       {},
-      { withCredentials: true }
+      { withCredentials: true, headers: CSRF_HEADERS }
     ).pipe(
       map(response => {
         if (response.isSuccess && response.value) {
@@ -298,7 +327,7 @@ export class Auth {
     this.isLoggingOut = true;
 
     // Call backend to clear cookie and revoke session
-    this.http.post(this.buildUrl('Auth', 'logout'), {}, { withCredentials: true }).pipe(
+    this.http.post(this.buildUrl('Auth', 'logout'), {}, { withCredentials: true, headers: CSRF_HEADERS }).pipe(
       catchError(() => of(null))
     ).subscribe();
 

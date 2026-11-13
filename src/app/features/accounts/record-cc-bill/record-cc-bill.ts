@@ -32,6 +32,9 @@ export class RecordCcBill {
 
   billAmount = signal<number | null>(this.config.data?.billAmount ?? null);
   minimumDue = signal<number | null>(this.config.data?.minimumDue ?? null);
+  interestAndFees = signal<number | null>(null);
+  otherCharges = signal<number | null>(null);
+  statementDate = signal<Date | null>(null);
   dueDate = signal<Date | null>(this.config.data?.dueDate ? new Date(this.config.data.dueDate) : null);
 
   isSubmitting = signal(false);
@@ -52,6 +55,9 @@ export class RecordCcBill {
         accountId: this.accountId,
         billAmount: amount,
         minimumDue: this.minimumDue(),
+        interestAndFees: this.interestAndFees(),
+        otherCharges: this.otherCharges(),
+        statementDate: toDateOnlyString(this.statementDate()),
         dueDate: toDateOnlyString(this.dueDate())
       }));
 

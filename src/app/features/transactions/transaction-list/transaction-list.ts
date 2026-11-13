@@ -1,3 +1,4 @@
+import { CcHistory } from '../../accounts/cc-history/cc-history';
 import { ChangeDetectionStrategy, Component, inject, OnInit, OnDestroy, signal, computed, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -30,6 +31,7 @@ import { InfiniteScrollDirective } from '../../../shared/directives/infinite-scr
   selector: 'app-transaction-list',
   standalone: true,
   imports: [
+    CcHistory,
     CommonModule,
     FormsModule,
     RouterLink,
@@ -595,4 +597,4 @@ export class TransactionList implements OnInit, OnDestroy {
       });
     }
   }
-}
+}

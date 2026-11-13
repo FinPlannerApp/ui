@@ -212,6 +212,9 @@
           }
         }
       </div>
+      @if (accountId() !== null) {
+        <app-cc-history [accountId]="accountId()!" [selectedDate]="selectedDate()" [refreshKey]="ccBreakdown()" />
+      }
     }
 
     @if (account.loanDetails; as details) {
@@ -547,4 +550,4 @@
       </div>
     </p-dialog>
   }
-</div>
+</div>

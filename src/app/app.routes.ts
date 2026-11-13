@@ -97,6 +97,10 @@ export const routes: Routes = [
     loadComponent: () => import('./core/layout/layout/layout').then(m => m.Layout),
     children: [
       {
+        path: 'accounts/data-health',
+        loadComponent: () => import('./features/accounts/data-health/data-health').then(m => m.DataHealth)
+      },
+      {
         path: 'accounts',
         loadComponent: () => import('./features/accounts/accounts-page/accounts-page').then(m => m.AccountsPage)
       },

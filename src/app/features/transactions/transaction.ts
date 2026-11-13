@@ -22,6 +22,7 @@ export interface Transaction {
 export interface TransactionPageResult {
   transactions: PaginatedResult<Transaction>;
   balanceBroughtForward: number;
+  closingBalance?: number;
   totalIncome: number;
   totalExpenses: number;
   totalSavings: number;
@@ -103,6 +104,15 @@ export class TransactionService {
    * @param payload The bulk transaction payload.
    * @returns An Observable of the bulk insert response containing success and failure counts.
    */
+  bulkValidateTransactions(payload: any): Observable<any> {
+    return this.apiService.post<any>('Transactions/bulk-validate', payload).pipe(
+      map(response => {
+        if (!response.isSuccess) throw response;
+        return response.value;
+      })
+    );
+  }
+
   bulkUpsertTransactions(payload: any): Observable<any> {
     const endpoint = `Transactions/bulk-upsert`;
     return this.apiService.post<any>(endpoint, payload).pipe(

@@ -80,6 +80,7 @@ export class AccountForm {
       balance: [0, [Validators.required, Validators.min(0)]],
       accountCategoryId: [null, Validators.required],
       purpose: [null],
+      cashRole: [0],
 
       // Credit Card fields
       creditLimit: [null],
@@ -110,6 +111,13 @@ export class AccountForm {
       this.accountForm.updateValueAndValidity();
     });
   }
+
+  readonly cashRoleOptions = [
+    { value: 0, label: 'Automatic (bank & cash accounts are spendable)' },
+    { value: 1, label: 'Spendable cash (e.g. cash wallet, UPI wallet)' },
+    { value: 2, label: 'Emergency fund (not counted as spendable)' },
+    { value: 3, label: 'Held for someone else (not mine, excluded from net worth)' }
+  ];
 
   async ngOnInit(): Promise<void> {
     await this.loadCategories(true);
@@ -279,6 +287,7 @@ export class AccountForm {
         balance: rawValue.balance,
         accountCategoryId: rawValue.accountCategoryId,
         purpose: rawValue.purpose,
+        cashRole: rawValue.cashRole ?? 0,
         ...this.buildDetailsPayload()
       };
 

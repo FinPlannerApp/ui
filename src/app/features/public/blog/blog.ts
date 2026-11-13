@@ -917,11 +917,11 @@ export const BLOG_POSTS = [
         <li><strong>Verify:</strong> The user enters the OTP. Server validates it, retrieves the cached payload, creates the user via ASP.NET Core Identity, sets <code>EmailConfirmed = true</code>, and deletes the Redis keys.</li>
       </ol>
 
-      <h2>Login & Concurrent Session Detection</h2>
-      <p>Every login checks <code>user.CurrentSessionId</code>. If a session is already active and <code>ForceLogin</code> is false, the API returns a <code>Auth.ConcurrentLogin</code> error. The frontend prompts: <em>"You are already logged in on another device. Do you want to continue here?"</em></p>
+      <h2>Login & Signed-in Devices</h2>
+      <p>Several devices can be signed in at once. Each sign-in is its own <em>session</em>, tied to a random device cookie issued by the server. Settings lists every signed-in device and lets you sign any of them out, or all the others. Signing in from a device the account has not used before sends you an email, and can optionally require an emailed code first.</p>
 
       <h2>Refresh Token Rotation</h2>
-      <p>On every token refresh: the old token is immediately revoked, a new token is issued, all expired tokens are pruned, and one-token-per-IP is enforced.</p>
+      <p>On every token refresh: the old token is immediately revoked and a new token is issued in the same session. A refresh token only works together with the device cookie it was issued for. If a token that was already rotated is presented again, the whole session is signed out, because that means the token leaked.</p>
 
       <h2>Forgot Password Flow</h2>
       <ol>

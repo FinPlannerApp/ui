@@ -42,18 +42,14 @@ function initializeApp(
           switchMap(isLocked => {
             if (isLocked) return of(true);
 
+            // CSRF for the cookie endpoints is enforced with an Origin check + X-Requested-With header
+            // (no antiforgery-token round-trip at startup).
             return auth.restoreSession().pipe(
               switchMap(sessionRestored => {
-                const csrfUrl = `${environment.apiBaseUrl}/antiforgery/token`;
-                return http.get(csrfUrl).pipe(
-                  catchError(() => of(null)), // Don't crash if CSRF fails
-                  switchMap(() => {
-                    if (sessionRestored && auth.isLoggedIn()) {
-                      idleTimer.startMonitoring();
-                    }
-                    return of(true);
-                  })
-                );
+                if (sessionRestored && auth.isLoggedIn()) {
+                  idleTimer.startMonitoring();
+                }
+                return of(true);
               })
             );
           })

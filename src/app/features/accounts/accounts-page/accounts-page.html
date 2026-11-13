@@ -18,6 +18,7 @@
     </div>
 
     <div class="flex items-center gap-3">
+      <a routerLink="/app/accounts/data-health" class="p-button p-button-text p-button-sm no-underline"><i class="pi pi-heart mr-2"></i>Data health</a>
       <p-button icon="pi pi-refresh" [text]="true" [rounded]="true" pTooltip="Refresh Accounts" (onClick)="refreshData()"></p-button>
       <p-button label="Add Account" icon="pi pi-plus" (onClick)="openCreateForm()"></p-button>
     </div>

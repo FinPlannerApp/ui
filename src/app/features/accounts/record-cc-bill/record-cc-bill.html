@@ -5,7 +5,13 @@
 
   @if (!result()) {
     <div class="field">
-      <label class="text-sm text-secondary font-medium">Bill Amount (Statement Total)</label>
+      <label class="text-sm text-secondary font-medium">Statement (bill) date</label>
+      <p-datepicker [ngModel]="statementDate()" (ngModelChange)="statementDate.set($event)"
+        [showIcon]="true" appendTo="body" class="w-full" placeholder="Leave empty for the latest statement"></p-datepicker>
+    </div>
+
+    <div class="field">
+      <label class="text-sm text-secondary font-medium">Bill Amount (total: EMI + interest + GST on interest + all charges)</label>
       <p-inputNumber [ngModel]="billAmount()" (ngModelChange)="billAmount.set($event)"
         mode="currency" currency="INR" locale="en-IN" class="w-full" placeholder="e.g. 15000"></p-inputNumber>
     </div>
@@ -14,6 +20,19 @@
       <label class="text-sm text-secondary font-medium">Minimum Due (optional)</label>
       <p-inputNumber [ngModel]="minimumDue()" (ngModelChange)="minimumDue.set($event)"
         mode="currency" currency="INR" locale="en-IN" class="w-full" placeholder="e.g. 1500"></p-inputNumber>
+    </div>
+
+    <div class="field">
+      <label class="text-sm text-secondary font-medium">Interest + GST on interest included (optional)</label>
+      <p-inputNumber [ngModel]="interestAndFees()" (ngModelChange)="interestAndFees.set($event)"
+        mode="currency" currency="INR" locale="en-IN" class="w-full" placeholder="0 if none / unknown"></p-inputNumber>
+      <small class="text-secondary">Anything else not already logged is treated as card spend you haven't itemised, not interest.</small>
+    </div>
+
+    <div class="field">
+      <label class="text-sm text-secondary font-medium">Other / hidden charges included (optional)</label>
+      <p-inputNumber [ngModel]="otherCharges()" (ngModelChange)="otherCharges.set($event)"
+        mode="currency" currency="INR" locale="en-IN" class="w-full" placeholder="late fee, annual fee, other"></p-inputNumber>
     </div>
 
     <div class="field">
@@ -41,7 +60,7 @@
         transactions ({{ result()!.computedFromTransactions | currency:'INR' }}).
       </p>
       <p class="text-xs text-secondary m-0">
-        That gap is likely interest, fees, or transactions you forgot to log. Worth checking your bank statement if larger than expected.
+        That gap is counted as owed right away. Unless you entered interest &amp; fees, it will be booked as un-itemised card spend when you pay the bill. Import or add the missing purchases to categorise it.
       </p>
     </div>
 
