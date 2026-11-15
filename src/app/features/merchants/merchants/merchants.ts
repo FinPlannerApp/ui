@@ -1,5 +1,5 @@
 import { PageHeader } from '../../../shared/components/page-header/page-header';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -20,7 +20,14 @@ export class Merchants implements OnInit {
   private notificationService = inject(NotificationService);
   private confirmationService = inject(ConfirmationService);
 
+  private static readonly PAGE_SIZE = 30;
   merchants = signal<Merchant[]>([]);
+  total = signal(0);
+  page = signal(1);
+  search = signal('');
+  loadingMore = signal(false);
+  hasMore = computed(() => this.merchants().length < this.total());
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
   isLoading = signal(true);
   showForm = signal(false);
   editingId = signal<number | null>(null);
@@ -33,15 +40,42 @@ export class Merchants implements OnInit {
     await this.load();
   }
 
+  /** Loads the first page again (after a search, a save or a delete). */
   private async load(): Promise<void> {
     this.isLoading.set(true);
     try {
-      this.merchants.set(await this.merchantService.getAll());
+      const result = await this.merchantService.getPage(1, Merchants.PAGE_SIZE, this.search());
+      this.merchants.set(result.data);
+      this.total.set(result.totalRecords);
+      this.page.set(1);
     } catch {
       this.notificationService.showError('Could not load merchants.');
     } finally {
       this.isLoading.set(false);
     }
+  }
+
+  /** Appends the next page; the list never holds more than what has been asked for. */
+  async loadMore(): Promise<void> {
+    if (this.loadingMore() || !this.hasMore()) return;
+    this.loadingMore.set(true);
+    try {
+      const next = this.page() + 1;
+      const result = await this.merchantService.getPage(next, Merchants.PAGE_SIZE, this.search());
+      this.merchants.update(current => [...current, ...result.data.filter(m => !current.some(c => c.id === m.id))]);
+      this.total.set(result.totalRecords);
+      this.page.set(next);
+    } catch {
+      this.notificationService.showError('Could not load more merchants.');
+    } finally {
+      this.loadingMore.set(false);
+    }
+  }
+
+  onSearch(text: string): void {
+    this.search.set(text);
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(() => void this.load(), 300);
   }
 
   openCreateForm(): void {

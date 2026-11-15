@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { GenericApi } from '../../core/services/generic-api';
+import { GenericApi, PaginatedResult } from '../../core/services/generic-api';
 import { Merchant, MerchantSpending, UpsertMerchantRequest } from '../../core/models/merchant.model';
 import { toDateOnlyString } from '../../core/utils/date-utils';
 
@@ -11,6 +11,13 @@ export class MerchantService {
   async getAll(): Promise<Merchant[]> {
     const result = await firstValueFrom(this.api.get<Merchant[]>('Merchants'));
     return result.value ?? [];
+  }
+
+  /** One page of merchants, paged on the server; `search` matches a name or an alias. */
+  async getPage(pageNumber: number, pageSize: number, search: string): Promise<PaginatedResult<Merchant>> {
+    const q = search.trim() ? `&q=${encodeURIComponent(search.trim())}` : '';
+    const result = await firstValueFrom(this.api.get<PaginatedResult<Merchant>>(`Merchants/paged?pageNumber=${pageNumber}&pageSize=${pageSize}${q}`));
+    return result.value ?? { data: [], totalRecords: 0, pageNumber, pageSize };
   }
 
   async upsert(request: UpsertMerchantRequest): Promise<Merchant> {

@@ -8,6 +8,8 @@ import { sharedPrimeModules } from '../../../shared/prime-imports';
 import { GoalService } from '../goal.service';
 import { Goal, BucketOption } from '../../../core/models/goal.model';
 import { NotificationService } from '../../../core/services/notification.service';
+import { AccountState } from '../../../core/state/account-state.service';
+import { AccountType } from '../../../core/models/account-type.model';
 import { toDateOnlyString, fromDateOnlyString } from '../../../core/utils/date-utils';
 
 @Component({
@@ -20,6 +22,7 @@ export class Goals implements OnInit {
   private goalService = inject(GoalService);
   private notificationService = inject(NotificationService);
   private confirmationService = inject(ConfirmationService);
+  private accountState = inject(AccountState);
 
   goals = signal<Goal[]>([]);
   buckets = signal<BucketOption[]>([]);
@@ -31,15 +34,24 @@ export class Goals implements OnInit {
   formName = signal('');
   formTargetAmount = signal<number | null>(null);
   formTargetDate = signal<Date | null>(null);
-  formTrackingMode = signal<'bucket' | 'manual'>('manual');
+  formTrackingMode = signal<'bucket' | 'account' | 'manual'>('manual');
   formBucketId = signal<number | null>(null);
+  formAccountId = signal<number | null>(null);
   formManualAmount = signal<number>(0);
 
   bucketOptions = computed(() =>
     this.buckets().map(b => ({ label: `${b.accountName} — ${b.name} (${b.allocatedAmount})`, value: b.id }))
   );
 
+  /** Accounts a goal can follow: money you hold (bank, cash, savings), not a card or a loan. */
+  accountOptions = computed(() =>
+    this.accountState.accounts()
+      .filter(a => a.accountType !== AccountType.CreditCard && a.accountType !== AccountType.Loan)
+      .map(a => ({ label: a.name, value: a.id }))
+  );
+
   async ngOnInit(): Promise<void> {
+    void this.accountState.loadAccounts();
     await this.loadGoals();
     try {
       this.buckets.set(await this.goalService.getAllBuckets());
@@ -64,6 +76,7 @@ export class Goals implements OnInit {
     this.formTargetDate.set(null);
     this.formTrackingMode.set('manual');
     this.formBucketId.set(null);
+    this.formAccountId.set(null);
     this.formManualAmount.set(0);
     this.showForm.set(true);
   }
@@ -73,9 +86,10 @@ export class Goals implements OnInit {
     this.formName.set(goal.name);
     this.formTargetAmount.set(goal.targetAmount);
     this.formTargetDate.set(fromDateOnlyString(goal.targetDate));
-    this.formTrackingMode.set(goal.savingsBucketId ? 'bucket' : 'manual');
+    this.formTrackingMode.set(goal.source ?? (goal.savingsBucketId ? 'bucket' : 'manual'));
     this.formBucketId.set(goal.savingsBucketId);
-    this.formManualAmount.set(goal.savingsBucketId ? 0 : goal.currentAmount);
+    this.formAccountId.set(goal.linkedAccountId ?? null);
+    this.formManualAmount.set(goal.source === 'manual' ? goal.currentAmount : 0);
     this.showForm.set(true);
   }
 
@@ -84,9 +98,15 @@ export class Goals implements OnInit {
     const target = this.formTargetAmount();
     if (!name || target === null || target <= 0) return;
 
-    const isBucketMode = this.formTrackingMode() === 'bucket';
+    const mode = this.formTrackingMode();
+    const isBucketMode = mode === 'bucket';
+    const isAccountMode = mode === 'account';
     if (isBucketMode && this.formBucketId() === null) {
       this.notificationService.showError('Pick a bucket, or switch to manual tracking.');
+      return;
+    }
+    if (isAccountMode && this.formAccountId() === null) {
+      this.notificationService.showError('Pick an account, or switch to manual tracking.');
       return;
     }
 
@@ -97,7 +117,8 @@ export class Goals implements OnInit {
         targetAmount: target,
         targetDate: toDateOnlyString(this.formTargetDate()),
         savingsBucketId: isBucketMode ? this.formBucketId() : null,
-        manualCurrentAmount: isBucketMode ? 0 : this.formManualAmount()
+        linkedAccountId: isAccountMode ? this.formAccountId() : null,
+        manualCurrentAmount: mode === 'manual' ? this.formManualAmount() : 0
       });
 
       if (savedGoal) {

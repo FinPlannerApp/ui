@@ -32,7 +32,7 @@
 
         <div class="field">
           <label class="text-sm text-secondary">How should progress be tracked?</label>
-          <div class="flex gap-3 mt-1">
+          <div class="flex flex-wrap gap-x-4 gap-y-2 mt-1">
             <div class="flex items-center gap-2">
               <input type="radio" name="trackingMode" id="trackManual" value="manual"
                 [checked]="formTrackingMode() === 'manual'" (change)="formTrackingMode.set('manual')" />
@@ -49,8 +49,25 @@
                 }
               </label>
             </div>
+            <div class="flex items-center gap-2">
+              <input type="radio" name="trackingMode" id="trackAccount" value="account"
+                [checked]="formTrackingMode() === 'account'" (change)="formTrackingMode.set('account')"
+                [disabled]="accountOptions().length === 0" />
+              <label for="trackAccount" class="text-sm">From an account's balance</label>
+            </div>
           </div>
         </div>
+
+        @if (formTrackingMode() === 'account') {
+          <div class="field">
+            <label class="text-sm text-secondary">Which account?</label>
+            <p-select [options]="accountOptions()" [ngModel]="formAccountId()" (ngModelChange)="formAccountId.set($event)"
+              optionLabel="label" optionValue="value" placeholder="Select an account" appendTo="body" class="w-full"></p-select>
+            <p class="text-xs text-secondary mt-1 mb-0">
+              Progress follows this account's balance, so it updates by itself as you deposit and spend. Best for an account you keep only for this goal, such as an emergency fund.
+            </p>
+          </div>
+        }
 
         @if (formTrackingMode() === 'manual') {
           <div class="field">
@@ -80,9 +97,7 @@
   }
 
   @if (isLoading()) {
-    <div class="flex justify-center p-6">
-      <p-progressSpinner></p-progressSpinner>
-    </div>
+    
   } @else {
     <div class="flex flex-col gap-2">
       @for (goal of goals(); track goal.id) {
@@ -100,6 +115,8 @@
                 }
                 @if (goal.savingsBucketName) {
                   <span class="text-xs text-secondary">via {{ goal.savingsBucketName }}</span>
+                } @else if (goal.linkedAccountName) {
+                  <span class="text-xs text-secondary">follows {{ goal.linkedAccountName }}</span>
                 }
               </div>
               <div class="flex gap-1">

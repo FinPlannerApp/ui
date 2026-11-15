@@ -2531,15 +2531,17 @@ a,
    Overlay stacking + motion (single source of truth)
    page content < header(500) < saving shield(1500) < dialogs(2000) < overlays(2100) < toast
    ============================================================ */
-.pill-saving {
-  display: inline-flex; align-items: center; gap: .6rem;
-  padding: .5rem .9rem; border-radius: 999px;
-  background: var(--glass-bg-solid); color: var(--text-main);
-  border: 1px solid var(--glass-border); box-shadow: 0 8px 24px rgba(0,0,0,.25);
-  font-size: .8rem; font-weight: 600;
-  animation: pill-in .18s cubic-bezier(.2,.8,.2,1) both;
-}
-@keyframes pill-in { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+/* Global loader: one spinner, centered in the viewport. Reads never block; saves block clicks until done. */
+.global-loader { position: fixed; inset: 0; z-index: 1500; display: grid; place-items: center; pointer-events: none; animation: loader-in .18s ease-out both; }
+.global-loader.is-blocking { pointer-events: auto; cursor: progress; background: rgba(0, 0, 0, .14); backdrop-filter: blur(1.5px); }
+.global-loader-card { display: inline-flex; align-items: center; gap: .75rem; padding: .75rem 1.1rem; border-radius: 999px;
+  background: var(--glass-bg-solid); color: var(--text-main); border: 1px solid var(--glass-border);
+  box-shadow: 0 10px 30px rgba(0,0,0,.25); font-size: .85rem; font-weight: 600; }
+.global-loader-ring { width: 1.35rem; height: 1.35rem; border-radius: 50%; border: 3px solid rgba(128,128,128,.28);
+  border-top-color: var(--primary-color, #10b981); animation: loader-spin .8s linear infinite; }
+@keyframes loader-spin { to { transform: rotate(360deg); } }
+@keyframes loader-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .global-loader-ring { animation-duration: 2.4s; } }
 
 .p-dialog-mask { animation: mask-in .18s ease-out both; }
 .p-dialog { animation: dialog-in .22s cubic-bezier(.2,.8,.2,1) both; }
@@ -2689,5 +2691,12 @@ html:not(.my-app-dark) .text-amber-500, html:not(.my-app-dark) .text-yellow-500 
   border: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; color: #fff;
   background: linear-gradient(135deg, #10b981, #0ea5e9); box-shadow: 0 8px 24px rgba(0,0,0,.35); }
 .quick-fab:hover { filter: brightness(1.1); }
+/* Report a problem: a smaller button stacked above the quick add button */
+.feedback-fab { position: fixed; right: 22px; bottom: calc(72px + 52px + 12px + env(safe-area-inset-bottom, 0px)); z-index: 40; width: 40px; height: 40px; border-radius: 9999px;
+  border: 1px solid var(--glass-border); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem;
+  color: var(--text-main); background: var(--glass-bg-solid); box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+.feedback-fab:hover { filter: brightness(1.08); }
+.feedback-fab:focus-visible { outline: 3px solid var(--primary-color, #10b981); outline-offset: 2px; }
+@media print { .feedback-fab { display: none; } }
 .quick-fab:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
 @media print { .quick-fab { display: none; } }

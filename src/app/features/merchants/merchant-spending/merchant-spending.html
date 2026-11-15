@@ -9,9 +9,7 @@
   <p class="text-sm text-secondary mt-0">Last 3 months.</p>
 
   @if (isLoading()) {
-    <div class="flex justify-center p-6">
-      <p-progressSpinner></p-progressSpinner>
-    </div>
+    
   } @else if (spending().length === 0) {
     <p class="text-secondary text-sm">
       No spending tagged to a merchant yet — tag some transactions to see

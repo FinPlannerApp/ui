@@ -8,7 +8,7 @@
   <p class="text-[var(--text-muted)] text-lg mt-0 mb-4">Recognizing our top contributors and bug hunters.</p>
 
   @if (loading()) {
-    <div class="flex justify-center p-6"><p-progressSpinner></p-progressSpinner></div>
+    
   } @else {
     <p-card styleClass="shadow-4 rounded-2xl overflow-hidden">
       <p-table [value]="leaders()" responsiveLayout="scroll" [tableStyle]="{'min-width': '100%'}">

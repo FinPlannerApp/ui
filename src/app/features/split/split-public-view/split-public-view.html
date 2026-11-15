@@ -7,9 +7,7 @@
 
 <div class="min-h-screen flex flex-col gap-6 w-full px-4 py-6 max-w-2xl mx-auto">
   @if (isLoading()) {
-    <div class="flex justify-center p-8">
-      <p-progressSpinner></p-progressSpinner>
-    </div>
+    
   } @else if (loadFailed() || !view()) {
     <div class="glass-card p-8 rounded-2xl text-center">
       <i class="pi pi-exclamation-triangle text-3xl text-amber-400 mb-3"></i>
@@ -100,7 +98,7 @@
           @if (moreFailed()) {
             <p-button label="Couldn't load more — tap to retry" icon="pi pi-refresh" [text]="true" size="small" (onClick)="retry()"></p-button>
           } @else {
-            <p-progressSpinner styleClass="w-7 h-7" strokeWidth="5"></p-progressSpinner>
+            
           }
         </div>
       }

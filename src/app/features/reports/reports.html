@@ -30,7 +30,7 @@
       </div>
 
       @if (periodLoading()) {
-        <div class="flex justify-center p-6"><p-progressSpinner styleClass="w-8 h-8"></p-progressSpinner></div>
+        
       } @else if (period(); as p) {
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div class="p-3 rounded-xl bg-[var(--glass-bg)] border border-[var(--glass-border)]">

@@ -2,9 +2,7 @@
   <app-page-header title="30-Day Money Challenge" backLink="/app/dashboard" />
 
   @if (isLoading()) {
-    <div class="flex justify-center p-6">
-      <p-progressSpinner></p-progressSpinner>
-    </div>
+    
   } @else if (overview(); as data) {
 
     <p-card>

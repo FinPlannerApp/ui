@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { DashboardState } from '../../../core/state/dashboard-state.service';
 import { BudgetProgressWidget } from '../../budgets/budget-progress-widget/budget-progress-widget';
 import { FinancialHealthWidget } from '../financial-health-widget/financial-health-widget';
+import { OverdueSuggestions } from '../../obligations/overdue-suggestions/overdue-suggestions';
 import { UpcomingObligationsWidget } from '../upcoming-obligations-widget/upcoming-obligations-widget';
 import { sharedPrimeModules } from '../../../shared/prime-imports';
 import { CompactInrPipe } from '../../../shared/pipes/compact-inr.pipe';
@@ -23,6 +24,7 @@ import { BreadcrumbService } from '../../../core/layout/breadcrumb.service';
     BudgetProgressWidget,
     FinancialHealthWidget,
     UpcomingObligationsWidget,
+    OverdueSuggestions,
     StatCard,
     CompactInrPipe
   ],

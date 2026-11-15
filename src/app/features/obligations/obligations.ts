@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MessageService } from 'primeng/api';
 import { RouterLink } from '@angular/router';
 import { GenericApi } from '../../core/services/generic-api';
+import { OverdueSuggestions } from './overdue-suggestions/overdue-suggestions';
 import { sharedPrimeModules } from '../../shared/prime-imports';
 
 interface Item {
@@ -18,7 +19,7 @@ interface Overview {
 @Component({
   selector: 'app-obligations',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterLink, ...sharedPrimeModules],
+  imports: [CommonModule, RouterLink, OverdueSuggestions, ...sharedPrimeModules],
   templateUrl: './obligations.html',
 })
 export class Obligations {

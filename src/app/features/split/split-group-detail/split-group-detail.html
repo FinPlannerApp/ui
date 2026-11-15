@@ -106,9 +106,7 @@
   </div>
 
   @if (isLoading()) {
-  <div class="flex justify-center p-12">
-    <p-progressSpinner styleClass="w-12 h-12"></p-progressSpinner>
-  </div>
+  
   } @else {
   <!-- Hero Financial Overview Banner Card -->
   <div class="grid grid-cols-12 gap-3.5 sm:gap-4">
@@ -445,7 +443,7 @@
     </section>
     } @empty {
     @if (isLoadingMore()) {
-    <div class="flex justify-center p-8"><p-progressSpinner styleClass="w-8 h-8"></p-progressSpinner></div>
+    
     } @else {
     <app-empty-state icon="pi pi-receipt" title="No expenses found"
       [message]="listIsCustomised() ? 'No expenses match your search or filters.' : 'No expenses logged yet.'" actionLabel="Add Expense"
@@ -461,7 +459,7 @@
       <p-button label="Couldn't load more — tap to retry" icon="pi pi-refresh" [text]="true" size="small"
         (onClick)="retryLoadMore()"></p-button>
       } @else {
-      <p-progressSpinner styleClass="w-7 h-7" strokeWidth="5"></p-progressSpinner>
+      
       }
     </div>
     } @else if (expenses().length > 0) {
@@ -512,7 +510,7 @@
           </div>
         } @empty {
           @if (activityLoading()) {
-            <div class="flex justify-center p-8"><p-progressSpinner styleClass="w-8 h-8"></p-progressSpinner></div>
+            
           } @else {
             <p class="m-0 p-6 text-center text-sm text-[var(--text-muted)]">No activity yet.</p>
           }
@@ -521,7 +519,7 @@
 
       @if (activityCursor()) {
         <div appInfiniteScroll [disabled]="activityLoading()" (reachedEnd)="loadActivity()" class="flex justify-center py-4">
-          <p-progressSpinner styleClass="w-7 h-7" strokeWidth="5"></p-progressSpinner>
+          
         </div>
       }
     </div>

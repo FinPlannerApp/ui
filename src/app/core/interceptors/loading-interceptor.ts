@@ -8,7 +8,9 @@ export const loadingInterceptor: HttpInterceptorFn = (req, next) => {
   
   // Exclude silent background polling endpoints if any
   const isSilent = req.url.includes('/healthz') || req.url.includes('/antiforgery/token');
-  const isMutation = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method.toUpperCase());
+  // Some reads are POSTs (search, preview, match...). They show "Loading…" and never block the screen like a save does.
+  const isReadPost = /\/(search|preview|match|query|check-similar|bulk-validate|account-summary)(\/|\?|$)|-preview(\?|$)/i.test(req.url);
+  const isMutation = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method.toUpperCase()) && !isReadPost;
 
   if (!isSilent) {
     loadingService.showRequest(isMutation);

@@ -1,3 +1,5 @@
+import { GlobalLoader } from './shared/components/global-loader/global-loader';
+import { DiagnosticsService } from './core/services/diagnostics.service';
 import { UndoService } from './core/services/undo.service';
 import { Component, inject, signal } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
@@ -18,7 +20,7 @@ import { DiagramViewerModalComponent } from './shared/components/diagram-viewer-
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, ToastModule, DialogModule, ButtonModule, ProgressBarModule, ConfirmDialogModule, DiagramViewerModalComponent],
+  imports: [RouterOutlet, ToastModule, DialogModule, ButtonModule, ProgressBarModule, ConfirmDialogModule, DiagramViewerModalComponent, GlobalLoader],
   templateUrl: './app.html',
 })
 export class App {
@@ -37,6 +39,8 @@ export class App {
   private router = inject(Router);
 
   constructor() {
+    // Start the rolling record that a bug report can carry (errors, API calls, steps).
+    inject(DiagnosticsService).install();
     // Initialize PWA update checking
     this.pwaUpdate.initialize();
 

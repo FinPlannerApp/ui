@@ -1,22 +1,4 @@
 <div class="layout-wrapper min-h-screen flex flex-col relative">
-  <!-- Global Top Progress Bar -->
-  @if(loadingService.isLoading()) {
-    <div class="fixed top-0 left-0 right-0 z-[1000]" style="padding-top: env(safe-area-inset-top, 0px);">
-      <p-progressBar mode="indeterminate" [style]="{ height: '3px' }"></p-progressBar>
-    </div>
-  }
-
-  <!-- Mutation feedback: a non-blocking pill + click shield BELOW dialogs/toasts (z 1500 < PrimeNG modal 2000),
-       so popups opened while a save is running are never hidden behind it. -->
-  @if(loadingService.isMutating()) {
-    <div class="fixed inset-0 z-[1500] cursor-progress" aria-hidden="true"></div>
-    <div class="fixed left-1/2 -translate-x-1/2 z-[1501] pill-saving"
-         style="bottom: max(1.25rem, env(safe-area-inset-bottom, 0px));" role="status" aria-live="polite">
-      <p-progressSpinner styleClass="w-4 h-4" strokeWidth="6"></p-progressSpinner>
-      <span>Saving…</span>
-    </div>
-  }
-
   <!-- Header -->
   <header
     class="p-3 bg-[var(--glass-bg-solid)] backdrop-blur-xl border-b border-[var(--glass-border)] flex items-center justify-between sticky top-0 z-500"
@@ -67,6 +49,8 @@
                 <span>Session expires in {{ authService.sessionExpiresIn() }}</span>
               </div>
             </div>
+            <p-button label="Report a problem" icon="pi pi-flag" severity="secondary" size="small" [outlined]="true"
+              (onClick)="op.hide(); feedback.open()"></p-button>
             <p-button label="Check for updates" icon="pi pi-cloud-download" severity="secondary" size="small" [outlined]="true"
               [loading]="checkingUpdate" (onClick)="checkForUpdates()"></p-button>
             <p-button label="Reload app (clear cache)" icon="pi pi-sync" severity="secondary" size="small" [text]="true"
@@ -114,6 +98,11 @@
   </div>
 </div>
 
+<button type="button" class="feedback-fab" (click)="feedback.open()" [disabled]="feedback.capturing()"
+  [attr.aria-label]="'Report a problem (' + feedback.shortcutLabel + ')'" [title]="'Report a problem (' + feedback.shortcutLabel + ')'">
+  <i class="pi" [class]="feedback.capturing() ? 'pi-spin pi-spinner' : 'pi-flag'"></i>
+</button>
+<app-quick-feedback />
 <button type="button" class="quick-fab" (click)="quickAdd.open()" aria-label="Quick add transaction" title="Quick add a transaction">
   <i class="pi pi-plus"></i>
 </button>

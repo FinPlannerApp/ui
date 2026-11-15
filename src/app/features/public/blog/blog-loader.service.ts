@@ -97,7 +97,7 @@ export class BlogLoaderService {
       if (result.isSuccess && result.value) {
         return {
           items: result.value.items || result.value.data || [],
-          totalCount: result.value.totalCount || result.value.count || 0
+          totalCount: result.value.totalRecords ?? result.value.totalCount ?? result.value.count ?? 0
         };
       }
     } catch {

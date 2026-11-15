@@ -10,6 +10,8 @@ import { WhatsNew } from '../../../shared/components/whats-new/whats-new';
 import { ThemeEngine } from '../../services/theme';
 import { BreadcrumbService } from '../breadcrumb.service';
 import { CommonModule } from '@angular/common';
+import { QuickFeedback } from '../../../shared/components/quick-feedback/quick-feedback';
+import { QuickFeedbackService } from '../../../shared/components/quick-feedback/quick-feedback.service';
 import { LoadingService } from '../../services/loading.service';
 import { PwaUpdateService } from '../../services/pwa-update.service';
 import { MessageService } from 'primeng/api';
@@ -19,13 +21,14 @@ import { sharedPrimeModules } from '../../../shared/prime-imports';
 
 @Component({
   selector: 'app-layout',
-  imports: [RouterOutlet, CommonModule, WhatsNew, TipTicker, QuickAdd, ...sharedPrimeModules],
+  imports: [RouterOutlet, CommonModule, WhatsNew, TipTicker, QuickAdd, QuickFeedback, ...sharedPrimeModules],
   templateUrl: './layout.html',
 })
 
 export class Layout {
   public authService = inject(Auth);
   public quickAdd = inject(QuickAddService);
+  public feedback = inject(QuickFeedbackService);
   public themeEngine = inject(ThemeEngine);
   public breadcrumbService = inject(BreadcrumbService);
   public loadingService = inject(LoadingService);

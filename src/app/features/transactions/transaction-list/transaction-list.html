@@ -366,9 +366,20 @@
             </div>
             <div class="flex items-center gap-3 shrink-0">
               <span class="font-extrabold text-sm text-cyan-300">{{ bucket.allocatedAmount | currency:'INR':'symbol':'1.2-2' }}</span>
+              <p-button icon="pi pi-plus" [text]="true" [rounded]="true" size="small" pTooltip="Add money to this bucket" aria-label="Add money to this bucket" (onClick)="startAddFunds(bucket.id)"></p-button>
               <p-button icon="pi pi-trash" [text]="true" [rounded]="true" severity="danger" size="small" pTooltip="Delete Bucket" (onClick)="deleteBucket(bucket.id)"></p-button>
             </div>
           </div>
+          @if (addingToBucketId() === bucket.id) {
+            <div class="flex flex-wrap items-center gap-2 p-3 rounded-xl bg-black/30 border border-cyan-500/20">
+              <p-inputNumber [ngModel]="addFundsAmount()" (ngModelChange)="addFundsAmount.set($event)"
+                             mode="currency" currency="INR" locale="en-IN" placeholder="Amount to add"
+                             inputStyleClass="w-full sm:w-48 p-inputtext-sm rounded-xl"></p-inputNumber>
+              <p-button label="Add" icon="pi pi-check" size="small" (onClick)="confirmAddFunds(bucket.id)"></p-button>
+              <p-button label="Cancel" [text]="true" severity="secondary" size="small" (onClick)="addingToBucketId.set(null)"></p-button>
+              <span class="text-[11px] text-[var(--text-muted)]">Up to {{ breakdown.unallocated | currency:'INR':'symbol':'1.0-0' }} is free to set aside.</span>
+            </div>
+          }
         }
 
         <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-dashed border-white/10 text-xs flex-wrap gap-2">
@@ -587,7 +598,7 @@
       <div appInfiniteScroll [disabled]="isLoading() || isLoadingMore() || !hasMore()" (reachedEnd)="loadMore()"
            class="flex items-center justify-center gap-2 py-3 text-xs text-[var(--text-muted)]">
         @if (isLoadingMore()) {
-          <p-progressSpinner styleClass="w-4 h-4" strokeWidth="6"></p-progressSpinner> Loading more…
+           Loading more…
         } @else if (transactions().length > 0) {
           Showing {{ transactions().length }} of {{ totalRecords() }}
         }

@@ -1,8 +1,6 @@
 <div class="min-h-[85vh] flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 w-full max-w-lg mx-auto">
   @if (isLoading()) {
-    <div class="flex justify-center p-12">
-      <p-progressSpinner styleClass="w-12 h-12"></p-progressSpinner>
-    </div>
+    
   } @else if (loadFailed() || !preview() || !preview()!.isValid) {
     <div class="glass-card p-6 sm:p-8 rounded-3xl text-center flex flex-col items-center gap-3 w-full border border-amber-500/20 bg-amber-500/5">
       <i class="pi pi-exclamation-triangle text-4xl text-amber-400"></i>

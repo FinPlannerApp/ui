@@ -161,9 +161,7 @@
 
   <!-- Loading Spinner -->
   @if (isLoading()) {
-    <div class="flex justify-center p-12">
-      <p-progressSpinner styleClass="w-12 h-12"></p-progressSpinner>
-    </div>
+    
   } @else {
     <!-- Expenses matching the search, across all trips -->
     @if (expenseHits().length > 0) {

@@ -40,9 +40,7 @@
 </div>
 
 @if (isLoading()) {
-<div class="flex justify-center p-6">
-  <p-progressSpinner></p-progressSpinner>
-</div>
+
 } @else if (state.error() && !summary()) {
 <div
   class="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-200 flex items-center justify-between gap-3 mb-4">
@@ -275,6 +273,7 @@
     <app-financial-health-widget class="block"></app-financial-health-widget>
 
     <!-- Upcoming Obligations Widget (Stacked vertical list for 5-col width) -->
+    <app-overdue-suggestions></app-overdue-suggestions>
     <app-upcoming-obligations-widget class="block" [layout]="'stack'"></app-upcoming-obligations-widget>
   </div>
 </div>
@@ -419,9 +418,7 @@
       }
     }
   } @else {
-    <div class="flex justify-center py-6">
-      <p-progressSpinner strokeWidth="4" styleClass="w-8 h-8"></p-progressSpinner>
-    </div>
+    
   }
 </div>
 
@@ -533,9 +530,7 @@
         @defer (on viewport) {
         <p-chart type="doughnut" [data]="spendingChartData()" [options]="spendingChartOptions" class="w-full"></p-chart>
         } @placeholder {
-        <div class="flex justify-center items-center h-full">
-          <p-progressSpinner strokeWidth="4"></p-progressSpinner>
-        </div>
+        <div class="min-h-[12rem]"></div>
         }
       </div>
       } @else {
@@ -559,6 +554,7 @@
 
   <!-- Upcoming Obligations (Full Width Row) -->
   <div class="col-span-12">
+    <app-overdue-suggestions class="block mb-4"></app-overdue-suggestions>
     <app-upcoming-obligations-widget></app-upcoming-obligations-widget>
   </div>
 
@@ -784,7 +780,7 @@
       </div>
       } @else {
       <div class="flex flex-col items-center justify-center p-12 text-center">
-        <p-progressSpinner strokeWidth="4"></p-progressSpinner>
+        
         <p class="mt-3 text-muted font-semibold text-sm">Crunching your financial data...</p>
       </div>
       }

@@ -213,6 +213,8 @@
                       {{ acc.name }}
                     </h3>
                   </div>
+                  <p-button icon="pi pi-cog" [text]="true" [rounded]="true" size="small" styleClass="shrink-0"
+                    [pTooltip]="'Settings for ' + acc.name" [attr.aria-label]="'Settings for ' + acc.name" (onClick)="openSettings(acc)"></p-button>
                 </div>
 
                 <!-- Account Balance Container -->
@@ -359,20 +361,6 @@
                     <p-tag [value]="acc.accountCategoryName" [severity]="getAccountBadgeColor(acc).badgeSeverity" [rounded]="true" styleClass="text-xs px-2.5 py-0.5 font-semibold"></p-tag>
                   </div>
                 }
-
-                <div class="flex items-center justify-between gap-2 pt-2 border-t border-[var(--glass-border)] shrink-0">
-                  <button
-                    type="button"
-                    (click)="viewTransactions(acc)"
-                    class="flex items-center gap-1.5 text-xs font-semibold text-[var(--primary-color)] hover:underline cursor-pointer bg-transparent border-none p-0 shrink-0">
-                    <span>Transactions</span>
-                    <i class="pi pi-arrow-right text-xs"></i>
-                  </button>
-
-                  <div class="flex items-center gap-1 shrink-0">
-                    <p-button icon="pi pi-cog" [text]="true" [rounded]="true" size="small" pTooltip="Account settings" (onClick)="openSettings(acc)"></p-button>
-                  </div>
-                </div>
               </div>
             </div>
           }
@@ -432,7 +420,6 @@
                     @if (isCreditCard(acc) && !isCreditCardPaid(acc)) {
                       <p-button icon="pi pi-check-circle" [text]="true" [rounded]="true" severity="success" size="small" pTooltip="1-Tap Settlement" (onClick)="openPayCcBillModal(acc)"></p-button>
                     }
-                    <p-button icon="pi pi-list" [text]="true" [rounded]="true" size="small" pTooltip="View Transactions" (onClick)="viewTransactions(acc)"></p-button>
                     <p-button icon="pi pi-cog" [text]="true" [rounded]="true" size="small" pTooltip="Account settings" (onClick)="openSettings(acc)"></p-button>
                   </div>
                 </td>

@@ -7,6 +7,8 @@
     <a routerLink="/app/recurring-transactions" class="no-underline"><p-button label="Add or edit recurring" icon="pi pi-plus" severity="secondary" [outlined]="true"></p-button></a>
   </div>
 
+  <app-overdue-suggestions></app-overdue-suggestions>
+
   @if (loading()) {
     <div class="text-sm text-[var(--text-muted)] p-6">Loading…</div>
   } @else if (failed()) {

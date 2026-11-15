@@ -50,10 +50,18 @@
     </p-card>
   }
 
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <span class="p-input-icon-left relative w-full sm:w-72">
+      <input type="text" pInputText class="w-full" placeholder="Search merchants or aliases" aria-label="Search merchants"
+        [ngModel]="search()" (ngModelChange)="onSearch($event)" />
+    </span>
+    @if (!isLoading() && total() > 0) {
+      <span class="text-xs text-secondary">Showing {{ merchants().length }} of {{ total() }}</span>
+    }
+  </div>
+
   @if (isLoading()) {
-    <div class="flex justify-center p-6">
-      <p-progressSpinner></p-progressSpinner>
-    </div>
+    
   } @else {
     <div class="flex flex-col gap-2">
       @for (merchant of merchants(); track merchant.id) {
@@ -72,8 +80,13 @@
           </div>
         </p-card>
       } @empty {
-        <p class="text-secondary text-sm">No merchants yet — create one for a place you shop at often.</p>
+        <p class="text-secondary text-sm">{{ search() ? 'No merchant matches that search.' : 'No merchants yet — create one for a place you shop at often.' }}</p>
       }
     </div>
+    @if (hasMore()) {
+      <div class="flex justify-center">
+        <p-button label="Load more" icon="pi pi-angle-down" severity="secondary" [outlined]="true" [loading]="loadingMore()" (onClick)="loadMore()"></p-button>
+      </div>
+    }
   }
 </div>

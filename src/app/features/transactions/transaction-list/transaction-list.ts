@@ -99,6 +99,9 @@ export class TransactionList implements OnInit, OnDestroy {
   showBucketForm = signal(false);
   newBucketName = signal('');
   newBucketAmount = signal<number | null>(null);
+  /** The bucket that is showing the "add money" field, and the amount typed. */
+  addingToBucketId = signal<number | null>(null);
+  addFundsAmount = signal<number | null>(null);
 
   readonly AccountType = AccountType;
 
@@ -431,6 +434,29 @@ export class TransactionList implements OnInit, OnDestroy {
       await this.loadBuckets();
     } catch (err: any) {
       this.notificationService.showError(err?.message || 'Failed to add bucket.');
+    }
+  }
+
+  startAddFunds(bucketId: number): void {
+    this.addFundsAmount.set(null);
+    this.addingToBucketId.set(this.addingToBucketId() === bucketId ? null : bucketId);
+  }
+
+  /** Sets more of this account's money aside in a bucket; the server checks the account actually has it free. */
+  async confirmAddFunds(bucketId: number): Promise<void> {
+    const amount = this.addFundsAmount();
+    if (!amount || amount <= 0) {
+      this.notificationService.showError('Enter the amount to add.');
+      return;
+    }
+    try {
+      await firstValueFrom(this.api.post<any>('SavingsBuckets/add-funds', { id: bucketId, amount }));
+      this.notificationService.showSuccess('Money added to the bucket.');
+      this.addingToBucketId.set(null);
+      this.addFundsAmount.set(null);
+      await this.loadBuckets();
+    } catch (err: any) {
+      this.notificationService.showError(err?.message || 'Could not add money to the bucket.');
     }
   }
 

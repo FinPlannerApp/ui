@@ -17,7 +17,7 @@
   </div>
 
   @if (isLoading()) {
-    <div class="flex justify-center py-16"><p-progressSpinner strokeWidth="4" styleClass="w-10 h-10"></p-progressSpinner></div>
+    
   } @else if (dashboard(); as d) {
     <!-- Overall position, per currency -->
     @if (d.totals.length > 0) {

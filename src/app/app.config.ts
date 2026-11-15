@@ -1,10 +1,11 @@
 import { APP_INITIALIZER, ApplicationConfig, LOCALE_ID, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection, isDevMode } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { registerLocaleData } from '@angular/common';
 import localeEnIN from '@angular/common/locales/en-IN';
 
 import { routes } from './app.routes';
 import { provideHttpClient, withInterceptors, withXsrfConfiguration, HttpClient } from '@angular/common/http';
+import { diagnosticsInterceptor } from './core/interceptors/diagnostics-interceptor';
 import { authInterceptor } from './core/interceptors/auth-interceptor';
 import { errorInterceptor } from './core/interceptors/error-interceptor';
 import { statusInterceptor } from './core/interceptors/status-interceptor';
@@ -72,9 +73,9 @@ export const appConfig: ApplicationConfig = {
     { provide: LOCALE_ID, useValue: 'en-IN' },
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
-    provideRouter(routes),
+    provideRouter(routes, withInMemoryScrolling({ scrollPositionRestoration: 'enabled', anchorScrolling: 'enabled' })),
     provideHttpClient(
-      withInterceptors([loadingInterceptor, authInterceptor, errorInterceptor, statusInterceptor, dataSyncInterceptor]),
+      withInterceptors([diagnosticsInterceptor, loadingInterceptor, authInterceptor, errorInterceptor, statusInterceptor, dataSyncInterceptor]),
       withXsrfConfiguration({
         cookieName: 'XSRF-TOKEN',
         headerName: 'X-XSRF-TOKEN'
