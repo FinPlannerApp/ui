@@ -82,6 +82,10 @@ export class TransactionList implements OnInit, OnDestroy {
   private searchSubject = new Subject<string>();
   private searchSub?: Subscription;
 
+  /** Inside an account: the transactions, or (bank accounts that earn interest) the interest to confirm. */
+  view = signal<'transactions' | 'interest'>('transactions');
+  hasInterest = computed(() => !!this.currentAccount()?.bankAccountDetails?.interestRate);
+  showInterest = computed(() => this.view() === 'interest' && this.hasInterest());
   transactions = signal<Transaction[]>([]);
   isLoading = signal(false);
   accountId = signal<number | null>(null);

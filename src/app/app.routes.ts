@@ -102,6 +102,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/accounts/accounts-overview/accounts-overview').then(m => m.AccountsOverview)
       },
       {
+        path: 'accounts/interest',
+        loadComponent: () => import('./features/accounts/interest-page/interest-page').then(m => m.InterestPage)
+      },
+      {
         path: 'accounts/what-if',
         loadComponent: () => import('./features/accounts/what-if/what-if').then(m => m.WhatIfPage)
       },

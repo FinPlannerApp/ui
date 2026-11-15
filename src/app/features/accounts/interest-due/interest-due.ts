@@ -22,7 +22,7 @@ interface Overview {
   imports: [CommonModule, FormsModule, ...sharedPrimeModules],
   template: `
 @if (view(); as o) {
-  @if (o.due.length > 0 || (!accountId() && (o.earnedThisYear > 0 || o.paidThisYear > 0))) {
+  @if (always() || o.due.length > 0 || (!accountId() && (o.earnedThisYear > 0 || o.paidThisYear > 0))) {
     <div class="glass-card p-4 rounded-2xl flex flex-col gap-3">
       <div class="flex flex-wrap items-center justify-between gap-2">
         <div class="font-bold text-[var(--text-main)] flex items-center gap-2"><i class="pi pi-percentage text-[var(--primary-color)]"></i> {{ accountId() ? 'Interest to record' : 'Interest' }}</div>
@@ -46,6 +46,8 @@ interface Overview {
             </div>
           }
         </div>
+      } @else if (always()) {
+        <div class="text-sm text-[var(--text-muted)]">Nothing to record right now. When a bank credits interest for a finished period, it shows up here for you to confirm.</div>
       }
     </div>
   }
@@ -57,6 +59,8 @@ export class InterestDue {
   private accounts = inject(AccountState);
   /** When set (account page), only that account's due interest is shown. */
   accountId = input<number | null>(null);
+  /** Page mode: always show the card, with an empty state, instead of hiding when nothing is due. */
+  always = input(false);
   overview = signal<Overview | null>(null);
   view = computed(() => {
     const o = this.overview();

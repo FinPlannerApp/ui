@@ -1,4 +1,4 @@
-<div class="max-w-3xl mx-auto w-full flex flex-col gap-4 px-4 md:px-8 py-4">
+<div class="w-full flex flex-col gap-4 py-4">
   <app-module-tabs [tabs]="tabs" label="Subscriptions sections" />
   <div>
     <h1 class="text-2xl font-bold m-0 gradient-text">Subscription settings</h1>
@@ -7,7 +7,7 @@
   @if (loading()) {
     <p-skeleton height="200px" borderRadius="24px"></p-skeleton>
   } @else {
-    <section class="glass-card rounded-3xl p-5 border border-white/10 flex flex-col gap-5">
+    <section class="glass-card rounded-3xl p-5 border border-white/10 form-grid">
       <div class="flex flex-col gap-1.5">
         <label for="renew" class="text-xs font-semibold text-main">Highlight renewals</label>
         <p-select inputId="renew" [options]="alertOptions" optionLabel="label" optionValue="value" [ngModel]="settings().renewalAlertDays"

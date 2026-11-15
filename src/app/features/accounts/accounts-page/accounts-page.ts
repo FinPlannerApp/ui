@@ -7,7 +7,6 @@ import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { sharedPrimeModules } from '../../../shared/prime-imports';
 import { AccountState } from '../../../core/state/account-state.service';
 import { Account } from '../account';
-import { InterestDue } from '../interest-due/interest-due';
 import { AccountForm } from '../account-form/account-form';
 import { AdjustBalance } from '../adjust-balance/adjust-balance';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -34,7 +33,7 @@ import { UserSettingsService } from '../../../core/services/user-settings.servic
 @Component({
   selector: 'app-accounts-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ModuleTabs, InterestDue, AutoMarqueeDirective, EmptyState, StatCard, ...sharedPrimeModules],
+  imports: [CommonModule, FormsModule, RouterLink, ModuleTabs, AutoMarqueeDirective, EmptyState, StatCard, ...sharedPrimeModules],
   templateUrl: './accounts-page.html',
   providers: [DialogService, ConfirmationService],
   changeDetection: ChangeDetectionStrategy.OnPush

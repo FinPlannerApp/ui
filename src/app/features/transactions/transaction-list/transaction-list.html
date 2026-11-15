@@ -1,4 +1,4 @@
-<div class="transactions-page flex flex-col gap-6 w-full px-4 md:px-8 py-4">
+<div class="transactions-page flex flex-col gap-6 w-full py-4">
   <!-- Toast & Confirmation -->
   <p-confirmDialog></p-confirmDialog>
   <p-toast></p-toast>
@@ -94,9 +94,6 @@
 
   <!-- Account Type Specific Sub-Card (Credit Card / Loan / Bank Interest) -->
   @if (currentAccount(); as account) {
-    @if (account.bankAccountDetails?.interestRate) {
-      <app-interest-due [accountId]="account.id"></app-interest-due>
-    }
     @if (account.creditCardDetails; as details) {
       <div class="glass-card p-4 sm:p-5 rounded-2xl border border-purple-500/30 bg-gradient-to-r from-purple-950/20 via-purple-900/10 to-black/20 shadow-lg">
         <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
@@ -291,6 +288,26 @@
     }
   }
 
+  <!-- Account sections: transactions, or the interest to confirm (own tab, so it never pushes the list down) -->
+  @if (hasInterest()) {
+    <nav class="flex gap-1.5 overflow-x-auto pb-1" aria-label="Account sections">
+      <button type="button" (click)="view.set('transactions')" [attr.aria-pressed]="!showInterest()"
+        class="px-3.5 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 whitespace-nowrap border-0 cursor-pointer transition-all"
+        [class]="!showInterest() ? 'bg-emerald-500 text-white shadow-md' : 'bg-transparent text-muted hover:text-main'">
+        <i class="pi pi-list text-xs"></i><span>Transactions</span>
+      </button>
+      <button type="button" (click)="view.set('interest')" [attr.aria-pressed]="showInterest()"
+        class="px-3.5 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 whitespace-nowrap border-0 cursor-pointer transition-all"
+        [class]="showInterest() ? 'bg-emerald-500 text-white shadow-md' : 'bg-transparent text-muted hover:text-main'">
+        <i class="pi pi-percentage text-xs"></i><span>Interest</span>
+      </button>
+    </nav>
+  }
+  @if (showInterest() && currentAccount(); as ia) {
+    <app-interest-due [accountId]="ia.id" [always]="true"></app-interest-due>
+  }
+
+  @if (!showInterest()) {
   <!-- Savings Buckets Section -->
   @if (bucketBreakdown(); as breakdown) {
     <div class="glass-card p-4 rounded-2xl border border-cyan-500/20 bg-cyan-500/5 flex flex-col gap-3">
@@ -576,6 +593,7 @@
         }
       </div>
     </div>
+  }
   }
 
   <!-- Cashback App Detail Modal -->

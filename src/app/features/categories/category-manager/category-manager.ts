@@ -38,7 +38,7 @@ interface Group { parent: TransactionCategory; children: TransactionCategory[]; 
 
       @for (g of groups(); track g.parent.id) {
         <section class="glass-card rounded-2xl p-4">
-          <div class="flex items-center justify-between gap-2">
+          <div class="flex flex-wrap items-center justify-between gap-2">
             <h2 class="text-base font-extrabold m-0 flex items-center gap-2">
               <i class="pi pi-folder text-amber-400"></i>{{ g.parent.name }}
               @if (g.parent.isTransferCategory) { <span class="text-[10px] px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300">transfer</span> }

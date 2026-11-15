@@ -6,59 +6,281 @@
    ============================================================ */
 
 /* Page shell */
-.page { width: 100%; max-width: var(--page-max); margin-inline: auto; padding-inline: var(--page-gutter); }
-.page-stack { display: flex; flex-direction: column; gap: var(--space-4); }
-@media (min-width: 1024px) { .page-stack { gap: var(--space-6); } }
+.page {
+  width: 100%;
+  max-width: var(--page-max);
+  margin-inline: auto;
+  padding-inline: var(--page-gutter);
+}
+
+.page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+@media (min-width: 1024px) {
+  .page-stack {
+    gap: var(--space-6);
+  }
+}
 
 /* Auto-fit grid: as many columns as fit, never overflows. --min is the smallest card width. */
-.grid-auto { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--min, 16rem)), 1fr)); }
-.grid-auto.sm { --min: 11rem; } .grid-auto.lg { --min: 22rem; }
+.grid-auto {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--min, 16rem)), 1fr));
+}
+
+.grid-auto.sm {
+  --min: 11rem;
+}
+
+.grid-auto.lg {
+  --min: 22rem;
+}
 
 /* Row that wraps instead of overflowing */
-.cluster { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
-.cluster-between { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.cluster-between {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
 
 /* Children that contain long text must be allowed to shrink */
-.min-w-0-all > * { min-width: 0; }
+.min-w-0-all>* {
+  min-width: 0;
+}
 
 /* Tables: horizontal scroll with a hint, never breaks the page width */
-.table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
-.table-responsive > table, .table-responsive .p-datatable-table { min-width: 36rem; }
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+.table-responsive>table,
+.table-responsive .p-datatable-table {
+  min-width: 36rem;
+}
 
 /* Table -> cards on phones. Put data-label="Column" on each <td>. */
 @media (max-width: 639px) {
-  .table-cards table, .table-cards thead { display: block; }
-  .table-cards thead { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); }
-  .table-cards tbody { display: grid; gap: var(--space-3); }
-  .table-cards tr { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2) var(--space-3);
-    padding: var(--space-3); border: 1px solid var(--surface-border); border-radius: var(--radius-lg); background: var(--surface); }
-  .table-cards td { display: flex; flex-direction: column; gap: 2px; border: 0 !important; padding: 0 !important; min-width: 0; text-align: left !important; }
-  .table-cards td::before { content: attr(data-label); font-size: var(--text-xs); color: var(--text-dim); font-weight: 600; }
-  .table-cards td[data-full], .table-cards td.cell-full { grid-column: 1 / -1; }
+
+  .table-cards table,
+  .table-cards thead {
+    display: block;
+  }
+
+  .table-cards thead {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .table-cards tbody {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .table-cards tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2) var(--space-3);
+    padding: var(--space-3);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+  }
+
+  .table-cards td {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border: 0 !important;
+    padding: 0 !important;
+    min-width: 0;
+    text-align: left !important;
+  }
+
+  .table-cards td::before {
+    content: attr(data-label);
+    font-size: var(--text-xs);
+    color: var(--text-dim);
+    font-weight: 600;
+  }
+
+  .table-cards td[data-full],
+  .table-cards td.cell-full {
+    grid-column: 1 / -1;
+  }
 }
 
 /* Dialogs: centred card on large screens, bottom sheet on phones */
 @media (max-width: 639px) {
-  .p-dialog-mask { align-items: flex-end !important; padding: 0 !important; }
-  .p-dialog { width: 100vw !important; max-width: 100vw !important; margin: 0 !important;
+  .p-dialog-mask {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+
+  .p-dialog {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin: 0 !important;
     border-radius: var(--radius-xl) var(--radius-xl) 0 0 !important;
     max-height: calc(100dvh - var(--safe-top) - 1rem) !important;
-    padding-bottom: var(--safe-bottom); animation: sheet-in var(--dur-slow) var(--ease-out) both !important; }
+    padding-bottom: var(--safe-bottom);
+    animation: sheet-in var(--dur-slow) var(--ease-out) both !important;
+  }
 }
-@keyframes sheet-in { from { transform: translateY(100%); } to { transform: none; } }
+
+@keyframes sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: none;
+  }
+}
 
 /* Touch targets */
 @media (pointer: coarse) {
-  .p-button, .p-select, .p-inputtext, .p-paginator .p-paginator-page { min-height: var(--tap-min); }
+
+  .p-button,
+  .p-select,
+  .p-inputtext,
+  .p-paginator .p-paginator-page {
+    min-height: var(--tap-min);
+  }
 }
 
 /* Sticky action bar for forms/lists on phones */
-.action-bar-mobile { position: sticky; bottom: 0; padding: var(--space-3) var(--page-gutter) calc(var(--space-3) + var(--safe-bottom));
-  background: var(--surface-solid); border-top: 1px solid var(--surface-border); z-index: var(--z-sticky); }
+.action-bar-mobile {
+  position: sticky;
+  bottom: 0;
+  padding: var(--space-3) var(--page-gutter) calc(var(--space-3) + var(--safe-bottom));
+  background: var(--surface-solid);
+  border-top: 1px solid var(--surface-border);
+  z-index: var(--z-sticky);
+}
 
 /* Visibility helpers driven by html[data-bp] (set by ViewportService) */
-[data-bp="compact"] .hide-compact, [data-bp="medium"] .hide-medium, [data-bp="expanded"] .hide-expanded, [data-bp="large"] .hide-expanded { display: none !important; }
+[data-bp="compact"] .hide-compact,
+[data-bp="medium"] .hide-medium,
+[data-bp="expanded"] .hide-expanded,
+[data-bp="large"] .hide-expanded {
+  display: none !important;
+}
 
 /* Never allow accidental sideways page scroll */
-html, body { max-width: 100%; overflow-x: clip; }
-img, svg, canvas, video { max-width: 100%; height: auto; }
+html,
+body {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+img,
+svg,
+canvas,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ============================================================
+   APP SHELL — the shell owns the page width; pages own none.
+   A page component must NOT set max-w-*, mx-auto or its own side padding on its root:
+   the width, gutter and column flow below apply to every routed page automatically.
+   ============================================================ */
+:root {
+  --app-max: 2200px;
+}
+
+/* The content area: fills the screen up to --app-max (ultrawide), gutters scale with the screen. */
+.app-main {
+  width: 100%;
+  max-width: var(--app-max);
+  margin-inline: auto;
+  padding-inline: var(--page-gutter);
+}
+
+/* The routed page fills the content area. */
+main>router-outlet+* {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Safety net: a page root that still carries a width cap is released (forms keep their own max-w-md/lg/xl/2xl). */
+main>router-outlet+*> :is(.max-w-3xl, .max-w-4xl, .max-w-5xl, .max-w-6xl, .max-w-7xl) {
+  max-width: none;
+  margin-inline: 0;
+}
+
+/* The `.page` primitive inside the app shell: the shell already provides width and gutter. */
+main>router-outlet+*>.page:first-child {
+  max-width: none;
+  margin-inline: 0;
+  padding-inline: 0;
+}
+
+/* Card flow: a page whose root holds cards (section.glass-card) lays them side by side: one card fills the row, two share it,
+   three share it in thirds (each at least 30rem wide, otherwise it wraps to the next row). Everything else on the page
+   (tabs, headings, tables, grids) keeps the full width. */
+@media (min-width: 1100px) {
+  main>router-outlet+*> :first-child:has(> section.glass-card) {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    align-items: flex-start;
+  }
+
+  main>router-outlet+*> :first-child:has(> section.glass-card)> :not(section.glass-card) {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  main>router-outlet+*> :first-child:has(> section.glass-card)>section.glass-card {
+    flex: 1 1 30rem;
+    min-width: 0;
+  }
+}
+
+/* Form card: its fields flow into as many columns as fit (>= 20rem). Buttons and notes span the card. */
+.form-grid {
+  display: grid;
+  gap: var(--space-5);
+  align-items: start;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+}
+
+.form-grid> :is(p-button, button, p, hr, .form-full, p-message) {
+  grid-column: 1 / -1;
+}
+
+/* Nothing runs off the screen on small devices (phones, fold cover screens):
+   - a row that holds buttons wraps onto a second line instead of overflowing;
+   - a flex child that holds truncating text may shrink below its content width, so the text ellipsizes. */
+@media (max-width: 767px) {
+  main .flex:not(.flex-col):has(> :is(p-button, button)) {
+    flex-wrap: wrap;
+  }
+}
+
+.flex> :is(.truncate, .flex-1) {
+  min-width: 0;
+}
