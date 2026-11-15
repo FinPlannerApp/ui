@@ -1,0 +1,42 @@
+<div class="max-w-3xl mx-auto w-full flex flex-col gap-4 px-4 md:px-8 py-4">
+  <app-module-tabs [tabs]="tabs" label="Accounts sections" />
+  <div>
+    <h1 class="text-2xl font-bold m-0 gradient-text">Account settings</h1>
+    <p class="text-sm text-muted mt-1 mb-0">Alerts and privacy for the Accounts pages.</p>
+  </div>
+
+  @if (loading()) {
+    <p-skeleton height="240px" borderRadius="24px"></p-skeleton>
+  } @else {
+    <section class="glass-card rounded-3xl p-5 border border-white/10 flex flex-col gap-5">
+      <div class="flex flex-col gap-1.5">
+        <label for="lowBal" class="text-xs font-semibold text-main">Low-balance level</label>
+        <p-inputnumber inputId="lowBal" [ngModel]="settings().lowBalanceThreshold" (ngModelChange)="patch({ lowBalanceThreshold: $event ?? 0 })"
+          mode="currency" currency="INR" locale="en-IN" [min]="0" [maxFractionDigits]="0" styleClass="w-full"></p-inputnumber>
+        <span class="text-[11px] text-muted">Bank and cash accounts below this amount are flagged on the Overview. Set 0 to turn it off.</span>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="dueDays" class="text-xs font-semibold text-main">Credit card bill reminder</label>
+        <p-select inputId="dueDays" [options]="dueOptions" optionLabel="label" optionValue="value" [ngModel]="settings().cardDueReminderDays"
+          (ngModelChange)="patch({ cardDueReminderDays: $event })" appendTo="body" styleClass="w-full"></p-select>
+        <span class="text-[11px] text-muted">Highlights unpaid card bills due within this many days (and overdue ones) on the Overview.</span>
+      </div>
+
+      <label class="flex items-start justify-between gap-3 cursor-pointer">
+        <span class="flex flex-col min-w-0">
+          <span class="text-xs font-semibold text-main">Hide balances</span>
+          <span class="text-[11px] text-muted">Blurs amounts on the Accounts and Overview pages until you tap the eye button — handy in public.</span>
+        </span>
+        <p-toggleswitch [ngModel]="settings().hideBalances" (ngModelChange)="patch({ hideBalances: $event })"></p-toggleswitch>
+      </label>
+
+      <p-button label="Save settings" icon="pi pi-check" (onClick)="save()" [loading]="saving()" styleClass="w-full"></p-button>
+
+      <p class="text-[11px] text-muted m-0 border-t border-white/10 pt-3">
+        <i class="pi pi-tags mr-1"></i>Account categories (Savings, Wallet, …) are managed under
+        <a routerLink="/app/account-categories" class="text-emerald-400">Categories</a>.
+      </p>
+    </section>
+  }
+</div>

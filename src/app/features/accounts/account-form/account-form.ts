@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal, computed, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, inject, signal, computed, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DialogService, DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Select } from 'primeng/select';
@@ -25,8 +25,14 @@ export class AccountForm {
   @ViewChild('categorySelect') categorySelect?: Select;
 
   private fb = inject(FormBuilder);
-  public ref = inject(DynamicDialogRef);
-  public config = inject(DynamicDialogConfig);
+  // Works both as a dialog (Add account) and embedded in an account's Settings page (edit).
+  public ref = inject(DynamicDialogRef, { optional: true });
+  public config = inject(DynamicDialogConfig, { optional: true });
+  /** Embedded mode: the account being edited on its Settings page. */
+  @Input() embeddedAccount?: any;
+  @Output() saved = new EventEmitter<void>();
+  get embedded(): boolean { return !!this.embeddedAccount; }
+  cancel(): void { this.ref?.close(); }
   private categoryService = inject(Category);
   public validationService = inject(ValidationService);
   private accountState = inject(AccountState);
@@ -57,6 +63,7 @@ export class AccountForm {
     { label: 'Daily', value: InterestFrequency.Daily },
     { label: 'Monthly', value: InterestFrequency.Monthly },
     { label: 'Quarterly', value: InterestFrequency.Quarterly },
+    { label: 'Half-yearly', value: InterestFrequency.HalfYearly },
     { label: 'Yearly', value: InterestFrequency.Yearly }
   ];
 
@@ -102,7 +109,9 @@ export class AccountForm {
       // Bank fields
       bankInterestRate: [null],
       interestFrequency: [null],
-      minimumBalance: [null]
+      minimumBalance: [null],
+      interestCreditDay: [null],
+      autoPostInterest: [false]
     });
 
     this.accountForm.get('accountCategoryId')?.valueChanges.subscribe((value) => {
@@ -122,7 +131,7 @@ export class AccountForm {
   async ngOnInit(): Promise<void> {
     await this.loadCategories(true);
 
-    const data = this.config.data;
+    const data = this.config?.data ?? (this.embeddedAccount ? { itemToEdit: this.embeddedAccount } : null);
     if (data && data.itemToEdit) {
       this.isEditMode = true;
       const item = data.itemToEdit;
@@ -165,7 +174,9 @@ export class AccountForm {
         this.accountForm.patchValue({
           bankInterestRate: item.bankAccountDetails.interestRate,
           interestFrequency: item.bankAccountDetails.interestFrequency,
-          minimumBalance: item.bankAccountDetails.minimumBalance
+          minimumBalance: item.bankAccountDetails.minimumBalance,
+          interestCreditDay: item.bankAccountDetails.interestCreditDay ?? null,
+          autoPostInterest: !!item.bankAccountDetails.autoPostInterest
         });
       }
     }
@@ -272,7 +283,9 @@ export class AccountForm {
       bankAccountDetails: type === AccountType.Bank ? {
         interestRate: raw.bankInterestRate,
         interestFrequency: raw.interestFrequency,
-        minimumBalance: raw.minimumBalance
+        minimumBalance: raw.minimumBalance,
+        interestCreditDay: raw.interestCreditDay ?? null,
+        autoPostInterest: !!raw.autoPostInterest
       } : null
     };
   }
@@ -294,7 +307,9 @@ export class AccountForm {
       try {
         await this.accountState.addAccount(payload);
         this.notificationService.showSuccess('Account saved');
-        this.ref.close(true);
+        this.ref?.close(true);
+        this.saved.emit();
+        this.isSubmitting.set(false);
       } catch (err: any) {
         this.notificationService.showError(err.message || 'Failed to save account');
         this.isSubmitting.set(false);

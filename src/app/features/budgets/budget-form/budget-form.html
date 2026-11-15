@@ -1,7 +1,7 @@
 <form [formGroup]="budgetForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-2 p-fluid">
     <app-form-field label="Category" inputId="transactionCategoryId"
         [control]="budgetForm.get('transactionCategoryId')">
-        <p-select formControlName="transactionCategoryId" [options]="categories()" optionLabel="name" optionValue="id"
+        <p-select formControlName="transactionCategoryId" [options]="categories()" optionLabel="path" optionValue="id" [filter]="true" filterBy="path"
             placeholder="Select Category (Optional for General)" appendTo="body" id="transactionCategoryId">
         </p-select>
     </app-form-field>
@@ -26,6 +26,19 @@
         <p-datepicker formControlName="endDate" [showIcon]="true" appendTo="body" id="endDate">
         </p-datepicker>
     </app-form-field>
+
+    <div class="flex flex-col gap-2 p-3 rounded-xl border border-white/10">
+        <label class="flex items-center justify-between gap-3 cursor-pointer">
+            <span class="text-sm font-semibold">Custom alert level for this budget</span>
+            <p-toggleswitch [ngModel]="customAlert()" (ngModelChange)="customAlert.set($event)" [ngModelOptions]="{standalone: true}"></p-toggleswitch>
+        </label>
+        @if (customAlert()) {
+            <div class="flex items-center justify-between text-xs text-muted"><span>Warn me at</span><strong class="text-base">{{ alertLevel() }}%</strong></div>
+            <p-slider [ngModel]="alertLevel()" (ngModelChange)="setAlertLevel($event)" [ngModelOptions]="{standalone: true}" [min]="minAlert" [max]="maxAlert" [step]="5"></p-slider>
+        } @else {
+            <span class="text-xs text-muted">Uses your default from Budget settings.</span>
+        }
+    </div>
 
     <div class="flex justify-end gap-2 mt-2">
         <p-button label="Cancel" icon="pi pi-times" severity="secondary" type="button" (onClick)="ref.close()"

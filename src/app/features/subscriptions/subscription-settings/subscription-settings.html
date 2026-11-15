@@ -1,0 +1,26 @@
+<div class="max-w-3xl mx-auto w-full flex flex-col gap-4 px-4 md:px-8 py-4">
+  <app-module-tabs [tabs]="tabs" label="Subscriptions sections" />
+  <div>
+    <h1 class="text-2xl font-bold m-0 gradient-text">Subscription settings</h1>
+    <p class="text-sm text-muted mt-1 mb-0">Renewal heads-ups and your own spending ceiling.</p>
+  </div>
+  @if (loading()) {
+    <p-skeleton height="200px" borderRadius="24px"></p-skeleton>
+  } @else {
+    <section class="glass-card rounded-3xl p-5 border border-white/10 flex flex-col gap-5">
+      <div class="flex flex-col gap-1.5">
+        <label for="renew" class="text-xs font-semibold text-main">Highlight renewals</label>
+        <p-select inputId="renew" [options]="alertOptions" optionLabel="label" optionValue="value" [ngModel]="settings().renewalAlertDays"
+          (ngModelChange)="patch({ renewalAlertDays: $event })" appendTo="body" styleClass="w-full"></p-select>
+        <span class="text-[11px] text-muted">Subscriptions renewing within this time are called out on the Overview.</span>
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <label for="target" class="text-xs font-semibold text-main">Monthly target</label>
+        <p-inputnumber inputId="target" [ngModel]="settings().monthlyTarget" (ngModelChange)="patch({ monthlyTarget: $event ?? 0 })"
+          mode="currency" currency="INR" locale="en-IN" [min]="0" [maxFractionDigits]="0" styleClass="w-full"></p-inputnumber>
+        <span class="text-[11px] text-muted">The most you want subscriptions to cost per month. The Overview shows how close you are. 0 = off.</span>
+      </div>
+      <p-button label="Save settings" icon="pi pi-check" (onClick)="save()" [loading]="saving()" styleClass="w-full"></p-button>
+    </section>
+  }
+</div>

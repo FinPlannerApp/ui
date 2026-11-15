@@ -111,6 +111,12 @@ export class SplitFriends implements OnInit {
     return t ? t.person.lines.filter(l => l.currency === t.total.currency && l.amount !== 0) : [];
   });
 
+  /** The QR / UPI deep-link flow lives on the group page; send the payer there instead of marking it paid. */
+  payViaQr(groupId: number): void {
+    this.settleTarget.set(null);
+    this.router.navigate(['/app/split', groupId]);
+  }
+
   async confirmSettle(): Promise<void> {
     const t = this.settleTarget();
     if (!t) return;

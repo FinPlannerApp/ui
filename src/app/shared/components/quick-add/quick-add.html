@@ -1,0 +1,29 @@
+<p-dialog header="Quick add" [visible]="svc.visible()" (visibleChange)="$event ? svc.open() : svc.close()" [modal]="true" [dismissableMask]="true"
+          [style]="{ width: '24rem', maxWidth: '94vw' }" [draggable]="false" appendTo="body">
+  <form class="flex flex-col gap-3" (ngSubmit)="save()" aria-label="Quick add transaction">
+    <div class="flex gap-2" role="group" aria-label="Type">
+      <p-button label="Expense" size="small" [outlined]="type() !== TransactionType.Expense" severity="danger" (onClick)="type.set(TransactionType.Expense)"></p-button>
+      <p-button label="Income" size="small" [outlined]="type() !== TransactionType.Income" severity="success" (onClick)="type.set(TransactionType.Income)"></p-button>
+    </div>
+    <div class="flex flex-col gap-1.5">
+      <label for="qa-amount" class="text-xs font-semibold text-main">Amount</label>
+      <p-inputnumber inputId="qa-amount" [ngModel]="amount()" (ngModelChange)="amount.set($event)" [ngModelOptions]="{standalone: true}" mode="currency" currency="INR" locale="en-IN" [min]="0" [autofocus]="true" styleClass="w-full"></p-inputnumber>
+    </div>
+    <div class="flex flex-col gap-1.5">
+      <label for="qa-desc" class="text-xs font-semibold text-main">What for</label>
+      <input id="qa-desc" pInputText maxlength="200" placeholder="e.g. Bus" [ngModel]="description()" (ngModelChange)="description.set($event)" [ngModelOptions]="{standalone: true}" />
+    </div>
+    <div class="flex flex-col gap-1.5">
+      <label for="qa-acc" class="text-xs font-semibold text-main">Account</label>
+      <p-select inputId="qa-acc" [options]="accounts()" optionLabel="name" optionValue="id" [ngModel]="accountId()" (ngModelChange)="accountId.set($event)" [ngModelOptions]="{standalone: true}" appendTo="body" styleClass="w-full"></p-select>
+    </div>
+    <div class="flex flex-col gap-1.5">
+      <label for="qa-cat" class="text-xs font-semibold text-main">Category <span class="text-muted font-normal">(optional; your Rules can fill it)</span></label>
+      <p-select inputId="qa-cat" [options]="categories()" optionLabel="path" optionValue="id" [ngModel]="categoryId()" (ngModelChange)="categoryId.set($event ?? null)" [ngModelOptions]="{standalone: true}" [filter]="true" [showClear]="true" placeholder="None" appendTo="body" styleClass="w-full"></p-select>
+    </div>
+    <div class="flex gap-2">
+      <p-button type="submit" label="Add" icon="pi pi-check" [disabled]="!canSave()" [loading]="saving()" styleClass="grow"></p-button>
+      <p-button label="Add & another" [outlined]="true" [disabled]="!canSave()" (onClick)="save(true)"></p-button>
+    </div>
+  </form>
+</p-dialog>

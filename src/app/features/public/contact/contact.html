@@ -1,34 +1,26 @@
-<section class="px-4 py-8 md:px-8 max-w-3xl mx-auto">
-    <div class="text-center mb-6">
-        <h1 class="text-4xl md:text-5xl font-bold mb-3 zoom-in"
-            style="background: linear-gradient(135deg, #14b8a6, #10b981); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-            Get in Touch</h1>
-        <p class="text-lg" style="color: var(--text-muted);">Have questions? We'd love to hear from you.</p>
-    </div>
-
-    <div class="glass-card p-5 rounded-2xl">
-        <form (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
-            <div>
-                <label for="name">Name</label>
-                <input id="name" type="text" pInputText [(ngModel)]="form.name" name="name" class="w-full"
-                    placeholder="Your name">
-            </div>
-            <div>
-                <label for="email">Email</label>
-                <input id="email" type="email" pInputText [(ngModel)]="form.email" name="email" class="w-full"
-                    placeholder="you@example.com">
-            </div>
-            <div>
-                <label for="subject">Subject</label>
-                <input id="subject" type="text" pInputText [(ngModel)]="form.subject" name="subject" class="w-full"
-                    placeholder="How can we help?">
-            </div>
-            <div>
-                <label for="message">Message</label>
-                <textarea id="message" pInputTextarea [(ngModel)]="form.message" name="message" class="w-full" rows="5"
-                    placeholder="Tell us more..."></textarea>
-            </div>
-            <p-button type="submit" label="Send Message" icon="pi pi-send" styleClass="w-full"></p-button>
+<div class="pub">
+  <div class="pub-bg" aria-hidden="true" style="height:34rem"><div class="pub-grid-bg"></div><div class="pub-orb a"></div><div class="pub-orb b"></div></div>
+  <div class="pub-wrap pub-content" style="max-width:44rem">
+    <header class="pub-page-head" appReveal>
+      <span class="pub-eyebrow">Contact</span>
+      <h1 class="pub-h1" style="font-size:clamp(2.2rem,5vw,3.8rem)">Let’s <span class="pub-grad">talk</span></h1>
+      <p class="pub-lead">Questions, ideas or problems — send a message and we’ll get back to you. For feature requests and bugs, the <a routerLink="/feedback" style="color:var(--pub-2)">feedback hub</a> is the fastest route.</p>
+    </header>
+    <section class="pub-section" style="padding-block:2rem">
+      <div class="pub-card-lg" appReveal>
+        @if (sent()) {
+          <div class="pub-alert ok"><b>Thanks — message received.</b> We’ll reply to the email you gave.</div>
+        } @else {
+        <form class="pub-form" (ngSubmit)="onSubmit()" novalidate>
+          <div><label for="c-name">Name</label><input id="c-name" class="pub-field" type="text" [(ngModel)]="form.name" name="name" maxlength="100" autocomplete="name" placeholder="Your name"></div>
+          <div><label for="c-email">Email</label><input id="c-email" class="pub-field" type="email" [(ngModel)]="form.email" name="email" maxlength="254" autocomplete="email" placeholder="you@example.com"></div>
+          <div><label for="c-subject">Subject <span style="color:var(--pub-mute);font-weight:400">(optional)</span></label><input id="c-subject" class="pub-field" type="text" [(ngModel)]="form.subject" name="subject" maxlength="150" placeholder="How can we help?"></div>
+          <div><label for="c-msg">Message</label><textarea id="c-msg" class="pub-field" rows="6" [(ngModel)]="form.message" name="message" maxlength="3500" placeholder="Tell us more…"></textarea></div>
+          @if (error()) { <div class="pub-alert err" role="alert">{{ error() }}</div> }
+          <button type="submit" class="pub-btn pub-btn-primary" [disabled]="sending()">{{ sending() ? 'Sending…' : 'Send message' }} <i class="pi pi-send"></i></button>
         </form>
-    </div>
-</section>
+        }
+      </div>
+    </section>
+  </div>
+</div>

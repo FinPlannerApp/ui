@@ -1,0 +1,195 @@
+<div class="max-w-6xl mx-auto w-full flex flex-col gap-4">
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <div class="min-w-0">
+      <h1 class="text-2xl font-bold m-0 text-[var(--text-main)]">Investments</h1>
+      <p class="text-sm text-[var(--text-muted)] mt-1 mb-0">Funds, stocks, deposits and more. Money you move in is a transfer, not spending, so your net worth doesn't drop when you invest.</p>
+    </div>
+    <div class="flex gap-2 flex-wrap">
+      <p-button label="Refresh prices" icon="pi pi-sync" severity="secondary" [outlined]="true" [loading]="refreshing()" (onClick)="refreshPrices()"></p-button>
+      <p-button label="Add investment" icon="pi pi-plus" (onClick)="openAdd()"></p-button>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="text-sm text-[var(--text-muted)] p-6">Loading…</div>
+  } @else if (failed()) {
+    <div class="p-4 rounded-xl border border-red-400/40 text-sm text-[var(--text-main)]">Could not load investments. <button class="underline bg-transparent border-0 cursor-pointer text-[var(--primary-color)]" (click)="load()">Retry</button></div>
+  } @else if (data(); as d) {
+    @if (empty()) {
+      <div class="glass-card p-8 rounded-2xl text-center flex flex-col items-center gap-3">
+        <i class="pi pi-chart-line text-4xl text-[var(--primary-color)]"></i>
+        <div class="text-lg font-bold text-[var(--text-main)]">Track what your money is growing in</div>
+        <div class="text-sm text-[var(--text-muted)] max-w-md">Add a mutual fund, stock, FD, PPF or gold holding, update its value whenever you check it, and see gain and yearly return. Fund it by transferring from a bank account, or set up a SIP in Recurring.</div>
+        <p-button label="Add your first investment" icon="pi pi-plus" (onClick)="openAdd()"></p-button>
+      </div>
+    } @else {
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="glass-card p-4 rounded-2xl"><div class="text-xs text-[var(--text-muted)]">Invested</div><div class="text-xl font-bold text-[var(--text-main)]">{{ d.totalNetInvested | currency:'INR':'symbol':'1.0-0' }}</div></div>
+        <div class="glass-card p-4 rounded-2xl"><div class="text-xs text-[var(--text-muted)]">Current value</div><div class="text-xl font-bold text-[var(--text-main)]">{{ d.totalValue | currency:'INR':'symbol':'1.0-0' }}</div></div>
+        <div class="glass-card p-4 rounded-2xl"><div class="text-xs text-[var(--text-muted)]">Gain / loss</div>
+          <div class="text-xl font-bold" [class.text-green-600]="d.totalGain>=0" [class.text-red-500]="d.totalGain<0">{{ d.totalGain>=0 ? '+' : '' }}{{ d.totalGain | currency:'INR':'symbol':'1.0-0' }}
+            @if (d.totalGainPercent !== null) { <span class="text-sm">({{ d.totalGainPercent }}%)</span> }</div></div>
+        <div class="glass-card p-4 rounded-2xl"><div class="text-xs text-[var(--text-muted)]">Yearly return (XIRR)</div>
+          <div class="text-xl font-bold text-[var(--text-main)]">{{ d.portfolioXirrPercent !== null ? (d.portfolioXirrPercent + '%') : '—' }}</div>
+          <div class="text-[11px] text-[var(--text-muted)]">{{ d.portfolioXirrPercent === null ? 'Needs every holding valued and 30+ days of history' : 'Across all holdings' }}</div></div>
+      </div>
+
+      @if (d.allocation.length > 0 && d.totalValue > 0) {
+        <div class="glass-card p-4 rounded-2xl">
+          <div class="text-sm font-bold text-[var(--text-main)] mb-2">Allocation</div>
+          <div class="flex h-3 rounded-full overflow-hidden bg-black/5">
+            @for (a of d.allocation; track a.kind; let i = $index) { <div [style.width.%]="a.percent" [style.background]="color(i)" [title]="kindLabel(a.kind) + ' ' + a.percent + '%'"></div> }
+          </div>
+          <div class="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-[var(--text-muted)]">
+            @for (a of d.allocation; track a.kind; let i = $index) {
+              <span class="flex items-center gap-1"><span class="inline-block w-2.5 h-2.5 rounded-full" [style.background]="color(i)"></span>{{ kindLabel(a.kind) }} {{ a.percent }}%</span>
+            }
+          </div>
+        </div>
+      }
+
+      <div class="glass-card p-4 rounded-2xl">
+        <div class="text-sm font-bold text-[var(--text-main)]">If it keeps growing (an illustration)</div>
+        <div class="flex flex-wrap items-end gap-3 mt-2">
+          <label class="flex flex-col gap-1 text-xs text-[var(--text-muted)]">Yearly return, %
+            <p-inputnumber [(ngModel)]="projReturn" [min]="0" [max]="30" [minFractionDigits]="0" [maxFractionDigits]="1" [placeholder]="'' + projection(d).rate" [style]="{width: '7rem'}"></p-inputnumber></label>
+          <label class="flex flex-col gap-1 text-xs text-[var(--text-muted)]">For
+            <p-select [options]="yearOptions" optionLabel="label" optionValue="value" [(ngModel)]="projYears" appendTo="body"></p-select></label>
+          <label class="flex flex-col gap-1 text-xs text-[var(--text-muted)]">Raise SIPs each year by, %
+            <p-inputnumber [(ngModel)]="projStepUp" [min]="0" [max]="50" [style]="{width: '7rem'}"></p-inputnumber></label>
+        </div>
+        @if (projection(d); as p) {
+          <div class="mt-3 text-sm text-[var(--text-main)]">About <b>{{ p.value | currency:'INR':'symbol':'1.0-0' }}</b> after {{ projYears }} years at {{ p.rate }}% a year, including {{ p.contributed | currency:'INR':'symbol':'1.0-0' }} of future SIP money.</div>
+        }
+        <div class="text-[11px] text-[var(--text-muted)] mt-1">Markets don't grow in a straight line, and returns can be negative. This only shows what steady growth at the rate you choose would mean. Leave the return empty to use your own past return, kept between 4% and 15%.</div>
+      </div>
+
+      <div class="flex flex-col gap-3">
+        @for (h of d.holdings; track h.accountId) {
+          <div class="glass-card p-4 rounded-2xl flex flex-col gap-3">
+            <div class="flex flex-wrap items-start justify-between gap-2">
+              <div class="min-w-0">
+                <div class="font-bold text-[var(--text-main)] truncate">{{ h.name }}</div>
+                <div class="text-xs text-[var(--text-muted)]">{{ kindLabel(h.kind) }}@if (h.symbol) { · {{ h.symbol }} }@if (h.monthlySip > 0) { · SIP ≈ {{ h.monthlySip | currency:'INR':'symbol':'1.0-0' }}/month }@if (h.units) { · {{ h.units }} {{ h.kind === 0 ? 'units' : 'shares' }} }</div>
+                @if (h.autoValuation) {
+                  <div class="text-[11px]" [class.text-red-500]="h.lastPriceError" [class.text-[var(--text-muted)]]="!h.lastPriceError">
+                    {{ h.lastPriceError ? ('Automatic value failed: ' + h.lastPriceError) : ('Automatic · price ' + (h.lastPrice | number:'1.2-4') + (h.lastPriceDate ? ' on ' + (h.lastPriceDate | date:'dd MMM') : '')) }}
+                  </div>
+                }
+              </div>
+              <div class="flex gap-2">
+                <p-button label="Update value" icon="pi pi-pencil" size="small" severity="secondary" [outlined]="true" (onClick)="openVal(h)"></p-button>
+                <p-button label="Withdraw" icon="pi pi-arrow-down-left" size="small" severity="secondary" [outlined]="true" (onClick)="openWithdraw(h)"></p-button>
+                <a [routerLink]="['/app/accounts', h.accountId, 'transactions']" class="no-underline"><p-button label="Ledger" icon="pi pi-list" size="small" severity="secondary" [text]="true"></p-button></a>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+              <div><div class="text-xs text-[var(--text-muted)]">Invested</div><div class="font-semibold text-[var(--text-main)]">{{ h.netInvested | currency:'INR':'symbol':'1.0-0' }}</div></div>
+              <div><div class="text-xs text-[var(--text-muted)]">Value</div><div class="font-semibold text-[var(--text-main)]">{{ h.currentValue !== null ? (h.currentValue | currency:'INR':'symbol':'1.0-0') : 'Not valued' }}</div>
+                @if (h.valuedOn) { <div class="text-[11px]" [class.text-amber-600]="h.isStale" [class.text-[var(--text-muted)]]="!h.isStale">as of {{ h.valuedOn | date:'dd MMM yy' }}{{ h.isStale ? ' — stale' : '' }}</div> }</div>
+              <div><div class="text-xs text-[var(--text-muted)]">Gain / loss</div>
+                @if (h.currentValue !== null) { <div class="font-semibold" [class.text-green-600]="h.gain>=0" [class.text-red-500]="h.gain<0">{{ h.gain>=0 ? '+' : '' }}{{ h.gain | currency:'INR':'symbol':'1.0-0' }}@if (h.gainPercent !== null) { ({{ h.gainPercent }}%) }</div> } @else { <div class="text-[var(--text-muted)]">—</div> }</div>
+              <div><div class="text-xs text-[var(--text-muted)]">Yearly return</div><div class="font-semibold text-[var(--text-main)]">{{ h.xirrPercent !== null ? (h.xirrPercent + '%') : '—' }}</div></div>
+            </div>
+          </div>
+        }
+      </div>
+
+      @if (d.sips.length > 0) {
+        <div class="glass-card p-4 rounded-2xl">
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-sm font-bold text-[var(--text-main)]">Active SIPs <span class="font-normal text-[var(--text-muted)]">· ≈ {{ d.monthlySipTotal | currency:'INR':'symbol':'1.0-0' }}/month</span></div>
+            <a routerLink="/app/recurring-transactions" class="text-xs no-underline text-[var(--primary-color)]">Manage</a>
+          </div>
+          <div class="flex flex-col divide-y divide-[var(--glass-border)]">
+            @for (s of d.sips; track s.recurringId) {
+              <div class="py-2 flex flex-wrap items-center justify-between gap-2 text-sm">
+                <div class="min-w-0"><div class="text-[var(--text-main)] truncate">{{ s.description || s.investmentName }}</div>
+                  <div class="text-xs text-[var(--text-muted)]">{{ s.fundingAccountName }} → {{ s.investmentName }} · {{ freqLabel(s.frequency) }} · next {{ s.nextDate | date:'dd MMM' }}</div></div>
+                <div class="font-semibold text-[var(--text-main)]">{{ s.amount | currency:'INR':'symbol':'1.0-0' }}</div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+      <p class="text-xs text-[var(--text-muted)] m-0">Values are the ones you enter; nothing is fetched automatically. "Invested" is money moved in minus money taken out, from your ledger. To put money in, use Transfer from a bank account or a SIP in Recurring.</p>
+    }
+  }
+</div>
+
+<p-dialog header="Add investment" [(visible)]="addOpen" [modal]="true" [style]="{width: '440px', maxWidth: '94vw'}" [draggable]="false">
+  <div class="flex flex-col gap-3">
+    <label class="flex flex-col gap-1 text-sm">Name<input pInputText [(ngModel)]="add.name" placeholder="e.g. Nifty 50 Index Fund" autocomplete="off" /></label>
+    <label class="flex flex-col gap-1 text-sm">Type
+      <p-select [options]="kindOptions" optionLabel="label" optionValue="value" [(ngModel)]="add.kind" appendTo="body"></p-select></label>
+    <label class="flex flex-col gap-1 text-sm">Already invested (cost)
+      <p-inputnumber [(ngModel)]="add.investedSoFar" mode="currency" currency="INR" locale="en-IN"></p-inputnumber>
+      <span class="text-xs text-[var(--text-muted)]">Recorded as the starting balance. Leave 0 if you will fund it by transferring from a bank account.</span></label>
+    @if (autoCapable(add.kind)) {
+      <label class="flex flex-col gap-1 text-sm">{{ add.kind === 0 ? 'Scheme code' : 'Ticker' }}<input pInputText [(ngModel)]="add.symbol" autocomplete="off" [placeholder]="symbolHint(add.kind)" /></label>
+      <label class="flex flex-col gap-1 text-sm">{{ unitsLabel(add.kind) }}<p-inputnumber [(ngModel)]="add.units" [minFractionDigits]="0" [maxFractionDigits]="4"></p-inputnumber></label>
+      <label class="flex items-start gap-2 text-sm"><p-checkbox [(ngModel)]="add.auto" [binary]="true"></p-checkbox>
+        <span>Update the value automatically (units × latest price)<span class="block text-xs text-[var(--text-muted)]">Needs the code/ticker and units above. Refreshed every 6 hours.</span></span></label>
+    }
+    @if (!add.auto) {
+      <label class="flex flex-col gap-1 text-sm">Worth today (optional)
+        <p-inputnumber [(ngModel)]="add.currentValue" mode="currency" currency="INR" locale="en-IN"></p-inputnumber></label>
+    }
+  </div>
+  <ng-template pTemplate="footer">
+    <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="addOpen=false"></p-button>
+    <p-button label="Add" icon="pi pi-check" [loading]="saving()" (onClick)="saveAdd()"></p-button>
+  </ng-template>
+</p-dialog>
+
+<p-dialog [header]="'Update value — ' + val.name" [(visible)]="valOpen" [modal]="true" [style]="{width: '420px', maxWidth: '94vw'}" [draggable]="false">
+  <div class="flex flex-col gap-3">
+    @if (autoCapable(val.kind)) {
+      <label class="flex flex-col gap-1 text-sm">{{ val.kind === 0 ? 'Scheme code' : 'Ticker' }}<input pInputText [(ngModel)]="val.symbol" autocomplete="off" [placeholder]="symbolHint(val.kind)" /></label>
+      <label class="flex flex-col gap-1 text-sm">{{ unitsLabel(val.kind) }}<p-inputnumber [(ngModel)]="val.units" [minFractionDigits]="0" [maxFractionDigits]="4"></p-inputnumber></label>
+      <label class="flex items-start gap-2 text-sm"><p-checkbox [(ngModel)]="val.auto" [binary]="true"></p-checkbox>
+        <span>Update the value automatically<span class="block text-xs text-[var(--text-muted)]">Update the units here when a SIP buys more.</span></span></label>
+    }
+    @if (!val.auto) {
+      <label class="flex flex-col gap-1 text-sm">What is it worth?
+        <p-inputnumber [(ngModel)]="val.currentValue" mode="currency" currency="INR" locale="en-IN"></p-inputnumber></label>
+      <label class="flex flex-col gap-1 text-sm">As of<input pInputText type="date" [(ngModel)]="val.valuedOn" [max]="val.valuedOn" /></label>
+    }
+    <label class="flex flex-col gap-1 text-sm">Note (optional)<input pInputText [(ngModel)]="val.notes" autocomplete="off" /></label>
+  </div>
+  <ng-template pTemplate="footer">
+    <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="valOpen=false"></p-button>
+    <p-button label="Save" icon="pi pi-check" [loading]="saving()" (onClick)="saveVal()"></p-button>
+  </ng-template>
+</p-dialog>
+
+<p-dialog [header]="'Withdraw from ' + wd.name" [(visible)]="wdOpen" [modal]="true" [style]="{width: '460px', maxWidth: '94vw'}" [draggable]="false">
+  <div class="flex flex-col gap-3">
+    <label class="flex flex-col gap-1 text-sm">Money was credited to
+      <p-select [options]="destAccounts()" optionLabel="label" optionValue="value" [(ngModel)]="wd.destinationAccountId" placeholder="Choose account" appendTo="body" (onChange)="wdPreview.set(null)"></p-select></label>
+    <label class="flex flex-col gap-1 text-sm">Date<input pInputText type="date" [(ngModel)]="wd.date" [max]="wd.date" (ngModelChange)="wdPreview.set(null)" /></label>
+    <label class="flex flex-col gap-1 text-sm">Amount you received
+      <p-inputnumber [(ngModel)]="wd.receivedAmount" mode="currency" currency="INR" locale="en-IN" (ngModelChange)="wdPreview.set(null)"></p-inputnumber></label>
+    <label class="flex flex-col gap-1 text-sm">Amount before tax / charges (optional)
+      <p-inputnumber [(ngModel)]="wd.grossAmount" mode="currency" currency="INR" locale="en-IN" (ngModelChange)="wdPreview.set(null)"></p-inputnumber>
+      <span class="text-xs text-[var(--text-muted)]">If you leave this empty, no tax or charges are recorded. The app works out your gain from what you invested and what it is worth.</span></label>
+    <label class="flex flex-col gap-1 text-sm">Note (optional)<input pInputText [(ngModel)]="wd.notes" maxlength="100" /></label>
+
+    @if (wdPreview(); as p) {
+      <div class="p-3 rounded-xl border border-[var(--surface-border)] text-sm flex flex-col gap-1">
+        <div class="font-semibold text-[var(--text-main)]">What will be recorded {{ p.estimated ? '(estimated)' : '' }}</div>
+        <div class="flex justify-between"><span>Taken out of the investment</span><b>{{ p.gross | currency:'INR':'symbol':'1.0-2' }}</b></div>
+        <div class="flex justify-between"><span>Your money returned</span><b>{{ p.costRedeemed | currency:'INR':'symbol':'1.0-2' }}</b></div>
+        <div class="flex justify-between"><span>{{ p.gain >= 0 ? 'Gain' : 'Loss' }} booked</span><b [class.text-green-600]="p.gain>=0" [class.text-red-500]="p.gain<0">{{ p.gain | currency:'INR':'symbol':'1.0-2' }}</b></div>
+        @if (p.charges > 0) { <div class="flex justify-between"><span>Tax &amp; charges</span><b>{{ p.charges | currency:'INR':'symbol':'1.0-2' }}</b></div> }
+        <div class="flex justify-between"><span>Value left</span><b>{{ p.valueAfter | currency:'INR':'symbol':'1.0-2' }}</b></div>
+        @if (p.warning) { <div class="text-xs text-amber-600 mt-1">{{ p.warning }}</div> }
+      </div>
+    }
+  </div>
+  <ng-template pTemplate="footer">
+    <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="wdOpen = false"></p-button>
+    <p-button [label]="wdPreview() ? 'Recheck' : 'Check'" severity="secondary" [outlined]="true" [loading]="saving()" (onClick)="previewWithdraw()"></p-button>
+    @if (wdPreview()) { <p-button label="Record withdrawal" icon="pi pi-check" [loading]="saving()" (onClick)="confirmWithdraw()"></p-button> }
+  </ng-template>
+</p-dialog>

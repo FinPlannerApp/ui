@@ -13,6 +13,10 @@ export class IdleTimerService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly isBrowser = isPlatformBrowser(this.platformId);
 
+  private readonly activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+  private readonly onActivity = () => this.resetTimer();
+  private listening = false;
+
   startMonitoring() {
     if (!this.isBrowser) {
       return; // Don't run on server-side rendering
@@ -20,12 +24,11 @@ export class IdleTimerService {
 
     this.resetTimer();
 
-    // Listen for user activity events
-    const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
-    events.forEach(event => {
-      document.addEventListener(event, () => this.resetTimer(), { passive: true });
-    });
-
+    // Add the listeners once (this used to stack a new set on every sign-in) and remove them on stop.
+    if (!this.listening) {
+      this.activityEvents.forEach(event => document.addEventListener(event, this.onActivity, { passive: true }));
+      this.listening = true;
+    }
   }
 
   private resetTimer() {
@@ -53,6 +56,10 @@ export class IdleTimerService {
   }
 
   stopMonitoring() {
+    if (this.listening && this.isBrowser) {
+      this.activityEvents.forEach(event => document.removeEventListener(event, this.onActivity));
+      this.listening = false;
+    }
     if (this.timeoutId) {
       clearTimeout(this.timeoutId);
       this.timeoutId = undefined;

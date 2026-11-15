@@ -1,11 +1,12 @@
-<div class="accounts-page flex flex-col gap-6 w-full px-4 md:px-8 py-4">
+<div class="accounts-page flex flex-col gap-6 w-full px-4 md:px-8 py-4" [class.money-hidden]="hidden()">
+  <app-module-tabs [tabs]="tabs" label="Accounts sections" />
   <!-- Toast & Confirmation -->
   <p-toast></p-toast>
   <p-confirmDialog></p-confirmDialog>
 
   <!-- Page Header & Action Bar -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-    <div>
+    <div class="min-w-0 sm:flex-1">
       <div class="flex items-center gap-2">
         <a routerLink="/app/dashboard" class="no-underline text-[var(--text-muted)] hover:text-[var(--primary-color)] transition-colors">
           <i class="pi pi-arrow-left text-lg"></i>
@@ -17,8 +18,11 @@
       </p>
     </div>
 
-    <div class="flex items-center gap-3">
+    <div class="flex flex-wrap sm:flex-nowrap sm:shrink-0 items-center gap-2 sm:gap-3">
       <a routerLink="/app/accounts/data-health" class="p-button p-button-text p-button-sm no-underline"><i class="pi pi-heart mr-2"></i>Data health</a>
+      @if (hideBalancesSetting()) {
+        <p-button [icon]="revealed() ? 'pi pi-eye-slash' : 'pi pi-eye'" [text]="true" [rounded]="true" [pTooltip]="revealed() ? 'Hide balances' : 'Show balances'" (onClick)="revealed.set(!revealed())"></p-button>
+      }
       <p-button icon="pi pi-refresh" [text]="true" [rounded]="true" pTooltip="Refresh Accounts" (onClick)="refreshData()"></p-button>
       <p-button label="Add Account" icon="pi pi-plus" (onClick)="openCreateForm()"></p-button>
     </div>
@@ -27,7 +31,7 @@
   <!-- Financial Overview KPI Cards Grid -->
   <div class="grid grid-cols-12 gap-4">
     <div class="col-span-12 sm:col-span-6 lg:col-span-3 min-w-0">
-      <app-stat-card
+      <app-stat-card class="money"
         label="Net Worth"
         [value]="(netWorth() | currency:'INR':'symbol':'1.2-2')!"
         subtitle="Assets minus Liabilities"
@@ -37,7 +41,7 @@
     </div>
 
     <div class="col-span-12 sm:col-span-6 lg:col-span-3 min-w-0">
-      <app-stat-card
+      <app-stat-card class="money"
         label="Total Assets"
         [value]="(totalAssetBalance() | currency:'INR':'symbol':'1.2-2')!"
         [subtitle]="assetAccountsCount() + ' asset accounts'"
@@ -47,7 +51,7 @@
     </div>
 
     <div class="col-span-12 sm:col-span-6 lg:col-span-3 min-w-0">
-      <app-stat-card
+      <app-stat-card class="money"
         label="Liabilities & Debt"
         [value]="(totalLiabilities() | currency:'INR':'symbol':'1.2-2')!"
         [subtitle]="liabilityAccountsCount() + ' cards & loans'"
@@ -67,6 +71,8 @@
     </div>
   </div>
 
+  <app-interest-due></app-interest-due>
+
   <!-- Single Clean Controls Toolbar -->
   <div class="glass-card p-4 rounded-2xl">
     <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 w-full">
@@ -83,7 +89,7 @@
           class="w-full h-10 p-inputtext-sm rounded-xl" />
       </p-iconfield>
 
-      <div class="flex items-center gap-3 w-full lg:w-auto">
+      <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
         <!-- Category Filter Dropdown (Matching 40px height) -->
         <div class="w-full sm:w-52 shrink-0 min-w-0">
           <p-select
@@ -192,7 +198,8 @@
       @if (viewMode() === 'grid') {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           @for (acc of filteredAccounts(); track acc.id) {
-            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 hover:-translate-y-1 hover:shadow-xl border min-w-0"
+            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 hover:-translate-y-1 hover:shadow-xl border min-w-0 cursor-pointer"
+                 (click)="onCardClick($event, acc)" (keydown.enter)="onCardClick($event, acc)" tabindex="0" role="link" [attr.aria-label]="'Open ' + acc.name + ' transactions'"
                  [ngClass]="getAccountBadgeColor(acc).border">
               
               <!-- Account Header (Icon + Marquee Title) -->
@@ -212,7 +219,7 @@
                 <!-- Account Balance Container -->
                 <div class="my-4 p-3 rounded-xl bg-black/20 backdrop-blur-sm border border-white/5 flex flex-col min-w-0">
                   <span class="text-xs text-[var(--text-muted)] font-medium">Current Balance</span>
-                  <span class="text-2xl font-extrabold tracking-tight mt-0.5 truncate"
+                  <span class="money text-2xl font-extrabold tracking-tight mt-0.5 truncate"
                         [ngClass]="isLiabilityAccount(acc) || acc.balance < 0 ? 'text-rose-400' : 'text-emerald-400'"
                         [title]="acc.balance | currency:'INR':'symbol':'1.2-2'">
                     {{ acc.balance | currency:'INR':'symbol':'1.2-2' }}
@@ -364,9 +371,7 @@
                   </button>
 
                   <div class="flex items-center gap-1 shrink-0">
-                    <p-button icon="pi pi-sliders-h" [text]="true" [rounded]="true" severity="warn" size="small" pTooltip="Adjust Balance" (onClick)="openAdjustBalance(acc)"></p-button>
-                    <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" size="small" pTooltip="Edit Account" (onClick)="openEditForm(acc)"></p-button>
-                    <p-button icon="pi pi-trash" [text]="true" [rounded]="true" severity="danger" size="small" pTooltip="Delete Account" (onClick)="confirmDelete(acc)"></p-button>
+                    <p-button icon="pi pi-cog" [text]="true" [rounded]="true" size="small" pTooltip="Account settings" (onClick)="openSettings(acc)"></p-button>
                   </div>
                 </div>
               </div>
@@ -413,7 +418,7 @@
                     <span class="text-xs text-[var(--text-muted)]">—</span>
                   }
                 </td>
-                <td class="text-right font-bold text-base whitespace-nowrap"
+                <td class="money text-right font-bold text-base whitespace-nowrap"
                     [ngClass]="isLiabilityAccount(acc) || acc.balance < 0 ? 'text-rose-400' : 'text-emerald-400'">
                   {{ acc.balance | currency:'INR':'symbol':'1.2-2' }}
                 </td>
@@ -429,9 +434,7 @@
                       <p-button icon="pi pi-check-circle" [text]="true" [rounded]="true" severity="success" size="small" pTooltip="1-Tap Settlement" (onClick)="openPayCcBillModal(acc)"></p-button>
                     }
                     <p-button icon="pi pi-list" [text]="true" [rounded]="true" size="small" pTooltip="View Transactions" (onClick)="viewTransactions(acc)"></p-button>
-                    <p-button icon="pi pi-sliders-h" [text]="true" [rounded]="true" severity="warn" size="small" pTooltip="Adjust Balance" (onClick)="openAdjustBalance(acc)"></p-button>
-                    <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" size="small" pTooltip="Edit" (onClick)="openEditForm(acc)"></p-button>
-                    <p-button icon="pi pi-trash" [text]="true" [rounded]="true" severity="danger" size="small" pTooltip="Delete" (onClick)="confirmDelete(acc)"></p-button>
+                    <p-button icon="pi pi-cog" [text]="true" [rounded]="true" size="small" pTooltip="Account settings" (onClick)="openSettings(acc)"></p-button>
                   </div>
                 </td>
               </tr>

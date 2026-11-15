@@ -1,3 +1,4 @@
+import { UndoService } from './core/services/undo.service';
 import { Component, inject, signal } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { ThemeEngine } from './core/services/theme';
@@ -29,6 +30,7 @@ export class App {
   protected pwaInstall = inject(PwaInstallService);
   private pwaUpdate = inject(PwaUpdateService);
   private messageService = inject(MessageService);
+  protected undo = inject(UndoService);
 
   isSessionLocked = signal(false);
 

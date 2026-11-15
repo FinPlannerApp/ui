@@ -35,7 +35,12 @@
       </div>
     </div>
 
-    <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+    <div class="flex items-center gap-1 sm:gap-3 shrink-0">
+      <!-- Soft refresh on small screens (the breadcrumb one is hidden below md). Reloads this page's data only. -->
+      <p-button icon="pi pi-refresh" [text]="true" [rounded]="true" class="md:hidden" aria-label="Refresh data"
+        (onClick)="breadcrumbService.refresh()"></p-button>
+      <p-button icon="pi pi-question-circle" [text]="true" [rounded]="true" aria-label="Help for this page"
+        pTooltip="Tips for this page" (onClick)="openHelp()"></p-button>
       <!-- Theme Toggle Button -->
       <p-button [icon]="themeEngine.isDark() ? 'pi pi-sun' : 'pi pi-moon'" [text]="true"
         [rounded]="true" (onClick)="themeEngine.toggleDarkMode()">
@@ -62,6 +67,10 @@
                 <span>Session expires in {{ authService.sessionExpiresIn() }}</span>
               </div>
             </div>
+            <p-button label="Check for updates" icon="pi pi-cloud-download" severity="secondary" size="small" [outlined]="true"
+              [loading]="checkingUpdate" (onClick)="checkForUpdates()"></p-button>
+            <p-button label="Reload app (clear cache)" icon="pi pi-sync" severity="secondary" size="small" [text]="true"
+              (onClick)="forceReload()"></p-button>
             <p-button label="Logout" icon="pi pi-sign-out" severity="danger" size="small" class="mt-2"
               (onClick)="logout()"></p-button>
           </div>
@@ -98,11 +107,16 @@
 
   <!-- Main Content Area with Dynamic Viewport Height & Safe Area Inset -->
   <div class="layout-main grow">
-    <main class="p-3 md:p-5 relative z-[1] pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
+    <main class="p-3 md:p-5 relative z-[1] w-full max-w-[1760px] mx-auto pb-[calc(4rem+env(safe-area-inset-bottom,0px))]">
       <router-outlet></router-outlet>
+      <app-tip-ticker />
     </main>
   </div>
 </div>
 
+<button type="button" class="quick-fab" (click)="quickAdd.open()" aria-label="Quick add transaction" title="Quick add a transaction">
+  <i class="pi pi-plus"></i>
+</button>
+<app-quick-add />
 <app-whats-new />
-
+

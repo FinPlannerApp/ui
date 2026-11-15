@@ -14,7 +14,8 @@
     "e2e": "cypress open",
     "e2e:run": "cypress run",
     "release:dry": "node scripts/release.mjs --dry-run",
-    "test:release": "node --test scripts/release.test.mjs"
+    "test:release": "node --test scripts/release.test.mjs",
+    "e2e:mock": "node --test e2e-mock/smoke.test.js"
   },
   "prettier": {
     "printWidth": 100,
@@ -49,6 +50,7 @@
     "jwt-decode": "^4.0.0",
     "marked": "^18.0.9",
     "mermaid": "^11.16.1",
+    "pdfjs-dist": "^4.10.38",
     "primeicons": "^7.0.0",
     "primeng": "^20.1.2",
     "qrcode": "^1.5.4",

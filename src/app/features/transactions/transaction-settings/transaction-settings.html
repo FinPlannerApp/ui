@@ -1,0 +1,63 @@
+<div class="max-w-3xl mx-auto w-full flex flex-col gap-4 px-4 md:px-8 py-4">
+  <app-module-tabs [tabs]="tabs" label="Transactions sections" />
+  <div>
+    <h1 class="text-2xl font-bold m-0 gradient-text">Transaction settings</h1>
+    <p class="text-sm text-muted mt-1 mb-0">Safety nets and call-outs for your transactions.</p>
+  </div>
+
+  @if (loading()) {
+    <p-skeleton height="200px" borderRadius="24px"></p-skeleton>
+  } @else {
+    <section class="glass-card rounded-3xl p-5 border border-white/10 flex flex-col gap-5">
+      <div class="flex flex-col gap-1.5">
+        <label for="guard" class="text-xs font-semibold text-main">Duplicate guard</label>
+        <p-select inputId="guard" [options]="guardOptions" optionLabel="label" optionValue="value" [ngModel]="settings().duplicateGuardSeconds"
+          (ngModelChange)="patch({ duplicateGuardSeconds: $event })" appendTo="body" styleClass="w-full"></p-select>
+        <span class="text-[11px] text-muted">If you save an identical transaction (same account, amount, date and description) again within this time, it is rejected as an accidental double-tap. Bulk add and imports are not affected.</span>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="large" class="text-xs font-semibold text-main">Large-expense level</label>
+        <p-inputnumber inputId="large" [ngModel]="settings().largeExpenseThreshold" (ngModelChange)="patch({ largeExpenseThreshold: $event ?? 0 })"
+          mode="currency" currency="INR" locale="en-IN" [min]="0" [maxFractionDigits]="0" styleClass="w-full"></p-inputnumber>
+        <span class="text-[11px] text-muted">Expenses at or above this amount are called out on the Overview. Set 0 to turn it off.</span>
+      </div>
+
+      <div class="flex flex-col gap-3">
+        <h2 class="text-sm font-black text-main m-0">Defaults for new transactions</h2>
+        <div class="flex flex-col gap-1.5">
+          <label for="dacc" class="text-xs font-semibold text-main">Default account (Bulk add)</label>
+          <p-select inputId="dacc" [options]="accounts()" optionLabel="name" optionValue="id" [ngModel]="settings().defaultAccountId ?? null"
+            (ngModelChange)="patch({ defaultAccountId: $event ?? null })" [showClear]="true" placeholder="None" appendTo="body" styleClass="w-full"></p-select>
+          <span class="text-[11px] text-muted">Filled in when you start typing a Bulk add row and haven't chosen an account.</span>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label for="dcat" class="text-xs font-semibold text-main">Default category</label>
+          <p-select inputId="dcat" [options]="categories()" optionLabel="path" optionValue="id" [ngModel]="settings().defaultCategoryId ?? null"
+            (ngModelChange)="patch({ defaultCategoryId: $event ?? null })" [showClear]="true" [filter]="true" placeholder="None" appendTo="body" styleClass="w-full"></p-select>
+          <span class="text-[11px] text-muted">Pre-selected for new expenses (form and Bulk add). You can always change it.</span>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-3">
+        <h2 class="text-sm font-black text-main m-0">Quick Cards (Bulk add)</h2>
+        <div class="flex flex-col gap-1.5">
+          <label for="qmax" class="text-xs font-semibold text-main">Cards to show</label>
+          <p-inputnumber inputId="qmax" [ngModel]="settings().quickCardsMax" (ngModelChange)="patch({ quickCardsMax: $event ?? 0 })" [min]="0" [max]="30" [showButtons]="true" styleClass="w-full"></p-inputnumber>
+          <span class="text-[11px] text-muted">0 hides the strip. Most used cards come first.</span>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label for="qmin" class="text-xs font-semibold text-main">Repeats needed</label>
+          <p-inputnumber inputId="qmin" [ngModel]="settings().quickCardsMinUses" (ngModelChange)="patch({ quickCardsMinUses: $event ?? 3 })" [min]="2" [max]="20" [showButtons]="true" styleClass="w-full"></p-inputnumber>
+          <span class="text-[11px] text-muted">An entry (same description, amount, type, category, account) must appear this many times.</span>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label for="qdays" class="text-xs font-semibold text-main">Look back (days)</label>
+          <p-inputnumber inputId="qdays" [ngModel]="settings().quickCardsDays" (ngModelChange)="patch({ quickCardsDays: $event ?? 120 })" [min]="14" [max]="365" [showButtons]="true" styleClass="w-full"></p-inputnumber>
+        </div>
+      </div>
+
+      <p-button label="Save settings" icon="pi pi-check" (onClick)="save()" [loading]="saving()" styleClass="w-full"></p-button>
+    </section>
+  }
+</div>

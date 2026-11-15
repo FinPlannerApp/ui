@@ -7,6 +7,7 @@ import { BudgetProgressWidget } from '../../budgets/budget-progress-widget/budge
 import { FinancialHealthWidget } from '../financial-health-widget/financial-health-widget';
 import { UpcomingObligationsWidget } from '../upcoming-obligations-widget/upcoming-obligations-widget';
 import { sharedPrimeModules } from '../../../shared/prime-imports';
+import { CompactInrPipe } from '../../../shared/pipes/compact-inr.pipe';
 import { StatCard } from '../../../shared/components/stat-card/stat-card';
 import { BreadcrumbService } from '../../../core/layout/breadcrumb.service';
 
@@ -22,7 +23,8 @@ import { BreadcrumbService } from '../../../core/layout/breadcrumb.service';
     BudgetProgressWidget,
     FinancialHealthWidget,
     UpcomingObligationsWidget,
-    StatCard
+    StatCard,
+    CompactInrPipe
   ],
   templateUrl: './dashboard.html',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -78,6 +80,45 @@ export class Dashboard implements OnInit {
       percentage: total > 0 ? Math.round((item.totalAmount / total) * 100) : 0,
       color: colors[idx % colors.length]
     }));
+  });
+
+  // Detail drawer: opens from the hero metrics and the category list.
+  detailOpen = false;
+  detail = signal<{ kind: 'networth' | 'income' | 'expenses' | 'netflow' | 'category'; category?: string } | null>(null);
+
+  openDetail(kind: 'networth' | 'income' | 'expenses' | 'netflow' | 'category', category?: string): void {
+    this.detail.set({ kind, category });
+    this.detailOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  detailTitle = computed(() => {
+    const d = this.detail();
+    if (!d) return '';
+    return { networth: 'Net worth', income: 'Income this month', expenses: 'Expenses this month', netflow: 'Net flow', category: d.category ?? 'Category' }[d.kind];
+  });
+
+  /** Everything the drawer needs about the clicked category, from data the dashboard already loaded. */
+  categoryDetail = computed(() => {
+    const d = this.detail();
+    if (d?.kind !== 'category') return null;
+    const all = this.state.spending() ?? [];
+    const total = all.reduce((t: number, i: any) => t + (i.totalAmount || 0), 0);
+    const row = all.find((i: any) => i.categoryName === d.category);
+    const extreme = this.insights()?.categoryExtremes?.find(e => e.groupName === d.category);
+    const rank = all.findIndex((i: any) => i.categoryName === d.category) + 1;
+    return {
+      amount: row?.totalAmount ?? 0,
+      share: total > 0 && row ? Math.round((row.totalAmount / total) * 100) : 0,
+      rank, of: all.length, extreme
+    };
+  });
+
+  /** Spend per day so far — a quick pace check for the expenses drawer. */
+  dailyAverage = computed(() => {
+    const s = this.summary();
+    const day = Math.max(1, new Date().getDate());
+    return s ? (s.monthlyExpenses || 0) / day : 0;
   });
 
   // Local Insights UI State

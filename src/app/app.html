@@ -48,6 +48,14 @@
         </div>
     </ng-template>
 </p-toast>
+<p-toast position="bottom-center" key="undo">
+    <ng-template let-message pTemplate="message">
+        <div class="flex items-center justify-between gap-3 w-full">
+            <div class="min-w-0"><p class="font-bold m-0">{{ message.summary }}</p><p class="text-sm m-0 truncate">{{ message.detail }}</p></div>
+            <p-button size="small" label="Undo" icon="pi pi-undo" (click)="undo.run()" severity="primary"></p-button>
+        </div>
+    </ng-template>
+</p-toast>
 <p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
 <router-outlet></router-outlet>
 

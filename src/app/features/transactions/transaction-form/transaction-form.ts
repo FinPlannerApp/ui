@@ -1,9 +1,11 @@
+import { RuleMatch } from '../../../core/models/transaction-rule.model';
+import { UserSettingsService } from '../../../core/services/user-settings.service';
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal, computed } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Transaction, TransactionService } from '../transaction';
 import { TransactionType } from '../../../core/models/transaction-type';
-import { Category, TransactionCategory } from '../../categories/category';
+import { Category, TransactionCategory, findCategoryByText, splitCategoryText } from '../../categories/category';
 import { toDateOnlyString, fromDateOnlyString } from '../../../core/utils/date-utils';
 import { firstValueFrom } from 'rxjs';
 import { Account } from '../../accounts/account';
@@ -12,12 +14,14 @@ import { AccountState } from '../../../core/state/account-state.service';
 import { sharedPrimeModules } from '../../../shared/prime-imports';
 import { CommonModule } from '@angular/common';
 
+import { GenericApi } from '../../../core/services/generic-api';
+import { Attachments } from '../../../shared/components/attachments/attachments';
 import { MerchantService } from '../../merchants/merchant.service';
 import { Merchant } from '../../../core/models/merchant.model';
 
 @Component({
   selector: 'app-transaction-form',
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, ...sharedPrimeModules],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, Attachments, ...sharedPrimeModules],
   templateUrl: './transaction-form.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -28,14 +32,26 @@ export class TransactionForm implements OnInit {
   private categoryService = inject(Category);
   private transactionService = inject(TransactionService);
   private merchantService = inject(MerchantService);
+  private api = inject(GenericApi);
+  private userSettings = inject(UserSettingsService);
   private accountState = inject(AccountState);
   private messageService = inject(MessageService);
 
   transactionForm: FormGroup;
   transactionTypes: any[];
   categories = signal<TransactionCategory[]>([]);
+  selectedCategoryId = signal<number | null>(null);
   accounts = signal<Account[]>([]);
   merchants = signal<Merchant[]>([]);
+  /** Tags the user has used before, offered as suggestions (new ones can be typed and added with Enter or a comma). */
+  private knownTags: string[] = [];
+  tagSuggestions = signal<string[]>([]);
+
+  searchTags(event: { query: string }): void {
+    const q = (event.query || '').trim().toLowerCase().replace(/^#/, '');
+    const chosen = new Set<string>((this.transactionForm.get('tags')?.value ?? []).map((t: string) => t.toLowerCase()));
+    this.tagSuggestions.set(this.knownTags.filter(t => !chosen.has(t) && (!q || t.includes(q))).slice(0, 8));
+  }
   suggestedMerchantId = signal<number | null>(null);
   currentFilter = signal<string>('');
 
@@ -53,7 +69,7 @@ export class TransactionForm implements OnInit {
   isNewCategory = computed(() => {
     const filter = this.currentFilter().trim().toLowerCase();
     if (!filter) return false;
-    return !this.categories().some(c => c.name.toLowerCase() === filter);
+    return !this.categories().some(c => c.name.toLowerCase() === filter || (c.path ?? '').toLowerCase() === filter);
   });
 
   constructor() {
@@ -70,6 +86,8 @@ export class TransactionForm implements OnInit {
       type: [TransactionType.Expense, Validators.required],
       transactionCategoryId: [null],
       merchantId: [null],
+      notes: [null, Validators.maxLength(500)],
+      tags: [[]],
       destinationAccountId: [null] // Control for the transfer dropdown
     });
 
@@ -80,7 +98,7 @@ export class TransactionForm implements OnInit {
 
     // Patch form if we are in edit mode
     if (this.isEditMode()) {
-      this.transactionForm.patchValue(transactionData);
+      this.transactionForm.patchValue({ ...transactionData, tags: transactionData.tags ?? [], notes: transactionData.notes ?? null });
       this.transactionForm.patchValue({ date: fromDateOnlyString(transactionData.date) ?? new Date(transactionData.date) });
     }
   }
@@ -97,6 +115,17 @@ export class TransactionForm implements OnInit {
     ]);
     this.categories.set(categories);
     this.merchants.set(merchants);
+    if (!this.isEditMode()) {
+      try {
+        const d = await this.userSettings.getTransactions();
+        if (d.defaultCategoryId && categories.some(c => c.id === d.defaultCategoryId)) {
+          this.transactionForm.patchValue({ transactionCategoryId: d.defaultCategoryId });
+          this.selectedCategoryId.set(d.defaultCategoryId);
+          this.checkIfTransfer(d.defaultCategoryId);
+        }
+      } catch { /* optional */ }
+    }
+    void this.loadKnownTags();
 
     // Use state for accounts
     this.accounts.set(this.accountState.accounts().filter(a => a.id !== this.currentAccountId));
@@ -107,6 +136,7 @@ export class TransactionForm implements OnInit {
       const category = this.categories().find(c => c.name === transactionData.categoryName);
       if (category) {
         this.transactionForm.patchValue({ transactionCategoryId: category.id });
+        this.selectedCategoryId.set(category.id);
         // Manually trigger the check
         this.checkIfTransfer(category.id);
       }
@@ -115,6 +145,7 @@ export class TransactionForm implements OnInit {
 
   // --- THIS IS THE CORE TRANSFER LOGIC ---
   onCategoryChange(event: { value: number }): void {
+    this.selectedCategoryId.set(event.value ?? null);
     this.checkIfTransfer(event.value);
   }
 
@@ -145,19 +176,36 @@ export class TransactionForm implements OnInit {
   // isNewCategory is now a computed signal
 
   async addNewCategory(): Promise<void> {
-    let newCategoryName = this.currentFilter().trim();
-    if (newCategoryName) {
-      // Capitalize first letter
-      newCategoryName = newCategoryName.charAt(0).toUpperCase() + newCategoryName.slice(1);
-      try {
-        const newCategory = await firstValueFrom(this.categoryService.upsertTransactionCategory({ name: newCategoryName }));
-        this.categories.update(cats => [...cats, newCategory]);
-        this.transactionForm.get('transactionCategoryId')?.setValue(newCategory.id);
-        this.currentFilter.set('');
-      } catch (err: any) {
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'Failed to create new category' });
-      }
+    const typed = this.currentFilter().trim();
+    if (!typed) return;
+    // "Food › Pizza" creates the sub-category Pizza under Food (when Food exists).
+    const { parent, name } = splitCategoryText(typed);
+    const parentCat = parent ? this.categories().find(c => c.name.toLowerCase() === parent.toLowerCase() && !c.parentCategoryId) : undefined;
+    const finalName = (parentCat ? name : typed.replace(/\s*[›>\/]\s*/g, ' ')).trim();
+    const newCategoryName = finalName.charAt(0).toUpperCase() + finalName.slice(1);
+    try {
+      const newCategory = await firstValueFrom(this.categoryService.upsertTransactionCategory({
+        name: newCategoryName, parentCategoryId: parentCat?.id ?? null }));
+      const fresh = await firstValueFrom(this.categoryService.getTransactionCategories());
+      this.categories.set(fresh);
+      this.transactionForm.get('transactionCategoryId')?.setValue(newCategory.id);
+    } catch (err: any) {
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || err?.message || 'Failed to create new category' });
     }
+  }
+
+
+  /** When a main category with sub-categories is selected, offer its sub-categories as one-tap chips. */
+  subCategoryChips = computed(() => {
+    const id = this.selectedCategoryId();
+    if (!id) return [] as TransactionCategory[];
+    const current = this.categories().find(c => c.id === id);
+    const rootId = current?.parentCategoryId ?? current?.id;   // siblings too, once a sub-category is picked
+    return this.categories().filter(c => c.parentCategoryId === rootId);
+  });
+  pickSubCategory(id: number): void {
+    this.transactionForm.get('transactionCategoryId')?.setValue(id);
+    this.selectedCategoryId.set(id);
   }
 
   filterCategories(event: { filter: string }): void {
@@ -174,6 +222,25 @@ export class TransactionForm implements OnInit {
     this.suggestedMerchantId.set(match);
   }
 
+  /** Pre-fills category / merchant / tags from the user's Rules for a NEW transaction (only empty fields). */
+  async applyRulesFor(): Promise<void> {
+    if (this.isEditMode()) return;
+    const v = this.transactionForm.getRawValue();
+    if (!v.description?.trim()) return;
+    try {
+      const res = await firstValueFrom(this.api.post<RuleMatch | null>('transaction-rules/match', { description: v.description, amount: v.amount || 0, type: v.type }));
+      const m = res.isSuccess ? res.value : null;
+      if (!m) return;
+      if (!v.transactionCategoryId && m.transactionCategoryId) {
+        this.transactionForm.patchValue({ transactionCategoryId: m.transactionCategoryId });
+        this.selectedCategoryId.set(m.transactionCategoryId);
+        this.checkIfTransfer(m.transactionCategoryId);
+      }
+      if (!v.merchantId && m.merchantId) this.transactionForm.patchValue({ merchantId: m.merchantId });
+      if ((!v.tags || v.tags.length === 0) && m.tags.length) this.transactionForm.patchValue({ tags: m.tags });
+    } catch { /* rules are a convenience */ }
+  }
+
   acceptMerchantSuggestion(): void {
     const id = this.suggestedMerchantId();
     if (id) {
@@ -187,6 +254,13 @@ export class TransactionForm implements OnInit {
   }
 
   // --- UPDATED SUBMIT LOGIC ---
+  private async loadKnownTags(): Promise<void> {
+    try {
+      const res = await firstValueFrom(this.api.get<{ tag: string; count: number }[]>('Transactions/tags'));
+      if (res.isSuccess) this.knownTags = (res.value ?? []).map(t => t.tag);
+    } catch { /* suggestions are optional */ }
+  }
+
   async onSubmit(): Promise<void> {
     if (this.transactionForm.invalid || this.isSubmitting()) {
       this.transactionForm.markAllAsTouched();
@@ -217,6 +291,8 @@ export class TransactionForm implements OnInit {
           type: formValue.type,
           transactionCategoryId: formValue.transactionCategoryId,
           merchantId: formValue.merchantId,
+          notes: formValue.notes?.trim() || null,
+          tags: (formValue.tags ?? []) as string[],
           accountCategoryId: undefined // Explicitly undefined or omitted
         };
         await firstValueFrom(this.transactionService.upsertTransaction(this.currentAccountId, transactionData));

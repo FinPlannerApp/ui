@@ -1,0 +1,129 @@
+<div class="max-w-3xl mx-auto w-full flex flex-col gap-4 px-4 md:px-8 py-4">
+  <app-module-tabs [tabs]="tabs" label="Accounts sections" />
+  <div>
+    <h1 class="text-2xl font-bold m-0 gradient-text">What-ifs</h1>
+    <p class="text-sm text-muted mt-1 mb-0">Try different choices on a loan or a credit card. Nothing here changes your accounts. Figures are estimates: real lenders round and charge fees differently.</p>
+  </div>
+  <div class="flex gap-2" role="group" aria-label="What-if type">
+    <p-button label="Loan" icon="pi pi-building-columns" size="small" [outlined]="mode() !== 'loan'" (onClick)="mode.set('loan')"></p-button>
+    <p-button label="Credit card" icon="pi pi-credit-card" size="small" [outlined]="mode() !== 'card'" (onClick)="mode.set('card')"></p-button>
+  </div>
+
+  @if (mode() === 'loan') {
+    <section class="glass-card rounded-3xl p-5 border border-white/10 flex flex-col gap-4" aria-label="Loan what-if">
+      @if (loans().length) {
+        <div class="flex flex-col gap-1.5">
+          <label for="pickloan" class="text-xs font-semibold text-main">Start from one of your loans (optional)</label>
+          <p-select inputId="pickloan" [options]="loans()" optionLabel="name" optionValue="id" (ngModelChange)="pickLoan($event)" [ngModel]="null" placeholder="Choose a loan" appendTo="body" styleClass="w-full"></p-select>
+        </div>
+      }
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="flex flex-col gap-1.5">
+          <label for="lo" class="text-xs font-semibold text-main">Outstanding (₹)</label>
+          <p-inputnumber inputId="lo" [ngModel]="loanOutstanding()" (ngModelChange)="loanOutstanding.set($event)" [min]="0" [maxFractionDigits]="2" locale="en-IN" styleClass="w-full" ></p-inputnumber>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label for="lr" class="text-xs font-semibold text-main">Interest rate (% a year)</label>
+          <p-inputnumber inputId="lr" [ngModel]="loanRate()" (ngModelChange)="loanRate.set($event)" [min]="0" [maxFractionDigits]="2" locale="en-IN" styleClass="w-full" ></p-inputnumber>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label for="le" class="text-xs font-semibold text-main">Monthly EMI (₹)</label>
+          <p-inputnumber inputId="le" [ngModel]="loanEmi()" (ngModelChange)="loanEmi.set($event)" [min]="0" [maxFractionDigits]="2" locale="en-IN" styleClass="w-full" ></p-inputnumber>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label for="lm" class="text-xs font-semibold text-main">Months left</label>
+          <p-inputnumber inputId="lm" [ngModel]="loanMonthsLeft()" (ngModelChange)="loanMonthsLeft.set($event)" [min]="0" [maxFractionDigits]="2" locale="en-IN" styleClass="w-full" ></p-inputnumber>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div class="flex flex-col gap-1.5">
+          <label for="lx" class="text-xs font-semibold text-main">Extra every month (₹)</label>
+          <p-inputnumber inputId="lx" [ngModel]="extraMonthly()" (ngModelChange)="extraMonthly.set($event)" [min]="0" [maxFractionDigits]="2" locale="en-IN" styleClass="w-full" ></p-inputnumber>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label for="lp" class="text-xs font-semibold text-main">One-time prepayment (₹)</label>
+          <p-inputnumber inputId="lp" [ngModel]="prepayment()" (ngModelChange)="prepayment.set($event)" [min]="0" [maxFractionDigits]="2" locale="en-IN" styleClass="w-full" ></p-inputnumber>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label for="ln" class="text-xs font-semibold text-main">If the rate became (%)</label>
+          <p-inputnumber inputId="ln" [ngModel]="newRate()" (ngModelChange)="newRate.set($event)" [min]="0" [maxFractionDigits]="2" locale="en-IN" styleClass="w-full" ></p-inputnumber>
+        </div>
+      </div>
+    </section>
+
+    <section class="glass-card rounded-3xl p-5 border border-white/10" aria-label="Loan results">
+      <div class="grid grid-cols-1 gap-3 text-sm">
+        <div class="flex items-center justify-between gap-3"><span class="text-muted">Current plan</span><span class="font-black text-main">{{ ym(loanBase().months) }} · interest {{ loanBase().totalInterest | currency:'INR':'symbol':'1.0-0' }}</span></div>
+        <div class="flex items-center justify-between gap-3"><span class="text-main">+ {{ extraMonthly() | currency:'INR':'symbol':'1.0-0' }} every month</span>
+          <span class="font-black text-emerald-400 text-right">@if (saved(loanBase(), loanExtra()); as s) { {{ ym(loanExtra().months) }} · saves {{ ym(s.months) }} and {{ s.interest | currency:'INR':'symbol':'1.0-0' }} } @else { n/a }</span></div>
+        <div class="flex items-center justify-between gap-3"><span class="text-main">Prepay {{ prepayment() | currency:'INR':'symbol':'1.0-0' }} now, same EMI</span>
+          <span class="font-black text-emerald-400 text-right">@if (saved(loanBase(), loanPrepay()); as s) { {{ ym(loanPrepay().months) }} · saves {{ ym(s.months) }} and {{ s.interest | currency:'INR':'symbol':'1.0-0' }} } @else { n/a }</span></div>
+        <div class="flex items-center justify-between gap-3"><span class="text-main">Prepay {{ prepayment() | currency:'INR':'symbol':'1.0-0' }} now, same end date</span>
+          <span class="font-black text-emerald-400 text-right">EMI becomes {{ loanPrepayLowerEmi() | currency:'INR':'symbol':'1.0-0' }}</span></div>
+        <div class="flex items-center justify-between gap-3"><span class="text-main">Rate becomes {{ newRate() }}%, same EMI</span>
+          <span class="font-black text-right" [class.text-emerald-400]="(loanNewRateSameEmi().totalInterest) <= loanBase().totalInterest" [class.text-rose-400]="(loanNewRateSameEmi().totalInterest) > loanBase().totalInterest">@if (saved(loanBase(), loanNewRateSameEmi()); as s) { {{ ym(loanNewRateSameEmi().months) }} · {{ s.interest >= 0 ? 'saves' : 'costs' }} {{ (s.interest >= 0 ? s.interest : -s.interest) | currency:'INR':'symbol':'1.0-0' }} } @else { n/a }</span></div>
+        <div class="flex items-center justify-between gap-3"><span class="text-main">Rate becomes {{ newRate() }}%, same end date</span>
+          <span class="font-black text-main text-right">EMI becomes {{ loanNewRateEmi() | currency:'INR':'symbol':'1.0-0' }}</span></div>
+      </div>
+      @if (loanBase().months === null) { <p class="text-xs text-rose-400 mt-3 mb-0">This EMI does not even cover the monthly interest, so the loan never clears.</p> }
+    </section>
+  } @else {
+    <section class="glass-card rounded-3xl p-5 border border-white/10 flex flex-col gap-4" aria-label="Card what-if">
+      @if (cards().length) {
+        <div class="flex flex-col gap-1.5">
+          <label for="pickcard" class="text-xs font-semibold text-main">Start from one of your cards (optional)</label>
+          <p-select inputId="pickcard" [options]="cards()" optionLabel="name" optionValue="id" (ngModelChange)="pickCard($event)" [ngModel]="null" placeholder="Choose a card" appendTo="body" styleClass="w-full"></p-select>
+        </div>
+      }
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="flex flex-col gap-1.5">
+          <label for="cb" class="text-xs font-semibold text-main">Amount owed (₹)</label>
+          <p-inputnumber inputId="cb" [ngModel]="cardBalance()" (ngModelChange)="cardBalance.set($event)" [min]="0" [maxFractionDigits]="2" locale="en-IN" styleClass="w-full" ></p-inputnumber>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label for="ca" class="text-xs font-semibold text-main">Interest (% a year)</label>
+          <p-inputnumber inputId="ca" [ngModel]="cardApr()" (ngModelChange)="cardApr.set($event)" [min]="0" [maxFractionDigits]="2" locale="en-IN" styleClass="w-full" ></p-inputnumber>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label for="cp" class="text-xs font-semibold text-main">Minimum due (% of balance)</label>
+          <p-inputnumber inputId="cp" [ngModel]="cardMinPct()" (ngModelChange)="cardMinPct.set($event)" [min]="0" [maxFractionDigits]="2" locale="en-IN" styleClass="w-full" ></p-inputnumber>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label for="cf" class="text-xs font-semibold text-main">Minimum floor (₹)</label>
+          <p-inputnumber inputId="cf" [ngModel]="cardMinFloor()" (ngModelChange)="cardMinFloor.set($event)" [min]="0" [maxFractionDigits]="2" locale="en-IN" styleClass="w-full" ></p-inputnumber>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="flex flex-col gap-1.5">
+          <label for="cm" class="text-xs font-semibold text-main">You would pay monthly (₹)</label>
+          <p-inputnumber inputId="cm" [ngModel]="cardPlanned()" (ngModelChange)="cardPlanned.set($event)" [min]="0" [maxFractionDigits]="2" locale="en-IN" styleClass="w-full" ></p-inputnumber>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label for="em" class="text-xs font-semibold text-main">EMI plan months</label>
+          <p-inputnumber inputId="em" [ngModel]="emiMonths()" (ngModelChange)="emiMonths.set($event)" [min]="0" [maxFractionDigits]="2" locale="en-IN" styleClass="w-full" ></p-inputnumber>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label for="er" class="text-xs font-semibold text-main">EMI plan rate (%)</label>
+          <p-inputnumber inputId="er" [ngModel]="emiRate()" (ngModelChange)="emiRate.set($event)" [min]="0" [maxFractionDigits]="2" locale="en-IN" styleClass="w-full" ></p-inputnumber>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label for="ef" class="text-xs font-semibold text-main">EMI processing fee (%)</label>
+          <p-inputnumber inputId="ef" [ngModel]="emiFeePct()" (ngModelChange)="emiFeePct.set($event)" [min]="0" [maxFractionDigits]="2" locale="en-IN" styleClass="w-full" ></p-inputnumber>
+        </div>
+      </div>
+    </section>
+
+    <section class="glass-card rounded-3xl p-5 border border-white/10" aria-label="Card results">
+      <div class="grid grid-cols-1 gap-3 text-sm">
+        <div class="flex items-center justify-between gap-3"><span class="text-main">Pay the full bill by the due date</span><span class="font-black text-emerald-400">No interest (₹0)</span></div>
+        <div class="flex items-center justify-between gap-3"><span class="text-main">Pay only the minimum each month (first month {{ cardMin() | currency:'INR':'symbol':'1.0-0' }})</span>
+          <span class="font-black text-rose-400 text-right">@if (cardMinOnly().months !== null) { {{ ym(cardMinOnly().months) }} · interest {{ cardMinOnly().totalInterest | currency:'INR':'symbol':'1.0-0' }} } @else { never clears }</span></div>
+        <div class="flex items-center justify-between gap-3"><span class="text-main">Pay {{ cardPlanned() | currency:'INR':'symbol':'1.0-0' }} every month</span>
+          <span class="font-black text-right text-main">@if (cardFixed().months !== null) { {{ ym(cardFixed().months) }} · interest {{ cardFixed().totalInterest | currency:'INR':'symbol':'1.0-0' }} } @else { never clears (below the monthly interest) }</span></div>
+        <div class="flex items-center justify-between gap-3"><span class="text-main">Convert to a {{ emiMonths() }}-month EMI</span>
+          <span class="font-black text-right text-main">{{ cardEmiMonthly() | currency:'INR':'symbol':'1.0-0' }} a month · extra cost {{ cardEmiTotalCost() | currency:'INR':'symbol':'1.0-0' }}</span></div>
+      </div>
+      <p class="text-[11px] text-muted mt-3 mb-0">Card interest normally applies from the purchase date once a bill is not paid in full, so real costs can be higher than shown. GST on interest and fees is not included.</p>
+    </section>
+  }
+</div>

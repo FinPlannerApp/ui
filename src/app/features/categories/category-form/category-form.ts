@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { Category } from '../../categories/category';
+import { Category, TransactionCategory, splitCategoryText } from '../../categories/category';
 import { firstValueFrom } from 'rxjs';
 import { sharedPrimeModules } from '../../../shared/prime-imports';
 import { ValidationService } from '../../../core/services/validation.service';
@@ -34,10 +34,15 @@ export class CategoryForm implements OnInit {
     { label: 'Credit Card', value: AccountType.CreditCard },
     { label: 'Loan', value: AccountType.Loan },
     { label: 'Cash', value: AccountType.Cash },
+    { label: 'Investment (funds, stocks, FD…)', value: AccountType.Investment },
     { label: 'Other', value: AccountType.Other }
   ];
 
   existingCategoryNames = signal<string[]>([]);
+  /** Top-level categories that can become the parent of this one. */
+  parentOptions = signal<{ label: string; value: number }[]>([]);
+  /** A category that already has sub-categories can't itself become one (one level only). */
+  hasChildren = signal(false);
 
   // Compares against existing names after stripping case, punctuation,
   // and simple trailing-s pluralization — "BANK", "bank", and "banks"
@@ -75,6 +80,7 @@ export class CategoryForm implements OnInit {
       id: [null],
       name: ['', Validators.required],
       isTransferCategory: [false],
+      parentCategoryId: [null],
       // These two were missing from the live app entirely — added here
       // alongside a genuine merge with the duplicate-warning logic that
       // was already working, rather than another isolated patch.
@@ -89,6 +95,11 @@ export class CategoryForm implements OnInit {
       this.isTransactionCategory.set(true);
       const cats = await firstValueFrom(this.categoryService.getTransactionCategories());
       this.existingCategoryNames.set(cats.map(c => c.name));
+      const editingId = this.config.data?.itemToEdit?.id;
+      this.hasChildren.set(!!editingId && cats.some(c => c.parentCategoryId === editingId));
+      this.parentOptions.set(cats
+        .filter(c => !c.parentCategoryId && c.id !== editingId && !c.isTransferCategory)
+        .map(c => ({ label: c.name, value: c.id })));
     } else {
       const cats = await firstValueFrom(this.categoryService.getAccountCategories());
       this.existingCategoryNames.set(cats.map(c => c.name));
@@ -96,8 +107,21 @@ export class CategoryForm implements OnInit {
 
     // Patch the form if we are in edit mode
     if (this.config.data?.itemToEdit) {
-      this.categoryForm.patchValue(this.config.data.itemToEdit);
+      const item = { ...this.config.data.itemToEdit } as Partial<TransactionCategory>;
+      // Typed text such as "Food › Pizza" (from the pickers) means: sub-category "Pizza" under "Food".
+      if (this.isTransactionCategory() && item.name && !item.id) {
+        const { parent, name } = splitCategoryText(item.name);
+        if (parent) {
+          const match = this.parentOptions().find(o => o.label.toLowerCase() === parent.toLowerCase());
+          if (match) { item.name = name; item.parentCategoryId = match.value; }
+        }
+      }
+      this.categoryForm.patchValue(item);
     }
+    if (this.config.data?.parentCategoryId && !this.categoryForm.get('parentCategoryId')?.value) {
+      this.categoryForm.patchValue({ parentCategoryId: this.config.data.parentCategoryId });
+    }
+    if (this.hasChildren()) this.categoryForm.get('parentCategoryId')?.disable();
 
     // Each set of fields only makes sense for its own category type.
     if (!this.isTransactionCategory()) {

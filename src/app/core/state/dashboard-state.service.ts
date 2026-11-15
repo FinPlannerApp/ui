@@ -5,6 +5,7 @@ import { DashboardSummary, SpendingByCategory } from '../../features/dashboard/d
 import { DashboardInsightsDto } from '../models/dashboard-insights';
 import { FinancialHealth } from '../models/financial-health.model';
 import { toDateOnlyString } from '../utils/date-utils';
+import { UserSettingsService } from '../services/user-settings.service';
 
 @Injectable({
     providedIn: 'root'
@@ -38,6 +39,17 @@ export class DashboardState {
     constructor() {
     }
 
+    private userSettings = inject(UserSettingsService);
+    private monthStartDay = 1;
+    private settingsLoaded = false;
+
+    /** Called after the user changes "month starts on day N" so the dashboard re-reads its window. */
+    setMonthStartDay(day: number): void {
+        this.monthStartDay = day;
+        this.settingsLoaded = true;
+        if (this.hasData) this.load(true, true);
+    }
+
     private _loadPromise: Promise<void> | null = null;
     // Guards against an older, slower response overwriting a newer one
     // (e.g. two quick edits → two refreshes finishing out of order).
@@ -59,8 +71,14 @@ export class DashboardState {
             try {
                 // Calculate Start & End of the selected Month
                 const current = this._selectedDate();
-                const start = new Date(Date.UTC(current.getFullYear(), current.getMonth(), 1));
-                const end = new Date(Date.UTC(current.getFullYear(), current.getMonth() + 1, 0, 23, 59, 59, 999));
+                // The user's money month (e.g. salary day 5 → 5th to the 4th). Day 1 = calendar month, as before.
+                if (!this.settingsLoaded) {
+                    try { this.monthStartDay = (await this.userSettings.getGeneral()).monthStartDay; } catch { /* calendar month */ }
+                    this.settingsLoaded = true;
+                }
+                const sd = this.monthStartDay;
+                const start = new Date(Date.UTC(current.getFullYear(), current.getMonth(), sd));
+                const end = new Date(Date.UTC(current.getFullYear(), current.getMonth() + 1, sd - 1, 23, 59, 59, 999));
 
                 const params = `?startDate=${toDateOnlyString(start)}&endDate=${toDateOnlyString(end)}`;
 

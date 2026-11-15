@@ -1,0 +1,48 @@
+<div class="max-w-6xl mx-auto w-full flex flex-col gap-4">
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <div class="min-w-0">
+      <h1 class="text-2xl font-bold m-0 text-[var(--text-main)]">Account insights</h1>
+      <p class="text-sm text-[var(--text-muted)] mt-1 mb-0">How each bank and cash account moved over the last 6 months: money in, money out, the lowest balance and interest earned. Transfers between your own accounts are left out.</p>
+    </div>
+    <a routerLink="/app/accounts" class="no-underline"><p-button label="Accounts" icon="pi pi-wallet" severity="secondary" [outlined]="true"></p-button></a>
+  </div>
+  @if (loading()) {
+    <div class="text-sm text-[var(--text-muted)] p-6">Loading…</div>
+  } @else if (failed()) {
+    <div class="p-4 rounded-xl border border-red-400/40 text-sm text-[var(--text-main)]">Could not load. <button class="underline bg-transparent border-0 cursor-pointer text-[var(--primary-color)]" (click)="load()">Retry</button></div>
+  } @else if (data(); as d) {
+    @if (d.accounts.length === 0) {
+      <div class="glass-card p-8 rounded-2xl text-center text-sm text-[var(--text-muted)]">No bank or cash accounts to show yet.</div>
+    } @else {
+      <div class="glass-card p-4 rounded-2xl"><div class="text-xs text-[var(--text-muted)]">Total across these accounts</div><div class="text-xl font-bold text-[var(--text-main)]">{{ d.totalBalance | currency:'INR':'symbol':'1.0-0' }}</div></div>
+      @for (a of d.accounts; track a.accountId) {
+        <div class="glass-card p-4 rounded-2xl flex flex-col gap-3">
+          <div class="flex flex-wrap items-start justify-between gap-2">
+            <div class="font-bold text-[var(--text-main)] truncate">{{ a.name }}</div>
+            <a [routerLink]="['/app/accounts', a.accountId, 'transactions']" class="no-underline"><p-button label="Ledger" icon="pi pi-list" size="small" severity="secondary" [text]="true"></p-button></a>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+            <div><div class="text-xs text-[var(--text-muted)]">Balance</div><div class="font-semibold text-[var(--text-main)]">{{ a.balance | currency:'INR':'symbol':'1.0-0' }}</div></div>
+            <div><div class="text-xs text-[var(--text-muted)]">Lowest in 90 days</div><div class="font-semibold" [class.text-red-500]="a.lowestIn90Days < 0" [class.text-[var(--text-main)]]="a.lowestIn90Days >= 0">{{ a.lowestIn90Days | currency:'INR':'symbol':'1.0-0' }}</div>
+              @if (a.lowestOn) { <div class="text-[11px] text-[var(--text-muted)]">on {{ a.lowestOn | date:'dd MMM' }}</div> }</div>
+            <div><div class="text-xs text-[var(--text-muted)]">Interest, last 12 months</div><div class="font-semibold text-[var(--text-main)]">{{ a.interestLast12Months | currency:'INR':'symbol':'1.0-0' }}</div></div>
+          </div>
+          <div>
+            <div class="flex items-end gap-2 h-24">
+              @for (m of a.months; track m.month) {
+                <div class="flex-1 flex flex-col items-center justify-end h-full gap-0.5">
+                  <div class="w-full flex items-end gap-0.5 h-full">
+                    <div class="flex-1 rounded-t bg-emerald-500/80" [style.height.%]="pct(m.in, maxOf(a))" [title]="'In ' + m.in"></div>
+                    <div class="flex-1 rounded-t bg-rose-500/80" [style.height.%]="pct(m.out, maxOf(a))" [title]="'Out ' + m.out"></div>
+                  </div>
+                  <div class="text-[10px] text-[var(--text-muted)]">{{ label(m.month) }}</div>
+                </div>
+              }
+            </div>
+            <div class="flex gap-4 text-[11px] text-[var(--text-muted)] mt-1"><span><span class="inline-block w-2 h-2 rounded-sm bg-emerald-500/80 mr-1"></span>In</span><span><span class="inline-block w-2 h-2 rounded-sm bg-rose-500/80 mr-1"></span>Out</span></div>
+          </div>
+        </div>
+      }
+    }
+  }
+</div>

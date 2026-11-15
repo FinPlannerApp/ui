@@ -577,7 +577,7 @@ export const BLOG_POSTS = [
     _dateValue: new Date('2026-03-29'),
     content: `
       <h2>We Have a Domain: FinPlanner is Official!</h2>
-      <p>We are thrilled to announce that Financial Planner now has a permanent home. You can now access the application at <strong><a href="https://finplanner.ska97homelab.uk" target="_blank">https://finplanner.ska97homelab.uk</a></strong>. This marks a major milestone in our journey to provide a premium, professional-grade financial management tool.</p>
+      <p>We are thrilled to announce that Financial Planner now has a permanent home. You can now access the application at <strong><a href="https://finplanner.ska97homelab.uk" target="_blank" rel="noopener noreferrer">https://finplanner.ska97homelab.uk</a></strong>. This marks a major milestone in our journey to provide a premium, professional-grade financial management tool.</p>
 
       <h2>Navigation & Search: Faster, Fluid, Intuitive</h2>
       <p>Version 4.6.0 focuses on the small details that make a big difference in daily usage. We have added <strong>"Back to Dashboard"</strong> navigation points directly within the Accounts and Transactions views, ensuring you are never more than a single click away from your financial high-level overview.</p>

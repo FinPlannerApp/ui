@@ -1,0 +1,117 @@
+<div class="max-w-6xl mx-auto w-full flex flex-col gap-4 px-4 md:px-8 py-4">
+  <app-module-tabs [tabs]="tabs" label="Transactions sections" />
+
+  <div class="flex flex-wrap items-end justify-between gap-3">
+    <div class="min-w-0">
+      <h1 class="text-2xl font-bold m-0 gradient-text">Transactions overview</h1>
+      <p class="text-sm text-muted mt-1 mb-0">Money in, money out and where it went. Transfers between your own accounts are left out.</p>
+    </div>
+    <p-select [options]="periods()" optionLabel="label" optionValue="value" [ngModel]="periodIndex()" (ngModelChange)="onPeriodChange($event)"
+      appendTo="body" ariaLabel="Period" styleClass="min-w-[220px]"></p-select>
+  </div>
+
+  <section class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    @if (loading()) {
+      @for (i of [1,2,3,4]; track i) { <p-skeleton height="92px" borderRadius="24px"></p-skeleton> }
+    } @else {
+      <div class="tile glass-card rounded-3xl p-4 border border-white/10" style="--accent:#10b981">
+        <span class="lbl">Income</span><span class="val">{{ summary().monthlyIncome | currency:'INR':'symbol':'1.0-0' }}</span>
+      </div>
+      <div class="tile glass-card rounded-3xl p-4 border border-white/10" style="--accent:#f43f5e">
+        <span class="lbl">Expenses</span><span class="val">{{ summary().monthlyExpenses | currency:'INR':'symbol':'1.0-0' }}</span>
+        <span class="sub">{{ perDay() | currency:'INR':'symbol':'1.0-0' }} / day</span>
+      </div>
+      <div class="tile glass-card rounded-3xl p-4 border border-white/10" style="--accent:#06b6d4">
+        <span class="lbl">Net</span><span class="val" [class.text-red-400]="net() < 0">{{ net() | currency:'INR':'symbol':'1.0-0' }}</span>
+      </div>
+      <div class="tile glass-card rounded-3xl p-4 border border-white/10" style="--accent:#f59e0b">
+        <span class="lbl">Savings rate</span>
+        <span class="val" [class.text-red-400]="(savingsRate() ?? 0) < 0">{{ savingsRate() === null ? '—' : savingsRate() + '%' }}</span>
+        <span class="sub">of income kept</span>
+      </div>
+    }
+  </section>
+
+  @if (largeSpends().length) {
+    <section class="glass-card rounded-3xl p-4 border border-amber-400/30">
+      <h2 class="text-sm font-black text-main m-0 mb-2 flex items-center gap-2"><i class="pi pi-exclamation-circle text-amber-400"></i>Large expenses (≥ {{ settings().largeExpenseThreshold | currency:'INR':'symbol':'1.0-0' }})</h2>
+      @for (t of largeSpends(); track t.id) {
+        <div class="flex items-center justify-between gap-3 py-1.5 text-xs">
+          <span class="font-bold text-main truncate">{{ t.description || t.categoryName || 'Expense' }} <span class="text-muted font-normal">· {{ t.date | date:'d MMM' }}</span></span>
+          <span class="font-black text-amber-400 shrink-0">{{ t.amount | currency:'INR':'symbol':'1.0-0' }}</span>
+        </div>
+      }
+    </section>
+  }
+
+  <section class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+    <div class="lg:col-span-7 glass-card rounded-3xl p-5 border border-white/10">
+      <h2 class="text-sm font-black text-main m-0 mb-3 flex items-center gap-2"><i class="pi pi-chart-bar text-emerald-400"></i>Income vs expenses · last 6 calendar months</h2>
+      @if (trend().length) { <div class="h-[260px]"><p-chart type="bar" [data]="trendChart()" [options]="chartOptions" height="260px"></p-chart></div> }
+      @else { <p class="text-xs text-muted m-0">Appears once you have a few months of transactions.</p> }
+    </div>
+    <div class="lg:col-span-5 glass-card rounded-3xl p-5 border border-white/10">
+      <h2 class="text-sm font-black text-main m-0 mb-3 flex items-center gap-2"><i class="pi pi-tags text-emerald-400"></i>Top spending categories</h2>
+      @for (c of topCategories(); track c.categoryName; let i = $index) {
+        <div class="mb-2.5 last:mb-0">
+          <div class="flex items-baseline justify-between gap-2 text-xs">
+            <span class="font-bold text-main truncate">{{ c.categoryName }}</span>
+            <span class="font-black text-main shrink-0">{{ c.totalAmount | currency:'INR':'symbol':'1.0-0' }}</span>
+          </div>
+          <div class="bar-track mt-1"><div class="bar-fill" [style.width.%]="barWidth(c.totalAmount / maxCategory() * 100)" [style.transition-delay.ms]="i * 70"></div></div>
+        </div>
+      } @empty { <p class="text-xs text-muted m-0">No expenses in this period.</p> }
+    </div>
+  </section>
+
+  <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div class="glass-card rounded-3xl p-5 border border-white/10">
+      <h2 class="text-sm font-black text-main m-0 mb-1 flex items-center gap-2"><i class="pi pi-table text-amber-400"></i>Spending heatmap</h2>
+      <p class="text-[11px] text-muted m-0 mb-3">Darker = more spent that day (expenses only, transfers excluded).@if (busiestDay(); as b) { Busiest: {{ b.date | date:'d MMM' }}, {{ b.total | currency:'INR':'symbol':'1.0-0' }}. }</p>
+      <div class="grid grid-cols-7 gap-1 text-[10px] text-muted text-center mb-1" aria-hidden="true">
+        @for (w of weekdays; track $index) { <span>{{ w }}</span> }
+      </div>
+      <div class="flex flex-col gap-1" role="img" aria-label="Daily spending heatmap for the selected month">
+        @for (week of heatmap(); track $index) {
+          <div class="grid grid-cols-7 gap-1">
+            @for (c of week; track c.date) {
+              <div class="heat-cell" [class.heat-out]="!c.inPeriod" [attr.data-level]="c.level" [title]="cellTitle(c)">{{ c.inPeriod ? c.day : '' }}</div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+    <div class="glass-card rounded-3xl p-5 border border-white/10">
+      <h2 class="text-sm font-black text-main m-0 mb-3 flex items-center gap-2"><i class="pi pi-shop text-violet-400"></i>Top merchants</h2>
+      @for (m of topMerchants(); track m.merchantId) {
+        <div class="mb-2">
+          <div class="flex items-center justify-between gap-3 text-xs"><span class="font-bold text-main truncate">{{ m.merchantName }}</span><span class="font-black text-main shrink-0">{{ m.totalSpent | currency:'INR':'symbol':'1.0-0' }}</span></div>
+          <div class="h-1.5 rounded-full bg-white/10 overflow-hidden mt-1"><div class="h-full rounded-full bg-violet-400/80" [style.width.%]="animated() ? m.totalSpent / maxMerchant() * 100 : 0" style="transition: width .6s ease"></div></div>
+          <span class="text-[10px] text-muted">{{ m.transactionCount }} transaction{{ m.transactionCount === 1 ? '' : 's' }}</span>
+        </div>
+      } @empty { <p class="text-xs text-muted m-0">No spending is linked to a merchant yet. Pick a merchant (or create a Rule that sets one) and it will show up here.</p> }
+    </div>
+  </section>
+
+  <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div class="glass-card rounded-3xl p-5 border border-white/10">
+      <h2 class="text-sm font-black text-main m-0 mb-3 flex items-center gap-2"><i class="pi pi-arrow-up-right text-rose-400"></i>Biggest transactions</h2>
+      @for (t of biggest(); track t.id) {
+        <div class="flex items-center justify-between gap-3 py-1.5 border-b border-white/5 last:border-0 text-xs">
+          <span class="min-w-0"><span class="font-bold text-main block truncate">{{ t.description || t.categoryName || '—' }}</span><span class="text-[10px] text-muted">{{ t.accountName }} · {{ t.date | date:'d MMM' }}</span></span>
+          <span class="font-black shrink-0" [class.text-emerald-400]="t.type === 0" [class.text-rose-400]="t.type !== 0">{{ t.amount | currency:'INR':'symbol':'1.0-0' }}</span>
+        </div>
+      } @empty { <p class="text-xs text-muted m-0">Nothing yet.</p> }
+    </div>
+    <div class="glass-card rounded-3xl p-5 border border-white/10">
+      <h2 class="text-sm font-black text-main m-0 mb-3 flex items-center gap-2"><i class="pi pi-clock text-sky-400"></i>Latest</h2>
+      @for (t of latest(); track t.id) {
+        <div class="flex items-center justify-between gap-3 py-1.5 border-b border-white/5 last:border-0 text-xs">
+          <span class="min-w-0"><span class="font-bold text-main block truncate">{{ t.description || t.categoryName || '—' }}</span><span class="text-[10px] text-muted">{{ t.accountName }} · {{ t.date | date:'d MMM' }}</span></span>
+          <span class="font-black shrink-0" [class.text-emerald-400]="t.type === 0" [class.text-rose-400]="t.type !== 0">{{ t.amount | currency:'INR':'symbol':'1.0-0' }}</span>
+        </div>
+      } @empty { <p class="text-xs text-muted m-0">Nothing yet.</p> }
+      <a routerLink="/app/transactions" class="text-xs text-emerald-400 mt-2 inline-block">See all transactions →</a>
+    </div>
+  </section>
+</div>

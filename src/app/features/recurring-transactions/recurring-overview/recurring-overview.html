@@ -1,0 +1,64 @@
+<div class="max-w-6xl mx-auto w-full flex flex-col gap-4 px-4 md:px-8 py-4">
+  <app-module-tabs [tabs]="tabs" label="Recurring sections" />
+  <div>
+    <h1 class="text-2xl font-bold m-0 gradient-text">Recurring overview</h1>
+    <p class="text-sm text-muted mt-1 mb-0">What is already committed — salary, rent, EMIs, SIPs — and what lands in the next {{ horizon() }} days.</p>
+  </div>
+
+  @if (loading()) {
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">@for (i of [1,2,3,4]; track i) { <p-skeleton height="92px" borderRadius="24px"></p-skeleton> }</div>
+  } @else if (items().length === 0) {
+    <div class="glass-card rounded-3xl p-10 text-center border border-white/10">
+      <i class="pi pi-calendar text-5xl opacity-40 mb-3"></i>
+      <h2 class="text-lg font-black text-main m-0">Nothing recurring yet</h2>
+      <p class="text-sm text-muted mt-1 mb-4">Add salary, rent or an SIP once and it posts itself.</p>
+      <a routerLink="/app/recurring-transactions" class="p-button p-button-sm no-underline"><i class="pi pi-plus mr-2"></i>Add recurring transaction</a>
+    </div>
+  } @else {
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="tile glass-card rounded-3xl p-4 border border-white/10" style="--accent:#f43f5e"><span class="lbl">Committed out / month</span><span class="val">{{ monthlyOut() | currency:'INR':'symbol':'1.0-0' }}</span><span class="sub">average</span></div>
+      <div class="tile glass-card rounded-3xl p-4 border border-white/10" style="--accent:#10b981"><span class="lbl">Expected in / month</span><span class="val">{{ monthlyIn() | currency:'INR':'symbol':'1.0-0' }}</span><span class="sub">average</span></div>
+      <div class="tile glass-card rounded-3xl p-4 border border-white/10" style="--accent:#06b6d4"><span class="lbl">Net committed</span><span class="val" [class.text-red-400]="monthlyNet() < 0">{{ monthlyNet() | currency:'INR':'symbol':'1.0-0' }}</span><span class="sub">in − out</span></div>
+      <div class="tile glass-card rounded-3xl p-4 border border-white/10" style="--accent:#f59e0b"><span class="lbl">Next {{ horizon() }} days</span><span class="val">{{ outInWindow() | currency:'INR':'symbol':'1.0-0' }}</span><span class="sub">out · {{ inInWindow() | currency:'INR':'symbol':'1.0-0' }} in</span></div>
+    </section>
+
+    <section class="glass-card rounded-3xl p-5 border border-white/10">
+      <h2 class="text-sm font-black text-main m-0 mb-3 flex items-center gap-2"><i class="pi pi-calendar text-sky-400"></i>Week by week</h2>
+      <div class="flex gap-2 items-end h-[150px] overflow-x-auto pb-1">
+        @for (wk of weeks(); track wk.i) {
+          <div class="flex flex-col items-center justify-end h-full gap-1 min-w-[44px] flex-1">
+            <div class="w-full flex items-end justify-center gap-1 flex-1">
+              <div class="w-1/2 rounded-t-md col-bar" [style.height.%]="h(wk.out / maxWeek() * 100)" style="background:#f43f5e;min-height:2px" [title]="'Out ' + wk.out"></div>
+              <div class="w-1/2 rounded-t-md col-bar" [style.height.%]="h(wk.inc / maxWeek() * 100)" style="background:#10b981;min-height:2px" [title]="'In ' + wk.inc"></div>
+            </div>
+            <span class="text-[10px] text-muted">{{ wk.i === 0 ? 'This wk' : '+' + wk.i + 'w' }}</span>
+          </div>
+        }
+      </div>
+      <p class="text-[10px] text-muted mt-2 mb-0"><span class="inline-block w-2 h-2 rounded-sm align-middle mr-1" style="background:#f43f5e"></span>money out
+        <span class="inline-block w-2 h-2 rounded-sm align-middle mx-1 ml-3" style="background:#10b981"></span>money in</p>
+    </section>
+
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div class="glass-card rounded-3xl p-5 border border-white/10">
+        <h2 class="text-sm font-black text-main m-0 mb-3 flex items-center gap-2"><i class="pi pi-clock text-amber-400"></i>Coming up</h2>
+        @for (o of next10(); track o.id + '-' + o.date.getTime()) {
+          <div class="flex items-center justify-between gap-3 py-1.5 border-b border-white/5 last:border-0 text-xs">
+            <span class="min-w-0"><span class="font-bold text-main block truncate">{{ o.description }}</span><span class="text-[10px] text-muted">{{ o.date | date:'EEE d MMM' }} · {{ dueLabel(o.daysLeft) }} · {{ o.account }}</span></span>
+            <span class="font-black shrink-0" [class.text-emerald-400]="o.isIncome" [class.text-rose-400]="!o.isIncome">{{ o.isIncome ? '+' : '−' }}{{ o.amount | currency:'INR':'symbol':'1.0-0' }}</span>
+          </div>
+        } @empty { <p class="text-xs text-muted m-0">Nothing due in the next {{ horizon() }} days.</p> }
+      </div>
+      <div class="glass-card rounded-3xl p-5 border border-white/10">
+        <h2 class="text-sm font-black text-main m-0 mb-3 flex items-center gap-2"><i class="pi pi-list text-emerald-400"></i>All items <span class="text-[10px] text-muted font-semibold">{{ active().length }} active · {{ paused().length }} paused</span></h2>
+        @for (i of listed(); track i.id) {
+          <div class="flex items-center justify-between gap-3 py-1.5 border-b border-white/5 last:border-0 text-xs" [class.opacity-50]="!i.isActive">
+            <span class="min-w-0"><span class="font-bold text-main block truncate">{{ i.description }}</span><span class="text-[10px] text-muted">{{ freqLabel(i.frequency) }}{{ i.isActive ? '' : ' · paused' }}</span></span>
+            <span class="font-black shrink-0" [class.text-emerald-400]="i.type === 0" [class.text-rose-400]="i.type !== 0">{{ i.amount | currency:'INR':'symbol':'1.0-0' }}</span>
+          </div>
+        }
+        <a routerLink="/app/recurring-transactions" class="text-xs text-emerald-400 mt-2 inline-block">Manage →</a>
+      </div>
+    </section>
+  }
+</div>

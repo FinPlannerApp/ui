@@ -55,11 +55,17 @@ export class RecurringTransactionForm implements OnInit {
         this.accounts().filter(a => a.accountType === 2 || a.accountCategory?.accountType === 2 || a.loanDetails != null || a.isLiability)
     );
 
+    investmentAccounts = computed(() =>
+        this.accounts().filter(a => a.accountType === 5)
+    );
+
     frequencies = [
         { label: 'One-time', value: RecurrenceFrequency.OneTime },
         { label: 'Daily', value: RecurrenceFrequency.Daily },
         { label: 'Weekly', value: RecurrenceFrequency.Weekly },
         { label: 'Monthly', value: RecurrenceFrequency.Monthly },
+        { label: 'Quarterly', value: RecurrenceFrequency.Quarterly },
+        { label: 'Half-yearly', value: RecurrenceFrequency.HalfYearly },
         { label: 'Yearly', value: RecurrenceFrequency.Yearly },
         { label: 'Custom days...', value: RecurrenceFrequency.Custom }
     ];
@@ -113,6 +119,8 @@ export class RecurringTransactionForm implements OnInit {
             isObligation: [false],
             isLoanEmi: [false],
             linkedLoanAccountId: [null],
+            isSip: [false],
+            linkedInvestmentAccountId: [null],
             isActive: [true]
         });
     }
@@ -136,6 +144,7 @@ export class RecurringTransactionForm implements OnInit {
             if (item.startDate) item.startDate = fromDateOnlyString(item.startDate) ?? new Date(item.startDate);
             if (item.endDate) item.endDate = fromDateOnlyString(item.endDate) ?? new Date(item.endDate);
             if (item.linkedLoanAccountId) item.isLoanEmi = true;
+            if (item.linkedInvestmentAccountId) item.isSip = true;
             this.recurringForm.patchValue(item);
 
             // Decompose the stored bitmask back into individual toggle
@@ -196,6 +205,15 @@ export class RecurringTransactionForm implements OnInit {
             return;
         }
 
+        if (isExpense && formVal.isSip && !formVal.linkedInvestmentAccountId) {
+            this.notificationService.showError('Please choose the investment this SIP goes into.');
+            return;
+        }
+        if (isExpense && formVal.isSip && isLoanEmi) {
+            this.notificationService.showError('A recurring item can be a loan EMI or a SIP, not both.');
+            return;
+        }
+
         if (!this.isSubmitting()) {
             this.isSubmitting.set(true);
             const payload = {
@@ -204,9 +222,11 @@ export class RecurringTransactionForm implements OnInit {
                 endDate: toDateOnlyString(formVal.endDate),
                 // Only meaningful for Custom — explicitly null otherwise
                 customDays: isCustom ? this.computeCustomDaysBitmask() : null,
-                linkedLoanAccountId: (isExpense && isLoanEmi) ? formVal.linkedLoanAccountId : null
+                linkedLoanAccountId: (isExpense && isLoanEmi) ? formVal.linkedLoanAccountId : null,
+                linkedInvestmentAccountId: (isExpense && formVal.isSip) ? formVal.linkedInvestmentAccountId : null
             };
             delete payload.isLoanEmi;
+            delete payload.isSip;
             const endpoint = 'RecurringTransactions';
 
             try {

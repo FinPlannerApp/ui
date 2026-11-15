@@ -25,9 +25,61 @@ export class PwaUpdateService {
     }
   }
 
+  private lastCheck = 0;
+
+  /** Re-check when the app comes back to the foreground and every 30 minutes. An installed PWA is
+   *  usually resumed from memory, not relaunched, so a check "once at launch" never sees a new version. */
+  private startPeriodicChecks(): void {
+    const check = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (Date.now() - this.lastCheck < 60_000) return;
+      this.lastCheck = Date.now();
+      if (this.swUpdate.isEnabled) this.swUpdate.checkForUpdate().catch(() => {});
+      else void this.checkNonPwaUpdate();
+    };
+    document.addEventListener('visibilitychange', check);
+    window.addEventListener('focus', check);
+    window.addEventListener('online', check);
+    setInterval(check, 30 * 60_000);
+  }
+
+  /**
+   * Manual "Check for updates". Returns what happened so the caller can tell the user.
+   * 'updated' = a new version was found and the page is reloading into it.
+   */
+  async checkNow(): Promise<'updated' | 'latest' | 'error'> {
+    try {
+      if (this.swUpdate.isEnabled) {
+        const found = await this.swUpdate.checkForUpdate();
+        if (found) {
+          await this.swUpdate.activateUpdate();
+          document.location.reload();
+          return 'updated';
+        }
+        return 'latest';
+      }
+      await this.checkNonPwaUpdate(true);
+      return this.isNotificationShown ? 'updated' : 'latest';
+    } catch {
+      return 'error';
+    }
+  }
+
+  /** Last resort when an installed PWA is stuck on an old version: drop the service worker and every cache, then reload. */
+  async hardReload(): Promise<void> {
+    try {
+      const regs = await navigator.serviceWorker?.getRegistrations?.();
+      await Promise.all((regs ?? []).map(r => r.unregister()));
+      const keys = await caches?.keys?.();
+      await Promise.all((keys ?? []).map(k => caches.delete(k)));
+    } catch { /* reload anyway */ }
+    document.location.reload();
+  }
+
   private initPwaUpdateCheck(): void {
-    // Check for update ONCE when the user turns on/launches the application
+    // Check for update when the user turns on/launches the application, and again on every resume
     this.swUpdate.checkForUpdate().catch(() => {});
+    this.startPeriodicChecks();
 
     // Trigger update ONLY when Angular Service Worker confirms a real UI version change
     this.swUpdate.versionUpdates.pipe(
@@ -57,8 +109,8 @@ export class PwaUpdateService {
 
   private initNonPwaUpdateCheck(): void {
     this.recordInitialScriptHashes();
-    // Check ONCE on application startup
     this.checkNonPwaUpdate();
+    this.startPeriodicChecks();
   }
 
   private recordInitialScriptHashes(): void {
@@ -69,7 +121,7 @@ export class PwaUpdateService {
     });
   }
 
-  private async checkNonPwaUpdate(): Promise<void> {
+  private async checkNonPwaUpdate(_manual = false): Promise<void> {
     if (this.isNotificationShown) return;
 
     try {

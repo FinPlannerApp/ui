@@ -1,3 +1,4 @@
+import { DashboardState } from '../../../core/state/dashboard-state.service';
 import { Component, inject, Inject, PLATFORM_ID, computed, signal, OnInit } from '@angular/core';
 import { isPlatformBrowser, CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -9,6 +10,7 @@ import { NotificationService } from '../../../core/services/notification.service
 import { ThemeEngine } from '../../../core/services/theme';
 import { Auth, SessionDto } from '../../../core/services/auth';
 import { sharedPrimeModules } from '../../../shared/prime-imports';
+import { UserSettingsService } from '../../../core/services/user-settings.service';
 
 const PREFERENCES_KEY = 'finplanner_user_preferences';
 
@@ -43,6 +45,12 @@ export class Settings implements OnInit {
   };
 
   isSavingProfile = signal(false);
+  issueEmails = signal(false);
+  monthStartDay = signal(1);
+  isSavingMonth = signal(false);
+  readonly monthStartDays = Array.from({ length: 28 }, (_, i) => ({ label: i === 0 ? '1 (calendar month)' : String(i + 1), value: i + 1 }));
+  private userSettings = inject(UserSettingsService);
+  private dashboardState = inject(DashboardState);
 
   // Preference signals
   emailAlerts = signal(true);
@@ -81,6 +89,7 @@ export class Settings implements OnInit {
   }
 
   ngOnInit(): void {
+    void this.loadProfile();
     this.loadPreferences();
     void this.loadSessions();
   }
@@ -189,6 +198,115 @@ export class Settings implements OnInit {
     if (event.value) this.themeEngine.setPreset(event.value);
   }
 
+  private async loadProfile(): Promise<void> {
+    try {
+      const res = await firstValueFrom(this.api.get<{ name: string; email: string }>('Auth/profile'));
+      if (res.isSuccess && res.value) {
+        if (res.value.name) this.profile.name = res.value.name;
+      }
+    } catch { /* keep the defaults */ }
+    this.userSettings.getNotifications().then(n => { this.issueEmails.set(n.issueUpdateEmails); this.reminderEmails.set(!!n.paymentReminderEmails); this.reminderDays.set(n.reminderDaysBefore || 2); }).catch(() => { /* default: off */ });
+    try {
+      this.monthStartDay.set((await this.userSettings.getGeneral()).monthStartDay);
+    } catch { /* keep the default (1) */ }
+  }
+
+  reminderEmails = signal(false);
+  reminderDays = signal(2);
+  readonly reminderDayOptions = [{ label: '1 day before', value: 1 }, { label: '2 days before', value: 2 }, { label: '3 days before', value: 3 }, { label: '5 days before', value: 5 }, { label: '7 days before', value: 7 }];
+
+  async saveReminders(on: boolean, days: number): Promise<void> {
+    const prev = { on: this.reminderEmails(), days: this.reminderDays() };
+    this.reminderEmails.set(on); this.reminderDays.set(days);
+    try {
+      const saved = await this.userSettings.saveNotifications({ issueUpdateEmails: this.issueEmails(), paymentReminderEmails: on, reminderDaysBefore: days });
+      this.reminderEmails.set(saved.paymentReminderEmails); this.reminderDays.set(saved.reminderDaysBefore);
+    } catch (err: any) {
+      this.reminderEmails.set(prev.on); this.reminderDays.set(prev.days);
+      this.notificationService.showError(err?.message || 'Could not save.');
+    }
+  }
+
+  async setIssueEmails(on: boolean): Promise<void> {
+    const previous = this.issueEmails();
+    this.issueEmails.set(on);
+    try {
+      const saved = await this.userSettings.saveNotifications({ issueUpdateEmails: on, paymentReminderEmails: this.reminderEmails(), reminderDaysBefore: this.reminderDays() });
+      this.issueEmails.set(saved.issueUpdateEmails);
+    } catch (err: any) {
+      this.issueEmails.set(previous);
+      this.notificationService.showError(err?.message || 'Could not save.');
+    }
+  }
+
+  async saveMonthStart(): Promise<void> {
+    this.isSavingMonth.set(true);
+    try {
+      const saved = await this.userSettings.saveGeneral({ monthStartDay: this.monthStartDay() });
+      this.monthStartDay.set(saved.monthStartDay);
+      this.dashboardState.setMonthStartDay(saved.monthStartDay);
+      this.notificationService.showSuccess('Your month now starts on day ' + saved.monthStartDay + '.');
+    } catch (err: any) {
+      this.notificationService.showError(err?.message || 'Could not save.');
+    } finally {
+      this.isSavingMonth.set(false);
+    }
+  }
+
+  // --- Change email (code is sent to the NEW address, then every device is signed out) ---
+  emailChangeOpen = signal(false);
+  emailChangeStep = signal<1 | 2>(1);
+  emailChangeBusy = signal(false);
+  newEmail = '';
+  emailChangePassword = '';
+  emailChangeCode = '';
+
+  openEmailChange(): void {
+    this.newEmail = '';
+    this.emailChangePassword = '';
+    this.emailChangeCode = '';
+    this.emailChangeStep.set(1);
+    this.emailChangeOpen.set(true);
+  }
+
+  async submitEmailChange(): Promise<void> {
+    if (this.emailChangeBusy()) return;
+    const step = this.emailChangeStep();
+    if (!this.newEmail.trim() || !this.emailChangePassword) {
+      this.notificationService.showError('Enter the new email and your current password.');
+      return;
+    }
+    if (step === 2 && !this.emailChangeCode.trim()) {
+      this.notificationService.showError('Enter the code we emailed you.');
+      return;
+    }
+    this.emailChangeBusy.set(true);
+    try {
+      const res = await firstValueFrom(this.api.post<unknown>('Auth/update-profile', {
+        name: this.profile.name.trim() || this.authService.currentUserDetails()?.name || 'User',
+        newEmail: this.newEmail.trim(),
+        currentPassword: this.emailChangePassword,
+        emailCode: step === 2 ? this.emailChangeCode.trim() : null
+      }));
+      if (res.isSuccess) {
+        this.notificationService.showSuccess('Email changed. Please sign in again with the new address.');
+        this.emailChangeOpen.set(false);
+        this.authService.logout('Email changed — sign in again.');
+        return;
+      }
+      if (res.error?.code === 'Auth.EmailVerificationRequired') {
+        this.emailChangeStep.set(2);
+        this.notificationService.showSuccess('We sent a code to the new address.');
+        return;
+      }
+      this.notificationService.showError(res.error?.description || 'Could not change the email.');
+    } catch (err: any) {
+      this.notificationService.showError(err?.message || 'Could not change the email.');
+    } finally {
+      this.emailChangeBusy.set(false);
+    }
+  }
+
   async saveProfile(): Promise<void> {
     if (!this.profile.name.trim()) {
       this.notificationService.showError('Display name cannot be empty.');
@@ -196,8 +314,10 @@ export class Settings implements OnInit {
     }
     this.isSavingProfile.set(true);
     try {
-      // Simulate profile update or integrate API
-      await new Promise(resolve => setTimeout(resolve, 300));
+      const res = await firstValueFrom(this.api.post<unknown>('Auth/update-profile', {
+        name: this.profile.name.trim()
+      }));
+      if (!res.isSuccess) throw new Error(res.error?.description || 'Failed to save profile.');
       this.notificationService.showSuccess('Profile information saved.');
     } catch (err: any) {
       this.notificationService.showError(err?.message || 'Failed to save profile.');
@@ -229,11 +349,7 @@ export class Settings implements OnInit {
       icon: 'pi pi-trash',
       accept: () => {
         if (this.isBrowser) {
-          const token = localStorage.getItem('auth_token');
-          const refresh = localStorage.getItem('refresh_token');
-          localStorage.clear();
-          if (token) localStorage.setItem('auth_token', token);
-          if (refresh) localStorage.setItem('refresh_token', refresh);
+          localStorage.clear(); // tokens live in memory + an HttpOnly cookie, never in localStorage
           this.notificationService.showSuccess('Local cache cleared. Reloading page...');
           setTimeout(() => window.location.reload(), 1000);
         }

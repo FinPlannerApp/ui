@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { ConfirmationService } from 'primeng/api';
 import { sharedPrimeModules } from '../../../shared/prime-imports';
 import { SplitService } from '../split.service';
-import { GroupBalances, SplitGroup, SplitMember } from '../../../core/models/split.model';
+import { GroupBalances, RecurrenceFrequency, RecurringExpense, SplitGroup, SplitMember } from '../../../core/models/split.model';
 import { NotificationService } from '../../../core/services/notification.service';
 import { Auth } from '../../../core/services/auth';
 import { SPLIT_CURRENCIES, currencySymbol } from '../split-currency';
@@ -57,6 +57,7 @@ export class SplitSettingsDialog {
   readonly currencyOptions = SPLIT_CURRENCIES.map(c => ({ label: c.label, value: c.code }));
   draftCurrency = signal('INR');
   draftSimplify = signal(true);
+  draftAutoRemind = signal(false);
   draftStart = signal<Date | null>(null);
   draftEnd = signal<Date | null>(null);
   savingSettings = signal(false);
@@ -65,9 +66,15 @@ export class SplitSettingsDialog {
     // Reset the draft whenever the group (re)loads, so it always starts from what's saved.
     effect(() => {
       const g = this.group();
+      if (g) void this.loadRecurring();
+    });
+
+    effect(() => {
+      const g = this.group();
       if (!g) return;
       this.draftCurrency.set(g.currency || 'INR');
       this.draftSimplify.set(g.simplifyDebts !== false);
+      this.draftAutoRemind.set(!!g.autoRemind);
       this.draftStart.set(fromDateOnlyString(g.startDate));
       this.draftEnd.set(fromDateOnlyString(g.endDate));
     });
@@ -78,6 +85,7 @@ export class SplitSettingsDialog {
     if (!g) return false;
     return this.draftCurrency() !== (g.currency || 'INR')
       || this.draftSimplify() !== (g.simplifyDebts !== false)
+      || this.draftAutoRemind() !== !!g.autoRemind
       || toDateOnlyString(this.draftStart()) !== (toDateOnlyString(fromDateOnlyString(g.startDate)))
       || toDateOnlyString(this.draftEnd()) !== (toDateOnlyString(fromDateOnlyString(g.endDate)));
   });
@@ -90,6 +98,7 @@ export class SplitSettingsDialog {
       await this.splitService.updateGroupSettings(g.id, {
         currency: this.draftCurrency(),
         simplifyDebts: this.draftSimplify(),
+        autoRemind: this.draftAutoRemind(),
         startDate: toDateOnlyString(this.draftStart()),
         endDate: toDateOnlyString(this.draftEnd())
       });
@@ -100,6 +109,56 @@ export class SplitSettingsDialog {
     } finally {
       this.savingSettings.set(false);
     }
+  }
+
+  // ── Recurring expenses ──────────────────────────────────────────────────────
+  recurring = signal<RecurringExpense[]>([]);
+  readonly Frequency = RecurrenceFrequency;
+
+  frequencyLabel(f: RecurrenceFrequency): string {
+    return f === RecurrenceFrequency.Daily ? 'Every day' : f === RecurrenceFrequency.Weekly ? 'Every week' : 'Every month';
+  }
+
+  async loadRecurring(): Promise<void> {
+    const g = this.group();
+    if (!g) return;
+    try {
+      this.recurring.set(await this.splitService.getRecurring(g.id));
+    } catch {
+      this.recurring.set([]);
+    }
+  }
+
+  /** The person who set it up, or an admin, can pause, resume or delete it. */
+  canManageRecurring(r: RecurringExpense): boolean {
+    return !this.isGroupClosed() && (this.isGroupAdmin() || r.createdByUserId === this.authService.currentUserDetails()?.id);
+  }
+
+  async toggleRecurring(r: RecurringExpense): Promise<void> {
+    try {
+      await this.splitService.setRecurringActive(r.id, !r.isActive);
+      await this.loadRecurring();
+    } catch (err: any) {
+      this.notificationService.showError(err?.message || 'Could not update.');
+    }
+  }
+
+  deleteRecurring(r: RecurringExpense): void {
+    this.confirmationService.confirm({
+      header: 'Stop repeating this expense?',
+      message: `"${r.description}" won't be added again. Expenses already added stay.`,
+      icon: 'pi pi-trash',
+      acceptLabel: 'Delete',
+      rejectLabel: 'Keep',
+      accept: async () => {
+        try {
+          await this.splitService.deleteRecurring(r.id);
+          await this.loadRecurring();
+        } catch (err: any) {
+          this.notificationService.showError(err?.message || 'Could not delete.');
+        }
+      }
+    });
   }
 
   // ── Merge duplicate members ─────────────────────────────────────────────────
@@ -157,7 +216,14 @@ export class SplitSettingsDialog {
     const g = this.group();
     if (!g) return false;
     const currentUserId = this.authService.currentUserDetails()?.id;
-    return g.createdByUserId === currentUserId;
+    if (g.createdByUserId === currentUserId) return true;
+    return g.members.some(m => !m.leftAt && !!m.isAdmin && m.linkedUserId === currentUserId);
+  });
+
+  /** Only the creator can delete the group, reset the share link or choose who else is an admin. */
+  isGroupCreator = computed(() => {
+    const g = this.group();
+    return !!g && g.createdByUserId === this.authService.currentUserDetails()?.id;
   });
 
   currentUserMember = computed(() => {
@@ -366,6 +432,25 @@ export class SplitSettingsDialog {
     this.notificationService.showSuccess('Share link copied.');
   }
 
+  resetShareLink(): void {
+    const g = this.group();
+    if (!g) return;
+    this.confirmationService.confirm({
+      header: 'Reset the public link?',
+      message: 'The current public link will stop working for everyone who has it. Members are not affected.',
+      icon: 'pi pi-refresh',
+      accept: async () => {
+        try {
+          await this.splitService.resetShareToken(g.id);
+          this.notificationService.showSuccess('New public link created.');
+          this.reloadGroup.emit();
+        } catch (err: any) {
+          this.notificationService.showError(err?.message || 'Could not reset the share link.');
+        }
+      }
+    });
+  }
+
   async createInvite(): Promise<void> {
     const g = this.group();
     if (!g) return;
@@ -403,6 +488,38 @@ export class SplitSettingsDialog {
     return !!m.linkedUserId && m.linkedUserId === this.group()?.createdByUserId;
   }
 
+  /** The creator can make any other member with an account a co-admin (or take it away). */
+  canToggleAdmin(m: SplitMember): boolean {
+    return this.isGroupCreator() && !!m.linkedUserId && !m.leftAt && m.linkedUserId !== this.group()?.createdByUserId && !this.isGroupClosed();
+  }
+
+  /** Any admin can make a member with an account view-only (guest). Admins can't be guests. */
+  canToggleGuest(m: SplitMember): boolean {
+    return this.isGroupAdmin() && !!m.linkedUserId && !m.leftAt && !m.isAdmin && m.linkedUserId !== this.group()?.createdByUserId && !this.isGroupClosed();
+  }
+
+  async toggleGuest(m: SplitMember): Promise<void> {
+    const makeGuest = !m.isGuest;
+    try {
+      await this.splitService.setMemberGuest(m.id, makeGuest);
+      this.notificationService.showSuccess(makeGuest ? `${m.name} can now only view this group.` : `${m.name} is a full member again.`);
+      this.reloadGroup.emit();
+    } catch (err: any) {
+      this.notificationService.showError(err?.message || 'Could not change guest access.');
+    }
+  }
+
+  async toggleAdmin(m: SplitMember): Promise<void> {
+    const makeAdmin = !m.isAdmin;
+    try {
+      await this.splitService.setMemberAdmin(m.id, makeAdmin);
+      this.notificationService.showSuccess(makeAdmin ? `${m.name} is now an admin.` : `${m.name} is no longer an admin.`);
+      this.reloadGroup.emit();
+    } catch (err: any) {
+      this.notificationService.showError(err?.message || 'Could not change admin.');
+    }
+  }
+
   isMe(m: SplitMember): boolean {
     return !!m.linkedUserId && m.linkedUserId === this.currentUserMember()?.linkedUserId;
   }
@@ -412,6 +529,29 @@ export class SplitSettingsDialog {
     if (this.group()?.status === 3) return false;
     if (this.isCreatorMember(m)) return false;
     return this.isGroupAdmin() || this.isMe(m);
+  }
+
+  canUnlinkMember(m: SplitMember): boolean {
+    return this.isGroupAdmin() && !!m.linkedUserId && !m.leftAt && !this.isMe(m) && !this.isGroupClosed();
+  }
+
+  unlinkMember(m: SplitMember): void {
+    this.confirmationService.confirm({
+      header: `Unlink ${m.name}?`,
+      message: `${m.name}'s expenses and balance stay exactly as they are, but the signed-in account is detached so the right person can claim this name again. Use this if someone joined as the wrong person.`,
+      icon: 'pi pi-link',
+      acceptLabel: 'Unlink',
+      rejectLabel: 'Cancel',
+      accept: async () => {
+        try {
+          await this.splitService.unlinkMember(m.id);
+          this.notificationService.showSuccess(`${m.name} is unlinked.`);
+          this.reloadGroup.emit();
+        } catch (err: any) {
+          this.notificationService.showError(err?.message || 'Could not unlink this member.');
+        }
+      }
+    });
   }
 
   removeMember(m: SplitMember): void {

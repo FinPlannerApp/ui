@@ -17,6 +17,9 @@ export interface UpsertTransactionRequest {
     type: TransactionType;
     accountCategoryId?: number; // Optional?
     transactionCategoryId?: number;
+    merchantId?: number | null;
+    notes?: string | null;
+    tags?: string[];
 }
 
 export interface TransferRequest {
@@ -34,6 +37,7 @@ export interface UpsertCategoryRequest {
     id?: number;
     name: string;
     isTransferCategory?: boolean; // Only for TransactionCategory
+    parentCategoryId?: number | null; // Only for TransactionCategory: makes it a sub-category
     isLiability?: boolean;        // Only for AccountCategory
     accountType?: number;         // Only for AccountCategory — AccountType enum value
 }

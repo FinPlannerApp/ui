@@ -19,17 +19,19 @@
                     (ngModelChange)="selectedCategoryId.set($event); onSearch()" optionLabel="name" optionValue="id"
                     placeholder="Filter Category" [showClear]="true" class="w-full sm:w-60 p-inputtext-sm" appendTo="body"></p-select>
                 }
-                <p-iconfield class="flex gap-2 items-center grow">
-                    <p-inputicon class="pi pi-search"></p-inputicon>
-                    <input pInputText type="text" [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)"
-                        (keyup.enter)="onSearch()" placeholder="Search..." class="p-inputtext-sm w-full" />
-                    <p-button icon="pi pi-search" [text]="true" severity="primary" size="small" (onClick)="onSearch()"
-                        pTooltip="Run Search"></p-button>
+                <div class="flex gap-2 items-center grow min-w-0">
+                    <p-iconfield class="grow min-w-0">
+                        <p-inputicon class="pi pi-search"></p-inputicon>
+                        <input pInputText type="text" [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)"
+                            (keyup.enter)="onSearch()" placeholder="Search..." class="p-inputtext-sm w-full" />
+                    </p-iconfield>
                     @if (searchTerm()) {
                     <p-button icon="pi pi-times" [text]="true" severity="secondary" size="small"
-                        (onClick)="clearSearch()" pTooltip="Clear Search"></p-button>
+                        (onClick)="clearSearch()" pTooltip="Clear Search" aria-label="Clear search"></p-button>
                     }
-                </p-iconfield>
+                    <p-button icon="pi pi-search" [rounded]="true" severity="primary" size="small" (onClick)="onSearch()"
+                        pTooltip="Run Search" aria-label="Search"></p-button>
+                </div>
             </div>
             <p-button [label]="'New ' + singularTitle" icon="pi pi-plus" (onClick)="showForm()"
                 severity="primary" styleClass="w-full sm:w-auto shrink-0 justify-center"></p-button>

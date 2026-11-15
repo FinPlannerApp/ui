@@ -2,6 +2,8 @@ import { inject, Injectable } from '@angular/core';
 import { GenericApi, PaginatedResult } from '../../core/services/generic-api';
 import { map, Observable, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { BudgetAlert } from '../../core/models/budget.model';
+import { NotificationService } from '../../core/services/notification.service';
 import { TransactionType } from '../../core/models/transaction-type';
 import { SwitchTransactionAccountRequest, TransferRequest, UpsertTransactionRequest } from '../../core/models/api-contracts';
 
@@ -17,6 +19,12 @@ export interface Transaction {
   accountId: number;
   accountName?: string;
   categoryName?: string;
+  notes?: string | null;
+  tags?: string[];
+  /** Present only on the response to a new expense that pushed a budget past its alert level or limit. */
+  budgetAlerts?: BudgetAlert[];
+  /** Set for transfers (and similar linked rows); those can't be undone after deleting. */
+  transferGroupId?: string | null;
 }
 
 export interface TransactionPageResult {
@@ -43,7 +51,22 @@ export interface TransactionQueryParams {
   providedIn: 'root'
 })
 export class TransactionService {
+  private notifier = inject(NotificationService);
+
   constructor(private apiService: GenericApi) { }
+
+  /** Toasts any budget the just-saved expense pushed past its alert level or limit. */
+  private toastBudgetAlerts(alerts?: BudgetAlert[]): void {
+    for (const a of alerts ?? []) {
+      const pct = Math.round(a.percentUsed);
+      const left = a.budgetAmount - a.spentAmount;
+      if (a.level >= 2) {
+        this.notifier.showError(`${a.categoryName} is at ${pct}% — you've reached its budget limit.`, 'Budget limit reached');
+      } else {
+        this.notifier.showWarn(`${a.categoryName} is at ${pct}% (your alert level is ${a.thresholdPercent}%). ₹${Math.max(0, left).toLocaleString('en-IN')} left.`, 'Budget heads-up');
+      }
+    }
+  }
 
   // --- Unified Transaction Methods ---
 
@@ -94,6 +117,7 @@ export class TransactionService {
     return this.apiService.upsert<Transaction>(endpoint, payload).pipe(
       map(response => {
         if (!response.isSuccess) throw response.error;
+        this.toastBudgetAlerts(response.value?.budgetAlerts);
         return response.value;
       })
     );
@@ -113,6 +137,18 @@ export class TransactionService {
     );
   }
 
+  importPreview(payload: any): Observable<any> {
+    return this.apiService.post<any>('Transactions/import/preview', payload).pipe(
+      map(response => { if (!response.isSuccess) throw response; return response.value; })
+    );
+  }
+
+  importCommit(payload: any): Observable<any> {
+    return this.apiService.post<any>('Transactions/import/commit', payload).pipe(
+      map(response => { if (!response.isSuccess) throw response; return response.value; })
+    );
+  }
+
   bulkUpsertTransactions(payload: any): Observable<any> {
     const endpoint = `Transactions/bulk-upsert`;
     return this.apiService.post<any>(endpoint, payload).pipe(
@@ -129,6 +165,15 @@ export class TransactionService {
    * @param transactionId The ID of the transaction to delete.
    * @returns An Observable emitting true if successful.
    */
+  restoreTransaction(accountId: number, transactionId: number): Observable<boolean> {
+    return this.apiService.post<boolean>('Transactions/restore', { accountId, transactionId }).pipe(
+      map(response => {
+        if (!response.isSuccess) throw response.error;
+        return response.value;
+      })
+    );
+  }
+
   deleteTransaction(accountId: number, transactionId: number): Observable<boolean> {
     if (!accountId || accountId <= 0) {
       return throwError(() => new Error('Invalid Account ID'));

@@ -86,6 +86,17 @@
                 <p-checkbox formControlName="isLoanEmi" [binary]="true" inputId="isLoanEmi"></p-checkbox>
                 <label for="isLoanEmi">This is an EMI payment for a loan</label>
             </div>
+            <div class="flex items-center gap-2">
+                <p-checkbox formControlName="isSip" [binary]="true" inputId="isSip"></p-checkbox>
+                <label for="isSip">This is a SIP / regular investment (moves money into an investment, not an expense)</label>
+            </div>
+            @if (recurringForm.get('isSip')?.value) {
+                <app-form-field label="Which investment?" inputId="linkedInvestmentAccountId" [control]="recurringForm.get('linkedInvestmentAccountId')">
+                    <p-select formControlName="linkedInvestmentAccountId" [options]="investmentAccounts()" optionLabel="name" optionValue="id"
+                        placeholder="Select investment (create it on the Investments page first)" appendTo="body" id="linkedInvestmentAccountId">
+                    </p-select>
+                </app-form-field>
+            }
             @if (recurringForm.get('isLoanEmi')?.value) {
                 <app-form-field label="Which loan?" inputId="linkedLoanAccountId" [control]="recurringForm.get('linkedLoanAccountId')">
                     <p-select formControlName="linkedLoanAccountId" [options]="loanAccounts()" optionLabel="name" optionValue="id"

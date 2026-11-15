@@ -45,6 +45,8 @@
     </div>
   </div>
 
+  <app-undo-banner [accountId]="accountId()" />
+
   <!-- Financial Overview KPI Stat Cards -->
   @if (summary()) {
     <div class="grid grid-cols-12 gap-4">
@@ -92,6 +94,9 @@
 
   <!-- Account Type Specific Sub-Card (Credit Card / Loan / Bank Interest) -->
   @if (currentAccount(); as account) {
+    @if (account.bankAccountDetails?.interestRate) {
+      <app-interest-due [accountId]="account.id"></app-interest-due>
+    }
     @if (account.creditCardDetails; as details) {
       <div class="glass-card p-4 sm:p-5 rounded-2xl border border-purple-500/30 bg-gradient-to-r from-purple-950/20 via-purple-900/10 to-black/20 shadow-lg">
         <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
@@ -213,7 +218,7 @@
         }
       </div>
       @if (accountId() !== null) {
-        <app-cc-history [accountId]="accountId()!" [selectedDate]="selectedDate()" [refreshKey]="ccBreakdown()" />
+        <app-cc-history [accountId]="accountId()!" [selectedDate]="activeCycle()?.from ?? selectedDate()" [refreshKey]="ccBreakdown()" />
       }
     }
 
@@ -363,6 +368,21 @@
       
       <!-- Month Picker (Full on mobile, 4 cols on tablet, 3 cols on desktop) -->
       <div class="md:col-span-4 lg:col-span-3">
+        @if (isCardWithCycles()) {
+          <p-select
+            [options]="cycles()"
+            [ngModel]="activeCycle()?.key"
+            (ngModelChange)="onCycleChange($event)"
+            optionLabel="label"
+            optionValue="key"
+            styleClass="w-full h-10"
+            class="w-full block h-10 p-inputtext-sm rounded-xl"
+            appendTo="body" />
+          <div class="mt-1 text-[11px]" style="color:var(--text-dim)">
+            Statement cycle · spent <b>{{ cycleSpend() | currency:'INR':'symbol':'1.0-0' }}</b>
+            @if (activeCycle()?.statementAmount != null) { · statement bill {{ activeCycle()!.statementAmount | currency:'INR':'symbol':'1.0-0' }} }
+          </div>
+        } @else {
         <p-datepicker
           [ngModel]="selectedDate()"
           view="month"
@@ -376,6 +396,7 @@
           class="w-full block"
           appendTo="body">
         </p-datepicker>
+        }
       </div>
 
       <!-- Category Dropdown (Full on mobile, 4 cols on tablet, 4 cols on desktop) -->
@@ -412,6 +433,21 @@
     </div>
   </div>
 
+  <!-- Saved filters -->
+  @if (savedFilters().length || canSaveFilter()) {
+    <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Saved filters">
+      @for (f of savedFilters(); track f.name) {
+        <span class="inline-flex items-center rounded-full border border-white/10 text-xs font-semibold overflow-hidden">
+          <button type="button" class="px-2.5 py-1 bg-transparent text-main cursor-pointer border-0 hover:bg-white/10" (click)="applySavedFilter(f)" [attr.aria-label]="'Apply filter ' + f.name">{{ f.name }}</button>
+          <button type="button" class="px-1.5 py-1 bg-transparent text-[var(--text-muted)] cursor-pointer border-0 hover:text-white" (click)="removeSavedFilter(f.name)" [attr.aria-label]="'Remove filter ' + f.name">✕</button>
+        </span>
+      }
+      @if (canSaveFilter()) {
+        <p-button label="Save this filter" icon="pi pi-bookmark" [text]="true" size="small" (onClick)="saveCurrentFilter()"></p-button>
+      }
+    </div>
+  }
+
   <!-- Transactions Table & Empty State Container -->
   @if (transactions().length === 0 && !isLoading()) {
     @if (globalSearch() || selectedCategory()) {
@@ -427,12 +463,27 @@
       <app-empty-state
         icon="pi pi-receipt"
         title="No Transactions Found"
-        [description]="'No transactions recorded for this account in ' + (selectedDate() | date:'MMMM yyyy')"
+        [description]="'No transactions recorded for this account in ' + (activeCycle()?.label || (selectedDate() | date:'MMMM yyyy'))"
         actionLabel="Add Transaction"
         (onAction)="showTransactionForm()">
       </app-empty-state>
     }
   } @else {
+    <!-- Bulk edit toolbar -->
+    <div class="flex flex-wrap items-center gap-2">
+      <p-button [label]="selectMode() ? 'Done' : 'Select'" [icon]="selectMode() ? 'pi pi-check' : 'pi pi-check-square'" [outlined]="!selectMode()" size="small" (onClick)="toggleSelectMode()"></p-button>
+      @if (selectMode()) {
+        <span class="text-xs text-[var(--text-muted)]">{{ selectedIds().size }} selected</span>
+        @if (selectedIds().size > 0) {
+          <p-select [options]="bulkCategories()" optionLabel="path" optionValue="id" [ngModel]="bulkCategoryId()" (ngModelChange)="bulkCategoryId.set($event)"
+            [filter]="true" [showClear]="true" placeholder="Set category" appendTo="body" styleClass="w-48" aria-label="Category for selected transactions"></p-select>
+          <input pInputText type="text" maxlength="30" placeholder="Add tag" class="w-32" [ngModel]="bulkTag()" (ngModelChange)="bulkTag.set($event)" aria-label="Tag to add to selected transactions" />
+          <p-button label="Apply" icon="pi pi-check" size="small" [disabled]="bulkBusy() || (!bulkCategoryId() && !bulkTag().trim())" [loading]="bulkBusy()" (onClick)="applyBulkEdit()"></p-button>
+          <p-button label="Delete" icon="pi pi-trash" severity="danger" [outlined]="true" size="small" [disabled]="bulkBusy()" (onClick)="bulkDelete()"></p-button>
+        }
+      }
+    </div>
+
     <!-- Transactions Table Card -->
     <div class="glass-card rounded-2xl table-cards border border-[var(--glass-border)] w-full overflow-hidden">
       <p-table
@@ -446,6 +497,9 @@
         
         <ng-template pTemplate="header">
           <tr>
+            @if (selectMode()) {
+              <th class="w-10"><input type="checkbox" [checked]="allVisibleSelected()" (change)="selectAllVisible($any($event.target).checked)" aria-label="Select all loaded transactions" /></th>
+            }
             <th pSortableColumn="date" class="min-w-[140px] whitespace-nowrap">Date <p-sortIcon field="date"></p-sortIcon></th>
             <th pSortableColumn="description" class="min-w-[240px] whitespace-nowrap">Description <p-sortIcon field="description"></p-sortIcon></th>
             <th pSortableColumn="categoryName" class="min-w-[160px] whitespace-nowrap">Category <p-sortIcon field="categoryName"></p-sortIcon></th>
@@ -456,11 +510,30 @@
 
         <ng-template pTemplate="body" let-tx>
           <tr class="hover:bg-white/5 transition-colors">
+            @if (selectMode()) {
+              <td class="w-10">
+                @if (isBulkEditable(tx)) {
+                  <input type="checkbox" [checked]="selectedIds().has(tx.id)" (change)="toggleRow(tx, $any($event.target).checked)" [attr.aria-label]="'Select ' + tx.description" />
+                }
+              </td>
+            }
             <td data-label="Date" class="whitespace-nowrap font-medium text-xs text-[var(--text-muted)]">
               {{ tx.date | date:'mediumDate' }}
             </td>
             <td data-label="Description" class="cell-full whitespace-nowrap font-bold text-white">
               {{ tx.description }}
+              @if (tx.notes) { <i class="pi pi-comment text-[10px] ml-1 text-[var(--text-muted)]" [pTooltip]="tx.notes" tooltipPosition="top"></i> }
+              @if (tx.tags?.length) {
+                <div class="flex flex-wrap gap-1 mt-0.5">
+                  @for (g of tx.tags; track g) {
+                    <button type="button" class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full border border-white/10 text-[var(--text-muted)] hover:text-white bg-transparent cursor-pointer"
+                            (click)="filterByTag(g)" [attr.aria-label]="'Show transactions tagged ' + g">#{{ g }}</button>
+                  }
+                </div>
+              }
+              @if (!tx.transferGroupId) {
+                <div class="mt-0.5 font-normal"><app-attachments entityType="Transaction" [entityId]="tx.id" [lazy]="true" [folder]="['Receipts', tx.accountName || 'Account']"></app-attachments></div>
+              }
             </td>
             <td data-label="Category" class="whitespace-nowrap">
               @if (tx.categoryName) {

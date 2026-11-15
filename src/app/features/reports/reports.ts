@@ -1,9 +1,9 @@
 import { PageHeader } from '../../shared/components/page-header/page-header';
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { ReportsService } from './reports.service';
+import { PeriodReport, ReportsService } from './reports.service';
 import { AccountState } from '../../core/state/account-state.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { FormField } from '../../shared/components/form-field/form-field';
@@ -14,7 +14,7 @@ type ReportType = 'monthly-summary' | 'category-analysis' | 'budget-vs-actual' |
 @Component({
   selector: 'app-reports',
   standalone: true,
-  imports: [PageHeader, CommonModule, ReactiveFormsModule, FormField, ...sharedPrimeModules],
+  imports: [PageHeader, CommonModule, FormsModule, ReactiveFormsModule, FormField, ...sharedPrimeModules],
   templateUrl: './reports.html',
 })
 export class Reports {
@@ -26,6 +26,48 @@ export class Reports {
   accountState = inject(AccountState);
 
   isDownloading = signal(false);
+
+  // ── On-screen report (month or whole year), exported on demand ──
+  readonly periodModes = [{ label: 'Month', value: 'month' }, { label: 'Whole year', value: 'year' }];
+  periodMode = signal<'month' | 'year'>('month');
+  periodMonth = signal(new Date().getMonth() + 1);
+  periodYear = signal(new Date().getFullYear());
+  readonly yearOptions = Array.from({ length: 11 }, (_, i) => new Date().getFullYear() - i).map(y => ({ label: String(y), value: y }));
+  period = signal<PeriodReport | null>(null);
+  periodLoading = signal(false);
+  exporting = signal<'excel' | 'pdf' | null>(null);
+
+  async loadPeriod(): Promise<void> {
+    this.periodLoading.set(true);
+    try {
+      this.period.set(await this.reportsService.getPeriod(this.periodYear(), this.periodMode() === 'month' ? this.periodMonth() : null));
+    } catch (err: any) {
+      this.period.set(null);
+      this.notificationService.showError(err?.message || 'Could not load the report.');
+    } finally {
+      this.periodLoading.set(false);
+    }
+  }
+
+  setPeriodMode(v: 'month' | 'year'): void { this.periodMode.set(v); void this.loadPeriod(); }
+  setPeriodMonth(v: number): void { this.periodMonth.set(v); void this.loadPeriod(); }
+  setPeriodYear(v: number): void { this.periodYear.set(v); void this.loadPeriod(); }
+
+  maxCategory(): number {
+    return Math.max(1, ...(this.period()?.categories.map(c => c.amount) ?? [1]));
+  }
+
+  async exportPeriod(kind: 'excel' | 'pdf'): Promise<void> {
+    if (this.exporting()) return;
+    this.exporting.set(kind);
+    try {
+      await this.reportsService.exportPeriod(kind, this.periodYear(), this.periodMode() === 'month' ? this.periodMonth() : null);
+    } catch (err: any) {
+      this.notificationService.showError(err?.message || 'Could not create the file.');
+    } finally {
+      this.exporting.set(null);
+    }
+  }
 
   reportTypes: { label: string; value: ReportType }[] = [
     { label: 'Monthly Summary', value: 'monthly-summary' },
@@ -55,6 +97,7 @@ export class Reports {
       asOfDate: [now],
       accountId: [null]
     });
+    void this.loadPeriod();
   }
 
   get selectedType(): ReportType {

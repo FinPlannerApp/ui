@@ -144,7 +144,7 @@ export class BlogLoaderService {
       mermaid.initialize({
         startOnLoad: false,
         theme: 'dark',
-        securityLevel: 'loose',
+        securityLevel: 'antiscript', // strips scripts/handlers from diagram text (was 'loose')
         fontFamily: 'inherit'
       });
       this.mermaidInitialized = true;

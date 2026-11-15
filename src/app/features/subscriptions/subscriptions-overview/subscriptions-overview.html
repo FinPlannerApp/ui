@@ -1,0 +1,84 @@
+<div class="max-w-6xl mx-auto w-full flex flex-col gap-4 px-4 md:px-8 py-4">
+  <app-module-tabs [tabs]="tabs" label="Subscriptions sections" />
+  <div>
+    <h1 class="text-2xl font-bold m-0 gradient-text">Subscriptions overview</h1>
+    <p class="text-sm text-muted mt-1 mb-0">What your subscriptions really cost and what renews next.</p>
+  </div>
+
+  @if (loading()) {
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">@for (i of [1,2,3,4]; track i) { <p-skeleton height="92px" borderRadius="24px"></p-skeleton> }</div>
+  } @else if (subs().length === 0) {
+    <div class="glass-card rounded-3xl p-10 text-center border border-white/10">
+      <i class="pi pi-replay text-5xl opacity-40 mb-3"></i>
+      <h2 class="text-lg font-black text-main m-0">No subscriptions yet</h2>
+      <p class="text-sm text-muted mt-1 mb-4">Add Netflix, rent, a gym — anything that bills on a schedule.</p>
+      <a routerLink="/app/subscriptions" class="p-button p-button-sm no-underline"><i class="pi pi-plus mr-2"></i>Add a subscription</a>
+    </div>
+  } @else {
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="tile glass-card rounded-3xl p-4 border border-white/10" style="--accent:#10b981"><span class="lbl">Per month</span><span class="val">{{ monthly() | currency:'INR':'symbol':'1.0-0' }}</span><span class="sub">averaged across billing cycles</span></div>
+      <div class="tile glass-card rounded-3xl p-4 border border-white/10" style="--accent:#06b6d4"><span class="lbl">Per year</span><span class="val">{{ yearly() | currency:'INR':'symbol':'1.0-0' }}</span></div>
+      <div class="tile glass-card rounded-3xl p-4 border border-white/10" style="--accent:#8b5cf6"><span class="lbl">Active</span><span class="val">{{ subs().length }}</span><span class="sub">subscriptions</span></div>
+      <div class="tile glass-card rounded-3xl p-4 border border-white/10" style="--accent:#f59e0b">
+        <span class="lbl">Renewing soon</span><span class="val">{{ settings().renewalAlertDays > 0 ? renewingSoon().length : '—' }}</span>
+        <span class="sub">{{ settings().renewalAlertDays > 0 ? (soonTotal() | currency:'INR':'symbol':'1.0-0') + ' in ' + settings().renewalAlertDays + ' days' : 'alerts off' }}</span>
+      </div>
+    </section>
+
+    @if (settings().monthlyTarget > 0) {
+      <section class="glass-card rounded-3xl p-4 border border-white/10">
+        <div class="flex items-baseline justify-between gap-2 text-xs mb-1.5">
+          <span class="font-black text-main">Against your {{ settings().monthlyTarget | currency:'INR':'symbol':'1.0-0' }} monthly target</span>
+          <span class="font-black" [style.color]="targetColor()">{{ targetPct() | number:'1.0-0' }}%</span>
+        </div>
+        <div class="bar-track" role="progressbar" [attr.aria-valuenow]="targetPct() | number:'1.0-0'" aria-valuemin="0" aria-valuemax="100" aria-label="Subscription spend against target">
+          <div class="bar-fill" [style.width.%]="w(targetPct())" [style.background]="targetColor()"></div>
+        </div>
+      </section>
+    }
+
+    @if (renewingSoon().length) {
+      <section class="glass-card rounded-3xl p-4 border border-amber-400/30">
+        <h2 class="text-sm font-black text-main m-0 mb-2 flex items-center gap-2"><i class="pi pi-bell text-amber-400"></i>Renewing in the next {{ settings().renewalAlertDays }} days</h2>
+        @for (r of renewingSoon(); track r.id + '-' + r.date.getTime()) {
+          <div class="flex items-center justify-between gap-3 py-1.5 text-xs">
+            <span class="font-bold text-main truncate">{{ r.name }} <span class="text-muted font-normal">· {{ r.date | date:'EEE d MMM' }} ({{ dueLabel(r.daysLeft) }})</span></span>
+            <span class="font-black shrink-0">{{ r.amount | currency:'INR':'symbol':'1.0-0' }}</span>
+          </div>
+        }
+      </section>
+    }
+
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div class="lg:col-span-7 glass-card rounded-3xl p-5 border border-white/10">
+        <h2 class="text-sm font-black text-main m-0 mb-3 flex items-center gap-2"><i class="pi pi-sort-amount-down text-emerald-400"></i>Monthly cost by subscription</h2>
+        @for (r of ranked(); track r.s.id; let i = $index) {
+          <div class="mb-2.5 last:mb-0">
+            <div class="flex items-baseline justify-between gap-2 text-xs">
+              <span class="font-bold text-main truncate">{{ r.s.name }} <span class="text-muted font-normal">· {{ r.s.frequency }}</span></span>
+              <span class="font-black text-main shrink-0">{{ r.monthly | currency:'INR':'symbol':'1.0-0' }}/mo</span>
+            </div>
+            <div class="bar-track mt-1"><div class="bar-fill" [style.width.%]="w(r.monthly / maxMonthly() * 100)" [style.transition-delay.ms]="i * 60" style="background:linear-gradient(90deg,#10b981aa,#10b981)"></div></div>
+          </div>
+        }
+      </div>
+      <div class="lg:col-span-5 glass-card rounded-3xl p-5 border border-white/10">
+        <h2 class="text-sm font-black text-main m-0 mb-3 flex items-center gap-2"><i class="pi pi-tag text-emerald-400"></i>By tag</h2>
+        <div class="h-[240px]"><p-chart type="doughnut" [data]="tagChart()" [options]="donutOptions" height="240px"></p-chart></div>
+      </div>
+    </section>
+
+    <section class="glass-card rounded-3xl p-5 border border-white/10">
+      <h2 class="text-sm font-black text-main m-0 mb-3 flex items-center gap-2"><i class="pi pi-calendar text-sky-400"></i>Renewals · next 8 weeks</h2>
+      <div class="grid grid-cols-4 sm:grid-cols-8 gap-2 items-end h-[130px]">
+        @for (wk of weeks(); track wk.i) {
+          <div class="flex flex-col items-center justify-end h-full gap-1" [title]="wk.items.length + ' renewal(s)'">
+            <span class="text-[10px] font-bold text-muted">{{ wk.total > 0 ? (wk.total | currency:'INR':'symbol':'1.0-0') : '' }}</span>
+            <div class="w-full rounded-t-lg col-bar" [style.height.%]="w(wk.total / maxWeek() * 80)" style="background:linear-gradient(180deg,#38bdf8,#0ea5e9aa); min-height:2px"></div>
+            <span class="text-[10px] text-muted">{{ wk.i === 0 ? 'This wk' : '+' + wk.i + 'w' }}</span>
+          </div>
+        }
+      </div>
+    </section>
+  }
+</div>

@@ -1,3 +1,5 @@
+import { areaForUrl } from '../../data/tips';
+import { TipTicker } from '../tip-ticker';
 import { Component, inject, computed } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { Auth } from '../../services/auth';
@@ -9,21 +11,29 @@ import { ThemeEngine } from '../../services/theme';
 import { BreadcrumbService } from '../breadcrumb.service';
 import { CommonModule } from '@angular/common';
 import { LoadingService } from '../../services/loading.service';
+import { PwaUpdateService } from '../../services/pwa-update.service';
+import { MessageService } from 'primeng/api';
+import { QuickAdd } from '../../../shared/components/quick-add/quick-add';
+import { QuickAddService } from '../../../shared/components/quick-add/quick-add.service';
 import { sharedPrimeModules } from '../../../shared/prime-imports';
 
 @Component({
   selector: 'app-layout',
-  imports: [RouterOutlet, CommonModule, WhatsNew, ...sharedPrimeModules],
+  imports: [RouterOutlet, CommonModule, WhatsNew, TipTicker, QuickAdd, ...sharedPrimeModules],
   templateUrl: './layout.html',
 })
 
 export class Layout {
   public authService = inject(Auth);
+  public quickAdd = inject(QuickAddService);
   public themeEngine = inject(ThemeEngine);
   public breadcrumbService = inject(BreadcrumbService);
   public loadingService = inject(LoadingService);
   public changelog = inject(ChangelogService);
   private router = inject(Router);
+  private pwaUpdate = inject(PwaUpdateService);
+  private toast = inject(MessageService);
+  checkingUpdate = false;
 
   sidebarVisible = false;
   navItems: MenuItem[];
@@ -49,7 +59,13 @@ export class Layout {
         label: 'Money',
         items: [
           { label: 'Accounts', icon: 'pi pi-wallet', routerLink: '/app/accounts', command: () => { this.sidebarVisible = false; } },
+          { label: 'Account insights', icon: 'pi pi-chart-line', routerLink: '/app/accounts/insights', command: () => { this.sidebarVisible = false; } },
+          { label: 'Cards', icon: 'pi pi-credit-card', routerLink: '/app/cards', command: () => { this.sidebarVisible = false; } },
           { label: 'Transactions', icon: 'pi pi-list', routerLink: '/app/transactions', command: () => { this.sidebarVisible = false; } },
+          { label: 'Investments', icon: 'pi pi-chart-bar', routerLink: '/app/investments', command: () => { this.sidebarVisible = false; } },
+          { label: 'Outlook', icon: 'pi pi-compass', routerLink: '/app/outlook', command: () => { this.sidebarVisible = false; } },
+          { label: 'Obligations', icon: 'pi pi-calendar', routerLink: '/app/obligations', command: () => { this.sidebarVisible = false; } },
+          { label: 'Insurance', icon: 'pi pi-shield', routerLink: '/app/insurance', command: () => { this.sidebarVisible = false; } },
           { label: 'Recurring', icon: 'pi pi-sync', routerLink: '/app/recurring-transactions', command: () => { this.sidebarVisible = false; } },
           { label: 'Subscriptions', icon: 'pi pi-refresh', routerLink: '/app/subscriptions', command: () => { this.sidebarVisible = false; } },
           { label: 'Merchants', icon: 'pi pi-shop', routerLink: '/app/merchants', command: () => { this.sidebarVisible = false; } },
@@ -83,6 +99,8 @@ export class Layout {
         label: 'Settings',
         items: [
           { label: 'Settings', icon: 'pi pi-cog', routerLink: '/app/settings', command: () => { this.sidebarVisible = false; } },
+          { label: 'Undo centre', icon: 'pi pi-undo', routerLink: '/app/undo', command: () => { this.sidebarVisible = false; } },
+          { label: 'Tips & how-tos', icon: 'pi pi-lightbulb', routerLink: '/app/tips', command: () => { this.sidebarVisible = false; } },
           { label: 'Feedback Hub', icon: 'pi pi-comments', routerLink: '/app/issues', command: () => { this.sidebarVisible = false; } },
           { label: 'Merge Duplicates', icon: 'pi pi-sync', routerLink: '/app/merge-duplicates', command: () => { this.sidebarVisible = false; } }
         ]
@@ -90,8 +108,27 @@ export class Layout {
     ];
   }
 
+  helpArea(): string { return areaForUrl(this.router.url); }
+
+  openHelp(): void {
+    const area = this.helpArea();
+    this.router.navigate(['/app/tips'], area ? { queryParams: { area } } : {});
+  }
+
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/login']);
   }
+
+  async checkForUpdates(): Promise<void> {
+    if (this.checkingUpdate) return;
+    this.checkingUpdate = true;
+    try {
+      const r = await this.pwaUpdate.checkNow();
+      if (r === 'latest') this.toast.add({ severity: 'success', summary: 'Up to date', detail: 'You are on the latest version.', life: 3000 });
+      else if (r === 'error') this.toast.add({ severity: 'warn', summary: 'Could not check', detail: 'Check your connection and try again.', life: 4000 });
+    } finally { this.checkingUpdate = false; }
+  }
+
+  async forceReload(): Promise<void> { await this.pwaUpdate.hardReload(); }
 }

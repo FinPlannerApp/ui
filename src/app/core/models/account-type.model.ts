@@ -6,14 +6,16 @@ export enum AccountType {
     CreditCard = 1,
     Loan = 2,
     Cash = 3,
-    Other = 4
+    Other = 4,
+    Investment = 5
 }
 
 export enum InterestFrequency {
     Monthly = 0,
     Quarterly = 1,
     Yearly = 2,
-    Daily = 3
+    Daily = 3,
+    HalfYearly = 4
 }
 
 export interface CreditCardDetails {
@@ -44,4 +46,6 @@ export interface BankAccountDetails {
     interestRate?: number | null;
     interestFrequency?: InterestFrequency | null;
     minimumBalance?: number | null;
+    interestCreditDay?: number | null;
+    autoPostInterest?: boolean;
 }

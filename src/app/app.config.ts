@@ -1,5 +1,7 @@
-import { APP_INITIALIZER, ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection, isDevMode } from '@angular/core';
+import { APP_INITIALIZER, ApplicationConfig, LOCALE_ID, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection, isDevMode } from '@angular/core';
 import { provideRouter } from '@angular/router';
+import { registerLocaleData } from '@angular/common';
+import localeEnIN from '@angular/common/locales/en-IN';
 
 import { routes } from './app.routes';
 import { provideHttpClient, withInterceptors, withXsrfConfiguration, HttpClient } from '@angular/common/http';
@@ -20,6 +22,9 @@ import { environment } from '../environments/environment';
 import { catchError, from, of, switchMap } from 'rxjs';
 import { BackendStatusService } from './core/services/backend-status.service';
 import { provideServiceWorker } from '@angular/service-worker';
+
+// Indian number system everywhere the currency / number / date pipes are used: ₹3,12,000.00, 1,00,000.
+registerLocaleData(localeEnIN);
 
 function initializeApp(
   auth: Auth,
@@ -64,6 +69,7 @@ import { dataSyncInterceptor } from './core/interceptors/data-sync-interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    { provide: LOCALE_ID, useValue: 'en-IN' },
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
     provideRouter(routes),

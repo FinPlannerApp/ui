@@ -170,6 +170,35 @@
 
     </div>
 
+    <!-- Quick Cards: your usual entries, one tap adds today's copy -->
+    @if (visibleQuickCards().length) {
+    <section class="rounded-3xl glass-card border border-white/10 px-3 py-2.5" aria-label="Quick Cards">
+        <div class="flex items-center gap-2 mb-1.5">
+            <i class="pi pi-bolt text-amber-400 text-xs"></i>
+            <h2 class="text-xs font-black m-0 text-main">Quick Cards</h2>
+            <span class="text-[10px] text-muted">Your most repeated entries. Tap to add one with today's date.</span>
+        </div>
+        <div class="flex gap-2 overflow-x-auto no-scrollbar pb-0.5">
+            @for (c of visibleQuickCards(); track cardKey(c)) {
+            <div class="relative shrink-0">
+                <button type="button" (click)="addQuickCard(c)"
+                        class="text-left pl-3 pr-7 py-1.5 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+                        [attr.aria-label]="'Add ' + c.description + ' ' + c.amount">
+                    <span class="block text-xs font-extrabold text-main whitespace-nowrap">{{ c.description }}
+                        <span [ngClass]="c.type === 0 ? 'text-emerald-400' : 'text-rose-400'">{{ c.type === 0 ? '+' : '' }}₹{{ c.amount | number:'1.0-2' }}</span>
+                        @if (cardTaps()[cardKey(c)]) { <span class="ml-1 text-[10px] font-black text-emerald-400">×{{ cardTaps()[cardKey(c)] }}</span> }
+                    </span>
+                    <span class="block text-[10px] text-muted whitespace-nowrap">{{ cardCategoryName(c) || 'No category' }} · {{ cardAccountName(c) }} · used {{ c.count }}×</span>
+                </button>
+                <button type="button" (click)="hideQuickCard(c, $event)" class="absolute top-1 right-1 w-5 h-5 rounded-full bg-transparent border-0 text-muted hover:text-main cursor-pointer" [attr.aria-label]="'Hide card ' + c.description" title="Hide this card">
+                    <i class="pi pi-times text-[9px]"></i>
+                </button>
+            </div>
+            }
+        </div>
+    </section>
+    }
+
     <!-- Live KPI & Validation Summary Bar -->
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
         
@@ -337,8 +366,8 @@
                                 <p-autoComplete 
                                     [suggestions]="filteredCategories()" 
                                     [(ngModel)]="row.transactionCategoryId"
-                                    field="name" 
-                                    optionLabel="name" 
+                                    field="path" 
+                                    optionLabel="path" 
                                     (completeMethod)="filterCategories($event)"
                                     (onSelect)="onRowChange(row)" 
                                     (ngModelChange)="onRowChange(row)" 
@@ -349,7 +378,7 @@
                                     inputStyleClass="excel-input w-full h-full px-3 text-xs font-semibold bg-transparent border-none outline-none pr-8"
                                 >
                                     <ng-template let-item pTemplate="item">
-                                        <span class="text-xs font-semibold">{{ item.name }}</span>
+                                        <span class="text-xs font-semibold">{{ item.path || item.name }}</span>
                                     </ng-template>
                                 </p-autoComplete>
 
@@ -557,8 +586,8 @@
                                         <p-autoComplete 
                                             [suggestions]="filteredCategories()" 
                                             [(ngModel)]="row.transactionCategoryId"
-                                            field="name" 
-                                            optionLabel="name" 
+                                            field="path" 
+                                            optionLabel="path" 
                                             (completeMethod)="filterCategories($event)"
                                             (onSelect)="onRowChange(row)" 
                                             (ngModelChange)="onRowChange(row)"
@@ -569,7 +598,7 @@
                                             inputStyleClass="w-full text-xs font-semibold pr-8"
                                         >
                                             <ng-template let-item pTemplate="item">
-                                                <span class="text-xs font-semibold">{{ item.name }}</span>
+                                                <span class="text-xs font-semibold">{{ item.path || item.name }}</span>
                                             </ng-template>
                                         </p-autoComplete>
 

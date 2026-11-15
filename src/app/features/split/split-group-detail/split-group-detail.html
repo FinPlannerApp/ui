@@ -91,7 +91,7 @@
       <p-button icon="pi pi-file-excel" label="Export" (onClick)="exportToExcel()" [loading]="isExporting()"
         pTooltip="Download an Excel report with balances, who owes whom and every expense"
         styleClass="w-full rounded-2xl font-bold text-xs sm:text-sm shadow-sm" severity="secondary"></p-button>
-      @if (!isGroupClosed()) {
+      @if (!isGroupClosed() && !amGuest()) {
       <div class="col-span-2 sm:col-span-1 sm:w-auto">
         <p-button label="Add Expense" icon="pi pi-plus" (onClick)="openAddExpense()"
           styleClass="w-full rounded-2xl font-bold text-xs sm:text-sm shadow-sm"></p-button>
@@ -437,6 +437,7 @@
               </label>
             }
           </div>
+          <div class="mt-2"><app-attachments entityType="SplitExpense" [entityId]="expense.id" [readonly]="isGroupClosed()" [lazy]="true" [folder]="['Split receipts', group()?.name ?? 'Group']"></app-attachments></div>
         </div>
         }
       </div>
@@ -681,6 +682,14 @@
               <span>Nudge</span>
             </button>
             }
+            @if (canEmailRemind(debt)) {
+              <button (click)="emailReminder(debt)" [disabled]="remindingMemberId() === debt.fromMemberId"
+                pTooltip="Email a payment reminder" aria-label="Email a payment reminder"
+                class="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 transition-all border border-indigo-500/20 cursor-pointer flex items-center gap-1.5 text-xs font-bold shrink-0 disabled:opacity-50">
+                <i class="pi pi-envelope text-sm"></i>
+                <span>Remind</span>
+              </button>
+            }
             @if (canMemberSettleDebt(debt)) {
               <p-button [label]="iAmReceiverOf(debt) ? 'Record received' : 'Settle up'"
                 [icon]="iAmReceiverOf(debt) ? 'pi pi-download' : 'pi pi-wallet'" (onClick)="openSettleDialog(debt)"
@@ -790,6 +799,21 @@
         class="w-full resize-none" [ngModel]="expNotes()" (ngModelChange)="expNotes.set($event)"></textarea>
     </div>
 
+    @if (!editingExpenseId()) {
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">Repeat</label>
+        <p-select [options]="repeatOptions" [ngModel]="expRepeat()" (ngModelChange)="expRepeat.set($event)"
+          optionLabel="label" optionValue="value" appendTo="body" class="w-full"></p-select>
+        @if (expRepeat() !== null) {
+          <p-datepicker [ngModel]="expRepeatEnd()" (ngModelChange)="expRepeatEnd.set($event)" [showIcon]="true" [showClear]="true"
+            placeholder="Stop on (optional)" appendTo="body" class="w-full"></p-datepicker>
+          <span class="text-[0.7rem] text-[var(--text-muted)]">
+            Added again automatically with the same people and amounts. You can pause it any time in the group settings.
+          </span>
+        }
+      </div>
+    }
+
     <div class="flex flex-col gap-1.5">
       <div class="flex items-center justify-between">
         <label class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">Paid by</label>
@@ -840,7 +864,13 @@
     </div>
 
     <div class="flex flex-col gap-1.5">
-      <label class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">Split</label>
+      <div class="flex items-center justify-between gap-2">
+        <label class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">Split</label>
+        <button (click)="openItemize()" type="button"
+          class="text-xs text-[var(--primary-color)] bg-transparent border-none cursor-pointer p-0 flex items-center gap-1">
+          <i class="pi pi-list text-[0.7rem]"></i> Itemise bill (tax &amp; tip)
+        </button>
+      </div>
       <p-select [options]="splitTypeOptions" [ngModel]="expSplitType()" (ngModelChange)="onSplitTypeChange($event)"
         optionLabel="label" optionValue="value" appendTo="body" class="w-full"></p-select>
     </div>
@@ -952,6 +982,87 @@
     <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="showAddExpense.set(false)"></p-button>
     <p-button label="Save Expense" (onClick)="saveExpense()"></p-button>
   </ng-template>
+</p-dialog>
+
+<!-- Itemised bill -->
+<p-dialog [(visible)]="showItemize" header="Itemise bill" [modal]="true" [style]="{ width: '34rem' }" [breakpoints]="{ '640px': '96vw' }">
+  <div class="flex flex-col gap-3">
+    <p class="m-0 text-xs text-[var(--text-muted)]">
+      Add each item and tick who shared it. Tax and tip are split by what each person ordered.
+    </p>
+
+    @for (item of billItems(); track $index; let i = $index) {
+      <div class="p-3 rounded-xl bg-[var(--glass-bg)] border border-[var(--glass-border)] flex flex-col gap-2">
+        <div class="flex items-center gap-2">
+          <input type="text" pInputText class="flex-1 min-w-0" placeholder="Item (e.g. Pizza)" [attr.aria-label]="'Item ' + (i + 1) + ' name'"
+            [ngModel]="item.name" (ngModelChange)="updateBillItem(i, { name: $event })" />
+          <p-inputnumber [ngModel]="item.price" (ngModelChange)="updateBillItem(i, { price: $event })"
+            mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="2" [min]="0" placeholder="Price"
+            inputStyleClass="w-24" [attr.aria-label]="'Item ' + (i + 1) + ' price'"></p-inputnumber>
+          <button (click)="removeBillItem(i)" type="button" aria-label="Remove item"
+            class="text-[var(--text-muted)] hover:text-red-500 bg-transparent border-none cursor-pointer p-1.5">
+            <i class="pi pi-trash text-xs"></i>
+          </button>
+        </div>
+        <div class="flex flex-wrap gap-1.5">
+          @for (m of activeMembers(); track m.id) {
+            <button (click)="toggleBillMember(i, m.id)" type="button" [attr.aria-pressed]="item.memberIds.includes(m.id)"
+              class="px-2.5 py-1 rounded-full text-[0.7rem] font-bold border cursor-pointer"
+              [class.bg-[var(--primary-color,#3b82f6)]]="item.memberIds.includes(m.id)"
+              [class.text-white]="item.memberIds.includes(m.id)"
+              [class.bg-transparent]="!item.memberIds.includes(m.id)"
+              [class.text-[var(--text-muted)]]="!item.memberIds.includes(m.id)"
+              [class.border-[var(--glass-border)]]="!item.memberIds.includes(m.id)">
+              {{ m.name }}
+            </button>
+          }
+        </div>
+      </div>
+    }
+    <button (click)="addBillItem()" type="button"
+      class="self-start text-xs text-[var(--primary-color)] bg-transparent border-none cursor-pointer p-0 flex items-center gap-1">
+      <i class="pi pi-plus text-[0.7rem]"></i> Add item
+    </button>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-[var(--text-muted)] font-medium">Tax</label>
+        <div class="flex gap-2">
+          <p-inputnumber [ngModel]="billTaxValue()" (ngModelChange)="billTaxValue.set($event)" mode="decimal"
+            [minFractionDigits]="0" [maxFractionDigits]="2" [min]="0" inputStyleClass="w-full" class="flex-1 min-w-0"></p-inputnumber>
+          <p-select [options]="extraModeOptions" [ngModel]="billTaxMode()" (ngModelChange)="billTaxMode.set($event)"
+            optionLabel="label" optionValue="value" appendTo="body"></p-select>
+        </div>
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-[var(--text-muted)] font-medium">Tip</label>
+        <div class="flex gap-2">
+          <p-inputnumber [ngModel]="billTipValue()" (ngModelChange)="billTipValue.set($event)" mode="decimal"
+            [minFractionDigits]="0" [maxFractionDigits]="2" [min]="0" inputStyleClass="w-full" class="flex-1 min-w-0"></p-inputnumber>
+          <p-select [options]="extraModeOptions" [ngModel]="billTipMode()" (ngModelChange)="billTipMode.set($event)"
+            optionLabel="label" optionValue="value" appendTo="body"></p-select>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-3 rounded-xl bg-[var(--glass-bg)] border border-[var(--glass-border)] flex flex-col gap-1.5 text-xs">
+      <div class="flex justify-between text-[var(--text-muted)]">
+        <span>Items {{ billResult().subtotal | currency:currencyCode() }} · Tax {{ billResult().tax | currency:currencyCode() }} · Tip {{ billResult().tip | currency:currencyCode() }}</span>
+        <strong class="text-[var(--text-primary)]">Total {{ billResult().total | currency:currencyCode() }}</strong>
+      </div>
+      @for (p of billPeople(); track p.name) {
+        <div class="flex justify-between"><span>{{ p.name }}</span><strong>{{ p.amount | currency:currencyCode() }}</strong></div>
+      }
+      @if (billResult().unassignedItems > 0) {
+        <span class="text-rose-500 font-bold">{{ billResult().unassignedItems }} item(s) have nobody ticked.</span>
+      }
+    </div>
+
+    <div class="flex justify-end gap-2">
+      <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="showItemize.set(false)"></p-button>
+      <p-button label="Use this split" icon="pi pi-check" (onClick)="applyItemize()"></p-button>
+    </div>
+  </div>
 </p-dialog>
 
 <!-- Import to Ledger Dialog -->

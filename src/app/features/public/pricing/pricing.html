@@ -1,76 +1,23 @@
-<section class="px-4 py-8 md:px-8 max-w-5xl mx-auto">
-    <div class="text-center mb-6">
-        <h1 class="text-4xl md:text-5xl font-bold mb-3 zoom-in"
-            style="background: linear-gradient(135deg, #10b981, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-            Simple, Transparent Pricing</h1>
-        <p class="text-lg mb-4" style="color: var(--text-muted);">Choose the plan that works best for you.</p>
-
-        <!-- Hideable Toggle -->
-        <div class="flex justify-center items-center gap-3 mb-4">
-            <span style="color: var(--text-muted);">Show Pricing</span>
-            <p-togglebutton [(ngModel)]="showPricing" onIcon="pi pi-eye" offIcon="pi pi-eye-slash"></p-togglebutton>
+<div class="pub">
+  <div class="pub-bg" aria-hidden="true" style="height:34rem"><div class="pub-grid-bg"></div><div class="pub-orb a"></div><div class="pub-orb b"></div></div>
+  <div class="pub-wrap pub-content" style="max-width:56rem">
+    <header class="pub-page-head" appReveal>
+      <span class="pub-eyebrow">Pricing</span>
+      <h1 class="pub-h1" style="font-size:clamp(2.2rem,5vw,3.8rem)">Simple: it’s <span class="pub-grad">free</span></h1>
+      <p class="pub-lead">Everything in the app is free to use today. No card needed to sign up.</p>
+    </header>
+    <section class="pub-section" style="padding-block:2rem">
+      <div class="pub-card-lg" appReveal style="border-color:color-mix(in srgb,var(--pub-1) 45%,var(--pub-line))">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:.5rem">
+          <h2 class="pub-h3" style="font-size:1.4rem;margin:0">Free</h2>
+          <span style="font-size:2.6rem;font-weight:800;letter-spacing:-.03em">₹0</span>
         </div>
-    </div>
-
-    @if(showPricing) {
-    <div class="grid grid-cols-12 gap-4 grid-cols-12 gap-4">
-        <!-- Free Tier -->
-        <div class="col-span-12 md:col-span-6 p-3">
-            <div class="glass-card p-5 rounded-2xl text-center h-full">
-                <h3 class="text-lg font-semibold mb-2" style="color: var(--text-muted);">Free</h3>
-                <h2 class="text-4xl font-bold mb-1">₹0</h2>
-                <p class="mb-4" style="color: var(--text-muted);">forever</p>
-                <ul class="list-none p-0 text-left mb-5" style="color: var(--text-muted);">
-                    <li class="mb-2"><i class="pi pi-check-circle mr-2" style="color: #10b981;"></i>Unlimited Accounts
-                    </li>
-                    <li class="mb-2"><i class="pi pi-check-circle mr-2" style="color: #10b981;"></i>Full Analytics
-                        Dashboard</li>
-                    <li class="mb-2"><i class="pi pi-check-circle mr-2" style="color: #10b981;"></i>Transaction History
-                        & Search</li>
-                    <li class="mb-2"><i class="pi pi-check-circle mr-2" style="color: #10b981;"></i>Custom Categories
-                    </li>
-                    <li class="mb-2"><i class="pi pi-check-circle mr-2" style="color: #10b981;"></i>Dark & Light Mode
-                    </li>
-                    <li class="mb-2"><i class="pi pi-times-circle mr-2" style="color: var(--text-muted);"></i>Priority
-                        Support</li>
-                </ul>
-                <a routerLink="/register" class="no-underline">
-                    <p-button label="Get Started Free" styleClass="w-full p-button-outlined"></p-button>
-                </a>
-            </div>
-        </div>
-
-        <!-- Pro Tier -->
-        <div class="col-span-12 md:col-span-6 p-3">
-            <div class="glass-card p-5 rounded-2xl text-center h-full" style="border: 2px solid #10b981;">
-                <span class="inline-block px-3 py-1 text-sm font-bold rounded-xl mb-3"
-                    style="background: linear-gradient(135deg, #10b981, #38bdf8); color: white;">COMING SOON</span>
-                <h3 class="text-lg font-semibold mb-2" style="color: var(--text-muted);">Pro</h3>
-                <h2 class="text-4xl font-bold mb-1">₹299</h2>
-                <p class="mb-4" style="color: var(--text-muted);">/month</p>
-                <ul class="list-none p-0 text-left mb-5" style="color: var(--text-muted);">
-                    <li class="mb-2"><i class="pi pi-check-circle mr-2" style="color: #10b981;"></i>Everything in Free
-                    </li>
-                    <li class="mb-2"><i class="pi pi-check-circle mr-2" style="color: #10b981;"></i>Priority Support
-                    </li>
-                    <li class="mb-2"><i class="pi pi-check-circle mr-2" style="color: #10b981;"></i>Export Reports
-                        (PDF/CSV)</li>
-                    <li class="mb-2"><i class="pi pi-check-circle mr-2" style="color: #10b981;"></i>Advanced Insights &
-                        Alerts</li>
-                    <li class="mb-2"><i class="pi pi-check-circle mr-2" style="color: #10b981;"></i>Team Collaboration
-                    </li>
-                    <li class="mb-2"><i class="pi pi-check-circle mr-2" style="color: #10b981;"></i>Dedicated Account
-                        Manager</li>
-                </ul>
-                <p-button label="Notify Me" icon="pi pi-bell" styleClass="w-full" [disabled]="true"></p-button>
-            </div>
-        </div>
-    </div>
-    } @else {
-    <div class="text-center p-6 glass-card rounded-2xl">
-        <i class="pi pi-eye-slash text-5xl mb-3" style="color: var(--text-muted);"></i>
-        <p class="text-lg" style="color: var(--text-muted);">Pricing details are currently hidden. Toggle the switch
-            above to reveal plans.</p>
-    </div>
-    }
-</section>
+        <ul class="pub-list" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,18rem),1fr))">
+          @for (i of included; track i) { <li><i class="pi pi-check-circle"></i><span>{{ i }}</span></li> }
+        </ul>
+        <div class="pub-cta-row"><a routerLink="/register" class="pub-btn pub-btn-primary">Get started free <i class="pi pi-arrow-right"></i></a></div>
+      </div>
+      <p appReveal style="text-align:center;color:var(--pub-mute);margin-top:1.5rem;font-size:.92rem">If paid options are ever introduced, they will be announced in the app and here before anything changes.</p>
+    </section>
+  </div>
+</div>

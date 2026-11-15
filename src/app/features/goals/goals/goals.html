@@ -91,8 +91,12 @@
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <span class="font-medium">{{ goal.name }}</span>
-                @if (goal.isAchieved) {
-                  <p-tag severity="success" value="Achieved"></p-tag>
+                @switch (goal.status) {
+                  @case ('achieved') { <p-tag severity="success" value="Achieved"></p-tag> }
+                  @case ('on-track') { <p-tag severity="success" value="On track"></p-tag> }
+                  @case ('behind') { <p-tag severity="warn" value="Behind"></p-tag> }
+                  @case ('not-started') { <p-tag severity="warn" value="Not started"></p-tag> }
+                  @case ('overdue') { <p-tag severity="danger" value="Past target date"></p-tag> }
                 }
                 @if (goal.savingsBucketName) {
                   <span class="text-xs text-secondary">via {{ goal.savingsBucketName }}</span>
@@ -104,15 +108,31 @@
               </div>
             </div>
 
-            <div class="w-full rounded overflow-hidden" style="height: 8px; background: rgba(255,255,255,0.08);">
+            <div class="relative w-full rounded" style="height: 8px; background: rgba(255,255,255,0.08);">
               <div class="h-full rounded" [style.width.%]="goal.progressPercent"
-                [style.background]="goal.isAchieved ? 'var(--green-500)' : 'var(--primary-color)'"></div>
+                [style.background]="goal.status === 'achieved' ? 'var(--green-500)' : goal.status === 'behind' || goal.status === 'not-started' || goal.status === 'overdue' ? '#f59e0b' : 'var(--primary-color)'"></div>
+              @for (m of [25, 50, 75]; track m) {
+                <span class="absolute top-0 bottom-0 w-px" [style.left.%]="m"
+                  [style.background]="goal.progressPercent >= m ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.2)'"></span>
+              }
+              @if (goal.expectedPercent !== null && goal.status !== 'achieved') {
+                <span class="absolute w-0.5 rounded" style="top:-3px;bottom:-3px;background:#fff" [style.left.%]="goal.expectedPercent"
+                  title="Where you'd be today if you saved evenly toward the date"></span>
+              }
             </div>
 
             <div class="flex items-center justify-between text-sm">
               <span>{{ goal.currentAmount | currency:'INR' }} of {{ goal.targetAmount | currency:'INR' }}</span>
               <span class="text-secondary">{{ goal.progressPercent | number:'1.0-0' }}%</span>
             </div>
+
+            @if (goal.status !== 'achieved' && goal.nextMilestonePercent) {
+              <p class="text-xs text-secondary m-0">
+                Next milestone {{ goal.nextMilestonePercent }}%
+                @if (goal.projectedDate) { · at your pace you finish around {{ goal.projectedDate | date:'MMM y' }} }
+                @if (goal.status === 'behind' || goal.status === 'not-started') { · the white mark shows where you should be today }
+              </p>
+            }
 
             @if (goal.requiredMonthlySaving !== null && !goal.isAchieved) {
               <p class="text-xs text-secondary m-0">

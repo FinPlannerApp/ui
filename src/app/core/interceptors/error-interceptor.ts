@@ -26,7 +26,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
                         summary = 'Bad Request';
                         if (error.error && typeof error.error === 'object') {
                             // Try to extract a message if available
-                            errorMessage = error.error.message || error.error.title || JSON.stringify(error.error);
+                            errorMessage = error.error.message || error.error.title || 'The request was not valid.';
                         } else {
                             errorMessage = error.message;
                         }

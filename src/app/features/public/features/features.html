@@ -1,21 +1,48 @@
-<section class="px-4 py-8 md:px-8 max-w-6xl mx-auto">
-    <div class="text-center mb-6">
-        <h1 class="text-4xl md:text-5xl font-bold mb-3 zoom-in"
-            style="background: linear-gradient(135deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-            Powerful Features</h1>
-        <p class="text-lg" style="color: var(--text-muted); max-width: 550px; margin: 0 auto;">Everything you need to
-            master your personal finances, built with care.</p>
-    </div>
+<div class="pub">
+  <div class="pub-bg" aria-hidden="true" style="height:34rem"><div class="pub-grid-bg"></div><div class="pub-orb a"></div><div class="pub-orb b"></div></div>
+  <div class="pub-wrap pub-content">
+    <header class="pub-page-head" appReveal>
+      <span class="pub-eyebrow">Features</span>
+      <h1 class="pub-h1" style="font-size:clamp(2.2rem,5vw,3.8rem)">Everything you need to <span class="pub-grad">run your money</span></h1>
+      <p class="pub-lead">From daily spending to credit cards, loans and shared trips — one app, one honest picture.</p>
+    </header>
 
-    <div class="grid grid-cols-12 gap-4 grid-cols-12 gap-4">
-        @for(feature of featureList; track feature.title) {
-        <div class="col-span-12 md:col-span-6 lg:col-span-4 p-3">
-            <div class="glass-card p-5 rounded-2xl h-full">
-                <i [class]="feature.icon + ' text-4xl mb-3'" [style.color]="feature.color"></i>
-                <h3 class="text-xl font-bold mb-2">{{ feature.title }}</h3>
-                <p style="color: var(--text-muted);">{{ feature.description }}</p>
-            </div>
+    <nav class="pub-trust" style="justify-content:center;margin:1.5rem 0 0" aria-label="Sections">
+      @for (g of groups; track g.id) { <a [href]="'#' + g.id" class="pub-eyebrow" style="text-decoration:none;color:inherit">{{ g.title }}</a> }
+    </nav>
+
+    @for (g of groups; track g.id) {
+    <section [id]="g.id" class="pub-section" style="padding-block:clamp(2rem,5vw,3.5rem);scroll-margin-top:5rem">
+      <div class="pub-center" appReveal style="text-align:left">
+        <div style="display:flex;align-items:center;gap:.9rem">
+          <span class="pub-ico" style="margin:0" [style.--tile]="g.color"><i class="pi" [class]="g.icon"></i></span>
+          <div><h2 class="pub-h3" style="font-size:1.6rem;margin:0">{{ g.title }}</h2><p style="margin:.15rem 0 0;color:var(--pub-mute)">{{ g.blurb }}</p></div>
         </div>
+      </div>
+      <div style="display:grid;gap:1rem;margin-top:1.4rem;grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr))">
+        @for (it of g.items; track it.t; let i = $index) {
+          <article class="pub-tile" appSpotlight [appReveal]="i * 70" [style.--tile]="g.color"><h3 class="pub-h3">{{ it.t }}</h3><p>{{ it.d }}</p></article>
         }
-    </div>
-</section>
+      </div>
+    </section>
+    }
+
+    <section class="pub-section">
+      <div class="pub-card-lg" appReveal>
+        <h2 class="pub-h3" style="font-size:1.4rem">On the roadmap</h2>
+        <p style="color:var(--pub-mute);margin-bottom:1rem">Not available yet — these are what we’re working towards.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:.6rem">
+          @for (s of soon; track s) { <span class="pub-eyebrow"><i class="pi pi-clock"></i>{{ s }}</span> }
+        </div>
+        <div class="pub-cta-row"><a routerLink="/feedback" class="pub-btn pub-btn-ghost">Vote on what’s next <i class="pi pi-arrow-right"></i></a></div>
+      </div>
+    </section>
+
+    <section class="pub-section" style="padding-top:0">
+      <div class="pub-cta" appReveal>
+        <h2 class="pub-h2" style="margin-top:0">Ready when you are</h2>
+        <a routerLink="/register" class="pub-btn pub-btn-primary">Create free account <i class="pi pi-arrow-right"></i></a>
+      </div>
+    </section>
+  </div>
+</div>

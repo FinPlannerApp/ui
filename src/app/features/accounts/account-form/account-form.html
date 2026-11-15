@@ -137,6 +137,17 @@
         </app-form-field>
       </div>
       <div class="col-span-12 md:col-span-6">
+        <app-form-field label="Interest credited on day of month" inputId="interestCreditDay">
+          <p-inputNumber id="interestCreditDay" formControlName="interestCreditDay" [min]="1" [max]="31" [useGrouping]="false" placeholder="e.g. 1 (blank = last day)" class="w-full"></p-inputNumber>
+        </app-form-field>
+      </div>
+      <div class="col-span-12 md:col-span-6 flex items-end">
+        <label class="flex items-start gap-2 text-sm pb-2">
+          <p-checkbox formControlName="autoPostInterest" [binary]="true" inputId="autoPostInterest"></p-checkbox>
+          <span>Record the estimated interest automatically on that day <span class="block text-xs opacity-70">You can edit the entry to match your bank's actual credit.</span></span>
+        </label>
+      </div>
+      <div class="col-span-12 md:col-span-6">
         <app-form-field label="Minimum Balance" inputId="minimumBalance">
           <p-inputNumber id="minimumBalance" formControlName="minimumBalance" mode="currency" currency="INR" locale="en-IN" class="w-full"></p-inputNumber>
         </app-form-field>
@@ -153,8 +164,8 @@
   }
 
   <div class="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-[var(--glass-border)]">
-    <p-button label="Cancel" icon="pi pi-times" [text]="true" severity="secondary" (onClick)="ref.close()"></p-button>
-    <p-button [label]="isEditMode ? 'Update Account' : 'Create Account'"
+    @if (!embedded) { <p-button label="Cancel" icon="pi pi-times" [text]="true" severity="secondary" (onClick)="cancel()"></p-button> }
+    <p-button [label]="isEditMode ? 'Save changes' : 'Create Account'"
       [icon]="isEditMode ? 'pi pi-check' : 'pi pi-plus'" type="submit" [loading]="isSubmitting()"
       [disabled]="accountForm.invalid"></p-button>
   </div>

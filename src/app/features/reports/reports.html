@@ -2,6 +2,95 @@
   <app-page-header title="Reports" backLink="/app/dashboard" />
 
   <p-card>
+    <div class="flex flex-col gap-3">
+      <div class="flex flex-wrap items-end gap-2">
+        <div class="flex flex-col gap-1">
+          <label class="text-xs text-[var(--text-muted)] font-medium">View</label>
+          <p-select [options]="periodModes" [ngModel]="periodMode()" (ngModelChange)="setPeriodMode($event)"
+            optionLabel="label" optionValue="value" appendTo="body" styleClass="w-40"></p-select>
+        </div>
+        @if (periodMode() === 'month') {
+          <div class="flex flex-col gap-1">
+            <label class="text-xs text-[var(--text-muted)] font-medium">Month</label>
+            <p-select [options]="months" [ngModel]="periodMonth()" (ngModelChange)="setPeriodMonth($event)"
+              optionLabel="label" optionValue="value" appendTo="body" styleClass="w-40"></p-select>
+          </div>
+        }
+        <div class="flex flex-col gap-1">
+          <label class="text-xs text-[var(--text-muted)] font-medium">Year</label>
+          <p-select [options]="yearOptions" [ngModel]="periodYear()" (ngModelChange)="setPeriodYear($event)"
+            optionLabel="label" optionValue="value" appendTo="body" styleClass="w-28"></p-select>
+        </div>
+        <div class="flex gap-2 ml-auto">
+          <p-button label="Excel" icon="pi pi-file-excel" severity="secondary" [outlined]="true"
+            [loading]="exporting() === 'excel'" [disabled]="!period() || !!exporting()" (onClick)="exportPeriod('excel')"></p-button>
+          <p-button label="PDF" icon="pi pi-file-pdf" severity="secondary" [outlined]="true"
+            [loading]="exporting() === 'pdf'" [disabled]="!period() || !!exporting()" (onClick)="exportPeriod('pdf')"></p-button>
+        </div>
+      </div>
+
+      @if (periodLoading()) {
+        <div class="flex justify-center p-6"><p-progressSpinner styleClass="w-8 h-8"></p-progressSpinner></div>
+      } @else if (period(); as p) {
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div class="p-3 rounded-xl bg-[var(--glass-bg)] border border-[var(--glass-border)]">
+            <div class="text-xs text-[var(--text-muted)]">Income</div>
+            <div class="text-lg font-bold">{{ p.income | currency:'INR' }}</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[var(--glass-bg)] border border-[var(--glass-border)]">
+            <div class="text-xs text-[var(--text-muted)]">Expenses</div>
+            <div class="text-lg font-bold">{{ p.expenses | currency:'INR' }}</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[var(--glass-bg)] border border-[var(--glass-border)]">
+            <div class="text-xs text-[var(--text-muted)]">Net</div>
+            <div class="text-lg font-bold" [class.text-red-500]="p.net < 0">{{ p.net | currency:'INR' }}</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[var(--glass-bg)] border border-[var(--glass-border)]">
+            <div class="text-xs text-[var(--text-muted)]">Savings rate</div>
+            <div class="text-lg font-bold">{{ p.savingsRate }}%</div>
+          </div>
+        </div>
+
+        @if (p.months.length > 1) {
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead><tr class="text-left text-xs text-[var(--text-muted)]">
+                <th class="py-1">Month</th><th class="py-1 text-right">Income</th><th class="py-1 text-right">Expenses</th><th class="py-1 text-right">Net</th>
+              </tr></thead>
+              <tbody>
+                @for (m of p.months; track m.month) {
+                  <tr class="border-t border-[var(--glass-border)]">
+                    <td class="py-1.5">{{ m.label }}</td>
+                    <td class="py-1.5 text-right">{{ m.income | currency:'INR' }}</td>
+                    <td class="py-1.5 text-right">{{ m.expenses | currency:'INR' }}</td>
+                    <td class="py-1.5 text-right" [class.text-red-500]="m.net < 0">{{ m.net | currency:'INR' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+
+        <div class="flex flex-col gap-2">
+          <span class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Spending by category</span>
+          @for (c of p.categories; track c.name) {
+            <div class="flex items-center gap-2 text-sm">
+              <span class="w-36 truncate">{{ c.name }}</span>
+              <div class="flex-1 h-2 rounded-full bg-[var(--glass-bg)] overflow-hidden">
+                <div class="h-full rounded-full bg-[var(--primary-color,#3b82f6)]" [style.width.%]="c.amount / maxCategory() * 100"></div>
+              </div>
+              <span class="w-28 text-right">{{ c.amount | currency:'INR' }}</span>
+              <span class="w-12 text-right text-xs text-[var(--text-muted)]">{{ c.percent }}%</span>
+            </div>
+          } @empty {
+            <span class="text-sm text-[var(--text-muted)]">No spending in this period.</span>
+          }
+        </div>
+      }
+    </div>
+  </p-card>
+
+  <p-card header="Other reports (CSV)">
     <form [formGroup]="form" (ngSubmit)="downloadReport()" class="flex flex-col gap-2 p-fluid">
 
       <app-form-field label="Report Type" inputId="reportType">

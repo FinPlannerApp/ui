@@ -9,6 +9,11 @@ export interface Goal {
   currentAmount: number;
   progressPercent: number;
   requiredMonthlySaving: number | null;
+  status: 'achieved' | 'no-date' | 'overdue' | 'on-track' | 'behind' | 'not-started';
+  expectedPercent: number | null;
+  projectedDate: string | null;
+  nextMilestonePercent: number | null;
+  milestonesReached: number;
 }
 
 export interface UpsertGoalRequest {

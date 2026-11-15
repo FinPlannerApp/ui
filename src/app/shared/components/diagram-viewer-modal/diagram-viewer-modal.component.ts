@@ -1,6 +1,7 @@
 import { Component, inject, HostListener, ElementRef, ViewChild, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import DOMPurify from 'dompurify';
 import { DiagramViewerModalService } from './diagram-viewer-modal.service';
 import { NotificationService } from '../../../core/services/notification.service';
 
@@ -161,7 +162,13 @@ export class DiagramViewerModalComponent {
   startY = 0;
 
   get safeSvg(): SafeHtml {
-    return this.sanitizer.bypassSecurityTrustHtml(this.modalService.svgContent());
+    // The SVG came from the diagram renderer; clean it again before trusting it (SVG + the HTML inside foreignObject labels).
+    const clean = DOMPurify.sanitize(this.modalService.svgContent(), {
+      USE_PROFILES: { svg: true, svgFilters: true, html: true },
+      ADD_TAGS: ['foreignObject'],
+      HTML_INTEGRATION_POINTS: { foreignobject: true }
+    });
+    return this.sanitizer.bypassSecurityTrustHtml(clean);
   }
 
   @HostListener('window:keydown', ['$event'])

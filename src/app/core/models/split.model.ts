@@ -8,6 +8,10 @@ export interface SplitMember {
   linkedUserId: string | null;
   upiId: string | null;
   leftAt?: string | null;
+  /** Co-admin promoted by the creator (the creator is always an admin). */
+  isAdmin?: boolean;
+  /** View-only member (set by an admin): can see everything but not add expenses or pay. */
+  isGuest?: boolean;
 }
 
 export interface SplitGroup {
@@ -19,6 +23,8 @@ export interface SplitGroup {
   simplifyDebts: boolean;
   /** A hidden two-person ledger for a friend (expenses outside any group). */
   isDirect?: boolean;
+  /** Email a weekly reminder to members who still owe money. */
+  autoRemind?: boolean;
   /** Optional trip dates (ISO). */
   startDate?: string | null;
   endDate?: string | null;
@@ -31,6 +37,7 @@ export interface SplitGroup {
 export interface UpdateGroupSettingsRequest {
   currency: string;
   simplifyDebts: boolean;
+  autoRemind: boolean;
   /** YYYY-MM-DD */
   startDate: string | null;
   endDate: string | null;
@@ -335,3 +342,46 @@ export interface SettleWithPersonResult {
 }
 
 
+
+// ── Recurring expenses & reminders ──────────────────────────────────────────
+export enum RecurrenceFrequency { Daily = 0, Weekly = 1, Monthly = 2 }
+
+export interface CreateRecurringRequest {
+  groupId: number;
+  description: string;
+  amount: number;
+  category: string | null;
+  notes: string | null;
+  splitType: SplitType;
+  payers: { memberId: number; amountPaid: number }[];
+  participants: ExpenseParticipantLine[];
+  frequency: RecurrenceFrequency;
+  /** YYYY-MM-DD of the first occurrence. */
+  startDate: string;
+  endDate: string | null;
+  /** The expense for startDate was just added, so the schedule begins with the next one. */
+  firstAlreadyAdded: boolean;
+}
+
+export interface RecurringExpense {
+  id: number;
+  groupId: number;
+  description: string;
+  amount: number;
+  category: string | null;
+  frequency: RecurrenceFrequency;
+  nextRunDate: string;
+  endDate: string | null;
+  isActive: boolean;
+  lastRunAt: string | null;
+  lastError: string | null;
+  runCount: number;
+  paidBy: string;
+  participantCount: number;
+  createdByUserId: string;
+}
+
+export interface ReminderResult {
+  sentTo: string;
+  amount: number;
+}

@@ -71,6 +71,7 @@ export const routes: Routes = [
         path: 'about',
         loadComponent: () => import('./features/public/about/about').then(m => m.About)
       },
+      // Pricing page is intentionally hidden for now (component kept in features/public/pricing).
       {
         path: 'blog',
         loadComponent: () => import('./features/public/blog/blog').then(m => m.Blog)
@@ -97,6 +98,30 @@ export const routes: Routes = [
     loadComponent: () => import('./core/layout/layout/layout').then(m => m.Layout),
     children: [
       {
+        path: 'accounts/overview',
+        loadComponent: () => import('./features/accounts/accounts-overview/accounts-overview').then(m => m.AccountsOverview)
+      },
+      {
+        path: 'accounts/what-if',
+        loadComponent: () => import('./features/accounts/what-if/what-if').then(m => m.WhatIfPage)
+      },
+      {
+        path: 'accounts/settings',
+        loadComponent: () => import('./features/accounts/account-settings/account-settings').then(m => m.AccountSettingsPage)
+      },
+      {
+        path: 'accounts/insights',
+        loadComponent: () => import('./features/accounts/accounts-insights/accounts-insights').then(m => m.AccountsInsights)
+      },
+      {
+        path: 'cards',
+        loadComponent: () => import('./features/cards/cards').then(m => m.Cards)
+      },
+      {
+        path: 'outlook',
+        loadComponent: () => import('./features/forecast/forecast').then(m => m.Outlook)
+      },
+      {
         path: 'accounts/data-health',
         loadComponent: () => import('./features/accounts/data-health/data-health').then(m => m.DataHealth)
       },
@@ -105,8 +130,36 @@ export const routes: Routes = [
         loadComponent: () => import('./features/accounts/accounts-page/accounts-page').then(m => m.AccountsPage)
       },
       {
+        path: 'accounts/:id/settings',
+        loadComponent: () => import('./features/accounts/account-detail-settings/account-detail-settings').then(m => m.AccountDetailSettings)
+      },
+      {
+        path: 'undo',
+        loadComponent: () => import('./features/undo/undo-center').then(m => m.UndoCenter)
+      },
+      {
+        path: 'tips',
+        loadComponent: () => import('./features/tips/tips').then(m => m.Tips)
+      },
+      {
         path: 'accounts/:id/transactions',
         loadComponent: () => import('./features/transactions/transaction-list/transaction-list').then(m => m.TransactionList)
+      },
+      {
+        path: 'investments',
+        loadComponent: () => import('./features/investments/investments').then(m => m.Investments)
+      },
+      {
+        path: 'obligations',
+        loadComponent: () => import('./features/obligations/obligations').then(m => m.Obligations)
+      },
+      {
+        path: 'insurance',
+        loadComponent: () => import('./features/insurance/insurance').then(m => m.Insurance)
+      },
+      {
+        path: 'statement-import',
+        loadComponent: () => import('./features/transactions/statement-import/statement-import').then(m => m.StatementImport)
       },
       {
         path: 'bulk-transaction-add',
@@ -127,16 +180,23 @@ export const routes: Routes = [
       },
       {
         path: 'transaction-categories',
-        loadComponent: () => import('./features/shared/resource-page/resource-page').then(m => m.ResourcePage),
-        data: {
-          title: 'Transaction Categories',
-          endpoint: 'TransactionCategories',
-          columns: categoryColumns,
-          backLinkPath: '/app/dashboard',
-          backLinkLabel: 'Back to Dashboard',
-          formConfig: { endpoint: 'TransactionCategories' },
-          loadFormComponent: () => import('./features/categories/category-form/category-form').then(m => m.CategoryForm)
-        }
+        loadComponent: () => import('./features/categories/category-manager/category-manager').then(m => m.CategoryManager)
+      },
+      {
+        path: 'transactions/overview',
+        loadComponent: () => import('./features/transactions/transactions-overview/transactions-overview').then(m => m.TransactionsOverview)
+      },
+      {
+        path: 'quick-add',
+        loadComponent: () => import('./features/transactions/quick-add-route/quick-add-route').then(m => m.QuickAddRoute)
+      },
+      {
+        path: 'transactions/rules',
+        loadComponent: () => import('./features/transactions/transaction-rules/transaction-rules').then(m => m.TransactionRulesPage)
+      },
+      {
+        path: 'transactions/settings',
+        loadComponent: () => import('./features/transactions/transaction-settings/transaction-settings').then(m => m.TransactionSettingsPage)
       },
       {
         path: 'transactions',
@@ -151,16 +211,40 @@ export const routes: Routes = [
         loadComponent: () => import('./features/dashboard/dashboard/dashboard').then(m => m.Dashboard)
       },
       {
+        // /app/budgets → live dashboard; /manage → the list + add/edit form; /settings → alert levels
         path: 'budgets',
-        loadComponent: () => import('./features/shared/resource-page/resource-page').then(m => m.ResourcePage),
-        data: {
-          title: 'Budgets',
-          endpoint: 'Budgets',
-          columns: budgetColumns,
-          backLinkPath: '/app/dashboard',
-          backLinkLabel: 'Back to Dashboard',
-          loadFormComponent: () => import('./features/budgets/budget-form/budget-form').then(m => m.BudgetForm)
-        }
+        loadComponent: () => import('./features/budgets/budgets-hub/budgets-hub').then(m => m.BudgetsHub),
+        children: [
+          {
+            path: '',
+            pathMatch: 'full',
+            loadComponent: () => import('./features/budgets/budgets-dashboard/budgets-dashboard').then(m => m.BudgetsDashboard)
+          },
+          {
+            path: 'manage',
+            loadComponent: () => import('./features/shared/resource-page/resource-page').then(m => m.ResourcePage),
+            data: {
+              title: 'Manage Budgets',
+              endpoint: 'Budgets',
+              columns: budgetColumns,
+              backLinkPath: '/app/budgets',
+              backLinkLabel: 'Back to Budgets',
+              loadFormComponent: () => import('./features/budgets/budget-form/budget-form').then(m => m.BudgetForm)
+            }
+          },
+          {
+            path: 'settings',
+            loadComponent: () => import('./features/budgets/budget-settings/budget-settings').then(m => m.BudgetSettingsPage)
+          }
+        ]
+      },
+      {
+        path: 'recurring-transactions/overview',
+        loadComponent: () => import('./features/recurring-transactions/recurring-overview/recurring-overview').then(m => m.RecurringOverview)
+      },
+      {
+        path: 'recurring-transactions/settings',
+        loadComponent: () => import('./features/recurring-transactions/recurring-settings/recurring-settings').then(m => m.RecurringSettingsPage)
       },
       {
         path: 'recurring-transactions',
@@ -173,6 +257,14 @@ export const routes: Routes = [
           backLinkLabel: 'Back to Dashboard',
           loadFormComponent: () => import('./features/recurring-transactions/recurring-transaction-form/recurring-transaction-form').then(m => m.RecurringTransactionForm)
         }
+      },
+      {
+        path: 'subscriptions/overview',
+        loadComponent: () => import('./features/subscriptions/subscriptions-overview/subscriptions-overview').then(m => m.SubscriptionsOverview)
+      },
+      {
+        path: 'subscriptions/settings',
+        loadComponent: () => import('./features/subscriptions/subscription-settings/subscription-settings').then(m => m.SubscriptionSettingsPage)
       },
       {
         path: 'subscriptions',

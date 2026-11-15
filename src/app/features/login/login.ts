@@ -75,12 +75,14 @@ export class Login {
         this.isSubmitting = false;
         if (response.isSuccess) {
           this.awaitingDeviceCode = false;
-          const returnUrl = this.route.snapshot.queryParams['returnUrl'] || sessionStorage.getItem('pending_return_url');
+          // Only same-site relative paths are allowed (blocks open redirect / javascript: URLs).
+          const rawReturn = this.route.snapshot.queryParams['returnUrl'] || sessionStorage.getItem('pending_return_url');
+          const returnUrl = typeof rawReturn === 'string' && /^\/(?![\/\\])/.test(rawReturn) ? rawReturn : null;
+          sessionStorage.removeItem('pending_return_url');
           if (returnUrl) {
-            sessionStorage.removeItem('pending_return_url');
             this.router.navigateByUrl(returnUrl).then(success => {
               if (!success) {
-                window.location.href = returnUrl;
+                this.router.navigate(['/app/dashboard']);
               }
             });
           } else {

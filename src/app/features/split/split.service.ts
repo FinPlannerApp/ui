@@ -6,7 +6,7 @@ import {
   ExpensePage, GroupBalances, GroupExport, GroupFullDetails, ImportToLedgerRequest, ImportToLedgerResult,
   InviteCreated, InvitePreview, PaymentRequest, PublicGroupView, Settlement, SplitExpense, SplitGroup, SplitMember,
   UpdateSettlementRequest, UpdateGroupSettingsRequest, CreateFriendRequest, SplitDashboard,
-  SettleWithPersonRequest, SettleWithPersonResult, ExpenseFilters, ActivityPage, GlobalExpenseHit
+  SettleWithPersonRequest, SettleWithPersonResult, CreateRecurringRequest, RecurringExpense, ReminderResult, ExpenseFilters, ActivityPage, GlobalExpenseHit
 } from '../../core/models/split.model';
 
 @Injectable({ providedIn: 'root' })
@@ -202,6 +202,12 @@ export class SplitService {
     return result.value;
   }
 
+  async resetShareToken(groupId: number): Promise<string> {
+    const result = await firstValueFrom(this.api.post<string>(`Split/groups/${groupId}/share-token/reset`, {}));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Could not reset the share link.');
+    return result.value;
+  }
+
   async previewInvite(token: string): Promise<InvitePreview> {
     const result = await firstValueFrom(this.api.get<InvitePreview>(`Split/invites/${token}/preview`));
     if (!result.isSuccess) throw new Error(result.error?.description || 'Could not load this invite.');
@@ -249,6 +255,50 @@ export class SplitService {
     if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to merge members.');
   }
 
+  // ── Recurring expenses & reminders ─────────────────────────────────────────
+  async getRecurring(groupId: number): Promise<RecurringExpense[]> {
+    const result = await firstValueFrom(this.api.get<RecurringExpense[]>(`Split/groups/${groupId}/recurring`));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to load recurring expenses.');
+    return result.value ?? [];
+  }
+
+  async createRecurring(req: CreateRecurringRequest): Promise<RecurringExpense> {
+    const result = await firstValueFrom(this.api.post<RecurringExpense>('Split/recurring', req));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to set up the repeating expense.');
+    return result.value;
+  }
+
+  async setRecurringActive(id: number, active: boolean): Promise<void> {
+    const result = await firstValueFrom(this.api.put<boolean>(`Split/recurring/${id}/active`, { active }));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to update.');
+  }
+
+  async deleteRecurring(id: number): Promise<void> {
+    const result = await firstValueFrom(this.api.delete<boolean>(`Split/recurring/${id}`));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to delete.');
+  }
+
+  /** Emails a member who owes money (once per day per person). */
+  async sendReminder(groupId: number, fromMemberId: number): Promise<ReminderResult> {
+    const result = await firstValueFrom(this.api.post<ReminderResult>('Split/reminders', { groupId, fromMemberId }));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to send reminder.');
+    return result.value;
+  }
+
+  /** Creator only: make a member a co-admin, or take it away. */
+  async setMemberAdmin(memberId: number, isAdmin: boolean): Promise<SplitMember> {
+    const result = await firstValueFrom(this.api.put<SplitMember>(`Split/members/${memberId}/admin`, { isAdmin }));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to change admin.');
+    return result.value;
+  }
+
+  /** Admin only: make a member view-only (guest), or a full member again. */
+  async setMemberGuest(memberId: number, isGuest: boolean): Promise<SplitMember> {
+    const result = await firstValueFrom(this.api.put<SplitMember>(`Split/members/${memberId}/guest`, { isGuest }));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to change guest access.');
+    return result.value;
+  }
+
   /** Adds a friend: a hidden two-person ledger for expenses outside any group. */
   async createFriend(req: CreateFriendRequest): Promise<SplitGroup> {
     const result = await firstValueFrom(this.api.post<SplitGroup>('Split/friends', req));
@@ -290,6 +340,11 @@ export class SplitService {
   async removeMember(memberId: number): Promise<void> {
     const result = await firstValueFrom(this.api.delete<boolean>(`Split/members/${memberId}`));
     if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to remove member.');
+  }
+
+  async unlinkMember(memberId: number): Promise<void> {
+    const result = await firstValueFrom(this.api.post<boolean>(`Split/members/${memberId}/unlink`, {}));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Failed to unlink member.');
   }
 
   async deleteGroup(groupId: number): Promise<void> {

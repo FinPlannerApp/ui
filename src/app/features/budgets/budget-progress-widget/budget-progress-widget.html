@@ -26,12 +26,12 @@
 
             <p-progressBar [value]="budget.percentageUsed > 100 ? 100 : budget.percentageUsed" [showValue]="false"
                 [style]="{'height': '6px', 'border-radius': '10px'}"
-                [color]="budget.percentageUsed >= 100 ? '#ef4444' : (budget.percentageUsed >= 80 ? '#f59e0b' : '#3b82f6')">
+                [color]="colorOf(budget)">
             </p-progressBar>
 
             <div class="flex justify-between items-center mt-1 text-xs gap-2">
                 <span class="text-[11px] sm:text-xs shrink-0"
-                    [ngClass]="{'text-red-500 font-bold': budget.percentageUsed >= 100, 'text-secondary': budget.percentageUsed < 100}">
+                    [ngClass]="{'text-red-500 font-bold': budget.percentageUsed >= 100, 'text-amber-500 font-semibold': budget.percentageUsed < 100 && budget.status === 'alert', 'text-secondary': budget.percentageUsed < 100 && budget.status !== 'alert'}">
                     {{ budget.percentageUsed | number:'1.0-0' }}% used
                 </span>
                 <span class="text-[11px] sm:text-xs text-secondary italic truncate text-right min-w-0">
@@ -43,7 +43,7 @@
         </div>
 
         <div class="mt-2 border-t border-[var(--glass-border)] pt-3 flex justify-center">
-            <p-button label="Manage Budgets" icon="pi pi-cog" [routerLink]="['/app/budgets']" [text]="true"
+            <p-button label="Open Budgets" icon="pi pi-chart-pie" [routerLink]="['/app/budgets']" [text]="true"
                 size="small"></p-button>
         </div>
         }

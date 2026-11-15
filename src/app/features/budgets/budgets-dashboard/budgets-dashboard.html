@@ -1,0 +1,246 @@
+<app-page-header title="Budgets" [subtitle]="data() ? ((data()!.periodStart | date:'d MMM') + ' – ' + (data()!.periodEnd | date:'d MMM') + ' · ' + data()!.daysLeft + ' days left') : 'How much of each budget you have used'">
+  <a routerLink="/app/budgets/manage" class="p-button p-button-sm p-button-outlined"><i class="pi pi-plus mr-2"></i>Add / edit budgets</a>
+</app-page-header>
+
+@if (loading() && !data()) {
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    @for (i of [1,2,3,4]; track i) { <p-skeleton height="130px" borderRadius="24px"></p-skeleton> }
+  </div>
+} @else if (data() && budgets().length === 0) {
+  <div class="glass-card rounded-3xl p-10 text-center border border-white/10">
+    <i class="pi pi-chart-pie text-5xl opacity-40 mb-3"></i>
+    <h2 class="text-lg font-black text-main m-0">No budgets yet</h2>
+    <p class="text-sm text-muted mt-1 mb-4">Set a monthly limit per category and this page will track it live.</p>
+    <a routerLink="/app/budgets/manage" class="p-button p-button-sm"><i class="pi pi-plus mr-2"></i>Create your first budget</a>
+  </div>
+} @else if (data(); as d) {
+
+  <!-- Headline -->
+  <section class="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-4">
+    <div class="lg:col-span-4 glass-card rounded-3xl p-5 border border-white/10 flex items-center gap-5">
+      <div class="relative w-[132px] h-[132px] shrink-0" role="img" [attr.aria-label]="'Monthly budgets ' + (d.percentUsed | number:'1.0-0') + ' percent used'">
+        <svg viewBox="0 0 120 120" class="w-full h-full -rotate-90">
+          <circle cx="60" cy="60" [attr.r]="radius" fill="none" stroke="rgba(148,163,184,0.18)" stroke-width="10"></circle>
+          <circle cx="60" cy="60" [attr.r]="radius" fill="none" [attr.stroke]="color(gaugeStatus())" stroke-width="10" stroke-linecap="round"
+                  class="gauge-arc" [attr.stroke-dasharray]="circumference" [attr.stroke-dashoffset]="gaugeOffset()"></circle>
+        </svg>
+        <div class="absolute inset-0 flex flex-col items-center justify-center">
+          <span class="text-2xl font-black text-main leading-none">{{ d.percentUsed | number:'1.0-0' }}%</span>
+          <span class="text-[10px] uppercase tracking-wider text-muted font-bold mt-1">used</span>
+        </div>
+      </div>
+      <div class="min-w-0 flex flex-col gap-1">
+        <span class="text-[11px] uppercase tracking-wider text-muted font-bold">This month</span>
+        <span class="text-xl font-black text-main truncate">{{ d.totalSpent | currency:'INR':'symbol':'1.0-0' }}</span>
+        <span class="text-xs text-muted">of {{ d.totalBudgeted | currency:'INR':'symbol':'1.0-0' }} budgeted</span>
+        <span class="text-[11px] font-bold mt-1" [style.color]="color(gaugeStatus())">{{ statusLabel(gaugeStatus()) }}</span>
+      </div>
+    </div>
+
+    <div class="lg:col-span-8 grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div class="glass-card rounded-3xl p-4 border border-white/10 flex flex-col gap-1">
+        <span class="text-[10px] uppercase tracking-wider text-muted font-bold">Left to spend</span>
+        <span class="text-lg font-black" [class.text-red-400]="d.totalRemaining < 0" [class.text-main]="d.totalRemaining >= 0">{{ d.totalRemaining | currency:'INR':'symbol':'1.0-0' }}</span>
+      </div>
+      <div class="glass-card rounded-3xl p-4 border border-white/10 flex flex-col gap-1">
+        <span class="text-[10px] uppercase tracking-wider text-muted font-bold">Safe per day</span>
+        <span class="text-lg font-black text-main">{{ safePerDay() | currency:'INR':'symbol':'1.0-0' }}</span>
+        <span class="text-[10px] text-muted">{{ d.daysLeft }} days left</span>
+      </div>
+      <div class="glass-card rounded-3xl p-4 border border-white/10 flex flex-col gap-1">
+        <span class="text-[10px] uppercase tracking-wider text-muted font-bold">Budget health</span>
+        <div class="flex items-center gap-2 text-xs font-extrabold">
+          <span class="text-emerald-400">{{ d.safeCount }} ok</span>
+          <span class="text-amber-400">{{ d.alertCount }} warn</span>
+          <span class="text-red-400">{{ d.overCount }} over</span>
+        </div>
+      </div>
+      <div class="glass-card rounded-3xl p-4 border border-white/10 flex flex-col gap-1">
+        <span class="text-[10px] uppercase tracking-wider text-muted font-bold">Alerts this month</span>
+        <span class="text-lg font-black text-main">{{ d.alertsThisPeriod }}</span>
+        <span class="text-[10px] text-muted">alert level {{ d.settings.defaultAlertPercent }}%</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Each budget -->
+  <section class="mb-4">
+    <h2 class="text-sm font-black text-main mb-2 flex items-center gap-2"><i class="pi pi-wallet text-emerald-400"></i>Your budgets</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+      @for (b of budgets(); track b.budgetId; let i = $index) {
+        <article class="budget-card glass-card rounded-3xl p-4 border border-white/10 flex flex-col gap-2.5 cursor-pointer" tabindex="0" role="button"
+                 (click)="openBreakdown(b)" (keydown.enter)="openBreakdown(b)" [attr.aria-label]="'Show where the ' + (b.categoryName || 'overall') + ' budget went'"
+                 [class.budget-over]="b.status === 'over'" [style.--accent]="color(b.status)" [style.animation-delay.ms]="i * 60">
+          <header class="flex items-start justify-between gap-2 min-w-0">
+            <div class="min-w-0">
+              <h3 class="text-sm font-black text-main m-0 truncate" [title]="b.categoryName || 'Overall'">{{ b.categoryName || 'Overall spending' }}</h3>
+              <span class="text-[10px] text-muted font-semibold">{{ periodLabel(b.period) }} · alert at {{ b.alertThresholdPercent }}%{{ b.hasThresholdOverride ? ' (custom)' : '' }}</span>
+            </div>
+            <span class="status-chip" [style.color]="color(b.status)" [style.borderColor]="color(b.status)">{{ statusLabel(b.status) }}</span>
+          </header>
+
+          <div class="flex items-baseline justify-between gap-2">
+            <span class="text-lg font-black text-main">{{ b.spentAmount | currency:'INR':'symbol':'1.0-0' }}</span>
+            <span class="text-xs text-muted">of {{ b.budgetAmount | currency:'INR':'symbol':'1.0-0' }} · {{ b.percentageUsed | number:'1.0-0' }}%</span>
+          </div>
+
+          <div class="bar-track" role="progressbar" [attr.aria-valuenow]="b.percentageUsed | number:'1.0-0'" aria-valuemin="0" aria-valuemax="100"
+               [attr.aria-label]="(b.categoryName || 'Overall') + ' budget used'">
+            <div class="bar-fill" [style.width.%]="barWidth(b)" [style.transition-delay.ms]="i * 70" [style.background]="'linear-gradient(90deg, ' + color(b.status) + 'aa, ' + color(b.status) + ')'"></div>
+            <span class="bar-tick tick-threshold" [style.left.%]="b.alertThresholdPercent" title="Alert level"></span>
+            <span class="bar-tick tick-pace" [style.left.%]="b.expectedPercent" title="Where an even pace would be today"></span>
+          </div>
+
+          <footer class="flex items-center justify-between gap-2 text-[11px] text-muted">
+            <span>
+              @if (b.remainingAmount > 0) { {{ b.remainingAmount | currency:'INR':'symbol':'1.0-0' }} left · {{ b.dailyAllowance | currency:'INR':'symbol':'1.0-0' }}/day }
+              @else { {{ -b.remainingAmount | currency:'INR':'symbol':'1.0-0' }} over }
+            </span>
+            @if (willOverspend(b)) {
+              <span class="text-amber-400 font-bold" title="At your current pace">
+                <i class="pi pi-exclamation-triangle text-[10px] mr-0.5"></i>on pace for {{ b.projectedSpend | currency:'INR':'symbol':'1.0-0' }}
+              </span>
+            }
+          </footer>
+          <span class="text-[10px] text-sky-400 font-bold"><i class="pi pi-sitemap text-[10px] mr-1"></i>Tap to see the sub-category split</span>
+        </article>
+      }
+    </div>
+    <p class="text-[10px] text-muted mt-2 mb-0">
+      <span class="inline-block w-2.5 h-0.5 bg-white/70 align-middle mr-1"></span>marks your alert level ·
+      <span class="inline-block w-0.5 h-2.5 bg-sky-400 align-middle mx-1"></span>marks where an even pace would be today.
+    </p>
+  </section>
+
+  <!-- Charts -->
+  <section class="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-4">
+    <div class="lg:col-span-7 glass-card rounded-3xl p-5 border border-white/10">
+      <h2 class="text-sm font-black text-main mb-3 flex items-center gap-2"><i class="pi pi-chart-bar text-emerald-400"></i>Spent vs budgeted · last 6 months</h2>
+      @if (d.history.length) {
+        <div class="h-[260px]"><p-chart type="bar" [data]="historyChart()" [options]="chartOptions" height="260px"></p-chart></div>
+      } @else { <p class="text-xs text-muted">History appears once you have a monthly budget.</p> }
+    </div>
+    <div class="lg:col-span-5 glass-card rounded-3xl p-5 border border-white/10">
+      <h2 class="text-sm font-black text-main mb-3 flex items-center gap-2"><i class="pi pi-chart-pie text-emerald-400"></i>Where this month's money went</h2>
+      @if (shareChart().labels.length) {
+        <div class="h-[260px]"><p-chart type="doughnut" [data]="shareChart()" [options]="donutOptions" height="260px"></p-chart></div>
+      } @else { <p class="text-xs text-muted">No spending against monthly budgets yet.</p> }
+    </div>
+  </section>
+
+  <!-- Needs attention + alert log -->
+  <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div class="glass-card rounded-3xl p-5 border border-white/10">
+      <h2 class="text-sm font-black text-main mb-3 flex items-center gap-2"><i class="pi pi-exclamation-circle text-amber-400"></i>Needs attention</h2>
+      @for (b of atRisk(); track b.budgetId) {
+        <div class="flex items-center justify-between gap-3 py-2 border-b border-white/5 last:border-0">
+          <span class="text-xs font-bold text-main truncate">{{ b.categoryName || 'Overall' }}</span>
+          <span class="text-xs font-black shrink-0" [style.color]="color(b.status)">{{ b.percentageUsed | number:'1.0-0' }}%</span>
+        </div>
+      } @empty { <p class="text-xs text-muted m-0">Everything is within its alert level. 🎉</p> }
+    </div>
+    <div class="glass-card rounded-3xl p-5 border border-white/10">
+      <h2 class="text-sm font-black text-main mb-3 flex items-center gap-2"><i class="pi pi-bell text-sky-400"></i>Recent alerts</h2>
+      @for (a of d.recentAlerts; track $index) {
+        <div class="flex items-center justify-between gap-3 py-2 border-b border-white/5 last:border-0">
+          <div class="min-w-0">
+            <span class="text-xs font-bold text-main block truncate">{{ a.categoryName || 'Overall' }}</span>
+            <span class="text-[10px] text-muted">{{ a.level >= 2 ? 'Limit reached' : 'Hit ' + a.thresholdPercent + '% alert level' }} · {{ a.createdAt | date:'d MMM, h:mm a' }}</span>
+          </div>
+          <span class="text-xs font-black shrink-0" [style.color]="a.level >= 2 ? '#ef4444' : '#f59e0b'">{{ a.percentUsed | number:'1.0-0' }}%</span>
+        </div>
+      } @empty { <p class="text-xs text-muted m-0">No alerts yet. They are logged when an expense crosses an alert level.</p> }
+    </div>
+  </section>
+
+  <!-- Behaviour: how alerts cluster over the last 6 months -->
+  @if (patterns(); as p) {
+    <section class="glass-card rounded-3xl p-5 border border-white/10 mt-4">
+      <h2 class="text-sm font-black text-main mb-1 flex items-center gap-2"><i class="pi pi-chart-line text-violet-400"></i>Spending behaviour</h2>
+      <p class="text-[11px] text-muted m-0 mb-3">From your alerts over the last {{ p.months }} months · {{ p.warnings }} warnings, {{ p.breaches }} limit breaches</p>
+      <ul class="m-0 pl-4 mb-4 flex flex-col gap-1 text-xs text-main">
+        @for (t of p.insights; track $index) { <li>{{ t }}</li> }
+      </ul>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div>
+          <h3 class="text-[10px] uppercase tracking-wider text-muted font-bold mb-2">Alerts by month</h3>
+          @for (m of p.byMonth; track m.label) {
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-[10px] text-muted w-12 shrink-0">{{ m.label }}</span>
+              <div class="grow h-2 rounded bg-white/5 overflow-hidden"><div class="h-full rounded" style="background:#f59e0b" [style.width.%]="(m.warnings + m.breaches) / maxMonth() * 100"></div></div>
+              <span class="text-[10px] text-main w-5 text-right">{{ m.warnings + m.breaches }}</span>
+            </div>
+          }
+        </div>
+        <div>
+          <h3 class="text-[10px] uppercase tracking-wider text-muted font-bold mb-2">Alerts by weekday</h3>
+          @for (n of p.byWeekday; track $index) {
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-[10px] text-muted w-12 shrink-0">{{ weekdayLabels[$index] }}</span>
+              <div class="grow h-2 rounded bg-white/5 overflow-hidden"><div class="h-full rounded" style="background:#8b5cf6" [style.width.%]="n / maxWeekday() * 100"></div></div>
+              <span class="text-[10px] text-main w-5 text-right">{{ n }}</span>
+            </div>
+          }
+        </div>
+        <div>
+          <h3 class="text-[10px] uppercase tracking-wider text-muted font-bold mb-2">Repeat categories</h3>
+          @for (c of p.categories.slice(0, 6); track c.categoryName) {
+            <div class="flex items-center justify-between gap-2 py-1 border-b border-white/5 last:border-0">
+              <span class="text-xs font-bold text-main truncate">{{ c.categoryName }}</span>
+              <span class="text-[10px] text-muted shrink-0">{{ c.monthsBreached }} mo over @if (c.avgBreachDay > 0) { · ~day {{ c.avgBreachDay | number:'1.0-0' }} } · {{ c.warnings }} warn</span>
+            </div>
+          } @empty { <p class="text-xs text-muted m-0">Nothing yet.</p> }
+        </div>
+      </div>
+    </section>
+  }
+}
+
+<p-drawer [(visible)]="drawerOpen" position="right" [style]="{ width: 'min(30rem, 100vw)' }" [header]="(drawerBudget()?.categoryName || 'Overall spending') + ' · where it went'">
+  @if (drawerBudget(); as db) {
+    <div class="flex flex-col gap-3">
+      <div class="flex items-baseline justify-between">
+        <span class="text-2xl font-black text-main">{{ db.spentAmount | currency:'INR':'symbol':'1.0-0' }}</span>
+        <span class="text-xs text-muted">of {{ db.budgetAmount | currency:'INR':'symbol':'1.0-0' }} · {{ db.percentageUsed | number:'1.0-0' }}%</span>
+      </div>
+
+      <nav class="flex flex-wrap items-center gap-1 text-[11px]" aria-label="Breakdown path">
+        <button type="button" class="text-sky-400 font-bold bg-transparent border-0 p-0 cursor-pointer" (click)="drillTo(0)">{{ db.categoryName || 'All spending' }}</button>
+        @for (t of trail(); track t.id; let i = $index) {
+          <span class="text-muted">›</span>
+          <button type="button" class="text-sky-400 font-bold bg-transparent border-0 p-0 cursor-pointer" (click)="drillTo(i + 1)">{{ t.name }}</button>
+        }
+      </nav>
+
+      @if (breakdownLoading() && !breakdown()) {
+        <p class="text-xs text-muted">Loading…</p>
+      } @else if (breakdown(); as bd) {
+        @if (bd.rows.length) {
+          <div class="flex h-3 rounded-full overflow-hidden bg-white/5" role="img" aria-label="Share of spend by category">
+            @for (r of bd.rows; track r.name; let i = $index) {
+              <div [style.width.%]="r.shareOfSpend" [style.background]="rowColors[i % rowColors.length]" [title]="r.name + ' ' + r.shareOfSpend + '%'"></div>
+            }
+          </div>
+          <p class="text-[11px] text-muted m-0">Split by {{ bd.level }} · {{ bd.totalSpent | currency:'INR':'symbol':'1.0-0' }} this period</p>
+          @for (r of bd.rows; track r.name; let i = $index) {
+            <div class="rounded-2xl border border-white/10 p-3 flex flex-col gap-1.5" [class.cursor-pointer]="r.hasSubCategories"
+                 (click)="drillInto(r)" [attr.role]="r.hasSubCategories ? 'button' : null">
+              <div class="flex items-center justify-between gap-2">
+                <span class="flex items-center gap-2 min-w-0 text-sm font-bold text-main">
+                  <span class="w-2.5 h-2.5 rounded-full shrink-0" [style.background]="rowColors[i % rowColors.length]"></span>
+                  <span class="truncate">{{ r.name }}</span>
+                  @if (r.hasSubCategories) { <i class="pi pi-angle-right text-muted text-xs"></i> }
+                </span>
+                <span class="text-sm font-black text-main shrink-0">{{ r.spent | currency:'INR':'symbol':'1.0-0' }}</span>
+              </div>
+              <div class="h-1.5 rounded bg-white/5 overflow-hidden"><div class="h-full rounded" [style.width.%]="r.shareOfSpend" [style.background]="rowColors[i % rowColors.length]"></div></div>
+              <span class="text-[10px] text-muted">{{ r.shareOfSpend | number:'1.0-0' }}% of spend · {{ r.percentOfBudget | number:'1.0-0' }}% of the budget · {{ r.transactionCount }} transaction{{ r.transactionCount === 1 ? '' : 's' }}</span>
+            </div>
+          }
+        } @else {
+          <p class="text-xs text-muted">No spending in this budget yet this period.</p>
+        }
+      }
+    </div>
+  }
+</p-drawer>

@@ -281,6 +281,6 @@ export class RoadmapComponent implements OnInit {
 
   stripHtml(html: string): string {
     if (!html) return '';
-    return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').trim();
+    return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').trim();
   }
 }

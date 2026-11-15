@@ -3,7 +3,7 @@
   <div class="field">
     <label for="description">Description</label>
     <input id="description" type="text" pInputText formControlName="description" class="w-full" pAutoFocus
-      [autofocus]="true" (blur)="onDescriptionChange()" />
+      [autofocus]="true" (blur)="onDescriptionChange(); applyRulesFor()" />
   </div>
 
   @if (suggestedMerchantName()) {
@@ -30,8 +30,8 @@
 
   <div class="field">
     <label for="category">Category</label>
-    <p-select id="category" [options]="categories()" formControlName="transactionCategoryId" optionLabel="name"
-      optionValue="id" [showClear]="true" placeholder="Select or type to add" class="w-full" [filter]="true"
+    <p-select id="category" [options]="categories()" formControlName="transactionCategoryId" optionLabel="path"
+      optionValue="id" [showClear]="true" placeholder="Select or type (e.g. Food › Groceries)" class="w-full" [filter]="true" filterBy="path"
       appendTo="body" (onFilter)="filterCategories($event)" (onChange)="onCategoryChange($event)">
       <!-- Add change event -->
       <ng-template pTemplate="footer">
@@ -42,6 +42,16 @@
         }
       </ng-template>
     </p-select>
+    @if (subCategoryChips().length) {
+      <div class="flex flex-wrap items-center gap-1.5 mt-2" aria-label="Sub-categories">
+        <span class="text-[11px]" style="color:var(--text-dim)">Narrow down:</span>
+        @for (s of subCategoryChips(); track s.id) {
+          <button type="button" class="px-2.5 py-1 rounded-full text-xs font-semibold border cursor-pointer"
+                  [class]="s.id === transactionForm.get('transactionCategoryId')?.value ? 'border-emerald-500 bg-emerald-500/20' : 'border-[var(--glass-border)] bg-white/5 hover:bg-white/10'"
+                  (click)="pickSubCategory(s.id)">{{ s.name }}</button>
+        }
+      </div>
+    }
   </div>
 
   <div class="field">
@@ -51,6 +61,29 @@
       appendTo="body">
     </p-select>
   </div>
+
+  @if (!isTransfer()) {
+  <div class="field">
+    <label for="tags">Tags (optional)</label>
+    <p-autocomplete id="tags" formControlName="tags" [multiple]="true" [suggestions]="tagSuggestions()"
+      (completeMethod)="searchTags($event)" [forceSelection]="false" [addOnBlur]="true" separator="," [dropdown]="false"
+      placeholder="trip, work, reimbursable…" styleClass="w-full" inputStyleClass="w-full" appendTo="body">
+    </p-autocomplete>
+    <small class="text-[var(--text-muted)]">Type and press Enter. Up to 8 tags.</small>
+  </div>
+  <div class="field">
+    <label for="notes">Note (optional)</label>
+    <textarea id="notes" pInputText formControlName="notes" rows="2" maxlength="500" class="w-full"
+      placeholder="Anything worth remembering about this entry"></textarea>
+  </div>
+  <div class="field">
+    @if (isEditMode() && transactionForm.get('id')?.value) {
+      <app-attachments entityType="Transaction" [entityId]="transactionForm.get('id')!.value" [folder]="['Receipts', 'Transactions']"></app-attachments>
+    } @else {
+      <small class="text-[var(--text-muted)]"><i class="pi pi-paperclip mr-1"></i>Save first, then edit the entry to attach a receipt (optional).</small>
+    }
+  </div>
+  }
 
   <!-- NEW: Show "Transfer to" only if it's a transfer category -->
   @if(isTransfer()) {

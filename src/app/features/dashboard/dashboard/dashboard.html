@@ -1,6 +1,6 @@
 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
   <div class="flex flex-wrap items-center gap-3">
-    <h1 class="text-2xl sm:text-3xl font-black m-0 tracking-tight text-white flex items-center gap-2">
+    <h1 class="text-2xl sm:text-3xl font-black m-0 tracking-tight text-[var(--text-main)] flex items-center gap-2">
       Dashboard
     </h1>
     <p-datepicker [(ngModel)]="localDate" view="month" dateFormat="mm/yy" (ngModelChange)="onDateChange($event)"
@@ -8,9 +8,9 @@
   </div>
 
   <!-- Header Controls: Version Switcher + Action Buttons -->
-  <div class="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+  <div class="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2.5 w-full sm:w-auto min-w-0">
     <!-- Version Switcher Segmented Pill -->
-    <div class="inline-flex items-center p-1 rounded-xl bg-white/[0.05] border border-white/10 backdrop-blur-md shadow-inner">
+    <div class="inline-flex self-start items-center p-1 rounded-xl bg-white/[0.05] border border-white/10 backdrop-blur-md shadow-inner">
       <button type="button"
         (click)="setDashboardVersion('modern')"
         [ngClass]="dashboardVersion() === 'modern' ? 'bg-emerald-500 text-white shadow-sm font-bold' : 'text-zinc-400 hover:text-white font-medium'"
@@ -28,8 +28,10 @@
     </div>
 
     <!-- Action Buttons -->
-    <div class="grid grid-cols-2 sm:flex sm:items-center gap-2 flex-1 sm:flex-initial">
+    <div class="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto min-w-0">
       <p-button label="Bulk Add" icon="pi pi-table" routerLink="/app/bulk-transaction-add" severity="success"
+        styleClass="w-full sm:w-auto whitespace-nowrap rounded-xl py-2 text-xs sm:text-sm font-bold justify-center text-center"></p-button>
+      <p-button label="Import Statement" icon="pi pi-upload" routerLink="/app/statement-import" [outlined]="true"
         styleClass="w-full sm:w-auto whitespace-nowrap rounded-xl py-2 text-xs sm:text-sm font-bold justify-center text-center"></p-button>
       <p-button label="Accounts" icon="pi pi-wallet" routerLink="/app/accounts" [outlined]="true"
         styleClass="w-full sm:w-auto whitespace-nowrap rounded-xl py-2 text-xs sm:text-sm font-bold justify-center text-center"></p-button>
@@ -99,45 +101,45 @@
     <!-- Secondary Snapshot Metrics Grid (4 Clean Cards) -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 lg:gap-4 w-full xl:w-auto">
       <!-- Net Worth -->
-      <div class="p-3 sm:p-3.5 rounded-2xl bg-white/[0.03] border border-white/5 flex flex-col gap-1 hover:border-white/10 transition-colors min-w-0">
+      <div class="p-3 sm:p-3.5 rounded-2xl bg-white/[0.03] border border-white/5 flex flex-col gap-1 hover:border-white/20 transition-colors min-w-0 cursor-pointer" tabindex="0" role="button" (click)="openDetail('networth')" (keydown.enter)="openDetail('networth')">
         <span class="text-[11px] font-semibold text-zinc-400 flex items-center gap-1 truncate">
           <i class="pi pi-wallet text-sky-400 text-xs shrink-0"></i> Net Worth
         </span>
-        <span class="text-sm sm:text-base lg:text-lg font-black text-white truncate">
-          {{ summary()?.netWorth | currency:'INR' }}
+        <span class="text-sm sm:text-base lg:text-lg font-black text-white truncate" [title]="(summary()?.netWorth | currency:'INR')">
+          {{ summary()?.netWorth | compactInr }}
         </span>
         <span class="text-[10px] text-zinc-500 truncate">Total assets − debts</span>
       </div>
 
       <!-- Monthly Income -->
-      <div class="p-3 sm:p-3.5 rounded-2xl bg-white/[0.03] border border-white/5 flex flex-col gap-1 hover:border-white/10 transition-colors min-w-0">
+      <div class="p-3 sm:p-3.5 rounded-2xl bg-white/[0.03] border border-white/5 flex flex-col gap-1 hover:border-white/20 transition-colors min-w-0 cursor-pointer" tabindex="0" role="button" (click)="openDetail('income')" (keydown.enter)="openDetail('income')">
         <span class="text-[11px] font-semibold text-zinc-400 flex items-center gap-1 truncate">
           <i class="pi pi-arrow-down-left text-emerald-400 text-xs shrink-0"></i> Income
         </span>
-        <span class="text-sm sm:text-base lg:text-lg font-black text-emerald-400 truncate">
-          +{{ summary()?.monthlyIncome | currency:'INR' }}
+        <span class="text-sm sm:text-base lg:text-lg font-black text-emerald-400 truncate" [title]="(summary()?.monthlyIncome | currency:'INR')">
+          {{ summary()?.monthlyIncome | compactInr:true }}
         </span>
         <span class="text-[10px] text-zinc-500 truncate">Earned this month</span>
       </div>
 
       <!-- Monthly Expenses -->
-      <div class="p-3 sm:p-3.5 rounded-2xl bg-white/[0.03] border border-white/5 flex flex-col gap-1 hover:border-white/10 transition-colors min-w-0">
+      <div class="p-3 sm:p-3.5 rounded-2xl bg-white/[0.03] border border-white/5 flex flex-col gap-1 hover:border-white/20 transition-colors min-w-0 cursor-pointer" tabindex="0" role="button" (click)="openDetail('expenses')" (keydown.enter)="openDetail('expenses')">
         <span class="text-[11px] font-semibold text-zinc-400 flex items-center gap-1 truncate">
           <i class="pi pi-arrow-up-right text-rose-400 text-xs shrink-0"></i> Expenses
         </span>
-        <span class="text-sm sm:text-base lg:text-lg font-black text-rose-400 truncate">
-          -{{ summary()?.monthlyExpenses | currency:'INR' }}
+        <span class="text-sm sm:text-base lg:text-lg font-black text-rose-400 truncate" [title]="(summary()?.monthlyExpenses | currency:'INR')">
+          −{{ summary()?.monthlyExpenses | compactInr }}
         </span>
         <span class="text-[10px] text-zinc-500 truncate">Spent this month</span>
       </div>
 
       <!-- Net Flow / Savings -->
-      <div class="p-3 sm:p-3.5 rounded-2xl bg-white/[0.03] border border-white/5 flex flex-col gap-1 hover:border-white/10 transition-colors min-w-0">
+      <div class="p-3 sm:p-3.5 rounded-2xl bg-white/[0.03] border border-white/5 flex flex-col gap-1 hover:border-white/20 transition-colors min-w-0 cursor-pointer" tabindex="0" role="button" (click)="openDetail('netflow')" (keydown.enter)="openDetail('netflow')">
         <span class="text-[11px] font-semibold text-zinc-400 flex items-center gap-1 truncate">
           <i class="pi pi-percentage text-amber-400 text-xs shrink-0"></i> Net Flow
         </span>
-        <span class="text-sm sm:text-base lg:text-lg font-black truncate" [ngClass]="netSavings() >= 0 ? 'text-emerald-400' : 'text-rose-400'">
-          {{ netSavings() >= 0 ? '+' : '' }}{{ netSavings() | currency:'INR' }}
+        <span class="text-sm sm:text-base lg:text-lg font-black truncate" [ngClass]="netSavings() >= 0 ? 'text-emerald-400' : 'text-rose-400'" [title]="(netSavings() | currency:'INR')">
+          {{ netSavings() | compactInr:true }}
         </span>
         <span class="text-[10px] text-zinc-500 truncate">
           @if ((summary()?.monthlyIncome || 0) > 0) {
@@ -234,7 +236,8 @@
         <!-- Top Category Ranking List with Progress Bars -->
         <div class="sm:col-span-7 flex flex-col gap-3 min-w-0">
           @for (cat of topSpendingCategories(); track cat.categoryName) {
-          <div class="flex flex-col gap-1 min-w-0">
+          <div class="flex flex-col gap-1 min-w-0 cursor-pointer rounded-lg hover:bg-white/[0.03] -mx-1 px-1 py-0.5" tabindex="0" role="button"
+               (click)="openDetail('category', cat.categoryName)" (keydown.enter)="openDetail('category', cat.categoryName)">
             <div class="flex items-center justify-between text-xs gap-2 min-w-0">
               <span class="font-bold text-white flex items-center gap-1.5 truncate min-w-0 flex-1">
                 <span class="w-2 h-2 rounded-full shrink-0" [style.backgroundColor]="cat.color"></span>
@@ -791,3 +794,71 @@
 }
 
 }
+
+<!-- Detail drawer for the modern dashboard cards -->
+<p-drawer [(visible)]="detailOpen" position="right" [style]="{ width: 'min(28rem, 100vw)' }" [header]="detailTitle()">
+  @switch (detail()?.kind) {
+    @case ('networth') {
+      <div class="flex flex-col gap-2 text-sm">
+        <div class="text-3xl font-black text-main mb-1">{{ summary()?.netWorth | currency:'INR' }}</div>
+        <div class="flex justify-between"><span class="text-muted">Liquid cash</span><b>{{ summary()?.liquidCash | currency:'INR' }}</b></div>
+        <div class="flex justify-between"><span class="text-muted">Reserved for card bills</span><b>−{{ summary()?.reservedForPayment | currency:'INR' }}</b></div>
+        <div class="flex justify-between"><span class="text-muted">Credit-card debt</span><b class="text-rose-400">{{ summary()?.creditCardDebt | currency:'INR' }}</b></div>
+        <div class="flex justify-between"><span class="text-muted">Coming up in {{ summary()?.obligationWindowDays }} days</span><b>{{ summary()?.upcomingObligationsTotal | currency:'INR' }}</b></div>
+        <div class="flex justify-between border-t border-white/10 pt-2"><span class="text-muted">Safe to spend</span><b class="text-emerald-400">{{ summary()?.safeToSpend | currency:'INR' }}</b></div>
+        <a routerLink="/app/accounts" class="text-sky-400 text-xs font-bold mt-2">See every account →</a>
+      </div>
+    }
+    @case ('income') {
+      <div class="flex flex-col gap-2 text-sm">
+        <div class="text-3xl font-black text-emerald-400 mb-1">+{{ summary()?.monthlyIncome | currency:'INR' }}</div>
+        <p class="text-xs text-muted m-0">Largest entries in your recent activity</p>
+        @for (t of insights()?.highestAmountTransactions ?? []; track t.id) {
+          @if (t.type !== 1) {
+            <div class="flex justify-between gap-2 py-1 border-b border-white/5"><span class="truncate">{{ t.description }}<span class="text-[10px] text-muted block">{{ t.accountName }} · {{ t.date | date:'d MMM' }}</span></span><b class="shrink-0">{{ t.amount | currency:'INR' }}</b></div>
+          }
+        }
+        <a routerLink="/app/transactions" class="text-sky-400 text-xs font-bold mt-2">Open all transactions →</a>
+      </div>
+    }
+    @case ('expenses') {
+      <div class="flex flex-col gap-2 text-sm">
+        <div class="text-3xl font-black text-rose-400 mb-1">−{{ summary()?.monthlyExpenses | currency:'INR' }}</div>
+        <div class="flex justify-between"><span class="text-muted">Daily average so far</span><b>{{ dailyAverage() | currency:'INR':'symbol':'1.0-0' }}</b></div>
+        <p class="text-xs text-muted m-0 mt-2">Where it went</p>
+        @for (c of topSpendingCategories(); track c.categoryName) {
+          <div class="flex flex-col gap-1 cursor-pointer" (click)="openDetail('category', c.categoryName)">
+            <div class="flex justify-between text-xs"><span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full" [style.backgroundColor]="c.color"></span>{{ c.categoryName }}</span><b>{{ c.totalAmount | currency:'INR':'symbol':'1.0-0' }} · {{ c.percentage }}%</b></div>
+            <div class="h-1.5 rounded bg-white/5 overflow-hidden"><div class="h-full rounded" [style.width.%]="c.percentage" [style.backgroundColor]="c.color"></div></div>
+          </div>
+        }
+        <a routerLink="/app/budgets" class="text-sky-400 text-xs font-bold mt-2">Check your budgets →</a>
+      </div>
+    }
+    @case ('netflow') {
+      <div class="flex flex-col gap-2 text-sm">
+        <div class="text-3xl font-black mb-1" [ngClass]="netSavings() >= 0 ? 'text-emerald-400' : 'text-rose-400'">{{ netSavings() >= 0 ? '+' : '' }}{{ netSavings() | currency:'INR' }}</div>
+        <div class="flex justify-between"><span class="text-muted">Income</span><b class="text-emerald-400">{{ summary()?.monthlyIncome | currency:'INR' }}</b></div>
+        <div class="flex justify-between"><span class="text-muted">Expenses</span><b class="text-rose-400">{{ summary()?.monthlyExpenses | currency:'INR' }}</b></div>
+        <div class="flex justify-between border-t border-white/10 pt-2"><span class="text-muted">Savings rate</span><b>{{ (summary()?.monthlyIncome || 0) > 0 ? savingsRate() + '%' : '—' }}</b></div>
+        <p class="text-xs text-muted m-0 mt-2">{{ netSavings() >= 0 ? 'You are spending less than you earn this month.' : 'You have spent more than you earned this month.' }}</p>
+      </div>
+    }
+    @case ('category') {
+      @if (categoryDetail(); as c) {
+        <div class="flex flex-col gap-2 text-sm">
+          <div class="text-3xl font-black text-main mb-1">{{ c.amount | currency:'INR' }}</div>
+          <div class="flex justify-between"><span class="text-muted">Share of spending</span><b>{{ c.share }}%</b></div>
+          @if (c.rank) { <div class="flex justify-between"><span class="text-muted">Rank</span><b>#{{ c.rank }} of {{ c.of }} categories</b></div> }
+          @if (c.extreme?.maxTransaction; as m) {
+            <div class="flex justify-between gap-2"><span class="text-muted">Biggest</span><b class="truncate">{{ m.description }} · {{ m.amount | currency:'INR':'symbol':'1.0-0' }}</b></div>
+          }
+          @if (c.extreme?.minTransaction; as m) {
+            <div class="flex justify-between gap-2"><span class="text-muted">Smallest</span><b class="truncate">{{ m.description }} · {{ m.amount | currency:'INR':'symbol':'1.0-0' }}</b></div>
+          }
+          <a routerLink="/app/transaction-categories" class="text-sky-400 text-xs font-bold mt-2">Manage categories and sub-categories →</a>
+        </div>
+      }
+    }
+  }
+</p-drawer>

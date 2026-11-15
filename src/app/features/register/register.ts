@@ -288,7 +288,8 @@ export class Register implements OnInit, OnDestroy {
         if (response.isSuccess) {
           this.clearDraft();
           this.notificationService.showSuccess('Account created successfully! Please login.');
-          const returnUrl = this.route.snapshot.queryParams['returnUrl'] || sessionStorage.getItem('pending_return_url');
+          const rawReturn = this.route.snapshot.queryParams['returnUrl'] || sessionStorage.getItem('pending_return_url');
+          const returnUrl = typeof rawReturn === 'string' && /^\/(?![\/\\])/.test(rawReturn) ? rawReturn : null;
           if (returnUrl) {
             this.router.navigate(['/login'], { queryParams: { returnUrl } });
           } else {

@@ -157,7 +157,7 @@
             <div class="font-bold text-color text-base mb-2 line-height-3">{{issue.title}}</div>
             <div class="text-sm text-[var(--text-muted)] line-height-3"
               style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;"
-              [innerHTML]="stripHtml(issue.description)"></div>
+>{{ stripHtml(issue.description) }}</div>
 
             <!-- Card Footer / Voting Hub -->
             <div class="flex items-center justify-between mt-3 pt-2 border-t border-[var(--glass-border)] text-sm">

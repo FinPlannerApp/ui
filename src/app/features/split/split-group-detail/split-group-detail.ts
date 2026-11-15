@@ -1,3 +1,4 @@
+import { Attachments } from '../../../shared/components/attachments/attachments';
 import { Component, OnInit, OnDestroy, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import * as QRCode from 'qrcode';
@@ -8,7 +9,7 @@ import { sharedPrimeModules } from '../../../shared/prime-imports';
 import { SplitService } from '../split.service';
 import {
   ActivityItem, ExpenseFilters, ExpenseParticipantLine, ExpenseSort, GroupBalances, Settlement, SettlementMethod, SettlementStatus, SimplifiedDebt,
-  SplitExpense, SplitGroup, SplitMember, SplitType
+  SplitExpense, SplitGroup, SplitMember, SplitType, RecurrenceFrequency
 } from '../../../core/models/split.model';
 import { NotificationService } from '../../../core/services/notification.service';
 import { DraftPersistenceService } from '../../../core/services/draft-persistence.service';
@@ -25,12 +26,13 @@ import { computeShares, equalPercentages } from '../split-share-math';
 import { compareExpenses, expenseDayKey, groupExpensesByDay } from '../split-expense-utils';
 import { exportSplitGroupToExcel } from '../split-excel-export';
 import { currencySymbol } from '../split-currency';
+import { BillItem, ExtraMode, itemize } from '../split-itemize';
 import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-split-group-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ...sharedPrimeModules, EmptyState, SplitSettingsDialog, InfiniteScrollDirective],
+  imports: [CommonModule, FormsModule, RouterLink, ...sharedPrimeModules, EmptyState, SplitSettingsDialog, InfiniteScrollDirective, Attachments],
   providers: [ConfirmationService],
   templateUrl: './split-group-detail.html'
 })
@@ -147,7 +149,8 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
     const g = this.group();
     if (!g) return false;
     const currentUserId = this.authService.currentUserDetails()?.id;
-    return g.createdByUserId === currentUserId;
+    if (g.createdByUserId === currentUserId) return true;
+    return g.members.some(m => !m.leftAt && !!m.isAdmin && m.linkedUserId === currentUserId);
   });
 
   currentUserMember = computed(() => {
@@ -281,8 +284,11 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
   });
 
   /** Either side of a debt (or the admin) can record a payment against it. */
+  /** A view-only member: can see everything, but not add expenses or record payments. */
+  amGuest = computed(() => !this.isGroupAdmin() && !!this.currentUserMember()?.isGuest);
+
   canMemberSettleDebt(debt: SimplifiedDebt): boolean {
-    if (!this.canSettle()) return false;
+    if (!this.canSettle() || this.amGuest()) return false;
     if (this.isGroupAdmin()) return true;
     const myMemberId = this.currentUserMember()?.id;
     return myMemberId !== undefined && (myMemberId === debt.fromMemberId || myMemberId === debt.toMemberId);
@@ -700,6 +706,26 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
     }
   }
 
+  /** The person who owes can be emailed only when they have a FinPlanner account. */
+  canEmailRemind(debt: SimplifiedDebt): boolean {
+    const debtor = this.group()?.members.find(m => m.id === debt.fromMemberId);
+    return !!debtor?.linkedUserId && this.canNudgeDebt(debt);
+  }
+
+  remindingMemberId = signal<number | null>(null);
+
+  async emailReminder(debt: SimplifiedDebt): Promise<void> {
+    this.remindingMemberId.set(debt.fromMemberId);
+    try {
+      const res = await this.splitService.sendReminder(this.groupId, debt.fromMemberId);
+      this.notificationService.showSuccess(`Reminder emailed to ${res.sentTo}.`);
+    } catch (err: any) {
+      this.notificationService.showError(err?.message || 'Could not send the reminder.');
+    } finally {
+      this.remindingMemberId.set(null);
+    }
+  }
+
   canNudgeDebt(debt: SimplifiedDebt): boolean {
     if (this.isGroupAdmin()) return true;
     const myMemberId = this.currentUserMember()?.id;
@@ -860,6 +886,98 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
       shares
     };
   });
+
+  // ── Repeat (recurring expense) ─────────────────────────────────────────────
+  expRepeat = signal<RecurrenceFrequency | null>(null);
+  expRepeatEnd = signal<Date | null>(null);
+  readonly repeatOptions = [
+    { label: 'Does not repeat', value: null },
+    { label: 'Every day', value: RecurrenceFrequency.Daily },
+    { label: 'Every week', value: RecurrenceFrequency.Weekly },
+    { label: 'Every month', value: RecurrenceFrequency.Monthly }
+  ];
+
+  // ── Itemised bill (items shared by some people, tax and tip shared by what each ordered) ──
+  showItemize = signal(false);
+  billItems = signal<BillItem[]>([]);
+  billTaxMode = signal<ExtraMode>('percent');
+  billTaxValue = signal<number | null>(null);
+  billTipMode = signal<ExtraMode>('percent');
+  billTipValue = signal<number | null>(null);
+  readonly extraModeOptions = [{ label: '%', value: 'percent' }, { label: 'Amount', value: 'amount' }];
+
+  billResult = computed(() => itemize({
+    items: this.billItems(),
+    memberOrder: this.activeMembers().map(m => m.id),
+    taxMode: this.billTaxMode(), taxValue: this.billTaxValue(),
+    tipMode: this.billTipMode(), tipValue: this.billTipValue()
+  }));
+
+  /** People in the bill preview, with what each owes. */
+  billPeople = computed(() => {
+    const shares = this.billResult().shares;
+    return this.activeMembers().filter(m => shares[m.id] !== undefined).map(m => ({ name: m.name, amount: shares[m.id] }));
+  });
+
+  private blankBillItem(): BillItem {
+    const ids = Array.from(this.expParticipantIds());
+    return { name: '', price: null, memberIds: ids.length > 0 ? [...ids] : this.activeMembers().map(m => m.id) };
+  }
+
+  openItemize(): void {
+    this.billItems.set([this.blankBillItem(), this.blankBillItem()]);
+    this.billTaxValue.set(null);
+    this.billTipValue.set(null);
+    this.showItemize.set(true);
+  }
+
+  addBillItem(): void {
+    this.billItems.update(items => [...items, this.blankBillItem()]);
+  }
+
+  removeBillItem(index: number): void {
+    this.billItems.update(items => items.length > 1 ? items.filter((_, i) => i !== index) : items);
+  }
+
+  updateBillItem(index: number, patch: Partial<BillItem>): void {
+    this.billItems.update(items => items.map((it, i) => i === index ? { ...it, ...patch } : it));
+  }
+
+  toggleBillMember(index: number, memberId: number): void {
+    const item = this.billItems()[index];
+    const has = item.memberIds.includes(memberId);
+    this.updateBillItem(index, { memberIds: has ? item.memberIds.filter(id => id !== memberId) : [...item.memberIds, memberId] });
+  }
+
+  applyItemize(): void {
+    const r = this.billResult();
+    if (r.total <= 0) {
+      this.notificationService.showError('Add at least one item with a price.');
+      return;
+    }
+    if (r.unassignedItems > 0) {
+      this.notificationService.showError(`${r.unassignedItems} item${r.unassignedItems === 1 ? ' has' : 's have'} nobody ticked — choose who shared ${r.unassignedItems === 1 ? 'it' : 'them'}.`);
+      return;
+    }
+
+    this.expAmount.set(r.total);
+    this.expSplitType.set(SplitType.Exact);
+    this.expParticipantIds.set(new Set(Object.keys(r.shares).map(Number)));
+    this.expExactAmounts.set({ ...r.shares });
+    this.splitCustomised.set(true);
+    if (this.splitPayment() && this.expPayers().length === 1) {
+      this.updatePayerRow(0, { amount: r.total });
+    }
+
+    const lines = this.billItems().filter(i => (i.price ?? 0) > 0)
+      .map(i => `${i.name.trim() || 'Item'} ${this.sym()}${(i.price ?? 0).toFixed(2)}`);
+    if (r.tax > 0) lines.push(`Tax ${this.sym()}${r.tax.toFixed(2)}`);
+    if (r.tip > 0) lines.push(`Tip ${this.sym()}${r.tip.toFixed(2)}`);
+    if (!this.expNotes().trim()) this.expNotes.set(lines.join(', '));
+
+    this.showItemize.set(false);
+    this.notificationService.showSuccess('Bill split by items — check the amounts and save.');
+  }
 
   async ngOnInit(): Promise<void> {
     await this.loadAll();
@@ -1272,6 +1390,8 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
       return;
     }
     this.editingExpenseId.set(null);
+    this.expRepeat.set(null);
+    this.expRepeatEnd.set(null);
     const draft = this.draftService.load<any>(this.draftKey);
     if (draft && (draft.description || draft.amount)) {
       this.expDescription.set(draft.description ?? '');
@@ -1469,14 +1589,17 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
         );
         return;
       }
-      payers = rows.map(r => ({ memberId: r.memberId!, amountPaid: r.amount! }));
+      payers = rows.map(r => ({ memberId: r.memberId!, amountPaid: Math.round(r.amount! * 100) / 100 }));
+      // Cents must add up exactly (the server checks for equality): put any 1-cent rounding gap on the last payer.
+      const gap = Math.round((Math.round(amount * 100) - payers.reduce((a, p) => a + Math.round(p.amountPaid * 100), 0))) / 100;
+      if (gap !== 0) payers[payers.length - 1].amountPaid = Math.round((payers[payers.length - 1].amountPaid + gap) * 100) / 100;
     } else {
       const payerId = this.expPayerId();
       if (payerId === null) {
         this.notificationService.showError('Select who paid.');
         return;
       }
-      payers = [{ memberId: payerId, amountPaid: amount }];
+      payers = [{ memberId: payerId, amountPaid: Math.round(amount * 100) / 100 }];
     }
 
     const type = this.expSplitType();
@@ -1491,7 +1614,7 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
       const payload = {
         groupId: this.groupId,
         description,
-        amount,
+        amount: Math.round(amount * 100) / 100,
         date: toDateOnlyString(this.expDate())!,
         category: this.expCategory(),
         notes: this.expNotes().trim() || null,
@@ -1506,6 +1629,19 @@ export class SplitGroupDetail implements OnInit, OnDestroy {
       } else {
         saved = await this.splitService.addExpense(payload);
         if (saved?.id) this.highlightExpense(saved.id);
+        const repeat = this.expRepeat();
+        if (repeat !== null) {
+          try {
+            await this.splitService.createRecurring({
+              groupId: this.groupId, description, amount, category: payload.category, notes: payload.notes,
+              splitType: type, payers, participants, frequency: repeat,
+              startDate: payload.date, endDate: toDateOnlyString(this.expRepeatEnd()), firstAlreadyAdded: true
+            });
+            this.notificationService.showSuccess('This expense will be added again automatically.');
+          } catch (err: any) {
+            this.notificationService.showError(`Expense saved, but it couldn't be set to repeat: ${err?.message || 'unknown error'}`);
+          }
+        }
       }
       // Apply the result right away (idempotent with the realtime event that follows), so the
       // new or edited expense appears under the right day even if the live connection is down.

@@ -53,7 +53,7 @@
       <div class="flex flex-col gap-3">
         <div class="flex items-center justify-between">
           <span class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Group Members ({{ activeMembers().length }})</span>
-          @if (!isGroupClosed()) {
+          @if (!isGroupClosed() && isGroupAdmin()) {
             <button (click)="showAddMember.set(true)"
               class="text-xs text-[var(--primary-color,#3b82f6)] bg-transparent border-none cursor-pointer font-bold flex items-center gap-1 hover:underline">
               <i class="pi pi-plus"></i> Add Member
@@ -106,8 +106,11 @@
                     } @else {
                       <span class="font-bold text-sm truncate text-[var(--text-primary)]">{{ m.name }}</span>
                     }
-                    @if (m.linkedUserId === group()?.createdByUserId) {
-                      <p-tag value="Admin" severity="warn" styleClass="text-[0.65rem] px-1.5 py-0.5 font-bold"></p-tag>
+                    @if (m.linkedUserId === group()?.createdByUserId || m.isAdmin) {
+                      <p-tag [value]="m.linkedUserId === group()?.createdByUserId ? 'Creator' : 'Admin'" severity="warn" styleClass="text-[0.65rem] px-1.5 py-0.5 font-bold"></p-tag>
+                    }
+                    @if (m.isGuest) {
+                      <p-tag value="Guest" severity="secondary" styleClass="text-[0.65rem] px-1.5 py-0.5 font-bold"></p-tag>
                     }
                     @if (m.linkedUserId && m.linkedUserId === currentUserMember()?.linkedUserId) {
                       <p-tag value="You" severity="info" styleClass="text-[0.65rem] px-1.5 py-0.5 font-bold"></p-tag>
@@ -152,10 +155,32 @@
                       <i class="pi pi-wallet"></i>
                     </button>
                   }
+                  @if (canToggleGuest(m)) {
+                    <button (click)="toggleGuest(m)" [pTooltip]="m.isGuest ? 'Make full member' : 'Make guest (view only)'"
+                      [attr.aria-label]="m.isGuest ? 'Make full member' : 'Make guest (view only)'"
+                      class="text-xs bg-transparent border-none cursor-pointer p-1.5 rounded-lg hover:bg-[var(--glass-bg)]"
+                      [class.text-sky-500]="m.isGuest" [class.text-[var(--text-muted)]]="!m.isGuest">
+                      <i class="pi" [class.pi-eye]="m.isGuest" [class.pi-eye-slash]="!m.isGuest"></i>
+                    </button>
+                  }
+                  @if (canToggleAdmin(m)) {
+                    <button (click)="toggleAdmin(m)" [pTooltip]="m.isAdmin ? 'Remove as admin' : 'Make admin'"
+                      [attr.aria-label]="m.isAdmin ? 'Remove as admin' : 'Make admin'"
+                      class="text-xs bg-transparent border-none cursor-pointer p-1.5 rounded-lg hover:bg-[var(--glass-bg)]"
+                      [class.text-amber-500]="m.isAdmin" [class.text-[var(--text-muted)]]="!m.isAdmin">
+                      <i class="pi pi-shield"></i>
+                    </button>
+                  }
                   @if (canMergeMember(m)) {
                     <button (click)="startMerge(m)" pTooltip="Merge into another member"
                       class="text-xs text-[var(--text-muted)] hover:text-indigo-400 bg-transparent border-none cursor-pointer p-1.5 rounded-lg hover:bg-[var(--glass-bg)]">
                       <i class="pi pi-share-alt"></i>
+                    </button>
+                  }
+                  @if (canUnlinkMember(m)) {
+                    <button (click)="unlinkMember(m)" pTooltip="Unlink account (wrong person joined)"
+                      class="text-xs text-[var(--text-muted)] hover:text-amber-400 bg-transparent border-none cursor-pointer p-1.5 rounded-lg hover:bg-[var(--glass-bg)]">
+                      <i class="pi pi-link"></i>
                     </button>
                   }
                   @if (canRemoveMember(m)) {
@@ -212,6 +237,17 @@
               [disabled]="!isGroupAdmin() || isGroupClosed()"></p-toggleswitch>
           </div>
 
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex flex-col min-w-0">
+              <span class="text-sm font-bold text-[var(--text-primary)]">Weekly email reminders</span>
+              <span class="text-[0.75rem] text-[var(--text-muted)]">
+                Every week, members with a FinPlanner account who still owe money get an email. You can also remind someone any time from the Balances tab.
+              </span>
+            </div>
+            <p-toggleswitch [ngModel]="draftAutoRemind()" (ngModelChange)="draftAutoRemind.set($event)"
+              [disabled]="!isGroupAdmin() || isGroupClosed()"></p-toggleswitch>
+          </div>
+
           @if (isGroupAdmin() && !isGroupClosed()) {
             <div class="flex justify-end">
               <p-button label="Save settings" size="small" [disabled]="!settingsDirty()"
@@ -219,6 +255,46 @@
             </div>
           } @else {
             <span class="text-xs text-[var(--text-muted)] italic">Only the trip admin can change these.</span>
+          }
+        </div>
+
+        <!-- Recurring expenses -->
+        <div class="p-4 rounded-2xl flex flex-col gap-3 bg-[var(--glass-bg)] border border-[var(--glass-border)] shadow-sm">
+          <span class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Repeating expenses</span>
+          @if (recurring().length === 0) {
+            <span class="text-xs text-[var(--text-muted)]">
+              None yet. When you add an expense, choose "Repeat" to have it added again automatically (rent, subscriptions…).
+            </span>
+          }
+          @for (r of recurring(); track r.id) {
+            <div class="flex items-center justify-between gap-3 p-3 rounded-xl border border-[var(--glass-border)]"
+              [class.opacity-60]="!r.isActive">
+              <div class="flex flex-col min-w-0">
+                <span class="text-sm font-bold truncate text-[var(--text-primary)]">{{ r.description }}</span>
+                <span class="text-[0.7rem] text-[var(--text-muted)]">
+                  {{ r.amount | currency:(group()?.currency || 'INR') }} · {{ frequencyLabel(r.frequency) }} · paid by {{ r.paidBy }} · {{ r.participantCount }} sharing
+                </span>
+                @if (r.isActive) {
+                  <span class="text-[0.7rem] text-[var(--text-muted)]">Next: {{ r.nextRunDate | date:'d MMM y' }}@if (r.endDate) { · until {{ r.endDate | date:'d MMM y' }} }</span>
+                } @else if (r.lastError) {
+                  <span class="text-[0.7rem] text-rose-500">Paused: {{ r.lastError }}</span>
+                } @else {
+                  <span class="text-[0.7rem] text-[var(--text-muted)]">Paused</span>
+                }
+              </div>
+              @if (canManageRecurring(r)) {
+                <div class="flex items-center gap-1 shrink-0">
+                  <button (click)="toggleRecurring(r)" [attr.aria-label]="r.isActive ? 'Pause' : 'Resume'" [pTooltip]="r.isActive ? 'Pause' : 'Resume'"
+                    class="text-xs text-[var(--text-muted)] hover:text-[var(--primary-color)] bg-transparent border-none cursor-pointer p-1.5 rounded-lg">
+                    <i class="pi" [class.pi-pause]="r.isActive" [class.pi-play]="!r.isActive"></i>
+                  </button>
+                  <button (click)="deleteRecurring(r)" aria-label="Delete" pTooltip="Delete"
+                    class="text-xs text-red-500 bg-transparent border-none cursor-pointer p-1.5 rounded-lg hover:bg-red-500/10">
+                    <i class="pi pi-trash"></i>
+                  </button>
+                </div>
+              }
+            </div>
           }
         </div>
 
@@ -286,6 +362,7 @@
           <div class="flex flex-col sm:flex-row items-center gap-2">
             <input type="text" pInputText [value]="shareLink()" readonly class="w-full text-xs font-mono" />
             <p-button label="Copy Link" icon="pi pi-copy" size="small" (onClick)="copyShareLink()" styleClass="w-full sm:w-auto shrink-0"></p-button>
+            @if (isGroupCreator()) { <p-button label="Reset" icon="pi pi-refresh" size="small" severity="secondary" [outlined]="true" (onClick)="resetShareLink()" pTooltip="Make the old link stop working" styleClass="w-full sm:w-auto shrink-0"></p-button> }
           </div>
           <span class="text-[0.75rem] text-[var(--text-muted)]">Short-lived public URL generated by admin for guests to view transactions.</span>
         </div>
@@ -358,7 +435,7 @@
           </div>
         }
 
-        @if (isGroupAdmin()) {
+        @if (isGroupCreator()) {
           <div class="p-4 rounded-2xl flex flex-col gap-3 bg-red-500/5 border border-red-500/20 shadow-sm">
             <div class="flex items-center justify-between flex-wrap gap-2">
               <div class="flex flex-col">

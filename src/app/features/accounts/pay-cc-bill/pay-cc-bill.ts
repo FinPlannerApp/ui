@@ -80,6 +80,28 @@ export class PayCcBill implements OnInit {
 
   rows = signal<PaymentRow[]>([this.newRow()]);
 
+  /** Unpaid statements, oldest first. The payment is recorded against the one chosen here. */
+  outstandingBills = signal<{ id: number; label: string; remaining: number }[]>([]);
+  selectedBillId = signal<number | null>(null);
+
+  private async loadOutstandingBills(): Promise<void> {
+    try {
+      const res = await firstValueFrom(this.api.get<{ id: number; statementDate: string; remainingAmount: number; dueDate: string | null }[]>(
+        `Accounts/${this.accountId}/outstanding-bills`));
+      if (!res.isSuccess) return;
+      const bills = (res.value ?? []).map(b => ({
+        id: b.id,
+        remaining: b.remainingAmount,
+        label: `Statement ${new Date(b.statementDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} · ₹${b.remainingAmount.toFixed(2)} left`
+          + (b.dueDate ? ` · due ${new Date(b.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}` : '')
+      }));
+      this.outstandingBills.set(bills);
+      this.selectedBillId.set(bills[0]?.id ?? null);
+    } catch {
+      // Not critical: without the list the server picks the statement itself.
+    }
+  }
+
   eligibleAccounts = computed(() =>
     this.accountState.accounts().filter(a => a.accountType !== AccountType.CreditCard)
   );
@@ -131,6 +153,7 @@ export class PayCcBill implements OnInit {
   });
 
   async ngOnInit(): Promise<void> {
+    void this.loadOutstandingBills();
     try {
       // Independent requests — run together instead of one after another.
       const [, appsRes, walletsRes] = await Promise.all([
@@ -323,6 +346,7 @@ export class PayCcBill implements OnInit {
     try {
       const payload = {
         creditCardAccountId: this.accountId,
+        creditCardBillId: this.selectedBillId(),
         payments: rows.map(r => ({
           payingAccountId: r.payingAccountId,
           amount: r.amount,

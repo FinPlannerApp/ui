@@ -1,0 +1,117 @@
+<div class="max-w-6xl mx-auto w-full flex flex-col gap-4 px-4 md:px-8 py-4" [class.money-hidden]="hidden()">
+  <app-module-tabs [tabs]="tabs" label="Accounts sections" />
+
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <div class="min-w-0">
+      <h1 class="text-2xl font-bold m-0 gradient-text">Accounts overview</h1>
+      <p class="text-sm text-muted mt-1 mb-0">Where your money sits, what you owe, and what needs attention.</p>
+    </div>
+    @if (settings().hideBalances) {
+      <p-button [icon]="revealed() ? 'pi pi-eye-slash' : 'pi pi-eye'" [label]="revealed() ? 'Hide balances' : 'Show balances'" size="small" severity="secondary" [outlined]="true" (onClick)="revealed.set(!revealed())"></p-button>
+    }
+  </div>
+
+  @if (loading() && accounts().length === 0) {
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">@for (i of [1,2,3,4]; track i) { <p-skeleton height="96px" borderRadius="24px"></p-skeleton> }</div>
+  } @else if (accounts().length === 0) {
+    <div class="glass-card rounded-3xl p-10 text-center border border-white/10">
+      <i class="pi pi-wallet text-5xl opacity-40 mb-3"></i>
+      <h2 class="text-lg font-black text-main m-0">No accounts yet</h2>
+      <p class="text-sm text-muted mt-1 mb-4">Add a bank, cash or card account to see your overview.</p>
+      <a routerLink="/app/accounts" class="p-button p-button-sm no-underline"><i class="pi pi-plus mr-2"></i>Add an account</a>
+    </div>
+  } @else {
+
+    <!-- Headline -->
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="tile glass-card rounded-3xl p-4 border border-white/10" style="--accent:#10b981">
+        <span class="lbl">Net worth</span>
+        <span class="val money" [class.text-red-400]="netWorth() < 0">{{ netWorth() | currency:'INR':'symbol':'1.0-0' }}</span>
+        <span class="sub">assets − liabilities</span>
+      </div>
+      <div class="tile glass-card rounded-3xl p-4 border border-white/10" style="--accent:#06b6d4">
+        <span class="lbl">Liquid cash</span>
+        <span class="val money">{{ liquid() | currency:'INR':'symbol':'1.0-0' }}</span>
+        <span class="sub">bank + cash accounts</span>
+      </div>
+      <div class="tile glass-card rounded-3xl p-4 border border-white/10" style="--accent:#f59e0b">
+        <span class="lbl">Card balances</span>
+        <span class="val money">{{ cardDebt() | currency:'INR':'symbol':'1.0-0' }}</span>
+        <span class="sub">{{ cards().length }} card{{ cards().length === 1 ? '' : 's' }}</span>
+      </div>
+      <div class="tile glass-card rounded-3xl p-4 border border-white/10" style="--accent:#ef4444">
+        <span class="lbl">Loans</span>
+        <span class="val money">{{ loanDebt() | currency:'INR':'symbol':'1.0-0' }}</span>
+        <span class="sub">outstanding</span>
+      </div>
+    </section>
+
+    <!-- Needs attention -->
+    @if (lowBalance().length || cardsDueSoon().length) {
+      <section class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        @if (cardsDueSoon().length) {
+          <div class="glass-card rounded-3xl p-4 border border-amber-400/30">
+            <h2 class="text-sm font-black text-main m-0 mb-2 flex items-center gap-2"><i class="pi pi-credit-card text-amber-400"></i>Card bills due soon</h2>
+            @for (c of cardsDueSoon(); track c.id) {
+              <div class="flex items-center justify-between gap-3 py-1.5">
+                <a [routerLink]="['/app/accounts', c.id, 'transactions']" class="text-xs font-bold text-main no-underline truncate">{{ c.name }}</a>
+                <span class="text-xs shrink-0"><span class="font-black money" [class.text-red-400]="c.daysLeft <= 0">{{ c.amount | currency:'INR':'symbol':'1.0-0' }}</span> <span class="text-muted">· {{ dueLabel(c.daysLeft) }}</span></span>
+              </div>
+            }
+          </div>
+        }
+        @if (lowBalance().length) {
+          <div class="glass-card rounded-3xl p-4 border border-red-400/30">
+            <h2 class="text-sm font-black text-main m-0 mb-2 flex items-center gap-2"><i class="pi pi-exclamation-triangle text-red-400"></i>Below your {{ settings().lowBalanceThreshold | currency:'INR':'symbol':'1.0-0' }} low-balance level</h2>
+            @for (a of lowBalance(); track a.id) {
+              <div class="flex items-center justify-between gap-3 py-1.5">
+                <a [routerLink]="['/app/accounts', a.id, 'transactions']" class="text-xs font-bold text-main no-underline truncate">{{ a.name }}</a>
+                <span class="text-xs font-black text-red-400 shrink-0 money">{{ a.balance | currency:'INR':'symbol':'1.0-0' }}</span>
+              </div>
+            }
+          </div>
+        }
+      </section>
+    }
+
+    <!-- Charts / bars -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div class="lg:col-span-5 glass-card rounded-3xl p-5 border border-white/10">
+        <h2 class="text-sm font-black text-main m-0 mb-3 flex items-center gap-2"><i class="pi pi-chart-pie text-emerald-400"></i>Assets by category</h2>
+        @if (hasCategoryData()) {
+          <div class="h-[250px] money"><p-chart type="doughnut" [data]="categoryChart()" [options]="donutOptions" height="250px"></p-chart></div>
+        } @else { <p class="text-xs text-muted m-0">No positive balances to chart yet.</p> }
+      </div>
+
+      <div class="lg:col-span-7 flex flex-col gap-4">
+        <div class="glass-card rounded-3xl p-5 border border-white/10">
+          <h2 class="text-sm font-black text-main m-0 mb-3 flex items-center gap-2"><i class="pi pi-credit-card text-amber-400"></i>Credit card use</h2>
+          @for (c of cardUse(); track c.id; let i = $index) {
+            <div class="mb-3 last:mb-0">
+              <div class="flex items-baseline justify-between gap-2 text-xs">
+                <span class="font-bold text-main truncate">{{ c.name }}</span>
+                <span class="text-muted shrink-0"><span class="money">{{ c.used | currency:'INR':'symbol':'1.0-0' }} / {{ c.limit | currency:'INR':'symbol':'1.0-0' }}</span> · <strong [style.color]="utilColor(c.raw)">{{ c.raw | number:'1.0-0' }}%</strong></span>
+              </div>
+              <div class="bar-track mt-1" role="progressbar" [attr.aria-valuenow]="c.pct | number:'1.0-0'" aria-valuemin="0" aria-valuemax="100" [attr.aria-label]="c.name + ' credit used'">
+                <div class="bar-fill" [style.width.%]="barWidth(c.pct)" [style.transition-delay.ms]="i * 80" [style.background]="utilColor(c.raw)"></div>
+              </div>
+            </div>
+          } @empty { <p class="text-xs text-muted m-0">Cards with a credit limit show their utilisation here. Under 30% keeps it healthy.</p> }
+        </div>
+
+        <div class="glass-card rounded-3xl p-5 border border-white/10">
+          <h2 class="text-sm font-black text-main m-0 mb-3 flex items-center gap-2"><i class="pi pi-wallet text-emerald-400"></i>Largest accounts</h2>
+          @for (a of topAccounts(); track a.id; let i = $index) {
+            <div class="mb-2.5 last:mb-0">
+              <div class="flex items-baseline justify-between gap-2 text-xs">
+                <span class="font-bold text-main truncate">{{ a.name }}</span>
+                <span class="font-black text-main shrink-0 money">{{ a.balance | currency:'INR':'symbol':'1.0-0' }}</span>
+              </div>
+              <div class="bar-track mt-1"><div class="bar-fill" [style.width.%]="barWidth(a.balance / maxTop() * 100)" [style.transition-delay.ms]="i * 80" style="background:#10b981"></div></div>
+            </div>
+          } @empty { <p class="text-xs text-muted m-0">No asset accounts with a balance yet.</p> }
+        </div>
+      </div>
+    </section>
+  }
+</div>

@@ -69,6 +69,15 @@
   @if (!result()) {
    <!-- Single scroll region; the footer below it stays pinned. -->
    <div class="flex flex-col gap-3 overflow-y-auto min-h-0 flex-1 pr-1 -mr-1">
+    @if (outstandingBills().length > 0) {
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">Pay which statement?</label>
+        <p-select [options]="outstandingBills()" [ngModel]="selectedBillId()" (ngModelChange)="selectedBillId.set($event)"
+          optionLabel="label" optionValue="id" appendTo="body" styleClass="w-full"></p-select>
+        <span class="text-[0.7rem] text-[var(--text-muted)]">The payment is recorded against this statement, so older bills are cleared first.</span>
+      </div>
+    }
+
     <!-- Payment Batch Rows -->
     <div class="flex flex-col gap-3">
       @for (row of rows(); track row.uid) {

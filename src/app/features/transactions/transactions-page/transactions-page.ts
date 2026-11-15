@@ -1,3 +1,5 @@
+import { UndoBanner } from '../../../shared/components/undo-banner/undo-banner';
+import { UndoService } from '../../../core/services/undo.service';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Transaction, TransactionService, TransactionPageResult, TransactionQueryParams } from '../transaction';
@@ -22,6 +24,8 @@ import { TooltipModule } from 'primeng/tooltip';
 import { FieldsetModule } from 'primeng/fieldset';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
+import { ModuleTabs } from '../../../shared/components/module-tabs/module-tabs';
+import { TRANSACTIONS_TABS } from '../transactions-tabs';
 
 interface MonthOption {
   label: string;
@@ -36,6 +40,7 @@ interface YearOption {
 @Component({
   selector: 'app-transactions-page',
   imports: [
+    UndoBanner,
     CommonModule,
     FormsModule,
     CardModule,
@@ -52,17 +57,20 @@ interface YearOption {
     TooltipModule,
     FieldsetModule,
     IconFieldModule,
-    InputIconModule
+    InputIconModule,
+    ModuleTabs
   ],
   providers: [DialogService],
   templateUrl: './transactions-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TransactionsPage implements OnInit {
+  readonly tabs = TRANSACTIONS_TABS;
   private transactionService = inject(TransactionService);
   private cdr = inject(ChangeDetectorRef);
   private dialogService = inject(DialogService); // Added
   private messageService = inject(MessageService); // Added
+  private undo = inject(UndoService);
   private confirmationService = inject(ConfirmationService); // Added
   private router = inject(Router); // Added
 
@@ -265,7 +273,16 @@ export class TransactionsPage implements OnInit {
       accept: () => {
         this.transactionService.deleteTransaction(transaction.accountId, transaction.id).subscribe({
           next: () => {
-            this.messageService.add({ severity: 'success', summary: 'Deleted', detail: 'Transaction deleted successfully' });
+            if (!transaction.transferGroupId) {
+              this.undo.offer(`"${transaction.description}" was deleted`, () => {
+                this.transactionService.restoreTransaction(transaction.accountId, transaction.id).subscribe({
+                  next: () => this.fetchTransactions(),
+                  error: (e) => this.messageService.add({ severity: 'error', summary: 'Undo failed', detail: e?.description || e?.message || 'Could not undo.' })
+                });
+              });
+            } else {
+              this.messageService.add({ severity: 'success', summary: 'Deleted', detail: 'Transaction deleted successfully' });
+            }
             this.fetchTransactions();
           },
           error: (err) => {

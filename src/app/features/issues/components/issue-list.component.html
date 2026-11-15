@@ -138,7 +138,7 @@
                 <span class="text-[var(--text-muted)]"><i class="pi pi-user mr-1"></i>{{issue.creatorName}}</span>
                 }
                 @if (issue.gitHubIssueUrl) {
-                <a [href]="issue.gitHubIssueUrl" target="_blank" (click)="$event.stopPropagation()"
+                <a [href]="issue.gitHubIssueUrl" target="_blank" rel="noopener noreferrer" (click)="$event.stopPropagation()"
                   class="text-[var(--text-muted)] no-underline"><i class="pi pi-github"></i></a>
                 }
               </div>

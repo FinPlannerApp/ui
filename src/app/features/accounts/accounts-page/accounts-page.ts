@@ -7,6 +7,7 @@ import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { sharedPrimeModules } from '../../../shared/prime-imports';
 import { AccountState } from '../../../core/state/account-state.service';
 import { Account } from '../account';
+import { InterestDue } from '../interest-due/interest-due';
 import { AccountForm } from '../account-form/account-form';
 import { AdjustBalance } from '../adjust-balance/adjust-balance';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -26,11 +27,14 @@ import { StatCard } from '../../../shared/components/stat-card/stat-card';
 import { PayCcBill } from '../pay-cc-bill/pay-cc-bill';
 import { RecordCcBill } from '../record-cc-bill/record-cc-bill';
 import { AccountType } from '../../../core/models/account-type.model';
+import { ModuleTabs } from '../../../shared/components/module-tabs/module-tabs';
+import { ACCOUNTS_TABS } from '../accounts-tabs';
+import { UserSettingsService } from '../../../core/services/user-settings.service';
 
 @Component({
   selector: 'app-accounts-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, AutoMarqueeDirective, EmptyState, StatCard, ...sharedPrimeModules],
+  imports: [CommonModule, FormsModule, RouterLink, ModuleTabs, InterestDue, AutoMarqueeDirective, EmptyState, StatCard, ...sharedPrimeModules],
   templateUrl: './accounts-page.html',
   providers: [DialogService, ConfirmationService],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -45,6 +49,13 @@ export class AccountsPage implements OnInit {
   private router = inject(Router);
 
   // State & Filter Signals
+  readonly tabs = ACCOUNTS_TABS;
+  private userSettings = inject(UserSettingsService);
+  /** From Account settings → Hide balances; the eye button reveals temporarily. */
+  hideBalancesSetting = signal(false);
+  revealed = signal(false);
+  hidden = computed(() => this.hideBalancesSetting() && !this.revealed());
+
   searchTerm = signal<string>('');
   selectedCategoryFilter = signal<string>('all'); // 'all' or category ID/name
   viewMode = signal<'grid' | 'table'>('grid');
@@ -154,6 +165,8 @@ export class AccountsPage implements OnInit {
       this.refreshData();
     });
 
+    this.userSettings.getAccounts().then(s => this.hideBalancesSetting.set(s.hideBalances)).catch(() => { /* default: shown */ });
+
     await Promise.all([
       this.loadCategories(),
       this.accountState.loadAccounts()
@@ -241,43 +254,16 @@ export class AccountsPage implements OnInit {
     }
   }
 
-  openEditForm(acc: Account): void {
-    this.ref = this.dialogService.open(AccountForm, {
-      header: `Edit "${acc.name}"`,
-      width: '560px',
-      style: { maxWidth: '94vw' },
-      modal: true,
-      closable: true,
-      dismissableMask: false,
-      data: {
-        itemToEdit: acc
-      }
-    });
 
-    if (this.ref) {
-      this.ref.onClose.subscribe((result: boolean) => {
-        if (result) {
-          this.refreshData();
-        }
-      });
-    }
+
+  openSettings(acc: Account): void {
+    this.router.navigate(['/app/accounts', acc.id, 'settings']);
   }
 
-  confirmDelete(acc: Account): void {
-    this.confirmationService.confirm({
-      header: 'Delete Account',
-      message: `Are you sure you want to delete account "${acc.name}"? Transactions associated with this account will remain saved.`,
-      icon: 'pi pi-exclamation-triangle',
-      acceptButtonStyleClass: 'p-button-danger',
-      accept: async () => {
-        try {
-          await this.accountState.deleteAccount(acc.id);
-          this.notificationService.showSuccess(`Account "${acc.name}" deleted successfully.`);
-        } catch (err: any) {
-          this.notificationService.showError(err?.message || 'Failed to delete account.');
-        }
-      }
-    });
+  /** The whole card opens the account's transactions; inner buttons/links keep their own action. */
+  onCardClick(ev: Event, acc: Account): void {
+    if ((ev.target as HTMLElement).closest('button, a, input, .p-button, .p-select')) return;
+    this.viewTransactions(acc);
   }
 
   viewTransactions(acc: Account): void {
@@ -429,24 +415,4 @@ export class AccountsPage implements OnInit {
     }
   }
 
-  openAdjustBalance(acc: Account): void {
-    this.ref = this.dialogService.open(AdjustBalance, {
-      header: 'Adjust Balance',
-      width: '28rem',
-      modal: true,
-      data: {
-        accountId: acc.id,
-        accountName: acc.name,
-        currentBalance: acc.balance
-      }
-    });
-
-    if (this.ref) {
-      this.ref.onClose.subscribe((changed: boolean) => {
-        if (changed) {
-          this.refreshData();
-        }
-      });
-    }
-  }
 }

@@ -4,7 +4,9 @@ export enum RecurrenceFrequency {
     Monthly = 3,
     Yearly = 4,
     Custom = 5,
-    OneTime = 6
+    OneTime = 6,
+    Quarterly = 7,
+    HalfYearly = 8
 }
 
 // Matches Domain.Enums.RecurrenceDayOfWeek on the backend exactly — same
@@ -39,6 +41,7 @@ export interface RecurringTransaction {
     lastProcessedDate?: string;
     isObligation?: boolean;
     linkedLoanAccountId?: number | null;
+    linkedInvestmentAccountId?: number | null;
 }
 
 export interface UpsertRecurringTransactionRequest {
@@ -54,4 +57,5 @@ export interface UpsertRecurringTransactionRequest {
     isActive: boolean;
     isObligation?: boolean;
     linkedLoanAccountId?: number | null;
+    linkedInvestmentAccountId?: number | null;
 }

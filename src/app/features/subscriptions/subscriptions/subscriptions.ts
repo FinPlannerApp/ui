@@ -12,11 +12,14 @@ import { RecurrenceFrequency } from '../../../core/models/recurring-transaction.
 import { NotificationService } from '../../../core/services/notification.service';
 import { GenericApi } from '../../../core/services/generic-api';
 import { toDateOnlyString } from '../../../core/utils/date-utils';
+import { monthlyFactor, toFrequency } from '../../../core/utils/recurrence-math';
+import { ModuleTabs } from '../../../shared/components/module-tabs/module-tabs';
+import { SUBSCRIPTIONS_TABS } from '../subscriptions-tabs';
 
 @Component({
   selector: 'app-subscriptions',
   standalone: true,
-  imports: [PageHeader, CommonModule, FormsModule, ...sharedPrimeModules],
+  imports: [PageHeader, ModuleTabs, CommonModule, FormsModule, ...sharedPrimeModules],
   templateUrl: './subscriptions.html'
 })
 export class Subscriptions implements OnInit {
@@ -25,6 +28,7 @@ export class Subscriptions implements OnInit {
   private confirmationService = inject(ConfirmationService);
   private api = inject(GenericApi);
 
+  readonly tabs = SUBSCRIPTIONS_TABS;
   subscriptions = signal<Subscription[]>([]);
   accounts = signal<any[]>([]);
   categories = signal<any[]>([]);
@@ -50,13 +54,8 @@ export class Subscriptions implements OnInit {
     // Rough estimate only — normalizes each subscription to a monthly
     // figure regardless of its actual frequency, purely so there's one
     // "about how much is this costing me a month" number to glance at.
-    return this.subscriptions().reduce((sum, s) => {
-      const freq = s.frequency.toLowerCase();
-      if (freq === 'yearly') return sum + s.amount / 12;
-      if (freq === 'weekly') return sum + s.amount * 4.33;
-      if (freq === 'daily') return sum + s.amount * 30.44;
-      return sum + s.amount; // monthly, or anything else, treated as-is
-    }, 0);
+    // Shared with the Overview so both pages agree — now also handles quarterly and half-yearly billing.
+    return this.subscriptions().reduce((sum, s) => sum + s.amount * (monthlyFactor(toFrequency(s.frequency)) || 1), 0);
   });
 
   async ngOnInit(): Promise<void> {
@@ -105,6 +104,12 @@ export class Subscriptions implements OnInit {
     const accountId = this.formAccountId();
     if (!name || amount === null || amount <= 0 || accountId === null) {
       this.notificationService.showError('Name, amount, and account are required.');
+      return;
+    }
+
+    const cancelUrl = this.formCancellationUrl().trim();
+    if (cancelUrl && !/^https?:\/\/[^\s]+$/i.test(cancelUrl)) {
+      this.notificationService.showError('The cancellation link must start with http:// or https://');
       return;
     }
 

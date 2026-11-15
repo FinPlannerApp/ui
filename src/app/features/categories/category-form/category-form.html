@@ -16,6 +16,14 @@
 
   <!-- Transaction Categories only -->
   @if(isTransactionCategory()) {
+  <app-form-field label="Parent category (optional)" inputId="parentCategoryId" [control]="categoryForm.get('parentCategoryId')">
+    <p-select id="parentCategoryId" [options]="parentOptions()" formControlName="parentCategoryId" optionLabel="label"
+      optionValue="value" [showClear]="true" [filter]="true" placeholder="None — this is a main category" appendTo="body" class="w-full"></p-select>
+  </app-form-field>
+  @if (hasChildren()) {
+    <p class="text-xs m-0 mt-1" style="color:var(--text-dim)">This category has sub-categories, so it can't become a sub-category itself.</p>
+  }
+
   <div class="field-checkbox mt-3 flex items-center gap-2 cursor-pointer">
     <p-checkbox formControlName="isTransferCategory" [binary]="true" inputId="isTransfer"></p-checkbox>
     <label for="isTransfer" class="text-xs sm:text-sm font-medium cursor-pointer select-none">Is this a transfer category?</label>

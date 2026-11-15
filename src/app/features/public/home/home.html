@@ -1,90 +1,227 @@
-<section class="px-4 py-8 md:px-8">
-    <!-- Hero Section -->
-    <div class="text-center mb-8 pt-6">
-        <h1 class="text-5xl md:text-7xl font-bold m-0 mb-3 zoom-in"
-            style="background: linear-gradient(135deg, #10b981, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1.2;">
-            Take Control of<br>Your Finances
-        </h1>
-        <p class="text-xl md:text-2xl mt-3 mb-5 fade-in"
-            style="color: var(--text-muted); max-width: 600px; margin-left: auto; margin-right: auto;">
-            Track spending, manage accounts, and build wealth — all in one beautifully crafted platform.
-        </p>
-        <div class="flex justify-center gap-3 fade-in">
-            <a routerLink="/register" class="no-underline">
-                <p-button label="Get Started Free" icon="pi pi-arrow-right" iconPos="right"
-                    styleClass="p-button-lg"></p-button>
-            </a>
-            <!-- <a routerLink="/features" class="no-underline">
-                <p-button label="See Features" styleClass="p-button-lg p-button-text"></p-button>
-            </a> -->
-            <a routerLink="/app/split" class="no-underline">
-                <p-button label="Splits" styleClass="p-button-lg p-button-text"></p-button>
-            </a>
+<div class="pub">
+  <!-- ═════════ HERO ═════════ -->
+  <section class="pub-hero">
+    <div class="pub-bg" aria-hidden="true"><div class="pub-grid-bg"></div><div class="pub-orb a"></div><div class="pub-orb b"></div><div class="pub-orb c"></div></div>
+    <div class="pub-wrap pub-content">
+      <div class="pub-hero-grid">
+        <div>
+          <span class="pub-eyebrow reveal is-in"><span class="dot"></span>Personal finance, built for how you actually pay</span>
+          <h1 class="pub-h1">Know what you can<br><span class="pub-grad">really spend.</span></h1>
+          <p class="pub-lead">Your bank balance isn’t your money. Financial Planner subtracts card dues, EMIs and upcoming bills so you see the amount that’s truly free — across every account, card and wallet.</p>
+          <div class="pub-cta-row">
+            @if (isLoggedIn()) {
+              <a routerLink="/app/dashboard" class="pub-btn pub-btn-primary">Open dashboard <i class="pi pi-arrow-right"></i></a>
+            } @else {
+              <a routerLink="/register" class="pub-btn pub-btn-primary">Get started free <i class="pi pi-arrow-right"></i></a>
+              <a routerLink="/login" class="pub-btn pub-btn-ghost">Log in</a>
+            }
+            <a routerLink="/features" class="pub-btn pub-btn-ghost">See what’s inside</a>
+          </div>
+          <div class="pub-trust">
+            <span><i class="pi pi-check-circle"></i>Free to use</span>
+            <span><i class="pi pi-check-circle"></i>Phone, tablet &amp; desktop</span>
+            <span><i class="pi pi-check-circle"></i>Installable app</span>
+          </div>
         </div>
-    </div>
 
-    <!-- Feature Highlights Grid -->
-    <div class="grid grid-cols-12 gap-4 max-w-6xl mx-auto mt-8 mb-8">
-        <div class="col-span-12 md:col-span-4 p-3">
-            <div class="glass-card p-5 text-center rounded-2xl h-full">
-                <i class="pi pi-wallet text-5xl mb-3"
-                    style="background: linear-gradient(135deg, #10b981, #34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"></i>
-                <h3 class="text-xl font-bold mb-2">Unlimited Accounts</h3>
-                <p style="color: var(--text-muted);">Manage bank accounts, wallets, and credit cards from a single
-                    dashboard — completely free.</p>
+        <!-- product preview (sample data) -->
+        <div class="pub-mock-wrap">
+          <div class="pub-chip-float f2"><span class="ico" style="background:color-mix(in srgb,#f59e0b 18%,transparent);color:#f59e0b"><i class="pi pi-bell"></i></span><span>Rent due in 3 days<small>Included in commitments</small></span></div>
+          <div class="pub-mock">
+            <div class="pub-mock-head"><span>Real available cash</span><span class="pub-pill"><i class="pi pi-check-circle"></i>Safe to spend</span></div>
+            <div class="pub-mock-big"><span [appCountUp]="84000" prefix="₹"></span></div>
+            <div style="font-size:.8rem;color:var(--pub-mute)">after card dues and what’s due in the next 30 days</div>
+            <div class="pub-eq">
+              <div><small>Liquid cash</small><b>₹1,24,500</b></div>
+              <div class="neg"><small>− Card debt</small><b>₹18,200</b></div>
+              <div class="neg"><small>− Commitments</small><b>₹22,300</b></div>
+              <div class="pos"><small>= Safe to spend</small><b>₹84,000</b></div>
             </div>
-        </div>
-        <div class="col-span-12 md:col-span-4 p-3">
-            <div class="glass-card p-5 text-center rounded-2xl h-full">
-                <i class="pi pi-chart-pie text-5xl mb-3"
-                    style="background: linear-gradient(135deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"></i>
-                <h3 class="text-xl font-bold mb-2">Visual Analytics</h3>
-                <p style="color: var(--text-muted);">Beautiful charts showing spending by category, income trends, and
-                    monthly comparisons at a glance.</p>
+            <div class="pub-bars" aria-hidden="true">
+              @for (h of bars; track $index) { <i [style.height.%]="h" [style.animation-delay.ms]="$index * 90"></i> }
             </div>
+          </div>
+          <div class="pub-chip-float f1"><span class="ico" style="background:color-mix(in srgb,#10b981 18%,transparent);color:#10b981"><i class="pi pi-users"></i></span><span>Rahul paid you back<small>Split · Goa trip · ₹1,200</small></span></div>
         </div>
-        <div class="col-span-12 md:col-span-4 p-3">
-            <div class="glass-card p-5 text-center rounded-2xl h-full">
-                <i class="pi pi-shield text-5xl mb-3"
-                    style="background: linear-gradient(135deg, #f59e0b, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"></i>
-                <h3 class="text-xl font-bold mb-2">Bank-Grade Security</h3>
-                <p style="color: var(--text-muted);">JWT authentication, encrypted storage, and OTP verification keep
-                    your financial data completely safe.</p>
-            </div>
-        </div>
+      </div>
+      <p class="pub-note">Preview shows sample data, not a real account.</p>
     </div>
+  </section>
 
-    <div class="text-center py-6 mb-6">
-        <div class="grid grid-cols-12 gap-4 max-w-5xl mx-auto">
-            <div class="col-span-6 md:col-span-3 mb-4 md:mb-0">
-                <h2 class="text-4xl font-bold m-0" style="color: #10b981;">{{ formatValue(stats().totalUsers) }}+</h2>
-                <p style="color: var(--text-muted);">Active Users</p>
-            </div>
-            <div class="col-span-6 md:col-span-3 mb-4 md:mb-0">
-                <h2 class="text-4xl font-bold m-0" style="color: #38bdf8;">{{ formatValue(stats().totalAccounts) }}+
-                </h2>
-                <p style="color: var(--text-muted);">Accounts Managed</p>
-            </div>
-            <div class="col-span-6 md:col-span-3">
-                <h2 class="text-4xl font-bold m-0" style="color: #818cf8;">{{ formatValue(stats().totalTransactions) }}+
-                </h2>
-                <p style="color: var(--text-muted);">Transactions Tracked</p>
-            </div>
-            <div class="col-span-6 md:col-span-3">
-                <h2 class="text-4xl font-bold m-0" style="color: #f59e0b;">{{
-                    formatValue(stats().totalTransactionVolume) }}+</h2>
-                <p style="color: var(--text-muted);">Volume Handled (₹)</p>
-            </div>
-        </div>
+  <!-- ═════════ MARQUEE ═════════ -->
+  <div class="pub-marquee" aria-hidden="true">
+    <div class="pub-marquee-track">
+      @for (m of marquee; track $index) { <span><i class="pi" [class]="m[0]"></i>{{ m[1] }}</span> }
     </div>
+  </div>
 
-    <!-- CTA Section -->
-    <div class="glass-card p-6 text-center rounded-3xl max-w-3xl mx-auto mb-6">
-        <h2 class="text-3xl font-bold mb-3">Ready to simplify your finances?</h2>
-        <p class="text-lg mb-4" style="color: var(--text-muted);">Join users who trust Financial Planner to manage their
-            money smarter.</p>
-        <a routerLink="/register" class="no-underline">
-            <p-button label="Create Free Account" icon="pi pi-user-plus" styleClass="p-button-lg"></p-button>
-        </a>
+  <!-- ═════════ FORMULA ═════════ -->
+  <section class="pub-section">
+    <div class="pub-wrap">
+      <div class="pub-center" appReveal>
+        <span class="pub-eyebrow">The idea</span>
+        <h2 class="pub-h2">Your balance isn’t your <span class="pub-grad">spendable money</span></h2>
+        <p class="pub-lead">Most apps stop at “what’s in the bank”. We keep going, until the number you see is one you can safely act on.</p>
+      </div>
+      <div class="pub-formula">
+        <div class="pub-step" appReveal="0"><small>1 · Liquid cash</small><b>Bank + cash</b><p>Only money you can move today. Wallets and emergency savings are treated separately.</p><span class="op">−</span></div>
+        <div class="pub-step" appReveal="80"><small>2 · Card debt</small><b>Billed + unbilled</b><p>Unpaid statements and fresh swipes, so a full card never looks like free money.</p><span class="op">−</span></div>
+        <div class="pub-step" appReveal="160"><small>3 · Commitments</small><b>EMIs &amp; bills</b><p>Recurring payments and subscriptions due in your window, paid by cash or card.</p><span class="op">=</span></div>
+        <div class="pub-step" appReveal="240"><small>4 · Real available</small><b>Truly free</b><p>What’s left once everything owed is set aside.</p><span class="op">→</span></div>
+        <div class="pub-step result" appReveal="320"><small>5 · Safe to spend</small><b>With a buffer</b><p>A cautious figure for day-to-day decisions.</p></div>
+      </div>
     </div>
-</section>
+  </section>
+
+  <!-- ═════════ BENTO ═════════ -->
+  <section class="pub-section" style="padding-top:0">
+    <div class="pub-wrap">
+      <div class="pub-center" appReveal>
+        <span class="pub-eyebrow">Everything in one place</span>
+        <h2 class="pub-h2">Built for real money, not just expenses</h2>
+        <p class="pub-lead">Cards with statements, loans with EMIs, UPI wallets, shared trips — the messy parts of Indian personal finance, handled properly.</p>
+      </div>
+      <div class="pub-bento">
+        <article class="pub-tile w3" appSpotlight appReveal="0" style="--tile:#38bdf8">
+          <div class="pub-ico"><i class="pi pi-credit-card"></i></div>
+          <h3 class="pub-h3">Credit cards that make sense</h3>
+          <p>Record statements with interest, GST and charges, track minimum due and due dates, pay from any account, and see cashback and reward points — with every statement and payment in one history.</p>
+          <ul><li><i class="pi pi-circle-fill"></i>Statement &amp; payment history per card</li><li><i class="pi pi-circle-fill"></i>Cashback to wallet or bank, reward-point expiry</li></ul>
+        </article>
+        <article class="pub-tile w3" appSpotlight appReveal="90" style="--tile:#f59e0b">
+          <div class="pub-ico"><i class="pi pi-percentage"></i></div>
+          <h3 class="pub-h3">Loans &amp; EMIs, split correctly</h3>
+          <p>Each EMI is divided into principal and interest, with an amortisation schedule, next due date and a designated paying account. Delete a payment and everything rolls back cleanly.</p>
+          <ul><li><i class="pi pi-circle-fill"></i>Amortisation schedule</li><li><i class="pi pi-circle-fill"></i>Auto-debit from recurring items</li></ul>
+        </article>
+        <article class="pub-tile w2" appSpotlight appReveal="0" style="--tile:#10b981">
+          <div class="pub-ico"><i class="pi pi-bolt"></i></div>
+          <h3 class="pub-h3">Bulk entry with safety checks</h3>
+          <p>Paste or key in up to 500 rows. A dry run flags duplicates, future dates and overdrafts before anything is saved.</p>
+        </article>
+        <article class="pub-tile w2" appSpotlight appReveal="90" style="--tile:#818cf8">
+          <div class="pub-ico"><i class="pi pi-sync"></i></div>
+          <h3 class="pub-h3">Recurring &amp; subscriptions</h3>
+          <p>Daily to yearly schedules that never drift on month-ends, upcoming-obligation view, pause and resume, and a cancellation link per subscription.</p>
+        </article>
+        <article class="pub-tile w2" appSpotlight appReveal="180" style="--tile:#ec4899">
+          <div class="pub-ico"><i class="pi pi-flag"></i></div>
+          <h3 class="pub-h3">Goals &amp; savings buckets</h3>
+          <p>Set aside part of an account for a goal — the same rupee is never counted twice.</p>
+        </article>
+        <article class="pub-tile w4" appSpotlight appReveal="0" style="--tile:#14b8a6">
+          <div class="pub-ico"><i class="pi pi-chart-line"></i></div>
+          <h3 class="pub-h3">Insights, health score &amp; reports</h3>
+          <p>A financial-health score, nudges such as lifestyle inflation and subscription creep, budget-vs-actual, category analysis, net worth and account statements you can download.</p>
+          <span class="pub-tag">CSV export</span>
+        </article>
+        <article class="pub-tile w2" appSpotlight appReveal="90" style="--tile:#a78bfa">
+          <div class="pub-ico"><i class="pi pi-book"></i></div>
+          <h3 class="pub-h3">Decision journal</h3>
+          <p>Write down why you made a big money decision — and how it turned out.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════ SPLIT SPOTLIGHT ═════════ -->
+  <section class="pub-section" style="padding-top:0">
+    <div class="pub-wrap pub-split">
+      <div appReveal>
+        <span class="pub-eyebrow">Split</span>
+        <h2 class="pub-h2">Trips and flats, <span class="pub-grad">settled without the awkwardness</span></h2>
+        <p class="pub-lead">Share costs equally, by exact amounts, percentages or shares — with several payers on one bill.</p>
+        <ul class="pub-list">
+          <li><i class="pi pi-check-circle"></i><span><b>Friends don’t need an account.</b> Add them by name or share an invite or read-only link.</span></li>
+          <li><i class="pi pi-check-circle"></i><span><b>Pay by UPI,</b> then the receiver confirms — so “paid” always means paid.</span></li>
+          <li><i class="pi pi-check-circle"></i><span><b>Live updates</b> as expenses and settlements change, with a full activity trail.</span></li>
+        </ul>
+        <div class="pub-cta-row"><a routerLink="/app/split" class="pub-btn pub-btn-ghost">Open Split <i class="pi pi-arrow-right"></i></a></div>
+      </div>
+      <div class="pub-card-lg" appReveal="120">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem"><b>Goa trip</b><span class="pub-pill">4 people</span></div>
+        <div class="pub-row"><span class="pub-avatar" style="background:#34d399">A</span><span class="grow"><b>Aisha</b><small>paid ₹6,400 · Villa</small></span><span class="pub-amt pos">+ ₹2,100</span></div>
+        <div class="pub-row"><span class="pub-avatar" style="background:#38bdf8">R</span><span class="grow"><b>Rahul</b><small>paid ₹1,800 · Cab</small></span><span class="pub-amt pos">+ ₹100</span></div>
+        <div class="pub-row"><span class="pub-avatar" style="background:#f59e0b">S</span><span class="grow"><b>Sneha</b><small>paid ₹900 · Food</small></span><span class="pub-amt neg">− ₹800</span></div>
+        <div class="pub-row"><span class="pub-avatar" style="background:#818cf8">K</span><span class="grow"><b>Karan</b><small>paid ₹0</small></span><span class="pub-amt neg">− ₹1,400</span></div>
+        <p style="margin:.9rem 0 0;font-size:.72rem;color:var(--pub-mute);text-align:center">Sample group for illustration.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════ HOW IT WORKS ═════════ -->
+  <section class="pub-section" style="padding-top:0">
+    <div class="pub-wrap">
+      <div class="pub-center" appReveal>
+        <span class="pub-eyebrow">How it works</span>
+        <h2 class="pub-h2">Up and running in minutes</h2>
+      </div>
+      <div class="pub-steps">
+        <div class="pub-how" appReveal="0"><h3 class="pub-h3">Add your accounts</h3><p>Banks, cards, loans, wallets and cash. Mark emergency savings or money held for others so it never counts as spendable.</p></div>
+        <div class="pub-how" appReveal="100"><h3 class="pub-h3">Log what happens</h3><p>Add transactions as you go, or key in a month at once with bulk entry. Set up recurring bills once.</p></div>
+        <div class="pub-how" appReveal="200"><h3 class="pub-h3">See what’s safe</h3><p>Open the dashboard for your safe-to-spend figure, upcoming obligations, health score and insights.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════ TRUST ═════════ -->
+  <section class="pub-section" style="padding-top:0">
+    <div class="pub-wrap">
+      <div class="pub-center" appReveal>
+        <span class="pub-eyebrow">Privacy &amp; security</span>
+        <h2 class="pub-h2">Careful with your data</h2>
+        <p class="pub-lead">Money data deserves boring, well-tested safeguards.</p>
+      </div>
+      <div class="pub-trust-grid">
+        <div class="pub-tile" appReveal="0" style="--tile:#10b981"><div class="pub-ico"><i class="pi pi-mobile"></i></div><h3 class="pub-h3">Per-device sessions</h3><p>Each device has its own sign-in. A new device needs an email code.</p></div>
+        <div class="pub-tile" appReveal="80" style="--tile:#38bdf8"><div class="pub-ico"><i class="pi pi-lock"></i></div><h3 class="pub-h3">Short-lived access</h3><p>Rotating tokens, an idle timeout, and sign-out that takes effect immediately.</p></div>
+        <div class="pub-tile" appReveal="160" style="--tile:#818cf8"><div class="pub-ico"><i class="pi pi-shield"></i></div><h3 class="pub-h3">Your data is yours</h3><p>Every record is scoped to your account and checked on the server for each request.</p></div>
+        <div class="pub-tile" appReveal="240" style="--tile:#f59e0b"><div class="pub-ico"><i class="pi pi-history"></i></div><h3 class="pub-h3">Audit trail</h3><p>Changes to money records are logged so numbers can always be explained.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════ LIVE STATS (only when real) ═════════ -->
+  @if (stats().totalUsers > 0) {
+  <section class="pub-section" style="padding-top:0">
+    <div class="pub-wrap">
+      <div class="pub-stats">
+        <div class="pub-stat" appReveal="0"><b style="color:#10b981"><span [appCountUp]="stats().totalUsers"></span>+</b><span>People using it</span></div>
+        <div class="pub-stat" appReveal="80"><b style="color:#38bdf8"><span [appCountUp]="stats().totalAccounts"></span>+</b><span>Accounts managed</span></div>
+        <div class="pub-stat" appReveal="160"><b style="color:#818cf8"><span [appCountUp]="stats().totalTransactions"></span>+</b><span>Transactions tracked</span></div>
+        <div class="pub-stat" appReveal="240"><b style="color:#f59e0b">₹{{ compact(stats().totalTransactionVolume).n }}{{ compact(stats().totalTransactionVolume).suffix }}+</b><span>Volume handled</span></div>
+      </div>
+    </div>
+  </section>
+  }
+
+  <!-- ═════════ FAQ ═════════ -->
+  <section class="pub-section" style="padding-top:0">
+    <div class="pub-wrap">
+      <div class="pub-center" appReveal><span class="pub-eyebrow">FAQ</span><h2 class="pub-h2">Good questions</h2></div>
+      <div class="pub-faq">
+        @for (f of faqs; track f.q) {
+          <details appReveal><summary>{{ f.q }}</summary><p>{{ f.a }}</p></details>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════ FINAL CTA ═════════ -->
+  <section class="pub-section" style="padding-top:0">
+    <div class="pub-wrap">
+      <div class="pub-cta" appReveal>
+        <h2 class="pub-h2" style="margin-top:0">Start with one account.<br><span class="pub-grad">See the difference today.</span></h2>
+        <p class="pub-lead" style="margin-bottom:1.8rem">Free to use, takes a couple of minutes, works on every screen.</p>
+        <div style="display:flex;justify-content:center;gap:.8rem;flex-wrap:wrap">
+          @if (isLoggedIn()) {
+            <a routerLink="/app/dashboard" class="pub-btn pub-btn-primary">Open dashboard <i class="pi pi-arrow-right"></i></a>
+          } @else {
+            <a routerLink="/register" class="pub-btn pub-btn-primary">Create free account <i class="pi pi-arrow-right"></i></a>
+            <a routerLink="/features" class="pub-btn pub-btn-ghost">Explore features</a>
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

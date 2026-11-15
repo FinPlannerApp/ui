@@ -83,7 +83,7 @@
               @for (file of attachments(); track file.id) {
               <div class="border border-[var(--glass-border)] rounded p-2 flex items-center gap-2">
                   <i class="pi" [ngClass]="file.contentType.includes('image') ? 'pi-image' : 'pi-file'"></i>
-                  <a [href]="getAttachmentUrl(file.filePath)" target="_blank" class="text-color font-semibold no-underline text-sm hover:text-[var(--primary-color)]">{{file.fileName}}</a>
+                  <a [href]="getAttachmentUrl(file.filePath)" target="_blank" rel="noopener noreferrer" class="text-color font-semibold no-underline text-sm hover:text-[var(--primary-color)]">{{file.fileName}}</a>
                   <span class="text-xs text-[var(--text-muted)]">({{ (file.fileSizeBytes / 1024) | number:'1.0-0' }} KB)</span>
                 </div>
               }
@@ -176,7 +176,7 @@
         @if (issue.gitHubIssueUrl) {
         <div class="flex items-center gap-2 mt-2">
           <i class="pi pi-github text-[var(--text-muted)]"></i>
-          <a [href]="issue.gitHubIssueUrl" target="_blank" class="text-[var(--primary-color)] no-underline text-sm font-semibold">View on GitHub →</a>
+          <a [href]="issue.gitHubIssueUrl" target="_blank" rel="noopener noreferrer" class="text-[var(--primary-color)] no-underline text-sm font-semibold">View on GitHub →</a>
         </div>
         }
 

@@ -1,49 +1,46 @@
-<section class="px-4 py-8 md:px-8 max-w-5xl mx-auto">
-    <div class="text-center mb-6">
-        <h1 class="text-4xl md:text-5xl font-bold mb-3 zoom-in"
-            style="background: linear-gradient(135deg, #818cf8, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-            About Us</h1>
-        <p class="text-lg" style="color: var(--text-muted); max-width: 550px; margin: 0 auto;">Built by developers who
-            care about financial clarity.</p>
-    </div>
+<div class="pub">
+  <div class="pub-bg" aria-hidden="true" style="height:34rem"><div class="pub-grid-bg"></div><div class="pub-orb a"></div><div class="pub-orb b"></div></div>
+  <div class="pub-wrap pub-content" style="max-width:62rem">
+    <header class="pub-page-head" appReveal>
+      <span class="pub-eyebrow">About</span>
+      <h1 class="pub-h1" style="font-size:clamp(2.2rem,5vw,3.8rem)">Money tools should <span class="pub-grad">tell the truth</span></h1>
+      <p class="pub-lead">Financial Planner is an independent project, built in India, to answer one question well: how much can I actually spend?</p>
+    </header>
 
-    <div class="glass-card p-5 rounded-2xl mb-5">
-        <h2 class="text-2xl font-bold mb-3">Our Mission</h2>
-        <p class="text-lg line-height-3" style="color: var(--text-muted);">
-            Financial Planner was born from the frustration of managing money across multiple accounts, apps, and
-            spreadsheets.
-            We wanted a single, beautiful, secure platform that makes personal finance management feel effortless — not
-            like a chore.
-        </p>
-        <p class="text-lg line-height-3" style="color: var(--text-muted);">
-            Our team believes that financial awareness is the first step to financial freedom. That's why we've built
-            tools that give you
-            real-time visibility into your spending, income, and net worth — all wrapped in a premium experience.
-        </p>
-    </div>
+    <section class="pub-section" style="padding-block:2rem">
+      <div class="pub-card-lg" appReveal>
+        <h2 class="pub-h3" style="font-size:1.5rem">Why it exists</h2>
+        <p style="color:var(--pub-mute);line-height:1.7">Balances across several banks, a credit card with an unpaid statement, a UPI wallet, a loan EMI and a few subscriptions — none of the apps we tried could say what was genuinely free to spend. So we built one that treats cards, EMIs and upcoming bills as first-class, and keeps the maths explainable.</p>
+        <p style="color:var(--pub-mute);line-height:1.7;margin-bottom:0">It is built in the open with its users: the feedback hub drives the roadmap, and every release is written up in the blog.</p>
+      </div>
+    </section>
 
-    <div class="grid grid-cols-12 gap-4 grid-cols-12 gap-4">
-        <div class="col-span-12 md:col-span-4 p-3">
-            <div class="glass-card p-5 text-center rounded-2xl h-full">
-                <i class="pi pi-heart text-4xl mb-3" style="color: #ec4899;"></i>
-                <h3 class="font-bold mb-2">User First</h3>
-                <p style="color: var(--text-muted);">Every feature is designed with you in mind. No complexity, just
-                    clarity.</p>
-            </div>
+    <section class="pub-section" style="padding-block:2rem">
+      <div class="pub-bento" style="margin-top:0">
+        <div class="pub-tile w2" appSpotlight appReveal="0" style="--tile:#ec4899"><div class="pub-ico"><i class="pi pi-heart"></i></div><h3 class="pub-h3">Clarity first</h3><p>Every figure should be explainable. If we can’t show how a number was reached, it doesn’t ship.</p></div>
+        <div class="pub-tile w2" appSpotlight appReveal="90" style="--tile:#10b981"><div class="pub-ico"><i class="pi pi-shield"></i></div><h3 class="pub-h3">Privacy by default</h3><p>Your data is scoped to your account and used to run the app — not sold, not advertised against.</p></div>
+        <div class="pub-tile w2" appSpotlight appReveal="180" style="--tile:#818cf8"><div class="pub-ico"><i class="pi pi-comments"></i></div><h3 class="pub-h3">Built with you</h3><p>Vote on ideas, report problems and follow progress on the public roadmap.</p></div>
+      </div>
+    </section>
+
+    <section class="pub-section" style="padding-block:2rem">
+      <div class="pub-card-lg" appReveal>
+        <h2 class="pub-h3" style="font-size:1.5rem">Under the hood</h2>
+        <p style="color:var(--pub-mute);line-height:1.7">An Angular progressive web app talking to an ASP.NET Core API on PostgreSQL. Money-critical operations are transactional and serialised, schema changes are versioned SQL migrations, and sessions are bound to devices.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem">
+          @for (t of ['Angular','ASP.NET Core','PostgreSQL','PWA','SignalR']; track t) { <span class="pub-eyebrow">{{ t }}</span> }
         </div>
-        <div class="col-span-12 md:col-span-4 p-3">
-            <div class="glass-card p-5 text-center rounded-2xl h-full">
-                <i class="pi pi-code text-4xl mb-3" style="color: #818cf8;"></i>
-                <h3 class="font-bold mb-2">Open Innovation</h3>
-                <p style="color: var(--text-muted);">Built with modern technologies — Angular, .NET, and PrimeNG.</p>
-            </div>
+      </div>
+    </section>
+
+    <section class="pub-section" style="padding-top:1rem">
+      <div class="pub-cta" appReveal>
+        <h2 class="pub-h2" style="margin-top:0">Have an idea or found a bug?</h2>
+        <div style="display:flex;justify-content:center;gap:.8rem;flex-wrap:wrap">
+          <a routerLink="/feedback" class="pub-btn pub-btn-primary">Open the feedback hub <i class="pi pi-arrow-right"></i></a>
+          <a routerLink="/contact" class="pub-btn pub-btn-ghost">Contact us</a>
         </div>
-        <div class="col-span-12 md:col-span-4 p-3">
-            <div class="glass-card p-5 text-center rounded-2xl h-full">
-                <i class="pi pi-shield text-4xl mb-3" style="color: #10b981;"></i>
-                <h3 class="font-bold mb-2">Privacy Matters</h3>
-                <p style="color: var(--text-muted);">Your data stays yours. No selling, no third-party tracking.</p>
-            </div>
-        </div>
-    </div>
-</section>
+      </div>
+    </section>
+  </div>
+</div>

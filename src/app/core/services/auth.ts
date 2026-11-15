@@ -305,13 +305,18 @@ export class Auth {
           return true;
         }
         if (triggerLogout) {
-          this.logout('Session Expired');
+          // The server already said this session is dead. Do NOT call /logout: another tab may have
+          // just rotated the cookie, and a server logout would sign that healthy session out too.
+          this.logout('Session Expired', false);
         }
         return false;
       }),
-      catchError(() => {
-        if (triggerLogout) {
-          this.logout('Session Expired');
+      catchError((err: unknown) => {
+        // A network error / server outage is not "your session ended". Keep the user signed in and
+        // let the next request retry; only a definite 401/403 means the session is gone.
+        const status = (err as { status?: number })?.status ?? 0;
+        if (triggerLogout && (status === 401 || status === 403)) {
+          this.logout('Session Expired', false);
         }
         return of(false);
       })
@@ -322,18 +327,26 @@ export class Auth {
    * Logs out the current user, clears tokens and cookies, and redirects to login.
    * @param reason Optional reason for logout to display on login page.
    */
-  logout(reason?: string): void {
+  logout(reason?: string, callServer: boolean = true): void {
     if (this.isLoggingOut) return; // Debounce
     this.isLoggingOut = true;
 
-    // Call backend to clear cookie and revoke session
-    this.http.post(this.buildUrl('Auth', 'logout'), {}, { withCredentials: true, headers: CSRF_HEADERS }).pipe(
-      catchError(() => of(null))
-    ).subscribe();
+    // Call backend to clear cookie and revoke session (skipped when the server already ended it)
+    if (callServer) {
+      this.http.post(this.buildUrl('Auth', 'logout'), {}, { withCredentials: true, headers: CSRF_HEADERS }).pipe(
+        catchError(() => of(null))
+      ).subscribe();
+    }
 
     this.clearTokens();
     this.router.navigate(['/login'], {
       queryParams: reason ? { reason } : undefined
+    }).then(() => {
+      // In-memory singletons (accounts, dashboard, drafts ...) belong to the user who just left.
+      // A full reload guarantees the next person on this device never sees them.
+      if (typeof window !== 'undefined' && typeof location !== 'undefined' && !(globalThis as any).__karma__) {
+        window.location.reload();
+      }
     });
   }
 }

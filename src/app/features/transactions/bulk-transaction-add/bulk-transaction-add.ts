@@ -10,11 +10,13 @@ import { DialogModule } from 'primeng/dialog';
 import { Transaction, TransactionService } from '../transaction';
 import { TransactionType } from '../../../core/models/transaction-type';
 import { CategoryForm } from '../../categories/category-form/category-form';
+import { findCategoryByText, withPaths } from '../../categories/category';
 import { AccountForm } from '../../accounts/account-form/account-form';
 import { Account } from '../../accounts/account';
 import { toDateOnlyString } from '../../../core/utils/date-utils';
-import { Observable } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
 import { GenericApi, PaginatedResult } from '../../../core/services/generic-api';
+import { UserSettingsService } from '../../../core/services/user-settings.service';
 import { sharedPrimeModules } from '../../../shared/prime-imports';
 
 interface BulkTransactionRow {
@@ -31,6 +33,18 @@ interface BulkTransactionRow {
     isDeleted: boolean;
 }
 
+/** A habitual entry (same description, amount, category and account, repeated) offered as a one-tap card. */
+interface QuickCard {
+    description: string;
+    amount: number;
+    type: TransactionType;
+    transactionCategoryId: number | null;
+    accountId: number;
+    count: number;
+    lastUsed: string;
+}
+const HIDDEN_CARDS_KEY = 'finplanner_hidden_quick_cards';
+
 @Component({
     selector: 'app-bulk-transaction-add',
     imports: [
@@ -45,6 +59,7 @@ export class BulkTransactionAdd {
     private transactionService = inject(TransactionService);
     private messageService = inject(MessageService);
     private apiService = inject(GenericApi);
+    private userSettings = inject(UserSettingsService);
     private dialogService = inject(DialogService);
     private confirmationService = inject(ConfirmationService);
     private router = inject(Router);
@@ -72,12 +87,91 @@ export class BulkTransactionAdd {
     isChecking = signal(false);
     importSummaryData = signal({ total: 0, valid: 0, invalid: 0 });
 
+    /** Defaults from Transaction settings (loaded once). */
+    private defaults: { accountId?: number | null; categoryId?: number | null } = {};
     batchAccount = signal<any>(null);
     batchCategory = signal<any>(null);
 
     constructor() {
         this.loadInitialData();
         this.addEmptyRow();
+        void this.loadQuickCards();
+    }
+
+    // ── Quick Cards: your most repeated entries, one tap to add today's copy ──
+    quickCards = signal<QuickCard[]>([]);
+    private hiddenCards = signal<string[]>(this.readHidden());
+    /** How many times each card was tapped in this session (shown as a ×N badge). */
+    cardTaps = signal<Record<string, number>>({});
+
+    visibleQuickCards = computed(() => {
+        const hidden = new Set(this.hiddenCards());
+        const accs = this.accounts();
+        return this.quickCards().filter(c => !hidden.has(this.cardKey(c)) && accs.some(a => a.id === c.accountId));
+    });
+
+    cardKey(c: QuickCard): string {
+        return [c.description.toLowerCase(), c.amount, c.type, c.transactionCategoryId ?? '', c.accountId].join('|');
+    }
+    cardCategoryName(c: QuickCard): string {
+        return this.categories().find(x => x.id === c.transactionCategoryId)?.path
+            ?? this.categories().find(x => x.id === c.transactionCategoryId)?.name ?? '';
+    }
+    cardAccountName(c: QuickCard): string {
+        return this.accounts().find(a => a.id === c.accountId)?.name ?? '';
+    }
+
+    private readHidden(): string[] {
+        try { return JSON.parse(localStorage.getItem(HIDDEN_CARDS_KEY) || '[]'); } catch { return []; }
+    }
+
+    private async loadQuickCards(): Promise<void> {
+        try {
+            let cfg: any = { quickCardsMax: 12, quickCardsMinUses: 3, quickCardsDays: 120 };
+            try { cfg = { ...cfg, ...(await this.userSettings.getTransactions()) }; } catch { /* defaults */ }
+            this.defaults = { accountId: cfg.defaultAccountId, categoryId: cfg.defaultCategoryId };
+            if (!cfg.quickCardsMax) return;
+            const res = await firstValueFrom(this.apiService.get<QuickCard[]>(
+                `Transactions/quick-cards?days=${cfg.quickCardsDays}&minCount=${cfg.quickCardsMinUses}&limit=${cfg.quickCardsMax}`));
+            if (res.isSuccess) this.quickCards.set(res.value ?? []);
+        } catch { /* optional helper */ }
+    }
+
+    /** Adds a row with the card's values and today's date; the empty trailing row is reused. */
+    addQuickCard(c: QuickCard): void {
+        const account = this.accounts().find(a => a.id === c.accountId);
+        if (!account) return;
+        const category = this.categories().find(x => x.id === c.transactionCategoryId) ?? null;
+        this.rows.update(current => {
+            // First untouched row (re-validation can flag an empty row as 'invalid', so don't rely on its status).
+            const spare = current.find(r => !r.isDeleted && !r.amount && !r.description?.trim() && !r.accountId);
+            const row: BulkTransactionRow = spare ?? {
+                index: current.length, date: new Date(), accountId: null, transactionCategoryId: null, destinationAccountId: null,
+                description: '', type: TransactionType.Expense, amount: null, status: 'empty', isDeleted: false
+            };
+            row.date = new Date();
+            row.accountId = account;
+            row.transactionCategoryId = category;
+            row.description = c.description;
+            row.type = c.type;
+            row.amount = c.amount;
+            row.status = this.isValid(row) ? 'valid' : 'invalid';
+            return spare ? [...current] : [...current, row];
+        });
+        const taps = { ...this.cardTaps() };
+        const k = this.cardKey(c);
+        taps[k] = (taps[k] ?? 0) + 1;
+        this.cardTaps.set(taps);
+        const active = this.activeRows;
+        const last = active[active.length - 1];
+        if (last && (last.amount !== null || last.description || last.accountId)) this.addEmptyRow();
+    }
+
+    hideQuickCard(c: QuickCard, ev: Event): void {
+        ev.stopPropagation();
+        const next = [...this.hiddenCards(), this.cardKey(c)];
+        this.hiddenCards.set(next);
+        try { localStorage.setItem(HIDDEN_CARDS_KEY, JSON.stringify(next)); } catch { /* per-device convenience */ }
     }
 
     loadInitialData() {
@@ -93,7 +187,7 @@ export class BulkTransactionAdd {
         // Load active categories
         this.apiService.search<any>('TransactionCategories', { pageSize: 1000 }).subscribe({
             next: (res) => {
-                this.categories.set(res.value?.data || []);
+                this.categories.set(withPaths(res.value?.data || []));
                 this.reEvaluateRows();
             },
             error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load categories.' })
@@ -104,7 +198,8 @@ export class BulkTransactionAdd {
         if (!this.rows()) return;
         this.rows.update(current => {
             current.forEach(r => {
-                if (!r.isDeleted) {
+                const untouched = !r.amount && !r.description?.trim() && !r.accountId && !r.transactionCategoryId;
+                if (!r.isDeleted && !untouched) {   // a blank row stays blank: no warning icon on a row nobody typed in
                     this.onRowChange(r); // Re-run validation mapping
                 }
             });
@@ -248,7 +343,8 @@ export class BulkTransactionAdd {
             let query = (row.transactionCategoryId as string).trim();
             // Capitalize first letter
             query = query.charAt(0).toUpperCase() + query.slice(1);
-            const match = this.categories().find(c => c.name.trim().toLowerCase() === query.toLowerCase());
+            // Accepts a sub-category on its own ("Groceries") or with its parent ("Food › Groceries" / "Food > Groceries").
+            const match = findCategoryByText(this.categories(), query);
             if (match) row.transactionCategoryId = match;
             else row.transactionCategoryId = query; // Keep as string for now, will be created on save
         }
@@ -259,8 +355,22 @@ export class BulkTransactionAdd {
         }
     }
 
+    /** Fills the default account/category once a row is being typed in and those fields are still empty. */
+    private applyDefaults(row: BulkTransactionRow): void {
+        if (!row.amount && !row.description?.trim()) return;
+        if (!row.accountId && this.defaults.accountId) {
+            const a = this.accounts().find(x => x.id === this.defaults.accountId);
+            if (a) row.accountId = a;
+        }
+        if (!row.transactionCategoryId && this.defaults.categoryId && row.type === TransactionType.Expense) {
+            const c = this.categories().find(x => x.id === this.defaults.categoryId);
+            if (c) row.transactionCategoryId = c;
+        }
+    }
+
     onRowChange(row: BulkTransactionRow) {
         this.resolveStringsToObject(row);
+        this.applyDefaults(row);
 
         // Auto-detect type if amount is negative
         if (row.amount !== null && row.amount < 0) {
@@ -318,7 +428,7 @@ export class BulkTransactionAdd {
 
     filterCategories(event: any) {
         const query = event.query.toLowerCase();
-        this.filteredCategories.set(this.categories().filter(c => c.name.toLowerCase().includes(query)));
+        this.filteredCategories.set(this.categories().filter(c => (c.path ?? c.name).toLowerCase().includes(query)));
     }
 
     deleteRow(index: number) {
@@ -391,7 +501,7 @@ export class BulkTransactionAdd {
             if (idx !== null && idx !== undefined) {
                 const row = this.activeRows[idx];
                 if (row) {
-                    row.transactionCategoryId = result;
+                    row.transactionCategoryId = { ...result, path: result.parentCategoryName ? `${result.parentCategoryName} › ${result.name}` : result.name };
                     this.onRowChange(row);
                 }
             }

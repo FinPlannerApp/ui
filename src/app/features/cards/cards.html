@@ -1,0 +1,75 @@
+<div class="max-w-6xl mx-auto w-full flex flex-col gap-4">
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <div class="min-w-0">
+      <h1 class="text-2xl font-bold m-0 text-[var(--text-main)]">Cards</h1>
+      <p class="text-sm text-[var(--text-muted)] mt-1 mb-0">Your credit cards on their own: how much of each limit you use, what is due, and where the spending goes.</p>
+    </div>
+    <a routerLink="/app/accounts" class="no-underline"><p-button label="Manage accounts" icon="pi pi-wallet" severity="secondary" [outlined]="true"></p-button></a>
+  </div>
+
+  @if (loading()) {
+    <div class="text-sm text-[var(--text-muted)] p-6">Loading…</div>
+  } @else if (failed()) {
+    <div class="p-4 rounded-xl border border-red-400/40 text-sm text-[var(--text-main)]">Could not load cards. <button class="underline bg-transparent border-0 cursor-pointer text-[var(--primary-color)]" (click)="load()">Retry</button></div>
+  } @else if (data(); as d) {
+    @if (d.cards.length === 0) {
+      <div class="glass-card p-8 rounded-2xl text-center text-sm text-[var(--text-muted)]">No credit cards yet. Add one under Accounts (category type Credit Card) and it appears here.</div>
+    } @else {
+      <div class="grid grid-cols-2 lg:grid-cols-3 gap-3">
+        <div class="glass-card p-4 rounded-2xl"><div class="text-xs text-[var(--text-muted)]">Owed on cards</div><div class="text-xl font-bold text-[var(--text-main)]">{{ d.totalOutstanding | currency:'INR':'symbol':'1.0-0' }}</div></div>
+        <div class="glass-card p-4 rounded-2xl"><div class="text-xs text-[var(--text-muted)]">Total limit</div><div class="text-xl font-bold text-[var(--text-main)]">{{ d.totalLimit > 0 ? (d.totalLimit | currency:'INR':'symbol':'1.0-0') : '—' }}</div></div>
+        <div class="glass-card p-4 rounded-2xl col-span-2 lg:col-span-1"><div class="text-xs text-[var(--text-muted)]">Limit used</div><div class="text-xl font-bold" [ngClass]="utilClass(d.utilisationPercent)">{{ d.utilisationPercent !== null ? (d.utilisationPercent + '%') : '—' }}</div>
+          <div class="text-[11px] text-[var(--text-muted)]">Staying under about 30% is the usual comfortable range</div></div>
+      </div>
+
+      @for (c of d.cards; track c.accountId) {
+        <div class="glass-card p-4 rounded-2xl flex flex-col gap-3">
+          <div class="flex flex-wrap items-start justify-between gap-2">
+            <div class="min-w-0"><div class="font-bold text-[var(--text-main)] truncate"><i class="pi pi-credit-card mr-2 text-[var(--primary-color)]"></i>{{ c.name }}</div>
+              <div class="text-xs text-[var(--text-muted)]">{{ c.purchases90d }} purchases in the last 90 days · about {{ c.avgMonthlySpend | currency:'INR':'symbol':'1.0-0' }} a month@if (c.interestRate) { · {{ c.interestRate }}% interest if unpaid }</div></div>
+            <a [routerLink]="['/app/accounts', c.accountId, 'transactions']" class="no-underline"><p-button label="Ledger" icon="pi pi-list" size="small" severity="secondary" [text]="true"></p-button></a>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+            <div><div class="text-xs text-[var(--text-muted)]">Owed now</div><div class="font-semibold text-[var(--text-main)]">{{ c.outstanding | currency:'INR':'symbol':'1.0-0' }}</div></div>
+            <div><div class="text-xs text-[var(--text-muted)]">Limit used</div><div class="font-semibold" [ngClass]="utilClass(c.utilisationPercent)">{{ c.utilisationPercent !== null ? (c.utilisationPercent + '%') : '—' }}</div>
+              @if (c.limit) { <div class="h-1.5 rounded-full bg-black/10 mt-1 overflow-hidden"><div class="h-full bg-[var(--primary-color)]" [style.width.%]="c.utilisationPercent ?? 0"></div></div> }</div>
+            <div><div class="text-xs text-[var(--text-muted)]">Bill to pay</div><div class="font-semibold text-[var(--text-main)]">{{ c.remainingBill ? (c.remainingBill | currency:'INR':'symbol':'1.0-0') : 'Nothing due' }}</div></div>
+            <div><div class="text-xs text-[var(--text-muted)]">Due date</div><div class="font-semibold text-[var(--text-main)]">{{ c.dueDate ? (c.dueDate | date:'dd MMM yyyy') : '—' }}</div></div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <div class="text-xs font-semibold text-[var(--text-main)] mb-1">Spend by month</div>
+              <div class="flex items-end gap-1.5 h-24">
+                @for (m of c.months; track m.month) {
+                  <div class="flex-1 flex flex-col items-center justify-end h-full gap-0.5">
+                    <div class="w-full rounded-t bg-[var(--primary-color)]/80" [style.height.%]="pct(m.spend, maxSpend(c))" [title]="m.spend | currency:'INR':'symbol':'1.0-0'"></div>
+                    <div class="text-[10px] text-[var(--text-muted)]">{{ label(m.month) }}</div>
+                  </div>
+                }
+              </div>
+            </div>
+            <div>
+              <div class="text-xs font-semibold text-[var(--text-main)] mb-1">Where it goes (90 days)</div>
+              @for (t of c.topCategories; track t.name) {
+                <div class="flex justify-between text-xs py-0.5"><span class="truncate text-[var(--text-main)]">{{ t.name }}</span><span class="text-[var(--text-muted)]">{{ t.amount | currency:'INR':'symbol':'1.0-0' }}</span></div>
+              } @empty { <div class="text-xs text-[var(--text-muted)]">No purchases yet.</div> }
+            </div>
+            <div>
+              <div class="text-xs font-semibold text-[var(--text-main)] mb-1">By day of week (90 days)</div>
+              <div class="flex items-end gap-1 h-16">
+                @for (v of c.weekday; track $index) {
+                  <div class="flex-1 flex flex-col items-center justify-end h-full gap-0.5">
+                    <div class="w-full rounded-t bg-violet-500/70" [style.height.%]="pct(v, maxOf(c.weekday))"></div>
+                    <div class="text-[10px] text-[var(--text-muted)]">{{ days[$index].charAt(0) }}</div>
+                  </div>
+                }
+              </div>
+              @if (worstDay(c); as w) { <div class="text-[11px] text-[var(--text-muted)] mt-1">You swipe most on {{ w }}s.</div> }
+              @if (c.biggest) { <div class="text-[11px] text-[var(--text-muted)]">Biggest: {{ c.biggest.name }}, {{ c.biggest.amount | currency:'INR':'symbol':'1.0-0' }}</div> }
+            </div>
+          </div>
+        </div>
+      }
+    }
+  }
+</div>
