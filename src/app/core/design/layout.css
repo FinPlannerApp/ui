@@ -297,3 +297,26 @@ main>router-outlet+*>.page:first-child {
 }
 .public-layout > main { flex: 1 1 auto; width: 100%; min-width: 0; }
 @media (prefers-reduced-motion: reduce) { .public-layout { animation: none; } }
+
+/* Legacy utility names (from an older design kit) still used in a few templates, such as the Feedback Hub and the blog,
+   mapped once to the app's design tokens. Prefer Tailwind or the tokens in new code. */
+.text-color { color: var(--text-main); }
+.border-circle { border-radius: 9999px; }
+.border-round { border-radius: .5rem; }
+.surface-ground { background: var(--glass-bg); }
+.surface-50 { background: color-mix(in srgb, var(--text-main) 4%, transparent); }
+.surface-card { background: var(--glass-bg-solid); }
+.surface-border, .border-300 { border-color: var(--glass-border); }
+.line-height-1 { line-height: 1; } .line-height-2 { line-height: 1.25; } .line-height-3 { line-height: 1.5; } .line-height-4 { line-height: 2; }
+.align-items-baseline { align-items: baseline; }
+.justify-content-start { justify-content: flex-start; }
+.bg-primary { background: var(--primary-color, #10b981); }
+.text-primary { color: var(--primary-color, #10b981); }
+.bg-primary-100 { background: color-mix(in srgb, var(--primary-color, #10b981) 15%, transparent); }
+.border-primary-300 { border-color: color-mix(in srgb, var(--primary-color, #10b981) 45%, transparent); }
+
+/* Top toasts open below the sticky header, never on top of its buttons (bottom toasts are left alone) */
+.p-toast.p-toast-top-right, .p-toast.p-toast-top-left, .p-toast.p-toast-top-center { top: calc(4.5rem + env(safe-area-inset-top, 0px)) !important; }
+@media (max-width: 639px) {
+  .p-toast.p-toast-top-right, .p-toast.p-toast-top-left, .p-toast.p-toast-top-center { top: calc(4rem + env(safe-area-inset-top, 0px)) !important; }
+}

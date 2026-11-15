@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -15,6 +15,13 @@ import { environment } from '../../../../environments/environment';
 
 import { DialogModule } from 'primeng/dialog';
 
+interface ReportCall { method?: string; path?: string; status?: number; error?: string; ms?: number }
+interface ReportStep { at?: string; kind?: string; what?: string }
+interface ReportContext {
+    page: string; appVersion: string; viewport: string; userAgent: string; theme: string; capturedAt: string;
+    consoleErrors: string[]; failedApiCalls: ReportCall[]; steps: ReportStep[]; hasScreenshot: boolean;
+}
+
 @Component({
     selector: 'app-issue-detail',
     standalone: true,
@@ -22,7 +29,7 @@ import { DialogModule } from 'primeng/dialog';
     providers: [MessageService, ConfirmationService],
     templateUrl: './issue-detail.component.html'
 })
-export class IssueDetailComponent {
+export class IssueDetailComponent implements OnDestroy {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private issueService = inject(IssueService);
@@ -31,7 +38,17 @@ export class IssueDetailComponent {
     public authService = inject(Auth);
 
     issue = signal<any>(null);
+
+    /** What the quick bug report attached: the technical details and the screenshot (shown to the reporter and admins). */
+    report = signal<ReportContext | null>(null);
+    reportShotUrl = signal<string | null>(null);
+    reportShotOpen = signal(false);
     comments = signal<Comment[]>([]);
+    // The thread is loaded a page at a time by cursor (top-level comments with their replies).
+    commentsTotal = signal(0);
+    commentsCursor = signal<string | null>(null);
+    commentsHasMore = signal(false);
+    loadingMoreComments = signal(false);
     newComment = signal('');
     replyingTo = signal<number | null>(null);
     replyContent = signal('');
@@ -98,7 +115,6 @@ export class IssueDetailComponent {
             if (id) {
                 this.loadIssue(id);
                 this.loadComments(id);
-                this.loadAttachments(id);
                 this.loadRelations(id);
                 this.loadActivities(id);
             }
@@ -111,11 +127,69 @@ export class IssueDetailComponent {
         this.issueService.getIssueDetail(id).subscribe(data => {
             this.issue.set(data);
         });
+        this.loadReportDetails(id);
     }
 
+    /** The screenshot and technical details of a quick bug report (nothing for an ordinary issue). */
+    private loadReportDetails(id: number) {
+        this.releaseShot();
+        this.report.set(null);
+        this.issueService.getDiagnostics(id).subscribe({
+            next: res => {
+                const v = res?.value as { contextJson?: string; hasScreenshot?: boolean } | null;
+                if (!v) return;
+                let ctx: Record<string, unknown> = {};
+                try { ctx = JSON.parse(v.contextJson ?? '{}'); } catch { /* keep an empty context */ }
+                this.report.set({
+                    page: String(ctx['page'] ?? ''), appVersion: String(ctx['appVersion'] ?? ''), viewport: String(ctx['viewport'] ?? ''),
+                    userAgent: String(ctx['userAgent'] ?? ''), theme: String(ctx['theme'] ?? ''), capturedAt: String(ctx['capturedAt'] ?? ''),
+                    consoleErrors: Array.isArray(ctx['consoleErrors']) ? (ctx['consoleErrors'] as string[]) : [],
+                    failedApiCalls: Array.isArray(ctx['failedApiCalls']) ? (ctx['failedApiCalls'] as ReportCall[]) : [],
+                    steps: Array.isArray(ctx['recentSteps']) ? (ctx['recentSteps'] as ReportStep[]) : [],
+                    hasScreenshot: !!v.hasScreenshot,
+                });
+                if (v.hasScreenshot) {
+                    this.issueService.getDiagnosticsScreenshot(id).subscribe({
+                        next: blob => this.reportShotUrl.set(URL.createObjectURL(blob)),
+                        error: () => { /* the details still show without the picture */ },
+                    });
+                }
+            },
+            error: () => { /* optional section: stay hidden */ },
+        });
+    }
+
+    private releaseShot() {
+        const url = this.reportShotUrl();
+        if (url) URL.revokeObjectURL(url);
+        this.reportShotUrl.set(null);
+    }
+
+    ngOnDestroy() { this.releaseShot(); }
+
     loadComments(id: number) {
-        this.issueService.getComments(id).subscribe(data => {
-            this.comments.set(Array.isArray(data) ? data : []);
+        this.issueService.getCommentsPaged(id).subscribe(res => {
+            this.comments.set(Array.isArray(res?.data) ? res.data : []);
+            this.commentsTotal.set(res?.totalRecords ?? 0);
+            this.commentsCursor.set(res?.nextCursor ?? null);
+            this.commentsHasMore.set(!!res?.hasMore);
+        });
+    }
+
+    loadMoreComments() {
+        const cursor = this.commentsCursor();
+        if (!cursor || this.loadingMoreComments()) return;
+        this.loadingMoreComments.set(true);
+        this.issueService.getCommentsPaged(this.issue().id, cursor).subscribe({
+            next: res => {
+                const more: Comment[] = Array.isArray(res?.data) ? res.data : [];
+                const seen = new Set(this.comments().map(c => c.id));
+                this.comments.update(list => [...list, ...more.filter(c => !seen.has(c.id))]);
+                this.commentsCursor.set(res?.nextCursor ?? null);
+                this.commentsHasMore.set(!!res?.hasMore);
+                this.loadingMoreComments.set(false);
+            },
+            error: () => this.loadingMoreComments.set(false)
         });
     }
 

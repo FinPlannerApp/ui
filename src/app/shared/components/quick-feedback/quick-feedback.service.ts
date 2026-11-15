@@ -8,13 +8,23 @@ const QUEUE_KEY = 'finplanner_report_queue';
 const MAX_QUEUED = 3;
 /** After offering "Report this" once, stay quiet this long so a crash loop never nags. */
 const OFFER_COOLDOWN_MS = 90_000;
+/** Pictures are shrunk to this width before they are kept or sent. */
+const MAX_PICTURE_WIDTH = 1280;
 
 export interface ReportDraft { text: string; severity: 'Minor' | 'Major' | 'Critical' }
 export interface ReportBody {
   description: string; severity: string; impactsMoney: boolean; contextJson: string; screenshotBase64: string | null;
 }
 
-/** Opens the quick bug report from anywhere: the floating button, the account menu, Alt+Shift+B, or the offer after an error. */
+/**
+ * Opens the quick bug report from anywhere: the floating button, the account menu, Alt+Shift+B, or the offer after an error.
+ *
+ * The dialog opens instantly and does no heavy work. A screenshot is optional and the person chooses how:
+ *  - paste an image (Ctrl+V): instant, nothing runs;
+ *  - capture the screen with the browser's own screen capture: runs outside the page, so the page never freezes;
+ *  - capture this page: draws the page with a library, which can make a large page unresponsive for a few seconds,
+ *    so it only runs when asked for, with a warning.
+ */
 @Injectable({ providedIn: 'root' })
 export class QuickFeedbackService {
   private diagnostics = inject(DiagnosticsService);
@@ -23,11 +33,12 @@ export class QuickFeedbackService {
 
   /** True while the report dialog is open. */
   readonly visible = signal(false);
-  /** The screenshot as it is, and the same screenshot with amounts and typed text blurred (JPEG data URLs), or null. */
+  /** The picture to send (JPEG data URL), or null. */
   readonly screenshot = signal<string | null>(null);
-  readonly screenshotMasked = signal<string | null>(null);
-  /** True while the screenshots are being taken. */
+  /** True while a picture is being captured. */
   readonly capturing = signal(false);
+  /** What the current capture is doing, for the message under the buttons. */
+  readonly captureNote = signal<string | null>(null);
   /** Set after an unhandled error: the app asks "Something went wrong. Report it?" */
   readonly offer = signal<string | null>(null);
 
@@ -42,7 +53,7 @@ export class QuickFeedbackService {
       window.addEventListener('keydown', e => {
         if (e.altKey && e.shiftKey && !e.ctrlKey && !e.metaKey && e.code === 'KeyB') {
           e.preventDefault();
-          void this.open();
+          this.open();
         }
       });
       // A report written offline is sent as soon as the connection is back.
@@ -61,43 +72,108 @@ export class QuickFeedbackService {
     void this.flushQueue();
   }
 
-  /**
-   * Opens the dialog at once and takes the screenshot in the background (the dialog itself is left out of the picture),
-   * so reporting is instant even on a heavy page. The preview appears when the picture is ready.
-   */
-  async open(): Promise<void> {
+  /** Opens the dialog at once: nothing is captured or computed here. */
+  open(): void {
     if (this.visible()) return;
     this.offer.set(null);
     this.screenshot.set(null);
-    this.screenshotMasked.set(null);
+    this.captureNote.set(null);
     this.visible.set(true);
-    this.capturing.set(true);
-    // Let the dialog paint first; the capture then blocks the page for a moment while it draws.
-    await new Promise<void>(r => requestAnimationFrame(() => setTimeout(r, 60)));
-    // One screenshot, with amounts and typed text covered (privacy first, and the default). The uncovered picture is
-    // only taken if the person turns that off: see captureUnblurred().
-    const masked = await this.capture(true);
-    if (this.visible()) this.screenshotMasked.set(masked);
-    this.capturing.set(false);
-  }
-
-  /** The screenshot without the covers, taken on request. */
-  async captureUnblurred(): Promise<void> {
-    if (this.screenshot() || this.capturing()) return;
-    this.capturing.set(true);
-    await new Promise<void>(r => setTimeout(r, 30));
-    const raw = await this.capture(false);
-    if (this.visible()) this.screenshot.set(raw);
-    this.capturing.set(false);
   }
 
   close(): void {
     this.visible.set(false);
     this.screenshot.set(null);
-    this.screenshotMasked.set(null);
+    this.captureNote.set(null);
   }
 
   dismissOffer(): void { this.offer.set(null); }
+
+  removeScreenshot(): void { this.screenshot.set(null); this.captureNote.set(null); }
+
+  // ── Option 1: a pasted or chosen image (instant) ──
+  async attachImage(file: Blob): Promise<void> {
+    if (!file.type.startsWith('image/')) { this.captureNote.set('That is not an image.'); return; }
+    this.captureNote.set(null);
+    this.screenshot.set(await this.shrink(await this.readAsDataUrl(file)));
+  }
+
+  // ── Option 2: the browser's own screen capture (outside the page, so it never freezes it) ──
+  async captureScreen(): Promise<void> {
+    if (this.capturing()) return;
+    const media = typeof navigator !== 'undefined' ? navigator.mediaDevices : undefined;
+    if (!media?.getDisplayMedia) { this.captureNote.set('This browser cannot capture the screen. Paste an image instead (Ctrl+V).'); return; }
+    this.capturing.set(true);
+    this.captureNote.set('Choose this tab or window in the browser prompt.');
+    let stream: MediaStream | null = null;
+    try {
+      stream = await media.getDisplayMedia({ video: true, audio: false, preferCurrentTab: true } as DisplayMediaStreamOptions);
+      // Hide this dialog for the instant the frame is taken, so it is not in the picture.
+      document.body.classList.add('qf-capturing');
+      const video = document.createElement('video');
+      video.srcObject = stream;
+      video.muted = true;
+      await video.play();
+      await new Promise(r => setTimeout(r, 350));
+      const canvas = document.createElement('canvas');
+      const scale = Math.min(1, MAX_PICTURE_WIDTH / (video.videoWidth || MAX_PICTURE_WIDTH));
+      canvas.width = Math.round((video.videoWidth || MAX_PICTURE_WIDTH) * scale);
+      canvas.height = Math.round((video.videoHeight || 720) * scale);
+      canvas.getContext('2d')?.drawImage(video, 0, 0, canvas.width, canvas.height);
+      this.screenshot.set(canvas.toDataURL('image/jpeg', 0.72));
+      this.captureNote.set(null);
+    } catch {
+      this.captureNote.set('No screenshot was taken. You can paste an image (Ctrl+V) instead.');
+    } finally {
+      stream?.getTracks().forEach(t => t.stop());
+      document.body.classList.remove('qf-capturing');
+      this.capturing.set(false);
+    }
+  }
+
+  // ── Option 3: draw this page (can pause a large page for a few seconds, so only on request) ──
+  async captureThisPage(maskPrivate: boolean): Promise<void> {
+    if (this.capturing()) return;
+    this.capturing.set(true);
+    this.captureNote.set('Taking the screenshot. The page may pause for a few seconds.');
+    // Let the note paint before the library starts working.
+    await new Promise<void>(r => requestAnimationFrame(() => setTimeout(r, 60)));
+    document.body.classList.add('qf-capturing');
+    try {
+      const shot = await this.drawPage(maskPrivate);
+      this.screenshot.set(shot);
+      this.captureNote.set(shot ? null : 'The page could not be captured. Try "Capture screen" or paste an image (Ctrl+V).');
+    } finally {
+      document.body.classList.remove('qf-capturing');
+      this.capturing.set(false);
+    }
+  }
+
+  private async drawPage(mask: boolean): Promise<string | null> {
+    try {
+      const { default: html2canvas } = await import('html2canvas-pro');
+      const shot = html2canvas(document.body, {
+        scale: Math.min(0.75, 960 / window.innerWidth),
+        logging: false,
+        useCORS: true,
+        imageTimeout: 1500,
+        x: window.scrollX,
+        y: window.scrollY,
+        width: window.innerWidth,
+        height: window.innerHeight,
+        windowWidth: window.innerWidth,
+        windowHeight: window.innerHeight,
+        // Our own floating buttons, loader and dialog are not part of the problem being reported.
+        ignoreElements: el => ['quick-fab', 'feedback-fab', 'global-loader', 'p-dialog-mask', 'p-dialog', 'report-offer'].some(c => el.classList?.contains(c)),
+        onclone: (doc: Document) => { QuickFeedbackService.simplify(doc); if (mask) QuickFeedbackService.coverPrivate(doc); },
+      });
+      const canvas = await Promise.race([shot, new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), 15000))]);
+      return canvas.toDataURL('image/jpeg', 0.72);
+    } catch (err) {
+      console.warn('Screenshot could not be taken', err);
+      return null;
+    }
+  }
 
   // ── Draft: what was typed survives closing the dialog, a refresh, or a failed send ──
   loadDraft(): ReportDraft | null {
@@ -127,20 +203,20 @@ export class QuickFeedbackService {
     if (list.length === 0) return;
     this.flushing = true;
     try {
-    const remaining: ReportBody[] = [];
-    for (const body of list) {
+      const remaining: ReportBody[] = [];
+      for (const body of list) {
+        try {
+          const r = await new Promise<{ isSuccess: boolean }>((resolve, reject) =>
+            this.api.post<{ id: number }>('Issues/quick-report', body).subscribe({ next: x => resolve(x), error: reject }));
+          if (!r.isSuccess) continue; // the server refused it (too short...): do not retry forever
+        } catch { remaining.push(body); }
+      }
       try {
-        const r = await new Promise<{ isSuccess: boolean }>((resolve, reject) =>
-          this.api.post<{ id: number }>('Issues/quick-report', body).subscribe({ next: x => resolve(x), error: reject }));
-        if (!r.isSuccess) continue; // the server refused it (too short...): do not retry forever
-      } catch { remaining.push(body); }
-    }
-    try {
-      if (remaining.length) localStorage.setItem(QUEUE_KEY, JSON.stringify(remaining)); else localStorage.removeItem(QUEUE_KEY);
-    } catch { /* ignore */ }
-    if (remaining.length < list.length) {
-      this.toast.add({ severity: 'success', summary: 'Report sent', detail: 'Your saved report reached the Feedback Hub.', life: 5000 });
-    }
+        if (remaining.length) localStorage.setItem(QUEUE_KEY, JSON.stringify(remaining)); else localStorage.removeItem(QUEUE_KEY);
+      } catch { /* ignore */ }
+      if (remaining.length < list.length) {
+        this.toast.add({ severity: 'success', summary: 'Report sent', detail: 'Your saved report reached the Feedback Hub.', life: 5000 });
+      }
     } finally {
       this.flushing = false;
     }
@@ -150,61 +226,46 @@ export class QuickFeedbackService {
     try { return JSON.parse(localStorage.getItem(QUEUE_KEY) ?? '[]') as ReportBody[]; } catch { return []; }
   }
 
-  /**
-   * What is on screen right now, as a small JPEG. With `mask`, amounts, typed text and anything marked data-private are
-   * covered in the copy that is photographed (never on the real page). Failure is fine: the report goes without a picture.
-   */
-  private async capture(mask: boolean): Promise<string | null> {
-    try {
-      const t0 = performance.now();
-      const { default: html2canvas } = await import('html2canvas-pro');
-      console.debug('screenshot: library loaded in', Math.round(performance.now() - t0), 'ms');
-      // Small is enough to see what was on screen, and far quicker to draw.
-      const scale = Math.min(0.75, 960 / window.innerWidth);
-      const shot = html2canvas(document.body, {
-        scale,
-        logging: false,
-        useCORS: true,
-        imageTimeout: 1500,
-        x: window.scrollX,
-        y: window.scrollY,
-        width: window.innerWidth,
-        height: window.innerHeight,
-        windowWidth: window.innerWidth,
-        windowHeight: window.innerHeight,
-        // Our own floating buttons and loader are not part of the problem being reported.
-        ignoreElements: el => ['quick-fab', 'feedback-fab', 'global-loader', 'p-dialog-mask', 'p-dialog', 'report-offer'].some(c => el.classList?.contains(c)),
-        onclone: (doc: Document) => { QuickFeedbackService.simplify(doc); if (mask) QuickFeedbackService.blurPrivate(doc); },
-      });
-      const canvas = await Promise.race([shot, new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000))]);
-      console.debug('screenshot: taken in', Math.round(performance.now() - t0), 'ms, mask =', mask);
-      return canvas.toDataURL('image/jpeg', 0.72);
-    } catch (err) {
-      console.warn('Screenshot could not be taken', err);
-      return null;
-    }
+  private readAsDataUrl(file: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
   }
 
-  /**
-   * In the cloned copy only: drop blurs, backdrop filters, shadows and animations. They make the screenshot library
-   * very slow on a glass-style page and add nothing a bug report needs.
-   */
+  /** Shrinks a picture to a sensible width and re-encodes it as JPEG, so it is small to send. */
+  private shrink(dataUrl: string): Promise<string> {
+    return new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, MAX_PICTURE_WIDTH / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext('2d')?.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.75));
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+  }
+
+  /** In the cloned copy only: drop blurs, backdrop filters, shadows and animations, which make the library very slow. */
   private static simplify(doc: Document): void {
     const style = doc.createElement('style');
     style.textContent = '*, *::before, *::after { filter: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; animation: none !important; transition: none !important; box-shadow: none !important; text-shadow: none !important; }';
     doc.head.appendChild(style);
   }
 
-  /**
-   * Covers money amounts, form fields and anything marked data-private with a grey box, in the cloned document only.
-   * (Solid boxes instead of a blur: they are far cheaper for the screenshot library to draw, and they cannot be undone.)
-   */
-  private static blurPrivate(doc: Document): void {
+  /** Covers money amounts, form fields and anything marked data-private with a grey box, in the cloned document only. */
+  private static coverPrivate(doc: Document): void {
     const cover = 'color: transparent !important; -webkit-text-fill-color: transparent !important; background: #94a3b8 !important; border-radius: 4px !important; text-shadow: none !important; box-shadow: none !important;';
     const style = doc.createElement('style');
     style.textContent = `input, textarea, select, .money, [data-private], .p-select-label { ${cover} }`;
     doc.head.appendChild(style);
-    const amount = /(?:₹|Rs\.?|INR)\s?[\d,]+(?:\.\d+)?|\d{1,3}(?:,\d{2,3})+(?:\.\d+)?/;
+    const amount = /(?:₹|Rs\.?|INR)\s?[\d,]+(?:\.\d+)?|\d{1,3}(?:,\d{2,3})+(?:\.\d+)?/;
     const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
     const hits: HTMLElement[] = [];
     for (let n = walker.nextNode(); n; n = walker.nextNode()) {

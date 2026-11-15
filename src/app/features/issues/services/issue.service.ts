@@ -10,13 +10,15 @@ export class IssueService {
     private apiUrl = `${environment.apiBaseUrl}/issues`;
 
     // --- Issues ---
-    getIssues(status?: string, sort = 'pain', page = 1, pageSize = 10, search?: string, type?: string, categoryId?: number, severity?: string): Observable<any> {
+    getIssues(status?: string, sort = 'pain', page = 1, pageSize = 10, search?: string, type?: string, categoryId?: number, severity?: string, cursor?: string): Observable<any> {
         let params = new HttpParams().set('sort', sort).set('page', page.toString()).set('pageSize', pageSize.toString());
         if (status) params = params.set('status', status);
         if (search) params = params.set('search', search);
         if (type) params = params.set('type', type);
         if (categoryId) params = params.set('categoryId', categoryId.toString());
         if (severity) params = params.set('severity', severity);
+        // Keyset paging: the cursor of the previous page, so the next page is found without an OFFSET.
+        if (cursor) params = params.set('cursor', cursor);
         return this.http.get<any>(this.apiUrl, { params });
     }
 
@@ -40,6 +42,15 @@ export class IssueService {
     getIssueVoters(id: number): Observable<any[]> { return this.http.get<any[]>(`${this.apiUrl}/${id}/voters`); }
 
     // --- Comments ---
+    /** One page of the thread (top-level comments by cursor, with their replies). */
+    getCommentsPaged(issueId: number, cursor?: string, pageSize = 20): Observable<any> {
+        const q = `pageSize=${pageSize}${cursor ? '&cursor=' + encodeURIComponent(cursor) : ''}`;
+        return this.http.get<any>(`${this.apiUrl}/${issueId}/comments/paged?${q}`);
+    }
+    /** What a quick bug report attached (page, device, errors, steps). Empty for a normal issue or when it is not yours to see. */
+    getDiagnostics(issueId: number): Observable<any> { return this.http.get<any>(`${this.apiUrl}/${issueId}/diagnostics`); }
+    /** The report's screenshot as an image (the endpoint needs sign-in, so it cannot be a plain img src). */
+    getDiagnosticsScreenshot(issueId: number): Observable<Blob> { return this.http.get(`${this.apiUrl}/${issueId}/diagnostics/screenshot`, { responseType: 'blob' }); }
     getComments(issueId: number): Observable<any[]> { return this.http.get<any[]>(`${this.apiUrl}/${issueId}/comments`); }
     addComment(issueId: number, content: string, parentCommentId?: number, type: string = 'General'): Observable<any> { return this.http.post<any>(`${this.apiUrl}/${issueId}/comments`, { content, parentCommentId, type }); }
     editComment(commentId: number, content: string): Observable<any> { return this.http.put<any>(`${this.apiUrl}/comments/${commentId}`, { content }); }

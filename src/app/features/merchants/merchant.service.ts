@@ -14,8 +14,8 @@ export class MerchantService {
   }
 
   /** One page of merchants, paged on the server; `search` matches a name or an alias. */
-  async getPage(pageNumber: number, pageSize: number, search: string): Promise<PaginatedResult<Merchant>> {
-    const q = search.trim() ? `&q=${encodeURIComponent(search.trim())}` : '';
+  async getPage(pageNumber: number, pageSize: number, search: string, cursor?: string | null): Promise<PaginatedResult<Merchant>> {
+    const q = (search.trim() ? `&q=${encodeURIComponent(search.trim())}` : '') + (cursor ? `&cursor=${encodeURIComponent(cursor)}` : '');
     const result = await firstValueFrom(this.api.get<PaginatedResult<Merchant>>(`Merchants/paged?pageNumber=${pageNumber}&pageSize=${pageSize}${q}`));
     return result.value ?? { data: [], totalRecords: 0, pageNumber, pageSize };
   }

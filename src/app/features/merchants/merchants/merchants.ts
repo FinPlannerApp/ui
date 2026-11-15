@@ -26,7 +26,9 @@ export class Merchants implements OnInit {
   page = signal(1);
   search = signal('');
   loadingMore = signal(false);
-  hasMore = computed(() => this.merchants().length < this.total());
+  private nextCursor = signal<string | null>(null);
+  private serverHasMore = signal<boolean | null>(null);
+  hasMore = computed(() => this.serverHasMore() ?? this.merchants().length < this.total());
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
   isLoading = signal(true);
   showForm = signal(false);
@@ -48,6 +50,8 @@ export class Merchants implements OnInit {
       this.merchants.set(result.data);
       this.total.set(result.totalRecords);
       this.page.set(1);
+      this.nextCursor.set(result.nextCursor ?? null);
+      this.serverHasMore.set(result.hasMore ?? null);
     } catch {
       this.notificationService.showError('Could not load merchants.');
     } finally {
@@ -60,11 +64,14 @@ export class Merchants implements OnInit {
     if (this.loadingMore() || !this.hasMore()) return;
     this.loadingMore.set(true);
     try {
+      // Continue from the last row seen (cursor): no OFFSET, no COUNT after the first page.
       const next = this.page() + 1;
-      const result = await this.merchantService.getPage(next, Merchants.PAGE_SIZE, this.search());
+      const result = await this.merchantService.getPage(next, Merchants.PAGE_SIZE, this.search(), this.nextCursor());
       this.merchants.update(current => [...current, ...result.data.filter(m => !current.some(c => c.id === m.id))]);
-      this.total.set(result.totalRecords);
+      if (result.totalRecords >= 0) this.total.set(result.totalRecords);
       this.page.set(next);
+      this.nextCursor.set(result.nextCursor ?? null);
+      this.serverHasMore.set(result.hasMore ?? null);
     } catch {
       this.notificationService.showError('Could not load more merchants.');
     } finally {

@@ -75,23 +75,48 @@
           </div>
         }
 
-        <!-- Attachments -->
-        <div class="mt-4">
-          <h3 class="text-lg font-bold mb-2">Attachments</h3>
-          @if (attachments().length > 0) {
-            <div class="flex flex-wrap gap-2 mb-3">
-              @for (file of attachments(); track file.id) {
-              <div class="border border-[var(--glass-border)] rounded p-2 flex items-center gap-2">
-                  <i class="pi" [ngClass]="file.contentType.includes('image') ? 'pi-image' : 'pi-file'"></i>
-                  <a [href]="getAttachmentUrl(file.filePath)" target="_blank" rel="noopener noreferrer" class="text-color font-semibold no-underline text-sm hover:text-[var(--primary-color)]">{{file.fileName}}</a>
-                  <span class="text-xs text-[var(--text-muted)]">({{ (file.fileSizeBytes / 1024) | number:'1.0-0' }} KB)</span>
-                </div>
-              }
-            </div>
-          }
-          
-          <p-fileUpload mode="basic" chooseLabel="Upload File" chooseIcon="pi pi-upload" name="file" maxFileSize="10000000" [customUpload]="true" (uploadHandler)="onUpload($event)" [auto]="true" styleClass="p-button-sm p-button-outlined p-button-secondary"></p-fileUpload>
-        </div>
+        @if (report(); as r) {
+          <section class="mt-4 rounded-xl border border-[var(--glass-border)] p-3 flex flex-col gap-3" aria-label="What the report included">
+            <h3 class="text-lg font-bold m-0 flex items-center gap-2"><i class="pi pi-flag"></i> Report details</h3>
+            @if (reportShotUrl(); as shot) {
+              <button type="button" class="p-0 border-0 bg-transparent cursor-zoom-in self-start" (click)="reportShotOpen.set(true)" aria-label="Open the screenshot full size">
+                <img [src]="shot" alt="Screenshot sent with this report" class="rounded-lg border border-[var(--glass-border)] max-h-72 max-w-full object-contain" />
+              </button>
+            } @else if (r.hasScreenshot) {
+              <span class="text-xs text-[var(--text-muted)]">Loading the screenshot…</span>
+            }
+            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-xs m-0">
+              <div><dt class="inline font-semibold">Page: </dt><dd class="inline m-0 break-all">{{ r.page || 'unknown' }}</dd></div>
+              <div><dt class="inline font-semibold">Screen: </dt><dd class="inline m-0">{{ r.viewport || 'unknown' }}{{ r.theme ? ', ' + r.theme + ' theme' : '' }}</dd></div>
+              <div><dt class="inline font-semibold">App version: </dt><dd class="inline m-0">{{ r.appVersion || 'unknown' }}</dd></div>
+              <div class="sm:col-span-2"><dt class="inline font-semibold">Device: </dt><dd class="inline m-0 break-words">{{ r.userAgent || 'unknown' }}</dd></div>
+            </dl>
+            @if (r.failedApiCalls.length > 0) {
+              <div class="text-xs">
+                <div class="font-semibold mb-1">Failed requests</div>
+                <ul class="m-0 pl-4">
+                  @for (c of r.failedApiCalls; track $index) { <li class="break-all">{{ c.method }} {{ c.path }} → {{ c.status || 'no answer' }}{{ c.error ? ' (' + c.error + ')' : '' }}</li> }
+                </ul>
+              </div>
+            }
+            @if (r.consoleErrors.length > 0) {
+              <div class="text-xs">
+                <div class="font-semibold mb-1">Errors in the browser</div>
+                <ul class="m-0 pl-4">
+                  @for (e of r.consoleErrors; track $index) { <li class="break-words">{{ e }}</li> }
+                </ul>
+              </div>
+            }
+            @if (r.steps.length > 0) {
+              <details class="text-xs">
+                <summary class="cursor-pointer font-semibold">Steps before the report ({{ r.steps.length }})</summary>
+                <ol class="mt-1 mb-0 pl-5">
+                  @for (s of r.steps; track $index) { <li>{{ s.at }} · {{ s.kind === 'route' ? 'went to' : 'tapped' }} {{ s.what }}</li> }
+                </ol>
+              </details>
+            }
+          </section>
+        }
 
         <p-divider></p-divider>
 
@@ -216,7 +241,7 @@
       <p-card styleClass="shadow-lg h-full">
         <div class="flex items-center gap-2 mb-4">
           <i class="pi pi-comments text-xl"></i>
-          <h2 class="text-xl font-bold m-0">Discussion ({{comments().length}})</h2>
+          <h2 class="text-xl font-bold m-0">Discussion ({{commentsTotal() > 0 ? commentsTotal() : comments().length}})</h2>
         </div>
 
         <!-- Add Comment -->
@@ -243,6 +268,12 @@
             <p>No comments yet. Be the first to contribute!</p>
           </div>
         }
+      
+        @if (commentsHasMore()) {
+          <div class="flex justify-center mt-2">
+            <p-button label="Load more comments" icon="pi pi-angle-down" severity="secondary" [outlined]="true" [loading]="loadingMoreComments()" (onClick)="loadMoreComments()"></p-button>
+          </div>
+        }
       </p-card>
     </div>
 
@@ -259,21 +290,19 @@
             <p>No activity logged yet.</p>
           </div>
         } @else {
-          <div class="flex flex-col gap-3" style="max-height: 500px; overflow-y: auto; padding-right: 5px;">
+          <ol class="list-none m-0 p-0 flex flex-col max-h-[500px] overflow-y-auto pr-1">
             @for (act of activities(); track act.id) {
-              <div class="flex gap-2">
-                <!-- Icon/Indicator -->
-                <div class="flex flex-col items-center">
-                  <div class="flex items-center justify-center border-circle bg-blue-50 border border-blue-200" style="width: 28px; height: 28px;">
-                    <i class="pi text-sm" [ngClass]="getActivityIcon(act.activityType)"></i>
-                  </div>
+              <li class="flex gap-3">
+                <div class="flex flex-col items-center shrink-0">
+                  <span class="w-7 h-7 rounded-full flex items-center justify-center bg-blue-500/10 border border-blue-500/30 text-blue-500">
+                    <i class="pi text-sm" [class]="getActivityIcon(act.activityType)"></i>
+                  </span>
                   @if (!$last) {
-                    <div class="flex-1 border-l border-300 my-1" style="min-height: 15px;"></div>
+                    <span class="grow w-px min-h-4 my-1 bg-[var(--glass-border)]"></span>
                   }
                 </div>
-                <!-- Details -->
-                <div class="flex-1 pb-2">
-                  <div class="text-sm font-semibold text-color line-height-2">{{act.description}}</div>
+                <div class="grow min-w-0 pb-3">
+                  <div class="text-sm font-semibold text-[var(--text-main)] leading-snug break-words">{{act.description}}</div>
                   <div class="text-xs text-[var(--text-muted)] mt-1">
                     @if (act.userDisplayName) {
                       <span>by {{act.userDisplayName}}</span>
@@ -282,9 +311,9 @@
                     <span>{{act.createdAt | date:'short'}}</span>
                   </div>
                 </div>
-              </div>
+              </li>
             }
-          </div>
+          </ol>
         }
       </p-card>
     </div>
@@ -488,4 +517,8 @@
       <p-button label="Add Relation" icon="pi pi-check" size="small" (onClick)="addRelation()" [disabled]="!newRelationTargetId()"></p-button>
     </div>
   </div>
+</p-dialog>
+
+<p-dialog header="Screenshot" [visible]="reportShotOpen()" (visibleChange)="reportShotOpen.set($event)" [modal]="true" [dismissableMask]="true" [style]="{ width: 'min(96vw, 1200px)' }" appendTo="body">
+  @if (reportShotUrl(); as shot) { <img [src]="shot" alt="Screenshot sent with this report" class="w-full h-auto rounded-lg" /> }
 </p-dialog>

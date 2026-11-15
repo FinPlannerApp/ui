@@ -20,7 +20,7 @@
   <!-- Search & Filter Bar -->
   <div class="mb-4">
     <p-card styleClass="shadow-1">
-      <div class="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center flex-wrap">
+      <div class="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center">
         <div class="flex-1 w-full min-w-0">
           <p-iconfield class="w-full">
             <p-inputicon class="pi pi-search"></p-inputicon>
@@ -28,15 +28,15 @@
               (keyup.enter)="onSearch()" />
           </p-iconfield>
         </div>
-        <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+        <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto lg:shrink-0">
           <p-selectButton [options]="typeOptions" [ngModel]="typeFilter()" (ngModelChange)="onTypeFilter({value: $event})"
             optionLabel="label" optionValue="value" [allowEmpty]="false" size="small"></p-selectButton>
           <p-select [options]="allCategories()" [ngModel]="selectedCategory()"
             (ngModelChange)="selectedCategory.set($event); onFilterChange()" optionLabel="name" optionValue="id"
-            placeholder="All Categories" [showClear]="true" styleClass="w-full sm:w-44" appendTo="body"></p-select>
+            placeholder="All Categories" [showClear]="true" class="w-full sm:w-44" appendTo="body"></p-select>
           <p-select [options]="severities" [ngModel]="selectedSeverity()"
             (ngModelChange)="selectedSeverity.set($event); onFilterChange()" placeholder="Any Severity" [showClear]="true"
-            styleClass="w-full sm:w-36" appendTo="body"></p-select>
+            class="w-full sm:w-36" appendTo="body"></p-select>
           <div class="flex gap-2 ml-auto">
             <p-button [icon]="viewMode() === 'list' ? 'pi pi-th-large' : 'pi pi-list'"
               [label]="viewMode() === 'list' ? 'Kanban' : 'List'" (onClick)="toggleViewMode()" [outlined]="true"
@@ -50,8 +50,8 @@
   @if (viewMode() === 'list') {
   <div class="grid grid-cols-12 gap-4">
     <!-- Sidebar Filters -->
-    <div class="col-span-12 lg:col-span-3">
-      <p-card styleClass="h-full shadow-lg">
+    <div class="col-span-12 lg:col-span-3 lg:self-start lg:sticky lg:top-20">
+      <p-card styleClass="shadow-lg">
         <h3 class="font-semibold mb-3 mt-0">Sort By</h3>
         <div class="flex flex-col gap-2">
           <p-button [text]="currentSort() !== 'pain'" [outlined]="currentSort() === 'pain'" severity="danger"
@@ -163,13 +163,13 @@
         }
       </div>
 
-      <!-- Pagination -->
-      @if (totalItems() > pageSize()) {
-      <div class="mt-4">
-        <p-paginator [first]="(currentPage() - 1) * pageSize()" [rows]="pageSize()" [totalRecords]="totalItems()" [rowsPerPageOptions]="[10, 25, 50]"
-          (onPageChange)="onPageChange($event)"></p-paginator>
+      <!-- More issues (by cursor) -->
+      <div class="mt-4 flex flex-wrap items-center justify-between gap-2">
+        <span class="text-xs text-[var(--text-muted)]">Showing {{ issues().length }} of {{ totalItems() }}</span>
+        @if (hasMore()) {
+          <p-button label="Load more" icon="pi pi-angle-down" severity="secondary" [outlined]="true" [loading]="loadingMore()" (onClick)="loadMore()"></p-button>
+        }
       </div>
-      }
     </div>
   </div>
   } @else {

@@ -7,7 +7,6 @@ import { Router, RouterLink } from '@angular/router';
 import { sharedPrimeModules } from '../../../shared/prime-imports';
 import { TagModule } from 'primeng/tag';
 import { DividerModule } from 'primeng/divider';
-import { PaginatorModule } from 'primeng/paginator';
 import { MessageService } from 'primeng/api';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectButtonModule } from 'primeng/selectbutton';
@@ -18,7 +17,7 @@ import { Auth } from '../../../core/services/auth';
 @Component({
     selector: 'app-issue-list',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink, TagModule, DividerModule, PaginatorModule, InputTextModule, SelectButtonModule, IconFieldModule, InputIconModule, ...sharedPrimeModules],
+    imports: [CommonModule, FormsModule, RouterLink, TagModule, DividerModule, InputTextModule, SelectButtonModule, IconFieldModule, InputIconModule, ...sharedPrimeModules],
     providers: [MessageService],
     templateUrl: './issue-list.component.html',
     styles: [`
@@ -85,6 +84,10 @@ export class IssueListComponent {
     totalItems = signal(0);
     currentPage = signal(1);
     pageSize = signal(10);
+    // Keyset paging: "Load more" continues from the last row seen (no OFFSET, no COUNT after the first page).
+    nextCursor = signal<string | null>(null);
+    hasMore = signal(false);
+    loadingMore = signal(false);
 
     // View Mode
     viewMode = signal<'list' | 'kanban'>('list');
@@ -118,12 +121,34 @@ export class IssueListComponent {
         
         const limit = this.viewMode() === 'kanban' ? 100 : this.pageSize();
         
-        this.issueService.getIssues(undefined, sort, this.currentPage(), limit, search, type, cat, sev).subscribe(res => {
+        // Every (re)load starts from the first page; further pages are appended by loadMore().
+        this.issueService.getIssues(undefined, sort, 1, limit, search, type, cat, sev).subscribe(res => {
             const issuesData = Array.isArray(res?.data) ? res.data : [];
             this.issues.set(issuesData);
             this.totalItems.set(res?.totalItems ?? 0);
+            this.nextCursor.set(res?.nextCursor ?? null);
+            this.hasMore.set(!!res?.hasMore);
             
             this.updateKanbanBoard(issuesData);
+        });
+    }
+
+    loadMore() {
+        const cursor = this.nextCursor();
+        if (!cursor || this.loadingMore()) return;
+        this.loadingMore.set(true);
+        const search = this.searchQuery()?.trim() || undefined;
+        this.issueService.getIssues(undefined, this.currentSort(), 1, this.pageSize(), search,
+            this.typeFilter() || undefined, this.selectedCategory() || undefined, this.selectedSeverity() || undefined, cursor).subscribe({
+            next: res => {
+                const more: Issue[] = Array.isArray(res?.data) ? res.data : [];
+                const seen = new Set(this.issues().map(i => i.id));
+                this.issues.update(list => [...list, ...more.filter(i => !seen.has(i.id))]);
+                this.nextCursor.set(res?.nextCursor ?? null);
+                this.hasMore.set(!!res?.hasMore);
+                this.loadingMore.set(false);
+            },
+            error: () => this.loadingMore.set(false)
         });
     }
 

@@ -32,7 +32,7 @@ type Severity = 'Minor' | 'Major' | 'Critical';
 
 <p-dialog header="Report a problem" [visible]="feedback.visible()" (visibleChange)="$event ? null : feedback.close()"
   [modal]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: 'min(36rem, 96vw)' }" appendTo="body">
-  <div class="flex flex-col gap-4">
+  <div class="flex flex-col gap-4" (paste)="onPaste($event)">
     <div class="flex flex-col gap-1.5">
       <label for="qf-text" class="text-sm font-semibold">What went wrong?</label>
       <textarea id="qf-text" pTextarea rows="4" maxlength="4000" class="w-full" autofocus
@@ -53,20 +53,28 @@ type Severity = 'Minor' | 'Major' | 'Critical';
     </div>
 
     <div class="flex flex-col gap-2 rounded-xl border border-[var(--glass-border)] p-3">
-      <label class="flex items-start gap-2 text-sm cursor-pointer">
-        <input type="checkbox" class="mt-1" [ngModel]="withShot()" (ngModelChange)="withShot.set($event)" [disabled]="!feedback.screenshotMasked() && !feedback.capturing()" />
-        <span><b>Include a screenshot</b>
-          @if (feedback.capturing()) { <span class="text-[var(--text-muted)]"> (taking it now, this can take a few seconds)</span> } @else if (!feedback.screenshotMasked()) { <span class="text-[var(--text-muted)]"> (could not be taken here)</span> }
-          <span class="block text-xs text-[var(--text-muted)]">It shows what was on screen. You can hide amounts and typed text below.</span></span>
-      </label>
-      @if (feedback.screenshotMasked() && withShot() && !feedback.capturing()) {
-        <label class="flex items-start gap-2 text-sm cursor-pointer ml-6">
-          <input type="checkbox" class="mt-1" [ngModel]="maskPrivate()" (ngModelChange)="onMask($event)" />
-          <span><b>Hide amounts and typed text</b>
-            <span class="block text-xs text-[var(--text-muted)]">Covers money amounts and form fields with grey boxes in the picture. The page itself is not changed.</span></span>
-        </label>
-        <img [src]="shotToSend()" alt="Screenshot that will be sent" class="rounded-lg border border-[var(--glass-border)] max-h-48 object-contain self-start ml-6" />
-      }
+      <div class="flex flex-col gap-2">
+        <span class="text-sm font-semibold">Screenshot <span class="font-normal text-[var(--text-muted)]">(optional)</span></span>
+        @if (feedback.screenshot(); as shot) {
+          <img [src]="shot" alt="Screenshot that will be sent" class="rounded-lg border border-[var(--glass-border)] max-h-48 object-contain self-start" />
+          <div class="flex gap-2">
+            <p-button label="Remove" icon="pi pi-trash" size="small" severity="secondary" [text]="true" (onClick)="feedback.removeScreenshot()"></p-button>
+          </div>
+        } @else {
+          <span class="text-xs text-[var(--text-muted)]">Press <b>Ctrl+V</b> to paste an image you copied (instant), or capture one:</span>
+          <div class="flex flex-wrap gap-2">
+            <p-button label="Capture screen" icon="pi pi-desktop" size="small" severity="secondary" [outlined]="true"
+              [disabled]="feedback.capturing()" (onClick)="feedback.captureScreen()"></p-button>
+            <p-button label="Capture this page" icon="pi pi-camera" size="small" severity="secondary" [outlined]="true"
+              [disabled]="feedback.capturing()" (onClick)="feedback.captureThisPage(maskPrivate())"></p-button>
+            <label class="inline-flex items-center gap-1.5 text-xs cursor-pointer">
+              <input type="checkbox" [ngModel]="maskPrivate()" (ngModelChange)="maskPrivate.set($event)" /> Hide amounts and typed text
+            </label>
+          </div>
+          <span class="text-xs text-[var(--text-muted)]"><b>Capture screen</b> uses your browser's own screen capture and never slows the page. <b>Capture this page</b> can make a large page pause for a few seconds; amounts and form fields are covered in the picture when the box is ticked.</span>
+        }
+        @if (feedback.captureNote(); as note) { <span class="text-xs text-amber-500" role="status">{{ note }}</span> }
+      </div>
 
       <label class="flex items-start gap-2 text-sm cursor-pointer">
         <input type="checkbox" class="mt-1" [ngModel]="withDetails()" (ngModelChange)="withDetails.set($event)" />
@@ -91,7 +99,7 @@ type Severity = 'Minor' | 'Major' | 'Critical';
       </span>
       <div class="flex gap-2">
         <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="feedback.close()"></p-button>
-        <p-button label="Send report" icon="pi pi-send" [loading]="sending()" [disabled]="text().trim().length < 3 || (feedback.capturing() && withShot())" (onClick)="send()"></p-button>
+        <p-button label="Send report" icon="pi pi-send" [loading]="sending()" [disabled]="text().trim().length < 3 || feedback.capturing()" (onClick)="send()"></p-button>
       </div>
     </div>
   </ng-template>
@@ -111,14 +119,10 @@ export class QuickFeedback {
 
   text = signal('');
   severity = signal<Severity>('Minor');
-  withShot = signal(true);
   maskPrivate = signal(true);
   withDetails = signal(true);
   sending = signal(false);
   error = signal<string | null>(null);
-
-  /** The picture that is previewed and sent: with amounts and fields blurred unless the person turned that off. */
-  shotToSend = computed(() => (this.maskPrivate() ? this.feedback.screenshotMasked() : this.feedback.screenshot() ?? this.feedback.screenshotMasked()));
 
   /** Taken when the dialog opens, so what the user sees in "technical details" is what is sent. */
   private details = computed(() => (this.feedback.visible() ? this.diagnostics.snapshot() : null));
@@ -139,10 +143,12 @@ export class QuickFeedback {
     });
   }
 
-  /** Turning the blur off takes the unblurred picture now (the dialog hides for a moment). */
-  onMask(on: boolean): void {
-    this.maskPrivate.set(on);
-    if (!on) void this.feedback.captureUnblurred();
+  /** Ctrl+V with an image on the clipboard attaches it at once: nothing runs, so the page never freezes. */
+  onPaste(event: ClipboardEvent): void {
+    const file = Array.from(event.clipboardData?.files ?? []).find(f => f.type.startsWith('image/'));
+    if (!file) return;
+    event.preventDefault();
+    void this.feedback.attachImage(file);
   }
 
   onText(value: string): void { this.text.set(value); this.feedback.saveDraft({ text: value, severity: this.severity() }); }
@@ -165,7 +171,7 @@ export class QuickFeedback {
       severity: this.severity(),
       impactsMoney: this.severity() === 'Critical',
       contextJson: this.withDetails() ? JSON.stringify(this.diagnostics.snapshot()) : JSON.stringify({ note: 'Technical details were not included.', page: window.location.pathname }),
-      screenshotBase64: this.withShot() ? this.shotToSend() : null,
+      screenshotBase64: this.feedback.screenshot(),
     };
     this.api.post<{ id: number; similarReports?: number }>('Issues/quick-report', body).subscribe({
       next: r => {
