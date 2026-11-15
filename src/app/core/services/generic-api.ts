@@ -20,6 +20,10 @@ export interface PaginatedResult<T> {
   pageNumber: number;
   pageSize: number;
   data: T[];
+  /** Keyset paging: true when another page follows (no total needed). */
+  hasMore?: boolean;
+  /** Keyset paging: send as `cursor` to get the next page without an OFFSET. */
+  nextCursor?: string | null;
 }
 
 @Injectable({

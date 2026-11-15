@@ -201,7 +201,10 @@ export class TransactionList implements OnInit, OnDestroy {
   totalRecords = signal(0);
   rows = signal(25);
   isLoadingMore = signal(false);
-  hasMore = computed(() => this.transactions().length < this.totalRecords());
+  /** Keyset paging: the server says whether another page follows and gives the cursor to fetch it. */
+  private nextCursor = signal<string | null>(null);
+  private serverHasMore = signal<boolean | null>(null);
+  hasMore = computed(() => this.serverHasMore() ?? this.transactions().length < this.totalRecords());
   lastLazyLoadEvent: any;
   ready = signal(false);
 
@@ -522,6 +525,8 @@ export class TransactionList implements OnInit, OnDestroy {
 
       this.transactions.set(paginatedResult.data);
       this.totalRecords.set(paginatedResult.totalRecords);
+      this.nextCursor.set(paginatedResult.nextCursor ?? null);
+      this.serverHasMore.set(paginatedResult.hasMore ?? null);
       this.summary.set(summaryData);
       await this.loadBuckets();
       await this.loadCashbackInsights();
@@ -558,14 +563,18 @@ export class TransactionList implements OnInit, OnDestroy {
     const sortOrder = this.lastLazyLoadEvent?.sortOrder === 1 ? 'asc' : 'desc';
 
     try {
+      // Newest-first lists continue by cursor (no OFFSET, no COUNT: as fast on page 500 as on page 2); other sorts use page numbers.
+      const cursor = this.nextCursor();
       const page = await firstValueFrom(this.transactionService.getTransactionsForAccount(id, {
-        pageNumber: nextPage, pageSize, sortBy, sortOrder, filters, globalSearch: this.globalSearch() || ''
+        pageNumber: cursor ? 1 : nextPage, cursor: cursor ?? undefined, pageSize, sortBy, sortOrder, filters, globalSearch: this.globalSearch() || ''
       }));
       // Filters/sort changed while this page was in flight: it belongs to an old list, drop it.
       if (keyAtStart !== this.lastQueryKey) return;
       const seen = new Set(this.transactions().map(t => t.id));
       this.transactions.update(list => [...list, ...page.data.filter(t => !seen.has(t.id))]);
-      this.totalRecords.set(page.totalRecords);
+      if (page.totalRecords >= 0) this.totalRecords.set(page.totalRecords); // cursor pages skip the COUNT
+      this.nextCursor.set(page.nextCursor ?? null);
+      this.serverHasMore.set(page.hasMore ?? null);
     } catch (err) {
       console.error('Failed to load more transactions', err);
     } finally {

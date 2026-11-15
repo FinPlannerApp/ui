@@ -287,6 +287,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/auth/change-password/change-password.component').then(m => m.ChangePasswordComponent)
       },
       {
+        path: 'my-reports',
+        loadComponent: () => import('./features/issues/my-reports/my-reports').then(m => m.MyReports)
+      },
+      {
         path: 'issues',
         loadChildren: () => import('./features/issues/issues.routes').then(m => m.ISSUES_ROUTES)
       },

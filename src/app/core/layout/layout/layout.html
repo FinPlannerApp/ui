@@ -49,6 +49,7 @@
                 <span>Session expires in {{ authService.sessionExpiresIn() }}</span>
               </div>
             </div>
+            <p-button label="My reports" icon="pi pi-list" severity="secondary" size="small" [text]="true" routerLink="/app/my-reports" (onClick)="op.hide()"></p-button>
             <p-button label="Report a problem" icon="pi pi-flag" severity="secondary" size="small" [outlined]="true"
               (onClick)="op.hide(); feedback.open()"></p-button>
             <p-button label="Check for updates" icon="pi pi-cloud-download" severity="secondary" size="small" [outlined]="true"

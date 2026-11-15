@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 
@@ -24,6 +24,9 @@ export class DiagnosticsService {
   private crumbs: Breadcrumb[] = [];
   private installed = false;
 
+  /** The latest unhandled error (not console.error noise): lets the app offer "Report this" without being asked. */
+  readonly unhandled = signal<{ message: string; at: number } | null>(null);
+
   /** Starts listening. Safe to call more than once. */
   install(): void {
     if (this.installed || typeof window === 'undefined') return;
@@ -34,8 +37,16 @@ export class DiagnosticsService {
       this.addError(args.map(a => this.text(a)).join(' '));
       original(...args);
     };
-    window.addEventListener('error', e => this.addError(`${e.message} (${this.shortFile(e.filename)}:${e.lineno})`));
-    window.addEventListener('unhandledrejection', e => this.addError(`Unhandled promise rejection: ${this.text(e.reason)}`));
+    window.addEventListener('error', e => {
+      const message = `${e.message} (${this.shortFile(e.filename)}:${e.lineno})`;
+      this.addError(message);
+      this.unhandled.set({ message, at: Date.now() });
+    });
+    window.addEventListener('unhandledrejection', e => {
+      const message = `Unhandled promise rejection: ${this.text(e.reason)}`;
+      this.addError(message);
+      this.unhandled.set({ message, at: Date.now() });
+    });
 
     document.addEventListener('click', e => {
       const el = (e.target as HTMLElement | null)?.closest('button, a, [role=button], [role=tab], [role=menuitem]') as HTMLElement | null;
