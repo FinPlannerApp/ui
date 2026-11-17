@@ -208,6 +208,12 @@ export class SplitService {
     return result.value;
   }
 
+  async setPublicLink(groupId: number, enabled: boolean): Promise<SplitGroup> {
+    const result = await firstValueFrom(this.api.post<SplitGroup>(`Split/groups/${groupId}/public-link`, { enabled }));
+    if (!result.isSuccess) throw new Error(result.error?.description || 'Could not change the public link.');
+    return result.value;
+  }
+
   async previewInvite(token: string): Promise<InvitePreview> {
     const result = await firstValueFrom(this.api.get<InvitePreview>(`Split/invites/${token}/preview`));
     if (!result.isSuccess) throw new Error(result.error?.description || 'Could not load this invite.');

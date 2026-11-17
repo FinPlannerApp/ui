@@ -25,6 +25,9 @@ export interface SplitGroup {
   isDirect?: boolean;
   /** Email a weekly reminder to members who still owe money. */
   autoRemind?: boolean;
+  includeLeftMembersInBalances?: boolean;
+  publicLinkEnabled?: boolean;
+  publicLinkExpiresAt?: string | null;
   /** Optional trip dates (ISO). */
   startDate?: string | null;
   endDate?: string | null;
@@ -38,6 +41,7 @@ export interface UpdateGroupSettingsRequest {
   currency: string;
   simplifyDebts: boolean;
   autoRemind: boolean;
+  includeLeftMembersInBalances?: boolean;
   /** YYYY-MM-DD */
   startDate: string | null;
   endDate: string | null;
@@ -122,6 +126,8 @@ export interface MemberBalance {
   inTransit?: number;
   /** totalPaid - totalShare + settledPaid - settledReceived. Positive = owed money. */
   netBalance: number;
+  /** Set when the person left the group (only listed if the admin turned on "show left members"). */
+  hasLeft?: boolean;
 }
 
 export interface SimplifiedDebt {
@@ -156,6 +162,9 @@ export interface GroupBalances {
   balances: MemberBalance[];
   simplifiedPlan: SimplifiedDebt[];
   categoryBreakdown?: CategorySpend[];
+  leftMembersWithBalance?: number;
+  leftMembersBalanceTotal?: number;
+  includesLeftMembers?: boolean;
   expenseCount?: number;
 }
 

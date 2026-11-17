@@ -49,6 +49,11 @@ export class SplitSignalRService {
         }
       });
 
+      // SEC-24: the server cut this socket because its login session was signed out.
+      this.hubConnection.on('SessionRevoked', () => {
+        void this.hubConnection?.stop();
+      });
+
       this.hubConnection.onreconnected(async () => {
         if (this.currentGroupId && this.hubConnection?.state === signalR.HubConnectionState.Connected) {
           try {

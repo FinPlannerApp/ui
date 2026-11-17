@@ -65,6 +65,28 @@ export interface ResetPasswordDto {
 }
 
 /** Sent on the cookie-based endpoints (refresh/logout); the API's CSRF guard requires it. */
+/**
+ * A random id for this install, kept in localStorage and sent with sign-in calls. The server also sets its own device
+ * cookie, but iOS Safari and home-screen apps often drop cross-site cookies, which made every sign-in look like a new
+ * device (duplicates in Signed-in Devices). This id lets the server recognise the same install without the cookie.
+ */
+function installId(): string {
+  const KEY = 'finplanner_install_id';
+  try {
+    const existing = localStorage.getItem(KEY);
+    if (existing && /^[0-9a-f]{32}$/.test(existing)) return existing;
+    const bytes = crypto.getRandomValues(new Uint8Array(16));
+    const id = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+    localStorage.setItem(KEY, id);
+    return id;
+  } catch {
+    return '';
+  }
+}
+function deviceHeaders(): Record<string, string> {
+  const id = installId();
+  return id ? { 'X-Device-Id': id } : {};
+}
 const CSRF_HEADERS = { 'X-Requested-With': 'XMLHttpRequest' };
 
 @Injectable({
@@ -247,7 +269,7 @@ export class Auth {
     return this.http.post<ApiResult<LoginResponseDto>>(
       this.buildUrl('Auth', 'login'),
       credentials,
-      { withCredentials: true }
+      { withCredentials: true, headers: deviceHeaders() }
     ).pipe(
       tap(response => {
         if (response.isSuccess && response.value) {
@@ -297,7 +319,7 @@ export class Auth {
     return this.http.post<ApiResult<LoginResponseDto>>(
       this.buildUrl('Auth', 'refresh'),
       {},
-      { withCredentials: true, headers: CSRF_HEADERS }
+      { withCredentials: true, headers: { ...CSRF_HEADERS, ...deviceHeaders() } }
     ).pipe(
       map(response => {
         if (response.isSuccess && response.value) {

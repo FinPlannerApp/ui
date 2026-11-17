@@ -523,14 +523,16 @@ export class TransactionList implements OnInit, OnDestroy {
         firstValueFrom(this.dashboardService.getAccountSummary(id, startOfMonth, endOfMonth))
       ]);
 
+      // A newer load (filters, sort, account) started while this one was in flight: its answer is the one to show.
+      if (currentQueryKey !== this.lastQueryKey) return;
+
       this.transactions.set(paginatedResult.data);
       this.totalRecords.set(paginatedResult.totalRecords);
       this.nextCursor.set(paginatedResult.nextCursor ?? null);
       this.serverHasMore.set(paginatedResult.hasMore ?? null);
       this.summary.set(summaryData);
-      await this.loadBuckets();
-      await this.loadCashbackInsights();
-      await this.loadCreditCardBreakdown();
+      // The side panels don't depend on each other: load them together instead of one after another.
+      await Promise.all([this.loadBuckets(), this.loadCashbackInsights(), this.loadCreditCardBreakdown()]);
       void this.loadCycles();
 
       const accountName = this.currentAccount()?.name || 'Account';

@@ -58,6 +58,7 @@ export class SplitSettingsDialog {
   draftCurrency = signal('INR');
   draftSimplify = signal(true);
   draftAutoRemind = signal(false);
+  draftIncludeLeft = signal(false);
   draftStart = signal<Date | null>(null);
   draftEnd = signal<Date | null>(null);
   savingSettings = signal(false);
@@ -75,6 +76,7 @@ export class SplitSettingsDialog {
       this.draftCurrency.set(g.currency || 'INR');
       this.draftSimplify.set(g.simplifyDebts !== false);
       this.draftAutoRemind.set(!!g.autoRemind);
+      this.draftIncludeLeft.set(!!g.includeLeftMembersInBalances);
       this.draftStart.set(fromDateOnlyString(g.startDate));
       this.draftEnd.set(fromDateOnlyString(g.endDate));
     });
@@ -86,6 +88,7 @@ export class SplitSettingsDialog {
     return this.draftCurrency() !== (g.currency || 'INR')
       || this.draftSimplify() !== (g.simplifyDebts !== false)
       || this.draftAutoRemind() !== !!g.autoRemind
+      || this.draftIncludeLeft() !== !!g.includeLeftMembersInBalances
       || toDateOnlyString(this.draftStart()) !== (toDateOnlyString(fromDateOnlyString(g.startDate)))
       || toDateOnlyString(this.draftEnd()) !== (toDateOnlyString(fromDateOnlyString(g.endDate)));
   });
@@ -99,6 +102,7 @@ export class SplitSettingsDialog {
         currency: this.draftCurrency(),
         simplifyDebts: this.draftSimplify(),
         autoRemind: this.draftAutoRemind(),
+        includeLeftMembersInBalances: this.draftIncludeLeft(),
         startDate: toDateOnlyString(this.draftStart()),
         endDate: toDateOnlyString(this.draftEnd())
       });
@@ -420,6 +424,18 @@ export class SplitSettingsDialog {
         }
       }
     });
+  }
+
+  async togglePublicLink(enabled: boolean): Promise<void> {
+    const g = this.group();
+    if (!g) return;
+    try {
+      await this.splitService.setPublicLink(g.id, enabled);
+      this.notificationService.showSuccess(enabled ? 'Public link is on for 30 days.' : 'Public link is off.');
+      this.reloadGroup.emit();
+    } catch (err: any) {
+      this.notificationService.showError(err?.message || 'Could not change the public link.');
+    }
   }
 
   shareLink(): string {

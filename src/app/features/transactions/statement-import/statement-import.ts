@@ -89,11 +89,11 @@ export class StatementImport {
   });
 
   constructor() {
-    this.api.search<any>('Accounts', { pageSize: 1000 }).subscribe({
+    this.api.search<any>('Accounts', { pageSize: 100 }).subscribe({
       next: res => this.accounts.set((res.value?.data || []).filter((a: any) => !a.isArchived)),
       error: () => this.error.set('Could not load your accounts.'),
     });
-    this.api.search<any>('TransactionCategories', { pageSize: 1000 }).subscribe({
+    this.api.search<any>('TransactionCategories', { pageSize: 100 }).subscribe({
       next: res => this.categories.set(withPaths<any>(res.value?.data || [])),
     });
   }

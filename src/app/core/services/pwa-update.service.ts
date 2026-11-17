@@ -12,6 +12,8 @@ export class PwaUpdateService {
 
   private initialScriptHashes = new Set<string>();
   private isNotificationShown = false;
+  /** True when the new version was found by asking the server, so the installed service worker is the one that is stale. */
+  private directDetected = false;
 
   /**
    * Initialize update checking. Call once from the root component.
@@ -35,7 +37,8 @@ export class PwaUpdateService {
       if (Date.now() - this.lastCheck < 60_000) return;
       this.lastCheck = Date.now();
       if (this.swUpdate.isEnabled) this.swUpdate.checkForUpdate().catch(() => {});
-      else void this.checkNonPwaUpdate();
+      // Also ask the server directly: a stuck or HTTP-cached service worker never reports a new version by itself.
+      void this.checkNonPwaUpdate();
     };
     document.addEventListener('visibilitychange', check);
     window.addEventListener('focus', check);
@@ -56,7 +59,8 @@ export class PwaUpdateService {
           document.location.reload();
           return 'updated';
         }
-        return 'latest';
+        await this.checkNonPwaUpdate(true);
+        return this.isNotificationShown ? 'updated' : 'latest';
       }
       await this.checkNonPwaUpdate(true);
       return this.isNotificationShown ? 'updated' : 'latest';
@@ -79,6 +83,8 @@ export class PwaUpdateService {
   private initPwaUpdateCheck(): void {
     // Check for update when the user turns on/launches the application, and again on every resume
     this.swUpdate.checkForUpdate().catch(() => {});
+    this.recordInitialScriptHashes();
+    void this.checkNonPwaUpdate();
     this.startPeriodicChecks();
 
     // Trigger update ONLY when Angular Service Worker confirms a real UI version change
@@ -125,7 +131,7 @@ export class PwaUpdateService {
     if (this.isNotificationShown) return;
 
     try {
-      const response = await fetch(`/index.html?t=${Date.now()}`, {
+      const response = await fetch(`/index.html?ngsw-bypass=true&t=${Date.now()}`, {
         cache: 'no-store',
         headers: { 'Cache-Control': 'no-cache' }
       });
@@ -146,6 +152,7 @@ export class PwaUpdateService {
       });
 
       if (versionChanged) {
+        this.directDetected = true;
         this.showUpdateNotification();
       }
     } catch {
@@ -170,6 +177,7 @@ export class PwaUpdateService {
 
   /** Reload the page to activate the new version */
   activateUpdate(): void {
+    if (this.swUpdate.isEnabled && this.directDetected) { void this.hardReload(); return; }
     document.location.reload();
   }
 }

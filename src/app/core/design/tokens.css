@@ -23,7 +23,7 @@
 
   /* Layout */
   --page-max: 1280px;
-  --page-gutter: clamp(.75rem, 2.5vw, 2rem);
+  --page-gutter: clamp(1rem, 3.5vw, 2rem); /* never below 16px, on any phone */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);

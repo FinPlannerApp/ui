@@ -2,6 +2,7 @@ import { Injectable, effect, inject, signal, untracked } from '@angular/core';
 import { MessageService } from 'primeng/api';
 import { DiagnosticsService } from '../../../core/services/diagnostics.service';
 import { GenericApi } from '../../../core/services/generic-api';
+import { Auth } from '../../../core/services/auth';
 
 const DRAFT_KEY = 'finplanner_report_draft';
 const QUEUE_KEY = 'finplanner_report_queue';
@@ -12,6 +13,8 @@ const OFFER_COOLDOWN_MS = 90_000;
 const MAX_PICTURE_WIDTH = 1280;
 
 export interface ReportDraft { text: string; severity: 'Minor' | 'Major' | 'Critical' }
+/** A queued report remembers who wrote it: on a shared device only that person's session may send it. */
+interface QueuedReport { owner: string; body: ReportBody }
 export interface ReportBody {
   description: string; severity: string; impactsMoney: boolean; contextJson: string; screenshotBase64: string | null;
 }
@@ -30,6 +33,7 @@ export class QuickFeedbackService {
   private diagnostics = inject(DiagnosticsService);
   private api = inject(GenericApi);
   private toast = inject(MessageService);
+  private auth = inject(Auth);
 
   /** True while the report dialog is open. */
   readonly visible = signal(false);
@@ -44,6 +48,10 @@ export class QuickFeedbackService {
 
   /** Keyboard shortcut label shown in tooltips and menus. */
   readonly shortcutLabel = 'Alt+Shift+B';
+  /** Phones and tablets: drawing the whole page there can freeze the browser, so only attaching a screenshot is offered. */
+  readonly isTouchDevice = typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)').matches;
+  /** Browser screen capture exists on desktop browsers only (not iOS). */
+  readonly canCaptureScreen = typeof navigator !== 'undefined' && !this.isTouchDevice && !!navigator.mediaDevices?.getDisplayMedia;
   private lastOfferAt = 0;
   /** True while the offline queue is being sent, so a double "online" event cannot send a report twice. */
   private flushing = false;
@@ -69,11 +77,26 @@ export class QuickFeedbackService {
         this.offer.set(err.message);
       });
     });
-    void this.flushQueue();
+    // Send the queue once someone is signed in, and only the reports that person wrote. When the session ends, the queue
+    // and draft are wiped: reports hold screen text and amounts, and must not stay on the device for the next person.
+    let wasSignedIn = false;
+    effect(() => {
+      const id = this.auth.currentUserDetails()?.id ?? null;
+      untracked(() => {
+        if (id) { wasSignedIn = true; void this.flushQueue(); }
+        else if (wasSignedIn) {
+          wasSignedIn = false;
+          try { localStorage.removeItem(QUEUE_KEY); localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+        }
+      });
+    });
   }
 
   /** Opens the dialog at once: nothing is captured or computed here. */
   open(): void {
+    // A stuck capture must never leave the dialog hidden for the next report.
+    document.body.classList.remove('qf-capturing');
+    this.capturing.set(false);
     if (this.visible()) return;
     this.offer.set(null);
     this.screenshot.set(null);
@@ -138,13 +161,13 @@ export class QuickFeedbackService {
     this.captureNote.set('Taking the screenshot. The page may pause for a few seconds.');
     // Let the note paint before the library starts working.
     await new Promise<void>(r => requestAnimationFrame(() => setTimeout(r, 60)));
-    document.body.classList.add('qf-capturing');
+    // The dialog is NOT hidden here: html2canvas already leaves it out of the picture (ignoreElements). Hiding it
+    // made the report form vanish for as long as the capture ran, and for good if the browser stalled.
     try {
       const shot = await this.drawPage(maskPrivate);
       this.screenshot.set(shot);
-      this.captureNote.set(shot ? null : 'The page could not be captured. Try "Capture screen" or paste an image (Ctrl+V).');
+      this.captureNote.set(shot ? null : 'The page could not be captured. Try "Capture screen" or attach an image.');
     } finally {
-      document.body.classList.remove('qf-capturing');
       this.capturing.set(false);
     }
   }
@@ -164,10 +187,10 @@ export class QuickFeedbackService {
         windowWidth: window.innerWidth,
         windowHeight: window.innerHeight,
         // Our own floating buttons, loader and dialog are not part of the problem being reported.
-        ignoreElements: el => ['quick-fab', 'feedback-fab', 'global-loader', 'p-dialog-mask', 'p-dialog', 'report-offer'].some(c => el.classList?.contains(c)),
+        ignoreElements: (el: Element) => ['quick-fab', 'feedback-fab', 'global-loader', 'p-dialog-mask', 'p-dialog', 'report-offer'].some(c => el.classList?.contains(c)),
         onclone: (doc: Document) => { QuickFeedbackService.simplify(doc); if (mask) QuickFeedbackService.coverPrivate(doc); },
       });
-      const canvas = await Promise.race([shot, new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), 15000))]);
+      const canvas = await Promise.race([shot, new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000))]);
       return canvas.toDataURL('image/jpeg', 0.72);
     } catch (err) {
       console.warn('Screenshot could not be taken', err);
@@ -190,16 +213,20 @@ export class QuickFeedbackService {
   queue(body: ReportBody): void {
     try {
       const list = this.readQueue();
+      const owner = this.auth.currentUserDetails()?.id ?? '';
       // The screenshot is the heavy part: keep it only when small enough for local storage.
       const slim = body.screenshotBase64 && body.screenshotBase64.length > 600_000 ? { ...body, screenshotBase64: null } : body;
-      list.push(slim);
+      list.push({ owner, body: slim });
       localStorage.setItem(QUEUE_KEY, JSON.stringify(list.slice(-MAX_QUEUED)));
     } catch { /* storage full or blocked: the draft text is still kept */ }
   }
 
   async flushQueue(): Promise<void> {
     if (this.flushing || (typeof navigator !== 'undefined' && !navigator.onLine)) return;
-    const list = this.readQueue();
+    const me = this.auth.currentUserDetails()?.id ?? null;
+    if (!me) return;
+    const all = this.readQueue();
+    const list = all.filter(q => q.owner === me).map(q => q.body);
     if (list.length === 0) return;
     this.flushing = true;
     try {
@@ -212,7 +239,8 @@ export class QuickFeedbackService {
         } catch { remaining.push(body); }
       }
       try {
-        if (remaining.length) localStorage.setItem(QUEUE_KEY, JSON.stringify(remaining)); else localStorage.removeItem(QUEUE_KEY);
+        const keep = [...all.filter(q => q.owner !== me), ...remaining.map(b => ({ owner: me, body: b }))];
+        if (keep.length) localStorage.setItem(QUEUE_KEY, JSON.stringify(keep)); else localStorage.removeItem(QUEUE_KEY);
       } catch { /* ignore */ }
       if (remaining.length < list.length) {
         this.toast.add({ severity: 'success', summary: 'Report sent', detail: 'Your saved report reached the Feedback Hub.', life: 5000 });
@@ -222,8 +250,12 @@ export class QuickFeedbackService {
     }
   }
 
-  private readQueue(): ReportBody[] {
-    try { return JSON.parse(localStorage.getItem(QUEUE_KEY) ?? '[]') as ReportBody[]; } catch { return []; }
+  private readQueue(): QueuedReport[] {
+    try {
+      const v = JSON.parse(localStorage.getItem(QUEUE_KEY) ?? '[]');
+      // Entries from before reports were tied to a user have no owner: they are dropped, never sent under someone else.
+      return Array.isArray(v) ? v.filter((q): q is QueuedReport => !!q && typeof q.owner === 'string' && !!q.body) : [];
+    } catch { return []; }
   }
 
   private readAsDataUrl(file: Blob): Promise<string> {

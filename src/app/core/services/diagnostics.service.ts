@@ -90,12 +90,12 @@ export class DiagnosticsService {
   }
 
   private addError(message: string): void {
-    this.errors.push(`${new Date().toISOString().slice(11, 19)} ${message.slice(0, 400)}`);
+    this.errors.push(`${new Date().toISOString().slice(11, 19)} ${redact(message).slice(0, 400)}`);
     if (this.errors.length > MAX_ERRORS) this.errors.shift();
   }
 
   private addCrumb(kind: Breadcrumb['kind'], what: string): void {
-    this.crumbs.push({ at: new Date().toISOString().slice(11, 19), kind, what });
+    this.crumbs.push({ at: new Date().toISOString().slice(11, 19), kind, what: redact(what) });
     if (this.crumbs.length > MAX_CRUMBS) this.crumbs.shift();
   }
 
@@ -106,4 +106,18 @@ export class DiagnosticsService {
     if (typeof v === 'string') return v;
     try { return JSON.stringify(v)?.slice(0, 300) ?? String(v); } catch { return String(v); }
   }
+}
+
+/**
+ * Takes money and personal details out of anything written into a report: amounts (₹ 12,000 / Rs 450.50 / 1,23,456),
+ * e-mail addresses, long digit runs (card, account, phone numbers) and bearer/JWT tokens. A bug report needs to say what
+ * was clicked and what failed, not what the balance was.
+ */
+export function redact(text: string): string {
+  return text
+    .replace(/eyJ[\w-]{10,}\.[\w-]{10,}\.[\w-]{5,}/g, '[token]')
+    .replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, '[email]')
+    .replace(/(?:₹|Rs\.?|INR)\s?-?\d[\d,]*(?:\.\d+)?/gi, '[amount]')
+    .replace(/\b\d{1,3}(?:,\d{2,3})+(?:\.\d+)?\b/g, '[amount]')
+    .replace(/\b\d{8,}\b/g, '[number]');
 }

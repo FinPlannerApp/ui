@@ -2194,7 +2194,7 @@ body.compact-view {
   font-size: 13px;
 
   & .layout-main main {
-    padding: 0.5rem !important;
+    padding-block: 0.5rem !important; /* the side gutter stays: it is what keeps cards off the screen edge */
   }
 
   & .p-card .p-card-body {

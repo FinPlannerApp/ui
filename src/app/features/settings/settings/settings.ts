@@ -1,3 +1,4 @@
+import { environment } from '../../../../environments/environment';
 import { DashboardState } from '../../../core/state/dashboard-state.service';
 import { Component, inject, Inject, PLATFORM_ID, computed, signal, OnInit } from '@angular/core';
 import { isPlatformBrowser, CommonModule } from '@angular/common';
@@ -29,6 +30,7 @@ export interface UserPreferences {
   templateUrl: './settings.html',
 })
 export class Settings implements OnInit {
+  readonly appVersion = environment.appVersion;
   public themeEngine = inject(ThemeEngine);
   private authService = inject(Auth);
   private api = inject(GenericApi);

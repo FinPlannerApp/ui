@@ -546,6 +546,7 @@
                   {{ b.memberName.substring(0, 2).toUpperCase() }}
                 </div>
                 <span class="text-sm font-bold truncate text-[var(--text-primary)]">{{ b.memberName }}</span>
+                @if (b.hasLeft) { <span class="text-[0.65rem] px-1.5 py-0.5 rounded bg-[var(--bg-secondary)] text-[var(--text-muted)]">left</span> }
               </div>
 
               <span class="text-base font-black tracking-tight" [class.text-emerald-500]="b.netBalance > 0"

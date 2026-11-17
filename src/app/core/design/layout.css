@@ -214,7 +214,10 @@ video {
   width: 100%;
   max-width: var(--app-max);
   margin-inline: auto;
-  padding-inline: var(--page-gutter);
+  /* The gutter is a floor: notches / rounded corners (installed PWA, landscape) can only make it larger. */
+  padding-left: max(var(--page-gutter), env(safe-area-inset-left, 0px));
+  padding-right: max(var(--page-gutter), env(safe-area-inset-right, 0px));
+  box-sizing: border-box;
 }
 
 /* The routed page fills the content area. */

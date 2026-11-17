@@ -61,17 +61,29 @@ type Severity = 'Minor' | 'Major' | 'Critical';
             <p-button label="Remove" icon="pi pi-trash" size="small" severity="secondary" [text]="true" (onClick)="feedback.removeScreenshot()"></p-button>
           </div>
         } @else {
-          <span class="text-xs text-[var(--text-muted)]">Press <b>Ctrl+V</b> to paste an image you copied (instant), or capture one:</span>
-          <div class="flex flex-wrap gap-2">
-            <p-button label="Capture screen" icon="pi pi-desktop" size="small" severity="secondary" [outlined]="true"
-              [disabled]="feedback.capturing()" (onClick)="feedback.captureScreen()"></p-button>
-            <p-button label="Capture this page" icon="pi pi-camera" size="small" severity="secondary" [outlined]="true"
-              [disabled]="feedback.capturing()" (onClick)="feedback.captureThisPage(maskPrivate())"></p-button>
-            <label class="inline-flex items-center gap-1.5 text-xs cursor-pointer">
-              <input type="checkbox" [ngModel]="maskPrivate()" (ngModelChange)="maskPrivate.set($event)" /> Hide amounts and typed text
-            </label>
+          <span class="text-xs text-[var(--text-muted)]">
+            @if (feedback.isTouchDevice) { Take a screenshot with your phone's buttons, then attach it here:
+            } @else { Press <b>Ctrl+V</b> to paste an image you copied (instant), attach a file, or capture one: }
+          </span>
+          <div class="flex flex-wrap gap-2 items-center">
+            <p-button label="Attach image" icon="pi pi-image" size="small" severity="secondary" [outlined]="true"
+              [disabled]="feedback.capturing()" (onClick)="fileInput.click()"></p-button>
+            <input #fileInput type="file" accept="image/*" class="hidden" (change)="onFile($event)" />
+            @if (feedback.canCaptureScreen) {
+              <p-button label="Capture screen" icon="pi pi-desktop" size="small" severity="secondary" [outlined]="true"
+                [disabled]="feedback.capturing()" (onClick)="feedback.captureScreen()"></p-button>
+            }
+            @if (!feedback.isTouchDevice) {
+              <p-button label="Capture this page" icon="pi pi-camera" size="small" severity="secondary" [outlined]="true"
+                [disabled]="feedback.capturing()" (onClick)="feedback.captureThisPage(maskPrivate())"></p-button>
+              <label class="inline-flex items-center gap-1.5 text-xs cursor-pointer">
+                <input type="checkbox" [ngModel]="maskPrivate()" (ngModelChange)="maskPrivate.set($event)" /> Hide amounts and typed text
+              </label>
+            }
           </div>
-          <span class="text-xs text-[var(--text-muted)]"><b>Capture screen</b> uses your browser's own screen capture and never slows the page. <b>Capture this page</b> can make a large page pause for a few seconds; amounts and form fields are covered in the picture when the box is ticked.</span>
+          @if (!feedback.isTouchDevice) {
+            <span class="text-xs text-[var(--text-muted)]"><b>Capture screen</b> uses your browser's own screen capture and never slows the page. <b>Capture this page</b> can make a large page pause for a few seconds; amounts and form fields are covered in the picture when the box is ticked.</span>
+          }
         }
         @if (feedback.captureNote(); as note) { <span class="text-xs text-amber-500" role="status">{{ note }}</span> }
       </div>
@@ -131,6 +143,13 @@ export class QuickFeedback {
     const d = this.details() as { consoleErrors?: unknown[]; recentApiCalls?: unknown[]; recentSteps?: unknown[] } | null;
     return `${d?.consoleErrors?.length ?? 0} errors, ${d?.recentApiCalls?.length ?? 0} API calls, ${d?.recentSteps?.length ?? 0} steps (tap to read)`;
   });
+
+  onFile(ev: Event): void {
+    const input = ev.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (file) void this.feedback.attachImage(file);
+    input.value = '';
+  }
 
   constructor() {
     // Opening the dialog brings back what was typed before (a draft from a closed dialog, a refresh, or a failed send).

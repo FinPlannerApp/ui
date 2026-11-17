@@ -41,7 +41,7 @@ export class TransactionSettingsPage implements OnInit {
       this.settings.set(await this.api.getTransactions());
       try {
         const [accs, cats] = await Promise.all([
-          firstValueFrom(this.apiService.search<any>('Accounts', { pageSize: 1000 })),
+          firstValueFrom(this.apiService.search<any>('Accounts', { pageSize: 100 })),
           firstValueFrom(this.categoryService.getTransactionCategories())
         ]);
         this.accounts.set(accs.value?.data ?? []);

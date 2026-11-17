@@ -3,6 +3,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { MessageService } from 'primeng/api';
+import { signal } from '@angular/core';
+import { Auth } from '../../../core/services/auth';
 import { QuickFeedbackService, ReportBody } from './quick-feedback.service';
 
 describe('QuickFeedbackService', () => {
@@ -11,7 +13,8 @@ describe('QuickFeedbackService', () => {
 
   beforeEach(() => {
     localStorage.clear();
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), MessageService] });
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), MessageService,
+      { provide: Auth, useValue: { currentUserDetails: signal({ id: 'u1' }) } }] });
     service = TestBed.inject(QuickFeedbackService);
   });
 
@@ -32,14 +35,20 @@ describe('QuickFeedbackService', () => {
 
   it('keeps at most the 3 newest offline reports', () => {
     for (let i = 1; i <= 5; i++) service.queue(body(i));
-    const queued = JSON.parse(localStorage.getItem('finplanner_report_queue') ?? '[]') as ReportBody[];
-    expect(queued.map(q => q.description)).toEqual(['report 3', 'report 4', 'report 5']);
+    const queued = JSON.parse(localStorage.getItem('finplanner_report_queue') ?? '[]') as { owner: string; body: ReportBody }[];
+    expect(queued.map(q => q.body.description)).toEqual(['report 3', 'report 4', 'report 5']);
   });
 
   it('drops a very large screenshot from the offline copy but keeps the text', () => {
     service.queue({ ...body(1), screenshotBase64: 'x'.repeat(700_000) });
-    const queued = JSON.parse(localStorage.getItem('finplanner_report_queue') ?? '[]') as ReportBody[];
-    expect(queued[0].description).toBe('report 1');
-    expect(queued[0].screenshotBase64).toBeNull();
+    const queued = JSON.parse(localStorage.getItem('finplanner_report_queue') ?? '[]') as { owner: string; body: ReportBody }[];
+    expect(queued[0].body.description).toBe('report 1');
+    expect(queued[0].body.screenshotBase64).toBeNull();
+  });
+
+  it('ties a queued report to the signed-in person', () => {
+    service.queue(body(1));
+    const queued = JSON.parse(localStorage.getItem('finplanner_report_queue') ?? '[]') as { owner: string }[];
+    expect(queued[0].owner).toBe('u1');
   });
 });

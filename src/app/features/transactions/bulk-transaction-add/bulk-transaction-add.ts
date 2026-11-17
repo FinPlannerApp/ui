@@ -176,7 +176,7 @@ export class BulkTransactionAdd {
 
     loadInitialData() {
         // Load active accounts
-        this.apiService.search<any>('Accounts', { pageSize: 1000 }).subscribe({
+        this.apiService.search<any>('Accounts', { pageSize: 100 }).subscribe({
             next: (res) => {
                 this.accounts.set(res.value?.data || []);
                 this.reEvaluateRows();
@@ -185,7 +185,7 @@ export class BulkTransactionAdd {
         });
 
         // Load active categories
-        this.apiService.search<any>('TransactionCategories', { pageSize: 1000 }).subscribe({
+        this.apiService.search<any>('TransactionCategories', { pageSize: 100 }).subscribe({
             next: (res) => {
                 this.categories.set(withPaths(res.value?.data || []));
                 this.reEvaluateRows();
