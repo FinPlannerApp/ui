@@ -37,7 +37,7 @@
     "@angular/core": "^20.3.23",
     "@angular/forms": "^20.3.23",
     "@angular/platform-browser": "^20.3.23",
-    "@angular/router": "^20.3.23",
+    "@angular/router": "^22.2.6",
     "@angular/service-worker": "^20.3.23",
     "@microsoft/signalr": "^10.0.11",
     "@primeng/themes": "^20.1.2",
