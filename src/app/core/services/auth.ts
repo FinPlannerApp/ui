@@ -89,6 +89,26 @@ function deviceHeaders(): Record<string, string> {
 }
 const CSRF_HEADERS = { 'X-Requested-With': 'XMLHttpRequest' };
 
+const REFRESH_TOKEN_KEY = 'finplanner_refresh_token';
+
+function getStoredRefreshToken(): string | null {
+  try {
+    return localStorage.getItem(REFRESH_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function setStoredRefreshToken(token: string | null): void {
+  try {
+    if (token) {
+      localStorage.setItem(REFRESH_TOKEN_KEY, token);
+    } else {
+      localStorage.removeItem(REFRESH_TOKEN_KEY);
+    }
+  } catch {}
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -144,7 +164,7 @@ export class Auth {
 
   // --- PRIVATE HELPERS ---
 
-  private storeTokens(accessToken: string): void {
+  private storeTokens(accessToken: string, refreshToken?: string): void {
     this.isLoggingOut = false;
 
     if (!accessToken) {
@@ -155,12 +175,20 @@ export class Auth {
       (window as any).__AUTH_TOKEN__ = accessToken;
     }
 
+    if (refreshToken) {
+      setStoredRefreshToken(refreshToken);
+    }
+
     this._accessToken.set(accessToken);
     this.decodeAndSetUser(accessToken);
     this.startSilentRefresh();
   }
 
   private clearTokens(): void {
+    if (typeof window !== 'undefined') {
+      delete (window as any).__AUTH_TOKEN__;
+    }
+    setStoredRefreshToken(null);
     this._accessToken.set(null);
     this._currentUserDetails.set(null);
     this.stopSilentRefresh();
@@ -273,7 +301,7 @@ export class Auth {
     ).pipe(
       tap(response => {
         if (response.isSuccess && response.value) {
-          this.storeTokens(response.value.accessToken);
+          this.storeTokens(response.value.accessToken, response.value.refreshToken);
         }
       })
     );
@@ -316,14 +344,15 @@ export class Auth {
    * @returns An Observable that emits true if refresh was successful, false otherwise.
    */
   refreshToken(triggerLogout: boolean = true): Observable<boolean> {
+    const storedToken = getStoredRefreshToken();
     return this.http.post<ApiResult<LoginResponseDto>>(
       this.buildUrl('Auth', 'refresh'),
-      {},
+      { refreshToken: storedToken || undefined },
       { withCredentials: true, headers: { ...CSRF_HEADERS, ...deviceHeaders() } }
     ).pipe(
       map(response => {
         if (response.isSuccess && response.value) {
-          this.storeTokens(response.value.accessToken);
+          this.storeTokens(response.value.accessToken, response.value.refreshToken);
           return true;
         }
         if (triggerLogout) {
@@ -355,7 +384,8 @@ export class Auth {
 
     // Call backend to clear cookie and revoke session (skipped when the server already ended it)
     if (callServer) {
-      this.http.post(this.buildUrl('Auth', 'logout'), {}, { withCredentials: true, headers: CSRF_HEADERS }).pipe(
+      const storedToken = getStoredRefreshToken();
+      this.http.post(this.buildUrl('Auth', 'logout'), { refreshToken: storedToken || undefined }, { withCredentials: true, headers: CSRF_HEADERS }).pipe(
         catchError(() => of(null))
       ).subscribe();
     }

@@ -40,7 +40,13 @@ export class PwaUpdateService {
       // Also ask the server directly: a stuck or HTTP-cached service worker never reports a new version by itself.
       void this.checkNonPwaUpdate();
     };
-    document.addEventListener('visibilitychange', check);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden' && (this.isNotificationShown || this.directDetected)) {
+        this.activateUpdate();
+      } else {
+        check();
+      }
+    });
     window.addEventListener('focus', check);
     window.addEventListener('online', check);
     setInterval(check, 30 * 60_000);
@@ -87,11 +93,13 @@ export class PwaUpdateService {
     void this.checkNonPwaUpdate();
     this.startPeriodicChecks();
 
-    // Trigger update ONLY when Angular Service Worker confirms a real UI version change
+    // Trigger update when Angular Service Worker confirms a real UI version change
     this.swUpdate.versionUpdates.pipe(
       filter((event): event is VersionReadyEvent => event.type === 'VERSION_READY')
     ).subscribe(async () => {
-      await this.swUpdate.activateUpdate();
+      try {
+        await this.swUpdate.activateUpdate();
+      } catch {}
       if (document.hidden) {
         document.location.reload();
       } else {
@@ -166,13 +174,18 @@ export class PwaUpdateService {
 
     this.messageService.add({
       severity: 'info',
-      summary: 'Update Available',
-      detail: 'A new version of Financial Planner is available.',
+      summary: 'Update Ready',
+      detail: 'A new version of Financial Planner is ready. Updating shortly...',
       sticky: true,
       closable: true,
       key: 'pwa-update',
       data: { action: 'reload' }
     });
+
+    // Automatically reload after a brief delay so users always run the latest version seamlessly
+    setTimeout(() => {
+      this.activateUpdate();
+    }, 3500);
   }
 
   /** Reload the page to activate the new version */

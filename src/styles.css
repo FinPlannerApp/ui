@@ -2535,28 +2535,56 @@ a,
   user-select: none;
 }
 
-/* 5. Mobile & Small Screen (< 640px) Adaptations */
-@media (max-width: 639px) {
+/* 5. Mobile & Responsive Screen (< 1024px) Adaptations & iOS Zoom Prevention */
+@media (max-width: 1024px) {
 
-  /* Prevent aggressive automatic zoom on input focus in iOS/Android WebViews */
+  /* Permanently prevent automatic viewport zoom on input/dropdown focus in iOS Safari & PWAs
+     by guaranteeing 16px font-size on all form elements and internal PrimeNG controls. */
   input,
   select,
   textarea,
   .p-inputtext,
+  .p-password input,
+  .p-inputnumber input,
+  .p-datepicker input,
+  .p-datepicker-input,
+  .p-autocomplete input,
   .p-select,
-  .p-datepicker-input {
+  .p-select input,
+  .p-select .p-select-label,
+  .p-select-label,
+  .p-select-filter,
+  .p-select-filter-input,
+  .p-dropdown,
+  .p-dropdown input,
+  .p-dropdown-label,
+  .p-dropdown-filter,
+  .p-multiselect,
+  .p-multiselect input,
+  .p-multiselect-label,
+  .p-multiselect-filter,
+  .p-multiselect-filter-input {
     font-size: 16px !important;
   }
 
   /* Keep all overlays safely bounded within the screen width */
   .p-popover,
   .p-select-overlay,
+  .p-select-panel,
+  .p-dropdown-panel,
   .p-datepicker-overlay,
   .p-multiselect-overlay,
-  .p-autocomplete-overlay {
+  .p-multiselect-panel,
+  .p-autocomplete-overlay,
+  .p-autocomplete-panel,
+  .p-menu.p-menu-overlay {
     max-width: calc(100vw - 1rem) !important;
     box-sizing: border-box !important;
+    overflow-x: hidden !important;
   }
+}
+
+@media (max-width: 639px) {
 
   /* Compact responsive tables for mobile */
   .p-datatable .p-datatable-thead>tr>th,
